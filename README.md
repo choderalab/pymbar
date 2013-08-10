@@ -69,7 +69,7 @@ See the example code in the docstrings, or find more elaborate examples in the `
 
 Basic usage involves first constructing a MBAR object, initializing it with the reduced potential from the simulation or experimental data:
 ```python
->>> mbar = pymbar.MBAR(u_kln, N_k)
+>>> mbar = MBAR(u_kln, N_k)
 ```
 Next, we extract the dimensionless free energy differences and uncertainties:
 ```python

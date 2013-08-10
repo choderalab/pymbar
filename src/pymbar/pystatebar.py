@@ -96,15 +96,15 @@ class BoundsError(Exception):
 # Private utility functions
 #=============================================================================================
 
-def logsum(a_n):
+def _logsum(a_n):
   """
   Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner:
 
-    logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
+    _logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
 
   where max_arg = max_n a_n.  This is mathematically (but not numerically) equivalent to
 
-    logsum a_n = \log \sum_{n=1}^N \exp[a_n]
+    _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
 
   ARGUMENTS
     a_n (numpy array) - a_n[n] is the nth exponential argument
@@ -115,7 +115,7 @@ def logsum(a_n):
   EXAMPLE  
 
   >>> a_n = numpy.array([0.0, 1.0, 1.2], numpy.float64)
-  >>> print '%.3e' % logsum(a_n)
+  >>> print '%.3e' % _logsum(a_n)
   1.951e+00
     
   """
@@ -637,7 +637,7 @@ class StateMBAR:
     # Compute unnormalized log weights for new state.
     log_w_kn = self._computeUnnormalizedLogWeights(u_kn)
     # Compute free energies
-    f_k[K] = - logsum(log_w_kn[self.indices])
+    f_k[K] = - _logsum(log_w_kn[self.indices])
     # Store normalized weights.
     W_nk[:,K] = numpy.exp(log_w_kn[self.indices] + f_k[K])
     
@@ -712,7 +712,7 @@ class StateMBAR:
       # Compute unnormalized log weights.
       log_w_kn = self._computeUnnormalizedLogWeights(u_kln[:,l,:])
       # Compute free energies
-      f_k[K+l] = - logsum(log_w_kn[self.indices])
+      f_k[K+l] = - _logsum(log_w_kn[self.indices])
       # Store normalized weights.
       W_nk[:,K+l] = numpy.exp(log_w_kn[self.indices] + f_k[K+l])
 
@@ -920,7 +920,7 @@ class StateMBAR:
       indices = numpy.where(bin_kn[self.indices] == i)[0]
 
       # Compute dimensionless free energy of occupying state i.
-      f_i[i] = - logsum( log_w_n[indices] )
+      f_i[i] = - _logsum( log_w_n[indices] )
 
     # Compute uncertainties by forming matrix of W_nk.
     N_k = numpy.zeros([self.K + nbins], numpy.int32)
@@ -969,7 +969,7 @@ class StateMBAR:
       # Determine uncertainties from normalization that \sum_i p_i = 1.
 
       # Compute bin probabilities p_i
-      p_i = numpy.exp(-f_i - logsum(-f_i))
+      p_i = numpy.exp(-f_i - _logsum(-f_i))
 
       # Compute uncertainties in bin probabilities.
       d2p_i = numpy.zeros([nbins], numpy.float64)
@@ -1045,7 +1045,7 @@ class StateMBAR:
         raise "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
 
       # Compute dimensionless free energy of occupying state i.
-      f_i[i] = - logsum( log_w_n[indices] )
+      f_i[i] = - _logsum( log_w_n[indices] )
 
     # Shift so that f_i.min() = 0
     f_i_min = f_i.min()
@@ -1453,7 +1453,7 @@ class StateMBAR:
         log_w_kn = numpy.zeros([self.K,self.N_max], dtype=numpy.float64)
         for k in range(0,self.K):
           for n in range(0,self.N_k[k]):
-            log_w_kn[k,n] = - logsum( numpy.log(self.N_k[self.nonzero_N_k_indices]) + self.f_k[self.nonzero_N_k_indices] - (self.u_kln[k,self.nonzero_N_k_indices,n] - u_kn[k,n]) )        
+            log_w_kn[k,n] = - _logsum( numpy.log(self.N_k[self.nonzero_N_k_indices]) + self.f_k[self.nonzero_N_k_indices] - (self.u_kln[k,self.nonzero_N_k_indices,n] - u_kn[k,n]) )        
 
     return log_w_kn
   #=============================================================================================
@@ -1578,7 +1578,7 @@ class StateMBAR:
       #    log_w_kn = self._computeUnnormalizedLogWeights(self.u_kln[:,l,:])
 
         # Update dimensionless free energies.
-        f_k_new[l] = - logsum( log_w_kn[self.indices] )
+        f_k_new[l] = - _logsum( log_w_kn[self.indices] )
           
       # Shift the dimensionless free energies such that f_k[0] = 0 (to ensure unique solution, and prevent overflow during early iterations).
       f_k_new[:] = f_k_new[:] - f_k_new[0]
@@ -1767,7 +1767,7 @@ class StateMBAR:
     #   log_w_kn = self._computeUnnormalizedLogWeights(self.u_kln[:,l,:])        
 
       # Update dimensionless free energies.
-      self.f_k[l] = - logsum( log_w_kn[self.indices] )
+      self.f_k[l] = - _logsum( log_w_kn[self.indices] )
     self.f_k = self.f_k - self.f_k[0]
     
     # write out current estimate

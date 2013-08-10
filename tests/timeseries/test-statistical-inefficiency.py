@@ -3,7 +3,8 @@
 import sys
 import numpy
 import math
-import timeseries
+
+from pymbar import timeseries
 
 N=10000
 K=10

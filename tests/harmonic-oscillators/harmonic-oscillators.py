@@ -34,9 +34,9 @@ __version__ = "$Revision: 282 $ $Date: 2011-01-30 17:14:19 -0500 (Sun, 30 Jan 20
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-import pymbar
 import numpy
-import testsystems
+
+from pymbar import testsystems, EXP, EXPgauss, BAR, MBAR
 
 #=============================================================================================
 # HELPER FUNCTIONS
@@ -136,7 +136,7 @@ print "======================================"
 print "Estimating relative free energies from simulation (this may take a while)..."
 
 # Initialize the MBAR class, determining the free energies.
-mbar = pymbar.MBAR(u_kln, N_k, method = 'adaptive',relative_tolerance=1.0e-10,verbose=True)
+mbar = MBAR(u_kln, N_k, method = 'adaptive',relative_tolerance=1.0e-10,verbose=True)
 # Get matrix of dimensionless free energy differences and uncertainty estimate.
 
 print "============================================="
@@ -171,7 +171,7 @@ for i in range(Knon-1):
   k1 = nonzero_indices[i+1]
   w_F = u_kln[k, k1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
   w_R = u_kln[k1, k, 0:N_k[k1]] - u_kln[k1, k1, 0:N_k[k1]]    # reverse work                                  
-  (df_bar,ddf_bar) = pymbar.computeBAR(w_F, w_R)
+  (df_bar,ddf_bar) = BAR(w_F, w_R)
   bar_analytical = (f_k_analytical[k1]-f_k_analytical[k]) 
   bar_error = bar_analytical - df_bar
   print "BAR estimator for reduced free energy from states %d to %d is %f +/- %f" % (k,k1,df_bar,ddf_bar) 
@@ -185,7 +185,7 @@ print "EXP forward free energy"
 for k in range(K-1):
   if N_k[k] != 0:
     w_F = u_kln[k, k+1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
-    (df_exp,ddf_exp) = pymbar.computeEXP(w_F)
+    (df_exp,ddf_exp) = EXP(w_F)
     exp_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
     exp_error = exp_analytical - df_exp
     print "df from states %d to %d is %f +/- %f" % (k,k+1,df_exp,ddf_exp) 
@@ -195,7 +195,7 @@ print "EXP reverse free energy"
 for k in range(1,K):
   if N_k[k] != 0:
     w_R = u_kln[k, k-1, 0:N_k[k]] - u_kln[k, k, 0:N_k[k]]         # reverse work                                  
-    (df_exp,ddf_exp) = pymbar.computeEXP(w_R)
+    (df_exp,ddf_exp) = EXP(w_R)
     df_exp = -df_exp
     exp_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
     exp_error = exp_analytical - df_exp
@@ -210,7 +210,7 @@ print "Gaussian forward estimate"
 for k in range(K-1):
   if N_k[k] != 0:
     w_F = u_kln[k, k+1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
-    (df_gauss,ddf_gauss) = pymbar.computeGauss(w_F)
+    (df_gauss,ddf_gauss) = EXPgauss(w_F)
     gauss_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
     gauss_error = gauss_analytical - df_gauss
     print "df for reduced free energy from states %d to %d is %f +/- %f" % (k,k+1,df_gauss,ddf_gauss) 
@@ -220,7 +220,7 @@ print "Gaussian reverse estimate"
 for k in range(1,K):
   if N_k[k] != 0:
     w_R = u_kln[k, k-1, 0:N_k[k]] - u_kln[k, k, 0:N_k[k]]         # reverse work                                  
-    (df_gauss,ddf_gauss) = pymbar.computeGauss(w_R)
+    (df_gauss,ddf_gauss) = EXPgauss(w_R)
     df_gauss = df_gauss
     gauss_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
     gauss_error = gauss_analytical - df_gauss
@@ -566,7 +566,7 @@ for k in range(numbrellas):
 
 print "Solving for free energies of state ..." 
 N_k = nsamples*numpy.ones([numbrellas], int)
-mbar = pymbar.MBAR(u_kln, N_k, method='adaptive')
+mbar = MBAR(u_kln, N_k, method='adaptive')
 
 #Can compare the free energies computed with MBAR if desired with f_k_analytical
 

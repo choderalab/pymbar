@@ -38,11 +38,9 @@ __version__ = "$Revision: 282 $ $Date: 2011-01-30 17:14:19 -0500 (Sun, 30 Jan 20
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-import pymbar
 import numpy
-import confidenceintervals
-import testsystems
 import pdb
+from pymbar import testsystems, MBAR, confidenceintervals
 #=============================================================================================
 # PARAMETERS
 #=============================================================================================
@@ -146,7 +144,7 @@ for replicate_index in range(0,nreplicates):
   #=============================================================================================
 
   # Initialize the MBAR class, determining the free energies.
-  mbar = pymbar.MBAR(u_kln, N_k, method = 'adaptive',relative_tolerance=1.0e-10,verbose=False) # use fast Newton-Raphson solver
+  mbar = MBAR(u_kln, N_k, method = 'adaptive',relative_tolerance=1.0e-10,verbose=False) # use fast Newton-Raphson solver
   (Deltaf_ij_estimated, dDeltaf_ij_estimated) = mbar.getFreeEnergyDifferences()
   
   # Compute error from analytical free energy differences.

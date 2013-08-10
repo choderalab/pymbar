@@ -41,9 +41,11 @@ This module contains implementations of
 
 #=============================================================================================
 # TODO
+# * Break EXP and BAR out into different files.
+# * Fix computeBAR and computeEXP to be BAR() and EXP() to make them easier to find.
+# * Make functions that don't need to be exported (like logsum) private by prefixing an underscore.
 # * Make asymptotic covariance matrix computation more robust to over/underflow.
 # * Double-check correspondence of comments to equation numbers once manuscript has been finalized.
-# * Set up distutils-style installation for _MBAR.cpp compiled code.
 # * Change self.nonzero_N_k_indices to self.states_with_samples
 #=============================================================================================
 
@@ -90,15 +92,15 @@ class BoundsError(Exception):
 # Private utility functions
 #=============================================================================================
 
-def logsum(a_n):
+def _logsum(a_n):
   """
   Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner:
 
-    logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
+    _logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
 
   where max_arg = max_n a_n.  This is mathematically (but not numerically) equivalent to
 
-    logsum a_n = \log \sum_{n=1}^N \exp[a_n]
+    _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
 
   ARGUMENTS
     a_n (numpy array) - a_n[n] is the nth exponential argument
@@ -109,7 +111,7 @@ def logsum(a_n):
   EXAMPLE  
 
   >>> a_n = numpy.array([0.0, 1.0, 1.2], numpy.float64)
-  >>> print '%.3e' % logsum(a_n)
+  >>> print '%.3e' % _logsum(a_n)
   1.951e+00
     
   """
@@ -129,7 +131,7 @@ def logsum(a_n):
 # One-sided exponential averaging (EXP).
 #=============================================================================================
 
-def computeEXP(w_F, compute_uncertainty=True, is_timeseries=False):
+def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
   """
   Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
 
@@ -155,10 +157,10 @@ def computeEXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
   >>> import testsystems
   >>> [w_F, w_R] = testsystems.GaussianWorkSample(mu_F=None, DeltaF=1.0, seed=0)
-  >>> [DeltaF, dDeltaF] = computeEXP(w_F)
+  >>> [DeltaF, dDeltaF] = EXP(w_F)
   >>> print 'Forward free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Forward free energy difference is 1.088 +- 0.076 kT
-  >>> [DeltaF, dDeltaF] = computeEXP(w_R)
+  >>> [DeltaF, dDeltaF] = EXP(w_R)
   >>> print 'Reverse free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Reverse free energy difference is -1.073 +- 0.082 kT
   
@@ -168,7 +170,7 @@ def computeEXP(w_F, compute_uncertainty=True, is_timeseries=False):
   T = float(numpy.size(w_F)) # number of work measurements
   
   # Estimate free energy difference by exponential averaging using DeltaF = - log < exp(-w_F) >
-  DeltaF = - ( logsum( - w_F ) - numpy.log(T) )
+  DeltaF = - ( _logsum( - w_F ) - numpy.log(T) )
 
   if compute_uncertainty:  
     # Compute x_i = numpy.exp(-w_F_i - max_arg)
@@ -201,7 +203,7 @@ def computeEXP(w_F, compute_uncertainty=True, is_timeseries=False):
 # Gaussian approximation to exponential averaging (Gauss).
 #=============================================================================================
 
-def computeGauss(w_F, compute_uncertainty=True, is_timeseries=False):
+def EXPgauss(w_F, compute_uncertainty=True, is_timeseries=False):
   """
   Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
@@ -227,10 +229,10 @@ def computeGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
   >>> import testsystems
   >>> [w_F, w_R] = testsystems.GaussianWorkSample(mu_F=None, DeltaF=1.0, seed=0)
-  >>> [DeltaF, dDeltaF] = computeGauss(w_F)
+  >>> [DeltaF, dDeltaF] = EXPgauss(w_F)
   >>> print 'Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-  >>> [DeltaF, dDeltaF] = computeGauss(w_R)
+  >>> [DeltaF, dDeltaF] = EXPgauss(w_R)
   >>> print 'Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
   
@@ -297,7 +299,7 @@ def BARzero(w_F,w_R,DeltaF):
     exp_arg_F = (M + w_F - DeltaF)
     max_arg_F = numpy.choose(numpy.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
     log_f_F = - max_arg_F - numpy.log( numpy.exp(-max_arg_F) + numpy.exp(exp_arg_F - max_arg_F) )
-    log_numer = logsum(log_f_F) - numpy.log(T_F)
+    log_numer = _logsum(log_f_F) - numpy.log(T_F)
     
     # Compute log_denominator.
     # log_denom = log < f(-W) exp[-W] >_R
@@ -305,14 +307,14 @@ def BARzero(w_F,w_R,DeltaF):
     exp_arg_R = (M - w_R - DeltaF)
     max_arg_R = numpy.choose(numpy.greater(0.0, exp_arg_R), (0.0, exp_arg_R))
     log_f_R = - max_arg_R - numpy.log( numpy.exp(-max_arg_R) + numpy.exp(exp_arg_R - max_arg_R) ) - w_R 
-    log_denom = logsum(log_f_R) - numpy.log(T_R)
+    log_denom = _logsum(log_f_R) - numpy.log(T_R)
 
     # This function must be zeroed to find a root
     fzero  = DeltaF - (log_denom - log_numer)
 
     return fzero
 
-def computeBAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, relative_tolerance=1.0e-11, verbose=False, method='false-position', iterated_solution = True):
+def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, relative_tolerance=1.0e-11, verbose=False, method='false-position', iterated_solution = True):
   """
   Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
@@ -351,7 +353,7 @@ def computeBAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iteration
 
   >>> import testsystems
   >>> [w_F, w_R] = testsystems.GaussianWorkSample(mu_F=None, DeltaF=1.0, seed=0)
-  >>> [DeltaF, dDeltaF] = computeBAR(w_F, w_R)
+  >>> [DeltaF, dDeltaF] = BAR(w_F, w_R)
   >>> print 'Free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Free energy difference is 1.088 +- 0.050 kT
     
@@ -368,8 +370,8 @@ def computeBAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iteration
     nfunc = 0
 
   if method == 'bisection' or method == 'false-position':
-    UpperB = computeEXP(w_F)[0]
-    LowerB = -computeEXP(w_R)[0]
+    UpperB = EXP(w_F)[0]
+    LowerB = -EXP(w_R)[0]
 
     FUpperB = BARzero(w_F,w_R,UpperB)
     FLowerB = BARzero(w_F,w_R,LowerB)
@@ -952,7 +954,7 @@ class MBAR:
 
       Log_W_nk[:,K+l] = numpy.log(A_n) + self.Log_W_nk[:,l] # this works because all A_n are now positive;
                                                             # we took the min at the beginning.
-      f_k[l] = -logsum(Log_W_nk[:,K+l])
+      f_k[l] = -_logsum(Log_W_nk[:,K+l])
       Log_W_nk[:,K+l] += f_k[l]              # normalize the row   
       A_i[l] = numpy.exp(-f_k[l])
       
@@ -1080,13 +1082,13 @@ class MBAR:
     # Compute row of W matrix for the extra state corresponding to u_kn.
     Log_w_kn = self._computeUnnormalizedLogWeights(u_kn)
     Log_W_nk[:,K] = Log_w_kn[self.indices] 
-    f_k[K] = -logsum(Log_W_nk[:,K])
+    f_k[K] = -_logsum(Log_W_nk[:,K])
     Log_W_nk[:,K] += f_k[K]
     
     # Compute the remaining rows/columns of W_nk and c_k for the observables.
     for i in range(I):
       Log_W_nk[:,K+1+i] = numpy.log(A_in[i,:]) + Log_W_nk[:,K]
-      f_k[K+1+i] = -logsum(Log_W_nk[:,K+1+i])  
+      f_k[K+1+i] = -_logsum(Log_W_nk[:,K+1+i])  
       Log_W_nk[:,K+1+i] += f_k[K+1+i]    # normalize this row
 
     # Compute estimates.
@@ -1225,12 +1227,12 @@ class MBAR:
     # compute the free energy of the additional state
     log_w_kn = self._computeUnnormalizedLogWeights(u_kn)
     # Compute free energies
-    f_k[K] = -logsum(log_w_kn[self.indices])
+    f_k[K] = -_logsum(log_w_kn[self.indices])
     Log_W_nk[:,K] = log_w_kn[self.indices] + f_k[K]
     
     # compute the observable at this state
     Log_W_nk[:,K+1] = numpy.log(A_n) + Log_W_nk[:,K]
-    f_k[K+1] = -logsum(Log_W_nk[:,K+1])
+    f_k[K+1] = -_logsum(Log_W_nk[:,K+1])
     Log_W_nk[:,K+1] += f_k[K+1]              # normalize the row   
     A = numpy.exp(-f_k[K+1]) 
     
@@ -1315,7 +1317,7 @@ class MBAR:
       # Compute unnormalized log weights.
       log_w_kn = self._computeUnnormalizedLogWeights(u_kln[:,l,:])
       # Compute free energies
-      f_k[K+l] = - logsum(log_w_kn[self.indices])
+      f_k[K+l] = - _logsum(log_w_kn[self.indices])
       # Store normalized weights.  Keep in exponential not log form because we will not store W_nk
       W_nk[:,K+l] = numpy.exp(log_w_kn[self.indices] + f_k[K+l])
 
@@ -1412,7 +1414,7 @@ class MBAR:
 
       Log_W_nk[:,K+l] = numpy.log(u_kn[self.indices]) + self.Log_W_nk[:,l] 
 
-      f_k[l] = -logsum(Log_W_nk[:,K+l])
+      f_k[l] = -_logsum(Log_W_nk[:,K+l])
       Log_W_nk[:,K+l] += f_k[l]              # normalize the row      
       u_i[l] = numpy.exp(-f_k[l])
 
@@ -1552,7 +1554,7 @@ class MBAR:
       indices = numpy.where(bin_kn[self.indices] == i)[0]
 
       # Compute dimensionless free energy of occupying state i.
-      f_i[i] = - logsum( log_w_n[indices] )
+      f_i[i] = - _logsum( log_w_n[indices] )
 
     # Compute uncertainties by forming matrix of W_nk.
     N_k = numpy.zeros([self.K + nbins], numpy.int32)
@@ -1607,7 +1609,7 @@ class MBAR:
       # Determine uncertainties from normalization that \sum_i p_i = 1.
 
       # Compute bin probabilities p_i
-      p_i = numpy.exp(-f_i - logsum(-f_i))
+      p_i = numpy.exp(-f_i - _logsum(-f_i))
 
       # todo -- eliminate triple loop over nbins!
       # Compute uncertainties in bin probabilities.
@@ -1684,7 +1686,7 @@ class MBAR:
         raise "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
 
       # Compute dimensionless free energy of occupying state i.
-      f_i[i] = - logsum( log_w_n[indices] )
+      f_i[i] = - _logsum( log_w_n[indices] )
 
     # Shift so that f_i.min() = 0
     f_i_min = f_i.min()
@@ -1777,7 +1779,7 @@ class MBAR:
       log_w_kn = -self.u_kln[:,index,:]+ self.log_weight_denom + f_k[l]
 
       if (return_f_k):
-        f_k_out[l] = f_k[l] - logsum( log_w_kn[self.indices] )
+        f_k_out[l] = f_k[l] - _logsum( log_w_kn[self.indices] )
         if (include_nonzero):
           log_w_kn[self.indices] += (f_k_out[l]-f_k[l])  # renormalize the weights, needed for nonzero states. 
 
@@ -2100,7 +2102,7 @@ class MBAR:
 
         if (len(w_F) > 0 and len(w_R) > 0): 
           # BAR solution doesn't need to be incredibly accurate to kickstart NR.
-          self.f_k[l] = self.f_k[k] + computeBAR(w_F, w_R, relative_tolerance=0.000001, verbose=False, compute_uncertainty=False)
+          self.f_k[l] = self.f_k[k] + BAR(w_F, w_R, relative_tolerance=0.000001, verbose=False, compute_uncertainty=False)
         else:
           # no states observed, so we don't need to initialize this free energy anyway, as 
           # the solution is noniterative.
@@ -2184,7 +2186,7 @@ class MBAR:
         log_w_kn = numpy.zeros([self.K,self.N_max], dtype=numpy.float64)
         for k in range(0,self.K):
           for n in range(0,self.N_k[k]):
-            log_w_kn[k,n] = - logsum(numpy.log(self.N_k[self.nonzero_N_k_indices]) + self.f_k[self.nonzero_N_k_indices] - (self.u_kln[k,self.nonzero_N_k_indices,n] - u_kn[k,n]) )        
+            log_w_kn[k,n] = - _logsum(numpy.log(self.N_k[self.nonzero_N_k_indices]) + self.f_k[self.nonzero_N_k_indices] - (self.u_kln[k,self.nonzero_N_k_indices,n] - u_kn[k,n]) )        
 
     return log_w_kn
 
