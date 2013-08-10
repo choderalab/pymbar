@@ -81,6 +81,11 @@ or compute expectations of given observables A(x) for all states:
 ```
 See the help for these individual methods for more information on exact usage.
 
+Examples
+--------
+
+Several examples of applications of `pymbar` to various types of simulation data can be found in [pymbar-examples](http://github.com/choderalab/pymbar-examples/).
+
 Optimizations and improvements
 ------------------------------
 
