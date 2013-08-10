@@ -7,7 +7,7 @@ import numpy
 import glob
 
 CMBAR = Extension('_pymbar',
-                  sources = ["_pymbar.c"],
+                  sources = ["src/pymbar/_pymbar.c"],
                   extra_compile_args=["-std=c99","-O2","-shared","-msse2","-msse3"],
                   include_dirs = [numpy.get_include(),numpy.get_include()+"/numpy/"]
                   )
@@ -18,15 +18,17 @@ def buildKeywordDictionary():
     setupKeywords["name"]              = "pymbar"
     setupKeywords["version"]           = "2.0beta"
     setupKeywords["author"]            = "Michael R. Shirts and John D. Chodera"
-    setupKeywords["author_email"]      = "michael.shirts@virginia.edu, jchodera@gmail.com"
+    setupKeywords["author_email"]      = "michael.shirts@virginia.edu, choderaj@mskcc.org"
     setupKeywords["license"]           = "GPL 2.0"
-    setupKeywords["url"]               = "https://simtk.org/home/pymbar"
-    setupKeywords["download_url"]      = "https://simtk.org/home/pymbar"
-    setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
+    setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
+    setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
+    setupKeywords["packages"]          = ['pymbar']
+    setupKeywords["package_dir"]       = {'pymbar' : 'src/pymbar'}    
+    #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
     setupKeywords["data_files"]        = []
     setupKeywords["ext_modules"]       = [CMBAR]
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
-    setupKeywords["description"]       = "Python Code for performing ."
+    setupKeywords["description"]       = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method."
     setupKeywords["long_description"]  = """
     Pymbar (https://simtk.org/home/pymbar) is a library
     that provides tools for optimally combining simulations 

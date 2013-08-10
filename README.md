@@ -57,7 +57,6 @@ setenv PYTHONPATH "/path/to/pymbar:$PYTHONPATH"
 export PYTHONPATH="/path/to/pymbar:$PYTHONPTH"
 ```
 
-
 Usage
 -----
 
@@ -82,6 +81,29 @@ or compute expectations of given observables A(x) for all states:
 ```
 See the help for these individual methods for more information on exact usage.
 
+Optimizations and improvements
+------------------------------
+
+By default, the pymbar class uses an adaptive method which uses self-consistent iteration initially and switches to Newton-Raphson iteration (with N-R implemented as described in the Appendix of Ref. [1]) when the norm of the gradient of a Newton-Raphson step is lower than the norm of the gradient of a self-consistent step. Self-consistent iteration or Newton-Raphson can be selected instead if desired.  For example, to use the Newton-Raphson solver alone, add the optional argument:
+```python
+method = 'Newton-Raphson'
+```
+to the MBAR initialization, as in 
+```python
+>>> mbar = MBAR.MBAR(u_kln, N_k, method = 'Newton-Raphson')
+```
+In very rare cases, the self-consistent iteration may still work when the adaptive method switches to Newton-Raphson prematurely.
+
+* C++ helper code
+
+We have provided a C++ helper code (`_pymbar.c`) to speed up the most time-consuming operation in computing the dimensionless free energies (used by all methods).  For many applications, use of the compiled helper code results in a speedup of ~40x.  There should be no significant difference in the output (if any) between the pure-Python/Numpy results and those employing the helper routine.  
+
+The routine should be installed correctly using the `setup.py` script, but if it fails, instructions on compilation for several platforms can be found in the header of `_pymbar.c`.
+
+pymbar.py will import and use the compiled dynamic library (`_pymbar.so`) provided it can be found in your `PYTHONPATH`.  An optional `use_optimized` flag passed to the MBAR constructor can be used to force or disable this behavior.  Passing the flag `use_optimized = False` to the MBAR initialization will disable use of the module.
+```python
+>>> mbar = pymbar.MBAR(u_kln, N_k, use_optimized = False)
+```
 
 References
 ----------
