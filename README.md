@@ -136,4 +136,4 @@ You should have received a copy of the GNU General Public License along with thi
 Thanks
 ------
 
-We would especially like to thank a large number of people for helping us identify issues and ways to improve `pymbar`, including Tommy Knotts, David Mobley, Himanshu Paliwal, Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian Roitberg, Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin, Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Sam Moors, Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, and Andrew Jewett.
+We would especially like to thank a large number of people for helping us identify issues and ways to improve `pymbar`, including Tommy Knotts, David Mobley, Himanshu Paliwal, Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian Roitberg, Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin, Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Dave Caplan, Sam Moors, Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, and Andrew Jewett.
