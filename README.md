@@ -35,7 +35,18 @@ Many of these packages are now standard in scientific Python installations or bu
 Installation
 ------------
 
-Use the provided `setup.py` to install.
+There are several ways to install pymbar.
+
+You can grab the latest version from the [Python Package Index (PyPI)](https://pypi.python.org/pypi/pymbar) with `easy_install`:
+```tcsh
+easy_install pymbar
+```
+or using `pip install`:
+```tcsh
+pip install pymbar
+```
+
+Or, if you download the [GitHub version](http://github.com/choderalab/pymbar), you can use the provided `setup.py` to install.
 
 To install to your default Python site-packages location:
 ```tcsh
@@ -43,7 +54,7 @@ To install to your default Python site-packages location:
 ```
 Or to install to a different location (e.g. a local Python package repository):
 ```tcsh
-# python setup.py --prefix=/path/to/my/site-packages/
+# python setup.py install --prefix=/path/to/my/site-packages/
 ```
 The C++ helper code will automatically be built in both cases, if possible.
 
@@ -138,4 +149,9 @@ You should have received a copy of the GNU General Public License along with thi
 Thanks
 ------
 
-We would especially like to thank a large number of people for helping us identify issues and ways to improve `pymbar`, including Tommy Knotts, David Mobley, Himanshu Paliwal, Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian Roitberg, Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin, Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Dave Caplan, Sam Moors, Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, and Andrew Jewett.
+We would especially like to thank a large number of people for helping us identify issues
+and ways to improve `pymbar`, including Tommy Knotts, David Mobley, Himanshu Paliwal, 
+Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian Roitberg, 
+Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin, 
+Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Dave Caplan, Sam Moors, 
+Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, Andrew Jewett, and Antonia Mey.
