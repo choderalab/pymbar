@@ -8,5 +8,5 @@ install:
   - "pip install . --use-mirrors"
   - "pip install -r requirements.txt --use-mirrors"
 # command to run tests, e.g. python setup.py test
-script: "python tests/test-statistical-inefficiency.py"
+script: "python tests/test-harmonic-oscillators.py"
 
