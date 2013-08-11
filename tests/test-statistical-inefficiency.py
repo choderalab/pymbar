@@ -33,3 +33,8 @@ if __name__ == "__main__" :
    print timeseries.statisticalInefficiencyMultiple(X[0:2,:]**2)      
    print "statisticalInefficiencyMultiple(energy)"
    print timeseries.statisticalInefficiencyMultiple(energy)
+   
+   # Exit with success.
+   # TODO: Add some checks to test statistical inefficinecies are within normal expected range.
+   sys.exit(0)
+   
