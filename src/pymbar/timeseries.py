@@ -658,6 +658,64 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
   # Return the list of indices of uncorrelated snapshots.
   return indices
 
+
+def detectEquilibration(A_t, fast=True, nskip=1):
+    """
+    Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
+
+    ARGUMENTS
+
+    A_t (numpy.array) - timeseries
+
+    OPTIONAL ARGUMENTS
+
+    nskip (int) - number of samples to sparsify data by in order to speed equilibration detection
+
+    RETURNS
+
+    t (int) - start of equilibrated data
+    g (float) - statistical inefficiency of equilibrated data
+    Neff_max (float) - number of uncorrelated samples   
+    
+    TODO
+    
+    Consider implementing a binary search for Neff_max.
+
+    EXAMPLE
+
+    Determine start of equilibrated data for a correlated timeseries.
+
+    >>> import testsystems
+    >>> A_t = testsystems.generateCorrelatedTimeseries(N=1000, tau=5.0) # generate a test correlated timeseries
+    >>> [t, g, Neff_max] = detectEquilibration(A_t) # compute indices of uncorrelated timeseries
+
+    Determine start of equilibrated data for a correlated timeseries with a shift.
+
+    >>> import testsystems
+    >>> A_t = testsystems.generateCorrelatedTimeseries(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
+    >>> B_t = testsystems.generateCorrelatedTimeseries(N=10000, tau=5.0) # generate a test correlated timeseries
+    >>> C_t = numpy.concatenate([A_t, B_t])
+    >>> [t, g, Neff_max] = detectEquilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
+    
+    """
+    T = A_t.size
+
+    # Special case if timeseries is constant.
+    if A_t.std() == 0.0:
+        return (0, 1, T)
+    
+    g_t = numpy.ones([T-1], numpy.float32)
+    Neff_t = numpy.ones([T-1], numpy.float32)
+    for t in range(0,T-1,nskip):
+        g_t[t] = statisticalInefficiency(A_t[t:T], fast=fast)
+        Neff_t[t] = (T-t+1) / g_t[t]
+    
+    Neff_max = Neff_t.max()
+    t = Neff_t.argmax()
+    g = g_t[t]
+    
+    return (t, g, Neff_max)
+
 #=============================================================================================
 # MAIN AND TESTS
 #=============================================================================================
