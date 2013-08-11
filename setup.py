@@ -27,6 +27,7 @@ def buildKeywordDictionary():
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
     setupKeywords["data_files"]        = []
     setupKeywords["ext_modules"]       = [CMBAR]
+    # setupKeywords["test_suite"]        = "tests" # requires we migrate to setuptools
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
     setupKeywords["description"]       = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method."
     setupKeywords["requires"]          = ["numpy"]
