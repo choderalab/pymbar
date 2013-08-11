@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/choderalab/pymbar.png)](https://travis-ci.org/choderalab/pymbar)
+
 pymbar
 ======
 
