@@ -45,7 +45,7 @@ def buildKeywordDictionary():
          value         = setupKeywords[key]
          outputString += key.rjust(firstTab) + str( value ).rjust(secondTab) + "\n"
     
-    print "%s" % outputString
+    print("%s" % outputString)
 
     get_config_var(None)  # this line is necessary to fix the imports Mac OS X
     return setupKeywords
