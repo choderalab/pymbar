@@ -1,0 +1,30 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{amssymb,amsfonts,amsmath}
+\usepackage{url}
+
+
+\begin{document}
+
+Here are the self-consistent equations:
+
+$$f_i = -\log \sum_j \frac{\exp[-u_i(x_j)]}{\sum_k N_k \exp[f_k - u_k(x_j)]}$$
+
+$$c_i = \sum_j \frac{q_i(x_j)}{\sum_k N_k c_k^{-1} q_k(x_j)}$$
+
+Let
+
+$$Q_{ij} = q_i(x_j)$$
+
+and 
+
+$$R_{ij} = Q_{ij} N_i$$
+
+Then 
+
+$$c_i = \sum_j \frac{Q_{ij}}{\sum_k R_{kj} c_k^{-1}$$
+
+
+\end{document}
