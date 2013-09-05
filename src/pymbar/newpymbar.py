@@ -33,18 +33,15 @@ class MBAR(object):
         self.n_states, self.n_samples = u_ki.shape
 
         self.u_ki = ensure_type(u_ki, np.float64, 2, 'u_ki')
-        self.q_ki = np.exp(-self.u_ki)
-        self.q_ki /= self.q_ki.max(0)  # Divide for overflow.
         
         self.N_k = ensure_type(N_k, np.float64, 1, 'N_k', (self.n_states))
-        
-        self.r_ki = self.q_ki.T * self.N_k
         
         self.N = self.N_k.sum()
         
         self.states = self.u_ki
 
     def _solve_iterative(self, max_iter=10000, tol=1E-12):
+        """Solve the MBAR equations in 'f' space."""
         f = np.zeros(self.n_states)
         f_old = f.copy()
         for k in xrange(max_iter):
@@ -64,6 +61,12 @@ class MBAR(object):
         return self.q_ki.dot(s ** -1.)
 
     def _solve_iterative_c(self, max_iter=10000, tol=1E-12):
+        """Solve the MBAR equations in 'c' space."""
+    
+        self.q_ki = np.exp(-self.u_ki)
+        self.q_ki /= self.q_ki.max(0)  # Divide for overflow.
+        self.r_ki = self.q_ki.T * self.N_k    
+        
         c = np.ones(self.n_states)
         c_old = c.copy()
         for k in xrange(max_iter):
