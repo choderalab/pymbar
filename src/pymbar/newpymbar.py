@@ -16,6 +16,7 @@
 
 import numpy as np
 from mdtraj.utils import ensure_type
+from sklearn.utils.extmath import logsumexp
 
 class MBAR(object):
     """Object for performing MBAR calculations.
@@ -79,3 +80,17 @@ class MBAR(object):
             print(c[0])
         return c
 
+    def _solve_iterative_logsumexp(self, max_iter=10000, tol=1E-12):
+        """Solve the MBAR equations in 'f' space using logsumexp whenever possible."""
+        mu = (np.log(self.N_k) - self.u_ki.T)
+        f = np.zeros(self.n_states)
+        f_old = f.copy()
+        for k in xrange(max_iter):
+            s = -logsumexp(f + mu, axis=1)
+            f = -logsumexp(-self.u_ki + s, axis=1)
+            epsilon = np.linalg.norm(f - f_old)
+            if epsilon <= tol:
+                break
+            f_old = f.copy()
+            print(f[0])
+        return f

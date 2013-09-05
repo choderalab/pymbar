@@ -24,7 +24,28 @@ $$R_{ij} = Q_{ij} N_i$$
 
 Then 
 
-$$c_i = \sum_j \frac{Q_{ij}}{\sum_k R_{kj} c_k^{-1}$$
+$$c_i = \sum_j \frac{Q_{ij}}{\sum_k R_{kj} c_k^{-1}}$$
+
+
+\section{Log Space}
+
+Let's work out an optimized form of the log-space calculation.  
+
+Let 
+$$\mu_{ij} = \log(N_i) -u_i(x_j)$$
+
+Thus
+
+$$f_i = -\log \sum_j \frac{\exp[-u_i(x_j)]}{\sum_k \exp[f_k + \mu_{kj}]}$$
+
+$$f_i = -\log \sum_j \exp[-u_i(x_j) - \log \sum_k \exp[f_k + \mu_{kj}]]$$
+
+Thus, we need to perform two logsumexp calculations:
+
+$$s_j = -\log \sum_k \exp[f_k + \mu_{kj}]$$
+
+$$f_i = -\log \sum_j \exp[-u_i(x_j) + s_j]$$
+
 
 
 \end{document}
