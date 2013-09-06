@@ -12,7 +12,5 @@ install:
 #  - "pip install -r requirements.txt --use-mirrors" # using apt-get instead
 # command to run tests, e.g. python setup.py test
 script: 
-  - "python tests/test-statistical-inefficiency.py"
-  - "python tests/test-harmonic-oscillators.py"
-
+  - nosetests
 
