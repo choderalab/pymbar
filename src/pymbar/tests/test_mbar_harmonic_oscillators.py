@@ -15,7 +15,7 @@ The dimensionless free energy is therefore
 f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]
 """
 
-DECIMAL_PLACES = 1
+DECIMAL_PLACES = 1  # Controls the # of decimal places for test success.  Adjust as necessary.
 
 import numpy as np
 from pymbar import testsystems, MBAR
