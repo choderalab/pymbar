@@ -43,3 +43,5 @@ class AnalyticalHarmonicOscillator(object):
         self.potential_energy = 1.0 / (2.0 * beta) * np.ones(self.n_states)
         self.position = O.copy()
         self.position_squared = (1.0 + beta * K * O ** 2.0) / (beta * K)
+        self.displacement = np.zeros(self.n_states)  # CHECK
+        self.displacement_squared = self.sigma ** 2.0  # CHECK

@@ -80,7 +80,7 @@ class ParameterError(Exception):
 
 LongWarning = "Warning on use of the timeseries module: If the inherent timescales of the system are long compared to those being analyzed, this statistical inefficiency may be an underestimate.  The estimate presumes the use of many statistically independent samples.  Tests should be performed to assess whether this condition is satisfied.   Be cautious in the interpretation of the data."
 
-sys.stderr.write(LongWarning + '\n')
+#sys.stderr.write(LongWarning + '\n')
 
 #=============================================================================================
 # METHODS

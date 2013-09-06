@@ -15,6 +15,7 @@ The dimensionless free energy is therefore
 f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]
 """
 
+DECIMAL_PLACES = 1
 
 import numpy as np
 from pymbar import testsystems, MBAR
@@ -40,11 +41,54 @@ def test_03_MBAR_setup():
 
 class TestHarmonicOscillator(object):
     def setup(self):
-        self.analytical = ref.AnalyticalHarmonicOscillator(ref.beta, ref.K_k, ref.O_k)
-        self.x_kn, self.u_kln, self.N_k = testsystems.harmonic_oscillators_example(ref.N_k, ref.O_k, ref.K_k * ref.beta, seed=seed)
+        self.beta, self.K_k, self.O_k, self.N_k = ref.beta, ref.K_k, ref.O_k, ref.N_k
+
+        self.analytical = ref.AnalyticalHarmonicOscillator(self.beta, self.K_k, self.O_k)
+        self.x_kn, self.u_kln, self.N_k = testsystems.harmonic_oscillators_example(self.N_k, self.O_k, self.K_k * self.beta, seed=seed)
+        
+        self.K = len(self.K_k)
+        self.N_max = self.N_k.max()
         
         self.mbar = MBAR(self.u_kln, self.N_k, method = 'adaptive', relative_tolerance=1.0e-10, verbose=False)
         
     def test_FE_difference(self):
+        """Test FE differences between states."""
         (Delta_f_ij_estimated, dDelta_f_ij_estimated) = self.mbar.getFreeEnergyDifferences()
-        eq(Delta_f_ij_estimated, self.analytical.f_k)
+        FE = Delta_f_ij_estimated[0] - Delta_f_ij_estimated[0,0]
+        FE0 = self.analytical.f_k - self.analytical.f_k[0]
+        eq(FE, FE0, decimal=DECIMAL_PLACES)
+
+    def test_displacement(self):
+        A_kn = np.zeros([self.K, self.K, self.N_max], dtype = np.float64)
+        for k in xrange(0, self.K):
+            for l in xrange(0, self.K):
+                A_kn[k, l, 0:self.N_k[k]] = (self.x_kn[k, 0:self.N_k[k]] - self.O_k[l])
+
+        (A_k_estimated, dA_k_estimated) = self.mbar.computeExpectations(A_kn)
+
+        eq(A_k_estimated, self.analytical.displacement, decimal=DECIMAL_PLACES)
+        
+    def test_displacement_squared(self):
+        A_kn = np.zeros([self.K, self.K, self.N_max], dtype = np.float64)
+        for k in xrange(0, self.K):
+            for l in xrange(0, self.K):
+                A_kn[k,l,0:self.N_k[k]] = (self.x_kn[k,0:self.N_k[k]] - self.O_k[l]) ** 2.
+
+        (A_k_estimated, dA_k_estimated) = self.mbar.computeExpectations(A_kn)
+        eq(A_k_estimated, self.analytical.displacement_squared, decimal=DECIMAL_PLACES)
+                
+    def test_position(self):
+        A_kn = np.zeros([self.K, self.N_max], dtype = np.float64)
+        for k in xrange(0, self.K):
+            A_kn[k, 0:self.N_k[k]] = self.x_kn[k, 0:self.N_k[k]]
+
+        (A_k_estimated, dA_k_estimated) = self.mbar.computeExpectations(A_kn)
+        eq(A_k_estimated, self.analytical.position, decimal=DECIMAL_PLACES)
+    
+    def test_position_squared(self):
+        A_kn = np.zeros([self.K, self.N_max], dtype = np.float64)
+        for k in xrange(0, self.K):
+            A_kn[k, 0:self.N_k[k]] = self.x_kn[k, 0:self.N_k[k]] ** 2. 
+
+        (A_k_estimated, dA_k_estimated) = self.mbar.computeExpectations(A_kn)
+        eq(A_k_estimated, self.analytical.position_squared, decimal=DECIMAL_PLACES)
