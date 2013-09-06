@@ -1,0 +1,50 @@
+"""Test MBAR by performing statistical tests on a set of of 1D harmonic oscillators, for which
+the true free energy differences can be computed analytically.
+
+A number of replications of an experiment in which i.i.d. samples are drawn from a set of
+K harmonic oscillators are produced.  For each replicate, we estimate the dimensionless free
+energy differences and mean-square displacements (an observable), as well as their uncertainties.
+
+For a 1D harmonic oscillator, the potential is given by
+V(x;K) = (K/2) * (x-x_0)**2
+where K denotes the spring constant.
+
+The equilibrium distribution is given analytically by
+p(x;beta,K) = sqrt[(beta K) / (2 pi)] exp[-beta K (x-x_0)**2 / 2]
+The dimensionless free energy is therefore
+f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]
+"""
+
+
+import numpy as np
+from pymbar import testsystems, MBAR
+import pymbar.testsystems.harmonic_oscillator_reference as ref
+from mdtraj.utils import ensure_type
+from mdtraj.testing import eq
+
+seed = None
+        
+def test_01_analytical_harmonic_oscillator():
+    """Test that we can generate analytical data."""
+    analytical = ref.AnalyticalHarmonicOscillator(ref.beta, ref.K_k, ref.O_k)
+        
+def test_02_harmonic_oscillators_example():
+    """Test that we can generate example data."""
+    x_kn, u_kln, N_k = testsystems.harmonic_oscillators_example(ref.N_k, ref.O_k, ref.K_k * ref.beta, seed=seed)
+    eq(N_k, ref.N_k)
+
+def test_03_MBAR_setup():
+    """Test that we can construct MBAR object."""
+    x_kn, u_kln, N_k = testsystems.harmonic_oscillators_example(ref.N_k, ref.O_k, ref.K_k * ref.beta, seed=seed)
+    mbar = MBAR(u_kln, N_k, method = 'adaptive', relative_tolerance=1.0e-10, verbose=False)
+
+class TestHarmonicOscillator(object):
+    def setup(self):
+        self.analytical = ref.AnalyticalHarmonicOscillator(ref.beta, ref.K_k, ref.O_k)
+        self.x_kn, self.u_kln, self.N_k = testsystems.harmonic_oscillators_example(ref.N_k, ref.O_k, ref.K_k * ref.beta, seed=seed)
+        
+        self.mbar = MBAR(self.u_kln, self.N_k, method = 'adaptive', relative_tolerance=1.0e-10, verbose=False)
+        
+    def test_FE_difference(self):
+        (Delta_f_ij_estimated, dDelta_f_ij_estimated) = self.mbar.getFreeEnergyDifferences()
+        eq(Delta_f_ij_estimated, self.analytical.f_k)

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def generateCorrelatedTimeseries(N=10000, tau=5.0, seed=None):
+def correlated_timeseries_example(N=10000, tau=5.0, seed=None):
     """Generate synthetic timeseries data with known correlation time.
 
     Parameters
@@ -39,15 +39,15 @@ def generateCorrelatedTimeseries(N=10000, tau=5.0, seed=None):
 
     Generate a timeseries of length 10000 with correlation time of 10.
 
-    >>> A_t = generateCorrelatedTimeseries(N=10000, tau=10.0)
+    >>> A_t = correlated_timeseries_example(N=10000, tau=10.0)
 
     Generate an uncorrelated timeseries of length 1000.
 
-    >>> A_t = generateCorrelatedTimeseries(N=1000, tau=1.0)
+    >>> A_t = correlated_timeseries_example(N=1000, tau=1.0)
 
     Generate a correlated timeseries with correlation time longer than the length.
 
-    >>> A_t = generateCorrelatedTimeseries(N=1000, tau=2000.0)
+    >>> A_t = correlated_timeseries_example(N=1000, tau=2000.0)
 
     """
 

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def GaussianWorkSample(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, seed=None):
+def gaussian_work_example(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, seed=None):
     """Generate samples from forward and reverse Gaussian work distributions.
 
     Parameters
@@ -58,23 +58,23 @@ def GaussianWorkSample(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, see
 
     Generate work values with default parameters.
 
-    >>> [w_F, w_R] = GaussianWorkSample()
+    >>> [w_F, w_R] = gaussian_work_example()
 
     Generate 50 forward work values and 70 reverse work values.
 
-    >>> [w_F, w_R] = GaussianWorkSample(N_F=50, N_R=70)
+    >>> [w_F, w_R] = gaussian_work_example(N_F=50, N_R=70)
 
     Generate work values specifying the work distribution parameters.
 
-    >>> [w_F, w_R] = GaussianWorkSample(mu_F=3.0, sigma_F=2.0)
+    >>> [w_F, w_R] = gaussian_work_example(mu_F=3.0, sigma_F=2.0)
 
     Generate work values specifying the work distribution parameters, specifying free energy difference instead of mu_F.
 
-    >>> [w_F, w_R] = GaussianWorkSample(mu_F=None, DeltaF=3.0, sigma_F=2.0)
+    >>> [w_F, w_R] = gaussian_work_example(mu_F=None, DeltaF=3.0, sigma_F=2.0)
 
     Generate work values with known seed to ensure reproducibility for testing.
 
-    >>> [w_F, w_R] = GaussianWorkSample(seed=0)
+    >>> [w_F, w_R] = gaussian_work_example(seed=0)
 
     """
 

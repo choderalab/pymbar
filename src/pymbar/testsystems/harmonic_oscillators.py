@@ -6,7 +6,7 @@ DEFAULT_O_k = np.array([  0.,   1.,   2.])
 DEFAULT_K_k = np.array([  1.,   1.,   1.])
 
 
-def HarmonicOscillatorsSample(N_k=DEFAULT_N_k, O_k=DEFAULT_O_k, K_k=DEFAULT_K_k, seed=None):
+def harmonic_oscillators_example(N_k=DEFAULT_N_k, O_k=DEFAULT_O_k, K_k=DEFAULT_K_k, seed=None):
     """Generate samples from 1D harmonic oscillators with specified relative spacing (in units of std devs).
 
     Parameters
@@ -37,11 +37,11 @@ def HarmonicOscillatorsSample(N_k=DEFAULT_N_k, O_k=DEFAULT_O_k, K_k=DEFAULT_K_k,
 
     Generate energy samples with default parameters.
 
-    >>> [x_kn, u_kln, N_k] = HarmonicOscillatorsSample()
+    >>> [x_kn, u_kln, N_k] = harmonic_oscillators_example()
 
     Specify number of samples, specify the states of the harmonic oscillators
 
-    >>> [x_kn, u_kln, N_k] = HarmonicOscillatorsSample(N_k=[10, 20, 30, 40, 50], O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
+    >>> [x_kn, u_kln, N_k] = harmonic_oscillators_example(N_k=[10, 20, 30, 40, 50], O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
 
     """
 
