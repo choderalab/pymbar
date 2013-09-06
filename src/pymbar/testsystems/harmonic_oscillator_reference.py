@@ -1,4 +1,4 @@
-from mdtraj.utils import ensure_type
+from pymbar.utils import ensure_type
 import numpy as np
 
 K_k = np.array([25.0, 16.0, 9.0, 4.0, 1.0, 1.0])

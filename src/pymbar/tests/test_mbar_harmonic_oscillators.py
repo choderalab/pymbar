@@ -20,8 +20,8 @@ DECIMAL_PLACES = 1  # Controls the # of decimal places for test success.  Adjust
 import numpy as np
 from pymbar import testsystems, MBAR
 import pymbar.testsystems.harmonic_oscillator_reference as ref
-from mdtraj.utils import ensure_type
-from mdtraj.testing import eq
+from pymbar.utils import ensure_type
+from pymbar.utils_for_testing import eq
 
 seed = None
         

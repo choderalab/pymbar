@@ -1,5 +1,5 @@
 import numpy as np
-from mdtraj.utils import ensure_type
+from pymbar.utils import ensure_type
 
 DEFAULT_N_k = np.array([100., 100., 100.])
 DEFAULT_O_k = np.array([  0.,   1.,   2.])
