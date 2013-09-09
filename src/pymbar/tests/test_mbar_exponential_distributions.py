@@ -1,36 +1,35 @@
-"""Test MBAR by performing statistical tests on a set of of 1D harmonic oscillators.
-for which the true free energy differences can be computed analytically.
+"""Test MBAR by performing statistical tests on a set of of 1D exponential
+distributions, the true free energy differences can be computed analytically.
 """
 
 import numpy as np
 from pymbar import MBAR
-from pymbar.testsystems import harmonic_oscillators
+from pymbar.testsystems import exponential_distributions
 from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_xn_to_x_kn
 from pymbar.utils_for_testing import eq
 
 seed = None
 
-O_k = np.array([1.0, 2.0, 3.0])
-k_k = np.array([1.0, 1.5, 2.0])
+rates = np.array([1.0, 2.0, 3.0])  # Rates, e.g. Lambda
 N_k = np.array([50, 60, 70])
         
-def test_analytical_harmonic_oscillators():
-    """Harmonic Oscillator Test: generate test object and calculate analytical results."""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+def test_analytical_exponential():
+    """Exponential Distribution Test: generate test object and calculate analytical results."""
+    test = exponential_distributions.ExponentialTestCase(rates)
     mu = test.analytical_means()
     variance = test.analytical_variances()
     f_k = test.analytical_free_energies()
 
-def test_harmonic_oscillators_samples():
-    """Harmonic Oscillator Test:  draw samples via test object."""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+def test_exponential_samples():
+    """Exponential Distribution Test:  draw samples via test object."""
+    test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(np.array([5, 6, 7]))
     x_n, u_kn, origin = test.sample(np.array([5, 5, 5]))
     x_n, u_kn, origin = test.sample(np.array([1., 1, 1.]))
     
-def test_shape_conversion_harmonic_oscillators():
-    """Harmonic Oscillator Test: convert shape from u_kn to u_ijn."""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+def test_shape_conversion_exponential():
+    """Exponential Distribution Test: convert shape from u_kn to u_ijn."""
+    test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(np.array([5, 6, 7]))
     u_ijn, N_k = convert_ukn_to_uijn(u_kn)
     x_n, u_kn, origin = test.sample(np.array([5, 5, 5]))
@@ -38,9 +37,9 @@ def test_shape_conversion_harmonic_oscillators():
     x_n, u_kn, origin = test.sample(np.array([1., 1, 1.]))
     u_ijn, N_k = convert_ukn_to_uijn(u_kn)
     
-def test_harmonic_oscillators_mbar_free_energies():
-    """Harmonic Oscillator Test: can MBAR calculate correct free energy differences?"""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+def test_exponential_mbar_free_energies():
+    """Exponential Distribution Test: can MBAR calculate correct free energy differences?"""
+    test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k)
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
     
@@ -56,9 +55,10 @@ def test_harmonic_oscillators_mbar_free_energies():
     z = z[1:]  # First component is undetermined.
     eq(z / 3.0, np.zeros(len(z)), decimal=0)
 
-def test_exponential_mbar__xkn():
-    """Harmonic Oscillator Test: can MBAR calculate E(x_kn)??"""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+
+def test_exponential_mbar_xkn():
+    """Exponential Distribution Test: can MBAR calculate E(x_kn)?"""
+    test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k)
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
     
@@ -77,9 +77,10 @@ def test_exponential_mbar__xkn():
     z = (mu0 - mu) / sigma
     eq(z / 3.0, np.zeros(len(z)), decimal=0)
 
+
 def test_exponential_mbar_xkn_squared():
-    """Harmonic Oscillator Test: can MBAR calculate E(x_kn^2)??"""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    """Exponential Distribution Test: can MBAR calculate E(x_kn^2)"""
+    test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k)
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
     
@@ -87,7 +88,7 @@ def test_exponential_mbar_xkn_squared():
 
     mbar = MBAR(u_ijn.values, N_k)
     
-    x_kn = convert_xn_to_x_kn(x_n) ** 2.
+    x_kn = convert_xn_to_x_kn(x_n) ** 2.0
 
     x_kn = x_kn.values  # Convert to numpy for MBAR
     x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0

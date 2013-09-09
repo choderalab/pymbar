@@ -22,6 +22,7 @@ import itertools
 import warnings
 
 import numpy as np
+import pandas as pd
 
 ##############################################################################
 # functions / classes
@@ -131,3 +132,62 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
                 raise error
 
     return val
+
+
+def convert_ukn_to_uijn(u_kn):
+    """Convert from 2D representation to 3D representation.
+
+    Parameters
+    ----------
+    u_kn : pd.DataFrame, shape=(n_states, n_samples)
+        Reduced potentials evaluated in each state for each sample x_n
+
+    Returns
+    -------
+    u_ijn : pd.Panel, shape=(n_states, n_states, n_samples)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.
+
+    Notes
+    -----
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.
+    """
+    origin = u_kn.columns
+    N_k = pd.value_counts(origin.get_level_values(0)).sort_index()
+    
+    states = u_kn.index
+    sample_ids = u_kn.columns
+
+    n_states = len(states)
+    N_max = N_k.max()
+    
+    u_ijn = np.zeros((n_states, n_states, N_max))
+    u_ijn = pd.Panel(u_ijn, items=states, major_axis=states, minor_axis=range(N_max))
+    for state_evaluated in states:
+        for ind in origin:
+            state_origin, sample_id = ind
+            u_ijn[state_evaluated] = u_kn[state_evaluated]
+
+    return u_ijn, N_k
+
+def convert_xn_to_x_kn(x_n):
+    """Convert from 1D (pd.Series) representation to 2D (pd.DataFrame).
+
+    Parameters
+    ----------
+    x_n : pd.DataFrame, shape=(n_samples)
+        Reduced potentials evaluated in each state for each sample x_n
+
+    Returns
+    -------
+    x_kn : pd.DataFrame, shape=(n_states, N_max)
+        The samples grouped by their origin and frame number.
+    
+    Notes
+    -----
+    The `n` variable in x_n and x_kn are different--the one ranges from 
+    1 to n_samples, while the second ranges from 1 to N_max.  
+    """
+    x_kn = x_n.reset_index().pivot("origin", "frame", "x")
+    return x_kn

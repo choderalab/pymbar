@@ -1,74 +1,79 @@
 import numpy as np
+import pandas as pd
 from pymbar.utils import ensure_type
 
-DEFAULT_N_k = np.array([100., 100., 100.])
-DEFAULT_O_k = np.array([  0.,   1.,   2.])
-DEFAULT_K_k = np.array([  1.,   1.,   1.])
+class HarmonicOscillatorsTestCase(object):
+    def __init__(self, O_k, K_k, beta=1.0):
+        """Generate test case with exponential distributions.
 
+        Parameters
+        ----------
+        O_k : np.ndarray, float, shape=(n_states)
+            Offset parameters for each state.
+        K_k : np.ndarray, float, shape=(n_states)
+            Force constants for each state.            
+        Notes
+        -----
+        We assume potentials of the form U(x) = (k / 2) * (x - o)^2
+        Here, k and o are the corresponding entries of O_k and K_k.
+        The equilibrium distribution is given analytically by
+        p(x;beta,K) = sqrt[(beta K) / (2 pi)] exp[-beta K (x-x_0)**2 / 2]
+        The dimensionless free energy is therefore
+        f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]        
+        
+        """
+        self.O_k = ensure_type(O_k, np.float64, 1, "O_k")
+        self.n_states = len(self.O_k)
+        self.K_k = ensure_type(K_k, np.float64, 1, "K_k", self.n_states)
 
-def harmonic_oscillators_example(N_k=DEFAULT_N_k, O_k=DEFAULT_O_k, K_k=DEFAULT_K_k, seed=None):
-    """Generate samples from 1D harmonic oscillators with specified relative spacing (in units of std devs).
+        self.beta = beta
+    
+    def analytical_means(self):
+        return self.O_k
+        
+    def analytical_variances(self):
+        return (self.beta * self.K_k) ** -1.
+        
+    def analytical_free_energies(self, subtract_component=0):
+        fe = -0.5 * np.log( 2 * np.pi / (self.beta * self.K_k))
+        if subtract_component is not None:
+            fe -= fe[subtract_component]
+        return fe
 
-    Parameters
-    ----------
-    N_k : np.ndarray, int
-        number of samples per state
-    O_k : np.ndarray, float
-        offsets of the harmonic oscillators in dimensionless units
-    K_k : np.ndarray, float
-        force constants of harmonic oscillators in dimensionless units
-    seed : int, optional
-        If not None, specify the numpy random number seed.
+    def analytical_x_squared(self):
+        return self.analytical_variances() + self.analytical_means() ** 2.
 
-    Returns
-    -------
-    x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
-        1D harmonic oscillator positions
-    u_kln : np.ndarray, shape=(n_states, n_states, n_samples), dtype=float
-        reduced potential
-    N_k : np.ndarray, shape=(n_states), dtype=float
-        number of samples per state
+    def sample(self, N_k):
+        """Draw samples from the distribution.
 
-    Notes
-    -----
+        Parameters
+        ----------
 
-    Examples
-    --------
+        N_k : np.ndarray, int
+            number of samples per state
+            
+        Returns
+        -------
+        x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
+            1D harmonic oscillator positions            
+        """
+        N_k = ensure_type(N_k, np.float64, 1, "N_k", self.n_states, warn_on_cast=False)
 
-    Generate energy samples with default parameters.
+        states = ["state %d" % k for k in range(self.n_states)]
+        
+        x_n = []
+        origin_and_frame = []
+        for k, N in enumerate(N_k):
+            x0 = self.O_k[k]
+            sigma = (self.beta * self.K_k[k]) ** -0.5
+            x_n.extend(np.random.normal(loc=x0, scale=sigma, size=N))
+            origin_and_frame.extend([(states[k], i) for i in range(int(N))])
+        
+        origin_and_frame = pd.MultiIndex.from_tuples(origin_and_frame, names=["origin", "frame"])
+        x_n = pd.Series(x_n, name="x", index=origin_and_frame)
 
-    >>> [x_kn, u_kln, N_k] = harmonic_oscillators_example()
+        u_kn = pd.DataFrame(dict([(state, x_n) for state in states]))
+        u_kn = 0.5 * self.K_k * (u_kn - self.O_k) ** 2.0        
+        u_kn = u_kn.T
 
-    Specify number of samples, specify the states of the harmonic oscillators
-
-    >>> [x_kn, u_kln, N_k] = harmonic_oscillators_example(N_k=[10, 20, 30, 40, 50], O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
-
-    """
-
-    N_k = ensure_type(N_k, np.float64, 1, 'N_k')
-
-    n_states = len(N_k)
-
-    O_k = ensure_type(O_k, np.float64, 1, 'O_k', n_states)
-    K_k = ensure_type(K_k, np.float64, 1, 'K_k', n_states)
-
-    # Determine maximum number of samples.
-    Nmax = N_k.max()
-
-    if seed is not None:
-        np.random.seed(seed)
-
-    # calculate the standard deviation induced by the spring constants.
-    sigma_k = (K_k) ** -0.5
-
-    # generate space to store the energies
-    u_kln = np.zeros([n_states, n_states, Nmax], np.float64)
-
-    # Generate position samples.
-    x_kn = np.zeros([n_states, Nmax], np.float64)
-    for k in xrange(n_states):
-        x_kn[k, 0:N_k[k]] = np.random.normal(O_k[k], sigma_k[k], N_k[k])
-        for l in xrange(n_states):
-            u_kln[k, l, 0:N_k[k]] = (K_k[l] / 2.0) * (x_kn[k, 0:N_k[k]] - O_k[l]) ** 2
-
-    return x_kn, u_kln, N_k
+        return x_n, u_kn, origin_and_frame
