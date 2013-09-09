@@ -8,7 +8,7 @@ from pymbar.testsystems import exponential_distributions
 from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_xn_to_x_kn
 from pymbar.utils_for_testing import eq
 
-seed = None
+z_scale_factor = 3.0  # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
 
 rates = np.array([1.0, 2.0, 3.0])  # Rates, e.g. Lambda
 N_k = np.array([50, 60, 70])
@@ -53,7 +53,7 @@ def test_exponential_mbar_free_energies():
 
     z = (fe - fe0) / fe_sigma
     z = z[1:]  # First component is undetermined.
-    eq(z / 3.0, np.zeros(len(z)), decimal=0)
+    eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
 def test_exponential_mbar_xkn():
@@ -75,7 +75,7 @@ def test_exponential_mbar_xkn():
     mu0 = test.analytical_means()
     
     z = (mu0 - mu) / sigma
-    eq(z / 3.0, np.zeros(len(z)), decimal=0)
+    eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
 def test_exponential_mbar_xkn_squared():
@@ -97,4 +97,4 @@ def test_exponential_mbar_xkn_squared():
     mu0 = test.analytical_x_squared()
     
     z = (mu0 - mu) / sigma
-    eq(z / 3.0, np.zeros(len(z)), decimal=0)
+    eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
