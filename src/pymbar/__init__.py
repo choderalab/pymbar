@@ -15,7 +15,9 @@ __license__ = "GPL"
 __maintainer__ = "Michael R. Shirts and John D. Chodera"
 __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 
-from pymbar import EXP, EXPgauss, BAR, BARzero, MBAR
+from .pymbar import MBAR
+from .bar import BAR, BARzero
+from .exponential_averaging import EXP, EXPgauss
 
 import timeseries
 import testsystems

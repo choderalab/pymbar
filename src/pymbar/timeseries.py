@@ -591,8 +591,8 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
 
   Subsample a correlated timeseries to extract an effectively uncorrelated dataset.
 
-  >>> import testsystems
-  >>> A_t = testsystems.generateCorrelatedTimeseries(N=10000, tau=5.0) # generate a test correlated timeseries
+  >>> import pymbar.testsystems
+  >>> A_t = pymbar.testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
   >>> indices = subsampleCorrelatedData(A_t) # compute indices of uncorrelated timeseries
   >>> A_n = A_t[indices] # extract uncorrelated samples
 
@@ -602,7 +602,7 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
   >>> T_k = [1000, 2000, 3000, 4000, 5000]
   >>> K = len(T_k) # number of timeseries
   >>> tau = 5.0 # exponential relaxation time
-  >>> A_kt = [ testsystems.generateCorrelatedTimeseries(N=T, tau=tau) for T in T_k ] # A_kt[k] is correlated timeseries k
+  >>> A_kt = [ pymbar.testsystems.correlated_timeseries_example(N=T, tau=tau) for T in T_k ] # A_kt[k] is correlated timeseries k
   >>> # Estimate statistical inefficiency from all timeseries data.
   >>> g = statisticalInefficiencyMultiple(A_kt)
   >>> # Count number of uncorrelated samples in each timeseries.
@@ -685,15 +685,15 @@ def detectEquilibration(A_t, fast=True, nskip=1):
 
     Determine start of equilibrated data for a correlated timeseries.
 
-    >>> import testsystems
-    >>> A_t = testsystems.generateCorrelatedTimeseries(N=1000, tau=5.0) # generate a test correlated timeseries
+    >>> import .testsystems
+    >>> A_t = pymbar.testsystems.correlated_timeseries_example(N=1000, tau=5.0) # generate a test correlated timeseries
     >>> [t, g, Neff_max] = detectEquilibration(A_t) # compute indices of uncorrelated timeseries
 
     Determine start of equilibrated data for a correlated timeseries with a shift.
 
-    >>> import testsystems
-    >>> A_t = testsystems.generateCorrelatedTimeseries(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
-    >>> B_t = testsystems.generateCorrelatedTimeseries(N=10000, tau=5.0) # generate a test correlated timeseries
+    >>> import pymbar.testsystems
+    >>> A_t = pymbar.testsystems.correlated_timeseries_example(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
+    >>> B_t = pymbar.testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
     >>> C_t = numpy.concatenate([A_t, B_t])
     >>> [t, g, Neff_max] = detectEquilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
     

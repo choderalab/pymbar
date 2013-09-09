@@ -12,8 +12,6 @@ J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
 
 This module contains implementations of
 
-* EXP - unidirectional estimator for free energy differences based on Zwanzig relation / exponential averaging
-* BAR - bidirectional estimator for free energy differences / Bennett acceptance ratio estimator
 * MBAR - multistate Bennett acceptance ratio estimator
 
 """
@@ -41,7 +39,6 @@ This module contains implementations of
 
 #=============================================================================================
 # TODO
-# * Break EXP and BAR out into different files.
 # * Fix computeBAR and computeEXP to be BAR() and EXP() to make them easier to find.
 # * Make functions that don't need to be exported (like logsum) private by prefixing an underscore.
 # * Make asymptotic covariance matrix computation more robust to over/underflow.
@@ -63,451 +60,7 @@ __license__ = "GPL 2.0"
 import math
 import numpy
 import numpy.linalg
-#=============================================================================================
-# Exception class.
-#=============================================================================================
-
-class ParameterError(Exception):
-  """
-  An error in the input parameters has been detected.
-
-  """
-  pass
-
-class ConvergenceError(Exception):
-  """
-  Convergence could not be achieved.
-
-  """
-  pass
-
-class BoundsError(Exception):
-  """
-  Could not determine bounds on free energy
-
-  """
-  pass
-
-#=============================================================================================
-# Private utility functions
-#=============================================================================================
-
-def _logsum(a_n):
-  """
-  Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner:
-
-    _logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
-
-  where max_arg = max_n a_n.  This is mathematically (but not numerically) equivalent to
-
-    _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
-
-  ARGUMENTS
-    a_n (numpy array) - a_n[n] is the nth exponential argument
-  
-  RETURNS
-    log_sum (float) - the log of the sum of exponentiated a_n, log (\sum_n exp(a_n))
-
-  EXAMPLE  
-
-  >>> a_n = numpy.array([0.0, 1.0, 1.2], numpy.float64)
-  >>> print '%.3e' % _logsum(a_n)
-  1.951e+00
-    
-  """
-
-  # Compute the maximum argument.
-  max_log_term = numpy.max(a_n)
-
-  # Compute the reduced terms.
-  terms = numpy.exp(a_n - max_log_term)
-
-  # Compute the log sum.
-  log_sum = numpy.log(numpy.sum(terms)) + max_log_term
-        
-  return log_sum
-
-#=============================================================================================
-# One-sided exponential averaging (EXP).
-#=============================================================================================
-
-def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
-  """
-  Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
-
-  ARGUMENTS
-    w_F (numpy array) - w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
-
-  OPTIONAL ARGUMENTS
-    compute_uncertainty (boolean) - if False, will disable computation of the statistical uncertainty (default: True)
-    is_timeseries (boolean) - if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
-                              Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
-
-  RETURNS
-    DeltaF (float) - DeltaF is the free energy difference between the two states.
-    dDeltaF (float) - dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
-
-  NOTE
-
-    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
-
-  EXAMPLES
-
-  Compute the free energy difference given a sample of forward work values.
-
-  >>> import testsystems
-  >>> [w_F, w_R] = testsystems.GaussianWorkSample(mu_F=None, DeltaF=1.0, seed=0)
-  >>> [DeltaF, dDeltaF] = EXP(w_F)
-  >>> print 'Forward free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
-  Forward free energy difference is 1.088 +- 0.076 kT
-  >>> [DeltaF, dDeltaF] = EXP(w_R)
-  >>> print 'Reverse free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
-  Reverse free energy difference is -1.073 +- 0.082 kT
-  
-  """
-
-  # Get number of work measurements.
-  T = float(numpy.size(w_F)) # number of work measurements
-  
-  # Estimate free energy difference by exponential averaging using DeltaF = - log < exp(-w_F) >
-  DeltaF = - ( _logsum( - w_F ) - numpy.log(T) )
-
-  if compute_uncertainty:  
-    # Compute x_i = numpy.exp(-w_F_i - max_arg)
-    max_arg = numpy.max(-w_F) # maximum argument
-    x = numpy.exp(-w_F - max_arg)
-
-    # Compute E[x] = <x> and dx
-    Ex = x.mean()
-
-    # Compute effective number of uncorrelated samples.
-    g = 1.0 # statistical inefficiency
-    if is_timeseries:
-      # Estimate statistical inefficiency of x timeseries.
-      import timeseries
-      g = timeseries.statisticalInefficiency(x, x)
-
-    # Estimate standard error of E[x].
-    dx = numpy.std(x) / numpy.sqrt(T/g)
-        
-    # dDeltaF = <x>^-1 dx
-    dDeltaF = (dx/Ex)
-
-    # Return estimate of free energy difference and uncertainty.
-    return (DeltaF, dDeltaF)
-  else:
-    return DeltaF
-
-
-#=============================================================================================
-# Gaussian approximation to exponential averaging (Gauss).
-#=============================================================================================
-
-def EXPgauss(w_F, compute_uncertainty=True, is_timeseries=False):
-  """
-  Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
-
-  ARGUMENTS
-    w_F (numpy array) - w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
-
-  OPTIONAL ARGUMENTS
-    compute_uncertainty (boolean) - if False, will disable computation of the statistical uncertainty (default: True)
-    is_timeseries (boolean) - if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
-                              Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
-
-  RETURNS
-    DeltaF (float) - DeltaF is the free energy difference between the two states.
-    dDeltaF (float) - dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
-
-  NOTE
-
-    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
-
-  EXAMPLES
-
-  Compute the free energy difference given a sample of forward work values.
-
-  >>> import testsystems
-  >>> [w_F, w_R] = testsystems.GaussianWorkSample(mu_F=None, DeltaF=1.0, seed=0)
-  >>> [DeltaF, dDeltaF] = EXPgauss(w_F)
-  >>> print 'Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
-  Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-  >>> [DeltaF, dDeltaF] = EXPgauss(w_R)
-  >>> print 'Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
-  Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
-  
-  """
-
-  # Get number of work measurements.
-  T = float(numpy.size(w_F)) # number of work measurements
-  
-  var = numpy.var(w_F)
-  # Estimate free energy difference by Gaussian approximation, dG = <U> - 0.5*var(U)
-  DeltaF = numpy.average(w_F) - 0.5*var
-
-  if compute_uncertainty:  
-    # Compute effective number of uncorrelated samples.
-    g = 1.0 # statistical inefficiency
-    T_eff = T
-    if is_timeseries:
-      # Estimate statistical inefficiency of x timeseries.
-      import timeseries
-      g = timeseries.statisticalInefficiency(w_F, w_F)
-
-      T_eff = T/g
-    # Estimate standard error of E[x].
-    dx2 = var/ T_eff + 0.5*var*var/(T_eff - 1)
-    dDeltaF = numpy.sqrt(dx2)
-
-    # Return estimate of free energy difference and uncertainty.
-    return (DeltaF, dDeltaF)
-  else:
-    return DeltaF
-  
-#=============================================================================================
-# Bennett acceptance ratio function to be zeroed to solve for BAR.
-#=============================================================================================
-def BARzero(w_F,w_R,DeltaF):
-    """
-    ARGUMENTS
-      w_F (numpy.array) - w_F[t] is the forward work value from snapshot t.
-                        t = 0...(T_F-1)  Length T_F is deduced from vector.
-      w_R (numpy.array) - w_R[t] is the reverse work value from snapshot t.
-                        t = 0...(T_R-1)  Length T_R is deduced from vector.
-
-      DeltaF (float) - Our current guess
-
-    RETURNS
-
-      fzero - a variable that is zeroed when DeltaF satisfies BAR.
-    """
-
-    # Recommended stable implementation of BAR.
-
-    # Determine number of forward and reverse work values provided.
-    T_F = float(w_F.size) # number of forward work values
-    T_R = float(w_R.size) # number of reverse work values
-
-    # Compute log ratio of forward and reverse counts.
-    M = numpy.log(T_F / T_R)
-    
-    # Compute log numerator.
-    # log f(W) = - log [1 + exp((M + W - DeltaF))]
-    #          = - log ( exp[+maxarg] [exp[-maxarg] + exp[(M + W - DeltaF) - maxarg]] )
-    #          = - maxarg - log[exp[-maxarg] + (T_F/T_R) exp[(M + W - DeltaF) - maxarg]]
-    # where maxarg = max( (M + W - DeltaF) )
-    exp_arg_F = (M + w_F - DeltaF)
-    max_arg_F = numpy.choose(numpy.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
-    log_f_F = - max_arg_F - numpy.log( numpy.exp(-max_arg_F) + numpy.exp(exp_arg_F - max_arg_F) )
-    log_numer = _logsum(log_f_F) - numpy.log(T_F)
-    
-    # Compute log_denominator.
-    # log_denom = log < f(-W) exp[-W] >_R
-    # NOTE: log [f(-W) exp(-W)] = log f(-W) - W
-    exp_arg_R = (M - w_R - DeltaF)
-    max_arg_R = numpy.choose(numpy.greater(0.0, exp_arg_R), (0.0, exp_arg_R))
-    log_f_R = - max_arg_R - numpy.log( numpy.exp(-max_arg_R) + numpy.exp(exp_arg_R - max_arg_R) ) - w_R 
-    log_denom = _logsum(log_f_R) - numpy.log(T_R)
-
-    # This function must be zeroed to find a root
-    fzero  = DeltaF - (log_denom - log_numer)
-
-    return fzero
-
-def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, relative_tolerance=1.0e-11, verbose=False, method='false-position', iterated_solution = True):
-  """
-  Compute free energy difference using the Bennett acceptance ratio (BAR) method.
-
-  ARGUMENTS
-    w_F (numpy.array) - w_F[t] is the forward work value from snapshot t.
-                        t = 0...(T_F-1)  Length T_F is deduced from vector.
-    w_R (numpy.array) - w_R[t] is the reverse work value from snapshot t.
-                        t = 0...(T_R-1)  Length T_R is deduced from vector.
-
-  OPTIONAL ARGUMENTS
-
-    DeltaF (float) - DeltaF can be set to initialize the free energy difference with a guess (default 0.0)
-    compute_uncertainty (boolean) - if False, only the free energy is returned (default: True)
-    maximum_iterations (int) - can be set to limit the maximum number of iterations performed (default 500)
-    relative_tolerance (float) - can be set to determine the relative tolerance convergence criteria (defailt 1.0e-5)
-    verbose (boolean) - should be set to True if verbse debug output is desired (default False)
-    method - choice of method to solve BAR nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-positions')
-    iterated_solution (bool) - whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be 
-                equivalent to transition matrix sampling.
-  RETURNS
-
-    [DeltaF, dDeltaF] where dDeltaF is the estimated std dev uncertainty
-
-  REFERENCE
-
-    [1] Shirts MR, Bair E, Hooker G, and Pande VS. Equilibrium free energies from nonequilibrium
-    measurements using maximum-likelihood methods. PRL 91(14):140601, 2003.
-
-  NOTE
-
-    The false position method is used to solve the implicit equation.
-
-  EXAMPLES
-
-  Compute free energy difference between two specified samples of work values.
-
-  >>> import testsystems
-  >>> [w_F, w_R] = testsystems.GaussianWorkSample(mu_F=None, DeltaF=1.0, seed=0)
-  >>> [DeltaF, dDeltaF] = BAR(w_F, w_R)
-  >>> print 'Free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
-  Free energy difference is 1.088 +- 0.050 kT
-    
-  """
-
-  # if computing nonoptimized, one step value, we set the max-iterations 
-  # to 1, and the method to 'self-consistent-iteration'
-  if not iterated_solution:
-    maximum_iterations = 1
-    method = 'self-consistent-iteration'
-    DeltaF_initial = DeltaF
-
-  if method == 'self-consistent-iteration':  
-    nfunc = 0
-
-  if method == 'bisection' or method == 'false-position':
-    UpperB = EXP(w_F)[0]
-    LowerB = -EXP(w_R)[0]
-
-    FUpperB = BARzero(w_F,w_R,UpperB)
-    FLowerB = BARzero(w_F,w_R,LowerB)
-    nfunc = 2;
-    
-    if (numpy.isnan(FUpperB) or numpy.isnan(FLowerB)):
-      # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
-      print "Warning: BAR is likely to be inaccurate because of poor sampling. Guessing 0."
-      if compute_uncertainty:
-        return [0.0, 0.0]
-      else:
-        return 0.0
-      
-    while FUpperB*FLowerB > 0:
-      # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
-      # There may be a better way to do this, and the above bracket should rarely fail.
-      if verbose:
-        print 'Initial brackets did not actually bracket, widening them'
-      FAve = (UpperB+LowerB)/2
-      UpperB = UpperB - max(abs(UpperB-FAve),0.1)
-      LowerB = LowerB + max(abs(LowerB-FAve),0.1)
-      FUpperB = BARzero(w_F,w_R,UpperB)
-      FLowerB = BARzero(w_F,w_R,LowerB)
-      nfunc += 2
-
-  # Iterate to convergence or until maximum number of iterations has been exceeded.
-
-  for iteration in range(maximum_iterations):
-
-    DeltaF_old = DeltaF
-    
-    if method == 'false-position':
-      # Predict the new value
-      if (LowerB==0.0) and (UpperB==0.0):
-        DeltaF = 0.0
-        FNew = 0.0
-      else:
-        DeltaF = UpperB - FUpperB*(UpperB-LowerB)/(FUpperB-FLowerB)
-        FNew = BARzero(w_F,w_R,DeltaF)
-      nfunc += 1
-     
-      if FNew == 0: 
-        # Convergence is achieved.
-        if verbose: 
-          print "Convergence achieved."
-        relative_change = 10^(-15)
-        break
-
-    if method == 'bisection':
-      # Predict the new value
-      DeltaF = (UpperB+LowerB)/2
-      FNew = BARzero(w_F,w_R,DeltaF)
-      nfunc += 1
-  
-    if method == 'self-consistent-iteration':  
-      DeltaF = -BARzero(w_F,w_R,DeltaF) + DeltaF
-      nfunc += 1
-
-    # Check for convergence.
-    if (DeltaF == 0.0):
-      # The free energy difference appears to be zero -- return.
-      if verbose: print "The free energy difference appears to be zero."
-      if compute_uncertainty:
-        return [0.0, 0.0]
-      else:
-        return 0.0
-        
-    if iterated_solution: 
-      relative_change = abs((DeltaF - DeltaF_old)/DeltaF)
-      if verbose:
-        print "relative_change = %12.3f" % relative_change
-          
-      if ((iteration > 0) and (relative_change < relative_tolerance)):
-        # Convergence is achieved.
-        if verbose: 
-          print "Convergence achieved."
-        break
-
-    if method == 'false-position' or method == 'bisection':
-      if FUpperB*FNew < 0:
-      # these two now bracket the root
-        LowerB = DeltaF
-        FLowerB = FNew
-      elif FLowerB*FNew <= 0:
-      # these two now bracket the root
-        UpperB = DeltaF
-        FUpperB = FNew
-      else:
-        message = 'WARNING: Cannot determine bound on free energy'
-        raise BoundsError(message)        
-
-    if verbose:
-      print "iteration %5d : DeltaF = %16.3f" % (iteration, DeltaF)
-
-  # Report convergence, or warn user if not achieved.
-  if iterated_solution: 
-    if iteration < maximum_iterations:
-      if verbose: 
-        print 'Converged to tolerance of %e in %d iterations (%d function evaluations)' % (relative_change, iteration,nfunc)
-    else:
-      message = 'WARNING: Did not converge to within specified tolerance. max_delta = %f, TOLERANCE = %f, MAX_ITS = %d' % (relative_change, relative_tolerance, maximum_iterations)
-      raise ConvergenceError(message)
-
-  if compute_uncertainty:
-    # Compute asymptotic variance estimate using Eq. 10a of Bennett, 1976 (except with n_1<f>_1^2 in 
-    # the second denominator, it is an error in the original
-    # NOTE: The numerical stability of this computation may need to be improved.
-
-    # Determine number of forward and reverse work values provided.
-    T_F = float(w_F.size) # number of forward work values
-    T_R = float(w_R.size) # number of reverse work values
-    # Compute log ratio of forward and reverse counts.
-    M = numpy.log(T_F / T_R)
-
-    if iterated_solution:
-      C = M-DeltaF
-    else:
-      C = M-DeltaF_initial
-
-    fF =  1/(1+numpy.exp(w_F + C))
-    fR =  1/(1+numpy.exp(w_R - C))
-    
-    afF2 = (numpy.average(fF))**2
-    afR2 = (numpy.average(fR))**2
-    
-    vfF = numpy.var(fF)/T_F
-    vfR = numpy.var(fR)/T_R
-
-    variance = vfF/afF2 + vfR/afR2
-
-    dDeltaF = numpy.sqrt(variance)
-    if verbose: print "DeltaF = %8.3f +- %8.3f" % (DeltaF, dDeltaF)
-    return (DeltaF, dDeltaF)
-  else: 
-    if verbose: print "DeltaF = %8.3f" % (DeltaF)
-    return DeltaF
+from .utils import _logsum, ParameterError, ConvergenceError, BoundsError
 
 #=============================================================================================
 # MBAR class definition
@@ -619,8 +172,8 @@ class MBAR:
 
     TEST
 
-    >>> import testsystems
-    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample()
+    >>> import oldtestsystems
+    >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
     >>> mbar = MBAR(u_kln, N_k)
 
     """
@@ -816,8 +369,8 @@ class MBAR:
 
     TEST
 
-    >>> import testsystems
-    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample()
+    >>> import oldtestsystems
+    >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
     >>> mbar = MBAR(u_kln, N_k)
     >>> [Deltaf_ij, dDeltaf_ij] = mbar.getFreeEnergyDifferences()
     
@@ -909,8 +462,8 @@ class MBAR:
 
     TEST
 
-    >>> import testsystems
-    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample()
+    >>> import oldtestsystems
+    >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
     >>> mbar = MBAR(u_kln, N_k)
     >>> A_kn = x_kn
     >>> (A_ij, dA_ij) = mbar.computeExpectations(A_kn)
@@ -1044,8 +597,8 @@ class MBAR:
 
     TESTS
 
-    >>> import testsystems
-    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample()
+    >>> import oldtestsystems
+    >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
     >>> mbar = MBAR(u_kln, N_k)
     >>> A_ikn = numpy.array([x_kn,x_kn**2,x_kn**3])
     >>> u_kn = u_kln[:,0,:]
@@ -1151,8 +704,8 @@ class MBAR:
      
      TEST
 
-     >>> import testsystems
-     >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample()
+     >>> import oldtestsystems
+     >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
      >>> mbar = MBAR(u_kln, N_k)
      >>> O_ij = mbar.computeOverlap()
      
@@ -1279,8 +832,8 @@ class MBAR:
 
     TEST
       
-    >>> import testsystems
-    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample()
+    >>> import oldtestsystems
+    >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
     >>> mbar = MBAR(u_kln, N_k)
     >>> [Deltaf_ij, dDeltaf_ij] = mbar.computePerturbedFreeEnergies(u_kln)
 
@@ -1377,8 +930,8 @@ class MBAR:
 
     TEST
       
-    >>> import testsystems
-    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample()
+    >>> import oldtestsystems
+    >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
     >>> mbar = MBAR(u_kln, N_k)
     >>> [Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij] = mbar.computeEntropyAndEnthalpy()
 
@@ -1520,8 +1073,8 @@ class MBAR:
 
     TEST
       
-    >>> import testsystems
-    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsSample(N_k=[100,100,100])
+    >>> import oldtestsystems
+    >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample(N_k=[100,100,100])
     >>> mbar = MBAR(u_kln, N_k)
     >>> u_kn = u_kln[0,:,:]
     >>> xmin = x_kn.min()

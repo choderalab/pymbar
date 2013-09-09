@@ -191,3 +191,70 @@ def convert_xn_to_x_kn(x_n):
     """
     x_kn = x_n.reset_index().pivot("origin", "frame", "x")
     return x_kn
+
+def _logsum(a_n):
+    """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.
+
+    Parameters
+    ----------
+    a_n : np.ndarray, shape=(n_samples)
+        a_n[n] is the nth exponential argument
+        
+    Returns
+    -------
+    a_n : np.ndarray, shape=(n_samples)
+        a_n[n] is the nth exponential argument
+        
+    Notes
+    -----
+
+    _logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
+
+    where max_arg = max_n a_n.  This is mathematically (but not numerically) equivalent to
+
+    _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
+
+
+
+    Example
+    -------
+    >>> a_n = np.array([0.0, 1.0, 1.2], np.float64)
+    >>> print '%.3e' % _logsum(a_n)
+    1.951e+00
+    """
+
+    # Compute the maximum argument.
+    max_log_term = np.max(a_n)
+
+    # Compute the reduced terms.
+    terms = np.exp(a_n - max_log_term)
+
+    # Compute the log sum.
+    log_sum = np.log(np.sum(terms)) + max_log_term
+        
+    return log_sum
+
+#=============================================================================================
+# Exception classes
+#=============================================================================================
+
+class ParameterError(Exception):
+    """
+    An error in the input parameters has been detected.
+
+    """
+    pass
+
+class ConvergenceError(Exception):
+    """
+    Convergence could not be achieved.
+
+    """
+    pass
+
+class BoundsError(Exception):
+    """
+    Could not determine bounds on free energy
+
+    """
+    pass
