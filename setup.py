@@ -7,7 +7,7 @@ import numpy
 import glob
 
 CMBAR = Extension('_pymbar',
-                  sources = ["src/pymbar/_pymbar.c"],
+                  sources = ["pymbar/_pymbar.c"],
                   extra_compile_args=["-std=c99","-O2","-shared","-msse2","-msse3"],
                   include_dirs = [numpy.get_include(),numpy.get_include()+"/numpy/"]
                   )
@@ -23,7 +23,7 @@ def buildKeywordDictionary():
     setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
     setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
     setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems']
-    setupKeywords["package_dir"]       = {'pymbar' : 'src/pymbar'}
+    setupKeywords["package_dir"]       = {'pymbar' : 'pymbar'}
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
     setupKeywords["data_files"]        = []
     setupKeywords["ext_modules"]       = [CMBAR]

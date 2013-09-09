@@ -122,8 +122,8 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
 
   Compute statistical inefficiency of timeseries data with known correlation time.  
 
-  >>> import testsystems
-  >>> A_n = testsystems.generateCorrelatedTimeseries(N=100000, tau=5.0)
+  >>> import pymbar.testsystems
+  >>> A_n = pymbar.testsystems.correlated_timeseries_example(N=100000, tau=5.0)
   >>> g = statisticalInefficiency(A_n, fast=True)
   
   """
@@ -222,7 +222,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
   >>> import testsystems
   >>> N_k = [1000, 2000, 3000, 4000, 5000]
   >>> tau = 5.0 # exponential relaxation time
-  >>> A_kn = [ testsystems.generateCorrelatedTimeseries(N=N, tau=tau) for N in N_k ]
+  >>> A_kn = [ pymbar.testsystems.correlated_timeseries_example(N=N, tau=tau) for N in N_k ]
   >>> g = statisticalInefficiencyMultiple(A_kn)
 
   Also return the values of the normalized fluctuation autocorrelation function that were computed.
@@ -385,8 +385,8 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
 
   Estimate normalized fluctuation correlation function.
 
-  >>> import testsystems
-  >>> A_t = testsystems.generateCorrelatedTimeseries(N=10000, tau=5.0)
+  >>> import pymbar.testsystems
+  >>> A_t = pymbar.testsystems.correlated_timeseries_example(N=10000, tau=5.0)
   >>> C_t = normalizedFluctuationCorrelationFunction(A_t, N_max=25)
 
   """
@@ -470,10 +470,10 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
 
   Estimate a portion of the normalized fluctuation autocorrelation function from multiple timeseries of different length.
 
-  >>> import testsystems
+  >>> import pymbar.testsystems
   >>> N_k = [1000, 2000, 3000, 4000, 5000]
   >>> tau = 5.0 # exponential relaxation time
-  >>> A_kn = [ testsystems.generateCorrelatedTimeseries(N=N, tau=tau) for N in N_k ]
+  >>> A_kn = [ pymbar.testsystems.correlated_timeseries_example(N=N, tau=tau) for N in N_k ]
   >>> C_n = normalizedFluctuationCorrelationFunctionMultiple(A_kn, N_max=25)
 
   """
@@ -685,7 +685,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
 
     Determine start of equilibrated data for a correlated timeseries.
 
-    >>> import .testsystems
+    >>> import pymbar.testsystems
     >>> A_t = pymbar.testsystems.correlated_timeseries_example(N=1000, tau=5.0) # generate a test correlated timeseries
     >>> [t, g, Neff_max] = detectEquilibration(A_t) # compute indices of uncorrelated timeseries
 
