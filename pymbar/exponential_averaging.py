@@ -52,8 +52,7 @@ __license__ = "GPL 2.0"
 import math
 import numpy as np
 import numpy.linalg
-from .utils import _logsum
-
+from pymbar.utils import _logsum
 
 #=============================================================================================
 # One-sided exponential averaging (EXP).

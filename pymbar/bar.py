@@ -54,8 +54,8 @@ __license__ = "GPL 2.0"
 import math
 import numpy
 import numpy.linalg
-from .utils import _logsum, ParameterError, ConvergenceError, BoundsError
-from .exponential_averaging import EXP
+from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
+from pymbar.exponential_averaging import EXP
   
 #=============================================================================================
 # Bennett acceptance ratio function to be zeroed to solve for BAR.

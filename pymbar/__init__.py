@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Package pymbar
 
@@ -15,13 +13,14 @@ __license__ = "GPL"
 __maintainer__ = "Michael R. Shirts and John D. Chodera"
 __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 
-from .pymbar import MBAR
-from .bar import BAR, BARzero
-from .exponential_averaging import EXP, EXPgauss
+import pymbar
+from pymbar.mbar import MBAR
+from pymbar.bar import BAR, BARzero
+from pymbar.exponential_averaging import EXP, EXPgauss
 
-import timeseries
-import testsystems
-import confidenceintervals
+import pymbar.timeseries
+import pymbar.testsystems
+import pymbar.confidenceintervals
 
-__all__ = ['EXP', 'EXPgauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals']
+__all__ = ['EXP', 'EXPgauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
 

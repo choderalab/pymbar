@@ -60,7 +60,7 @@ __license__ = "GPL 2.0"
 import math
 import numpy
 import numpy.linalg
-from .utils import _logsum, ParameterError, ConvergenceError, BoundsError
+from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
 
 #=============================================================================================
 # MBAR class definition
