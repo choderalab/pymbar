@@ -1,0 +1,299 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Getting started &mdash; pymbar 2.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pymbar 2.0.0 documentation" href="index.html" />
+    <link rel="next" title="The mbar module : pymbar.mbar" href="mbar.html" />
+    <link rel="prev" title="pymbar" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mbar.html" title="The mbar module : pymbar.mbar"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="pymbar"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pymbar 2.0.0 documentation</a> |</li>
+<a href="#">Getting Started</a> |
+<a href="https://github.com/choderalab/pymbar/issues">Bugs</a> |
+<a href="examples/index.html">Examples</a> |
+<a href="mdconvert.html"><span class="pre">mdconvert</span></a>
+ 
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="getting-started">
+<span id="id1"></span><h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installing-pymbar">
+<h2>Installing pymbar<a class="headerlink" href="#installing-pymbar" title="Permalink to this headline">¶</a></h2>
+<p>pymbar currently runs best on Python 2.7.x; earlier versions of Python are not
+supported. We are working on support for Python 3.3+. pymbar is developed and
+tested on mac and linux platforms. It probably works on windows, but might
+require some hacking.</p>
+<div class="section" id="easy-way">
+<h3>Easy Way<a class="headerlink" href="#easy-way" title="Permalink to this headline">¶</a></h3>
+<p>Just run</p>
+<div class="highlight-python"><pre>pip install pymbar</pre>
+</div>
+</div>
+<div class="section" id="medium-way">
+<h3>Medium Way<a class="headerlink" href="#medium-way" title="Permalink to this headline">¶</a></h3>
+<p>Clone the source code repository from github:</p>
+<div class="highlight-python"><pre>$ git clone git://github.com/choderalab/pymbar.git</pre>
+</div>
+<p>If you don&#8217;t have <tt class="docutils literal"><span class="pre">git</span></tt>, you can download the source code as a zip file from
+<a class="reference external" href="https://github.com/choderalab/pymbar/archive/master.zip">https://github.com/choderalab/pymbar/archive/master.zip</a>. Then, in the directory containing the source code, you can install it with.</p>
+<div class="highlight-python"><pre>$ python setup.py install</pre>
+</div>
+</div>
+</div>
+<div class="section" id="running-the-tests">
+<h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
+<p>Running the tests is a great way to verify that everything is working. The test
+suite uses <a class="reference external" href="https://nose.readthedocs.org/en/latest/">nose</a>, which you can pick
+up via <tt class="docutils literal"><span class="pre">pip</span></tt> if you don&#8217;t already have it.</p>
+<div class="highlight-python"><pre>pip install nose</pre>
+</div>
+<p>Then, to run the tests, open a python shell and do</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pymbar</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pymbar</span><span class="o">.</span><span class="n">test</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>From the source directory, you can also run the tests with <tt class="docutils literal"><span class="pre">nosetests</span></tt> on
+the command line</p>
+</div>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p>pymbar requires a few external libraries to work properly. Some of them are
+optional. You&#8217;ll definitely need <tt class="docutils literal"><span class="pre">numpy</span></tt>. You&#8217;ll also need a working C
+compiler and build environment, to compile the C-level extensions that connect
+the python code to the bit-twiddling C libraries that read and  write most of
+these binary formats.</p>
+<div class="section" id="id2">
+<h3>Easy Way<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>The easiest way to get all of the dependencies is to install one of the
+pre-packaged scientific python distributes like <a class="reference external" href="https://www.enthought.com/products/canopy/">Enthought&#8217;s Canopy</a> or <a class="reference external" href="https://store.continuum.io/">Continuum&#8217;s Anaconda</a>. These distributions already contain all of
+the dependences, and are distributed via 1-click installers for Windows, Mac
+and Linux. You won&#8217;t have to install anything except pymbar, which can be done, as shown above, with</p>
+<div class="highlight-python"><pre>pip install git+git://github.com/choderalab/pymbar.git</pre>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>Medium Way<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="linux">
+<h4>Linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h4>
+<p>If you&#8217;re on ubuntu and have root, you can install everything through your package manager.</p>
+<div class="highlight-python"><pre>$ sudo apt-get install libhdf5-serial-dev python-dev python-numpy python-nose python-setuptools cython python-numexpr python-tables netcdf-bin libnetcdf-dev python-netcdf python-networkx python-netcdf</pre>
+</div>
+</div>
+<div class="section" id="mac">
+<h4>Mac<a class="headerlink" href="#mac" title="Permalink to this headline">¶</a></h4>
+<p>If you&#8217;re on mac and want a package manager, you should be using <a class="reference external" href="http://mxcl.github.io/homebrew/">homebrew</a> and <tt class="docutils literal"><span class="pre">brews</span></tt>&#8216;s python (see <a class="reference external" href="https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python">this page</a> for details). The best way to install numpy and scipy with <tt class="docutils literal"><span class="pre">brew</span></tt> is to use
+samueljohn&#8217;s tap.</p>
+<div class="highlight-python"><pre>$ brew tap samueljohn/python
+$ brew install python
+$ brew install numpy
+$ brew install scipy
+$ brew install hdf5
+$ brew install netcdf</pre>
+</div>
+<p>Then, you can install the remaining packages with pip.</p>
+<div class="highlight-python"><pre>$ pip install nose numexpr cython tables
+$ pip install netcdf4</pre>
+</div>
+</div>
+</div>
+<div class="section" id="harder-way-compiling-from-source-no-root-needed">
+<h3>Harder Way : Compiling from source (no root needed)<a class="headerlink" href="#harder-way-compiling-from-source-no-root-needed" title="Permalink to this headline">¶</a></h3>
+<p>If you don&#8217;t already have a python installation you want to use, you can compile a new one.</p>
+<div class="highlight-python"><pre>$ wget http://www.python.org/ftp/python/2.7.5/Python-2.7.5.tgz
+$ tar -xzvf Python-2.7.5.tgz
+$ cd Python-2.7.5
+$ ./configure --prefix=$HOME/local/python
+$ make
+$ make install
+
+$ export PATH=$HOME/local/python/bin:$PATH</pre>
+</div>
+<p>To compile the dependences from source, you need to get <tt class="docutils literal"><span class="pre">libhdf5</span></tt>, <tt class="docutils literal"><span class="pre">libnetcdf</span></tt>, and <tt class="docutils literal"><span class="pre">numpy</span></tt>, which can have some BLAS issues. I recommend configuring everything with <tt class="docutils literal"><span class="pre">--prefix</span></tt> so that you don&#8217;t get your packages mixed up with system packages. NetCDF4 depends on hdf5, so you need to install HDF5 first.</p>
+<div class="highlight-python"><pre>$ wget http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.11.tar.gz
+$ tar -xzvf hdf5-1.8.11.tar.gz
+$ cd hdf5-1.8.11
+$ ./configure --prefix=$HOME/opt/hdf5-1.8.11
+$ make
+$ make install
+
+$ export LD_LIBRARY_PATH=$HOME/opt/hdf5-1.8.11/lib:$LD_LIBRARY_PATH
+$ export PATH=$HOME/opt/hdf5-1.8.11/bin:$PATH
+
+$ cd ..
+$ wget http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-4.3.0.tar.gz
+$ tar -xzvf netcdf-4.3.0.tar.gz
+$ cd netcdf-4.3.0
+$ CFLAGS="-I$HOME/opt/hdf5-1.8.11/include -L$HOME/opt/hdf5-1.8.11/lib"
+$ ./configure --prefix=$HOME/opt/netcdf-4.3.0
+$ make
+$ make install
+
+$ export LD_LIBRARY_PATH=$HOME/opt/netcdf-4.3.0/lib:$LD_LIBRARY_PATH
+$ export PATH=$HOME/opt/netcdf-4.3.0/bin:$PATH</pre>
+</div>
+<p>You&#8217;ll probably want to add those <tt class="docutils literal"><span class="pre">export</span></tt> statements to your bashrc too.</p>
+<p>If you don&#8217;t have <tt class="docutils literal"><span class="pre">easy_install</span></tt> or <tt class="docutils literal"><span class="pre">pip</span></tt> yet, you can get them with</p>
+<div class="highlight-python"><pre>$ wget http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz
+$ tar -xzvf setuptools-0.6c11.tar.gz
+$ cd setuptools-0.6c11.tar.gz
+$ python setup.py install
+$ easy_install pip</pre>
+</div>
+<p>Now you&#8217;re home free</p>
+<div class="highlight-python"><pre>$ pip install numpy
+$ pip install scipy
+$ pip install cython
+$ pip install numexpr
+$ pip install tables
+$ pip install netcdf4
+$ pip install nose</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<a href="index.html"><img src="_static/pymbar.png" alt="Logo"/></a>
+
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Getting started</a><ul>
+<li><a class="reference internal" href="#installing-pymbar">Installing pymbar</a><ul>
+<li><a class="reference internal" href="#easy-way">Easy Way</a></li>
+<li><a class="reference internal" href="#medium-way">Medium Way</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
+<li><a class="reference internal" href="#dependencies">Dependencies</a><ul>
+<li><a class="reference internal" href="#id2">Easy Way</a></li>
+<li><a class="reference internal" href="#id3">Medium Way</a><ul>
+<li><a class="reference internal" href="#linux">Linux</a></li>
+<li><a class="reference internal" href="#mac">Mac</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#harder-way-compiling-from-source-no-root-needed">Harder Way : Compiling from source (no root needed)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/getting_started.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mbar.html" title="The mbar module : pymbar.mbar"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="pymbar"
+             >previous</a> |</li>
+        <li><a href="index.html">pymbar 2.0.0 documentation</a> |</li>
+<a href="#">Getting Started</a> |
+<a href="https://github.com/choderalab/pymbar/issues">Bugs</a> |
+<a href="examples/index.html">Examples</a> |
+<a href="mdconvert.html"><span class="pre">mdconvert</span></a>
+ 
+
+      </ul>
+    </div>
+
+    <div class="footer">
+        &copy; Copyright 2013, Robert McGibbon and contributors.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-42143125-1', 'rmcgibbo.github.io');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>
