@@ -435,7 +435,6 @@ class MBAR:
             or: dependent on state
             A_kn (KxKxN_max numpy float64 array) - A_kn[k,l,n] = A(x_kn)
             where the 2nd dimension is the observable as a function of the state
-
         output : string, optional
             Either output averages, and uncertainties, or output a matrix of differences, with uncertainties.
         compute_uncertainty : bool, optional
@@ -443,7 +442,7 @@ class MBAR:
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, 
             or None to use default See help for computeAsymptoticCovarianceMatrix()
-             for more information on various methods. (default: None)
+            for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
         return_theta : bool, optional
@@ -464,7 +463,8 @@ class MBAR:
         Notes
         -----
 
-        The reported statistical uncertainty should, in the asymptotic limit, reflect one standard deviation for the normal distribution of the estimate.
+        The reported statistical uncertainty should, in the asymptotic limit,
+        reflect one standard deviation for the normal distribution of the estimate.
         The true expectation should fall within the interval [-dA, +dA] centered on the estimate 68% of the time, and within
         the interval [-2 dA, +2 dA] centered on the estimate 95% of the time.
         This will break down in cases where the number of samples is not large enough to reach the asymptotic normal limit.
@@ -478,7 +478,7 @@ class MBAR:
         Examples
         --------
 
-        >>> import oldtestsystems
+        >>> from pymbar import oldtestsystems
         >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
         >>> mbar = MBAR(u_kln, N_k)
         >>> A_kn = x_kn
@@ -600,33 +600,46 @@ class MBAR:
 
     #=========================================================================
     def computeMultipleExpectations(self, A_ikn, u_kn, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
-        """Compute the expectations of multiple observables of phase space functions [A_0(x),A_1(x),...,A_n(x)]
-           at single specified state, along with the covariances of their estimates.  The state is specified by
-           the choice of u_kn, which is the energy of the kxn samples evaluated at the chosen state.  Note that
-           these variables A should NOT be functions of the state!
+        """Compute the expectations of multiple observables of phase space functions.
+        
+        Compute the expectations of multiple observables of phase space functions.
+        [A_0(x),A_1(x),...,A_n(x)] at single specified state, 
+        along with the covariances of their estimates.  The state is specified by
+        the choice of u_kn, which is the energy of the kxn samples evaluated at the chosen state.  Note that
+        these variables A should NOT be functions of the state!
 
-        REQUIRED ARGUMENTS
-          A_ikn (IxKxN_max numpy float64 array) - A_ikn[i,k,n] = A_i(x_kn), the value of phase observable i for configuration n at state k
-          u_kn (KxN_max numpy float64 array) - u_kn[k,n] is the reduced potential of configuration n gathered from state k, at the state of interest
 
-        OPTIONAL ARUMENTS
-          uncertainty_method (string) - choice of method used to compute asymptotic covariance method, or None to use default
-                            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
-          uncertainty_method (string) - choice of method used to compute asymptotic covariance method, or None to use default
-                            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: svd)
-          warning_cutoff (float) - warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-          return_theta (boolean) - whether or not to return the theta matrix.  Can be useful for complicated differences.
+        Parameters
+        ----------
+        A_ikn : np.ndarray, float, shape=(I, k, N_max)       
+            A_ikn[i,k,n] = A_i(x_kn), the value of phase observable i for configuration n at state k
+        u_kn : np.ndarray, float, shape=(K, N_max)
+            u_kn[k,n] is the reduced potential of configuration n gathered from state k, at the state of interest
+        uncertainty_method : string, optional
+            Choice of method used to compute asymptotic covariance method, or None to use default
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+        warning_cutoff : float, optional
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
+        return_theta : bool, optional
+            Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
-        RETURN VALUES
-          A_i (I numpy float64 array) - A_i[i] is the estimate for the expectation of A_i(x) at the state specified by u_kn
-          d2A_ij (IxI numpy float64 array) - d2A_ij[i,j] is the COVARIANCE in the estimates of A_i[i] and A_i[j],
-          not the square root of the covariance
+        Returns
+        -------
 
-        NOTE: Not fully tested.
+        A_i : np.ndarray, float, shape=(I)
+            A_i[i] is the estimate for the expectation of A_i(x) at the state specified by u_kn
+        d2A_ij : np.ndarray, float, shape=(I, I)
+            d2A_ij[i,j] is the COVARIANCE in the estimates of A_i[i] and A_i[j],
+            not the square root of the covariance
 
-        TESTS
+        Notes
+        -----
+        Not fully tested!
 
-        >>> import oldtestsystems
+        Examples
+        --------
+
+        >>> from pymbar import oldtestsystems
         >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
         >>> mbar = MBAR(u_kln, N_k)
         >>> A_ikn = numpy.array([x_kn,x_kn**2,x_kn**3])
@@ -717,20 +730,22 @@ class MBAR:
 
     #=========================================================================
     def computeOverlap(self, output='scalar'):
-        """
-        Compute estimate of overlap matrix between the states.
+        """Compute estimate of overlap matrix between the states.
 
-        RETURNS
+        Returns
+        -------
+        O : np.ndarray, float, shape=(K, K)
+            estimated state overlap matrix: O[i,j] is an estimate
+            of the probability of observing a sample from state i in state j
 
-          O (numpy.array of numpy.float64 of dimension [K,K]) - estimated state overlap matrix
-            O[i,j] is an estimate of the probability of observing a sample from state i in state j
+        Parameters
+        ----------
+        output : string, optional
+            One of 'scalar', 'matrix', 'eigenvalues', 'all', specifying
+        what measure of overlap to return
 
-        OPTIONAL ARGUMENTS
-
-          output (string): One of 'scalar', 'matrix', 'eigenvalues', 'all', specifying what measure
-          of overlap to return
-
-        NOTES
+        Notes
+        -----
 
         W.T * W \approx \int (p_i p_j /\sum_k N_k p_k)^2 \sum_k N_k p_k dq^N
                       = \int (p_i p_j /\sum_k N_k p_k) dq^N
@@ -738,13 +753,13 @@ class MBAR:
         Multiplying elementwise by N_i, the elements of row i give the probability
         for a sample from state i being observed in state j.
 
-        TEST
+        Examples
+        --------
 
-        >>> import oldtestsystems
+        >>> from pymbar import oldtestsystems
         >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
         >>> mbar = MBAR(u_kln, N_k)
         >>> O_ij = mbar.computeOverlap()
-
         """
 
         W = numpy.matrix(self.getWeights(), numpy.float64)
@@ -764,30 +779,38 @@ class MBAR:
 
     #=========================================================================
     def computePerturbedExpectation(self, u_kn, A_kn, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
-        """
-        Compute the expectation of an observable of phase space function A(x) for a single new state.
+        """Compute the expectation of an observable of phase space function A(x) for a single new state.
 
-        REQUIRED ARGUMENTS
-          u_kn (KxN_max numpy float64 array) - u_kn[k,n] = u(x_kn) - the energy of the new state at all N samples previously sampled.
-          A_kn (KxN_max numpy float64 array) - A_kn[k,n] = A(x_kn) - the phase space function of the new state at all N samples previously sampled.  If this does NOT depend on state (e.g. position), it's simply the value of the observation.  If it DOES depend on the current state, then the observables from the previous states need to be reevaluated at THIS state.
+        Parameters
+        ----------
+        u_kn : np.ndarray, float, shape=(K, N_max)
+            u_kn[k,n] = u(x_kn) - the energy of the new state at all N samples previously sampled.
+        A_kn : np.ndarray, float, shape=(K, N_max)
+            A_kn[k,n] = A(x_kn) - the phase space function of the new state at all N samples previously sampled.  If this does NOT depend on state (e.g. position), it's simply the value of the observation.  If it DOES depend on the current state, then the observables from the previous states need to be reevaluated at THIS state.
+        compute_uncertainty : bool, optional
+            If False, the uncertainties will not be computed (default: True)
+        uncertainty_method : string, optional
+            Choice of method used to compute asymptotic covariance method, or None to use default
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+        warning_cutoff : float, optional
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
+        return_theta : bool, optional            
+            Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
-        OPTIONAL ARUMENTS
-          compute_uncertainty (boolean) - if set to False, the uncertainties will not be computed (default: True)
-          uncertainty_method (string) - choice of method used to compute asymptotic covariance method, or None to use default
-                            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
-          warning_cutoff (float) - warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-          return_theta (boolean) - whether or not to return the theta matrix.  Can be useful for complicated differences.
 
-        RETURN VALUES
-          A (double) - A is the estimate for the expectation of A(x) for the specified state
-          dA (double) - dA is uncertainty estimate for A
+        Returns
+        -------
+        A : float
+            A is the estimate for the expectation of A(x) for the specified state
+        dA : float
+            dA is uncertainty estimate for A
 
-        REFERENCE
-          See Section IV of [1].
+        Notes
+        -----
+        See Section IV of [1].
         # Compute estimators and uncertainty.
         #A = sum(W_nk[:,K] * A_n[:]) # Eq. 15 of [1]
         #dA = abs(A) * numpy.sqrt(Theta_ij[K,K] + Theta_ij[K+1,K+1] - 2.0 * Theta_ij[K,K+1]) # Eq. 16 of [1]
-
         """
 
         # Convert to numpy matrix.
@@ -855,31 +878,37 @@ class MBAR:
 
     #=========================================================================
     def computePerturbedFreeEnergies(self, u_kln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
-        """
-        Compute the free energies for a new set of states.
+        """Compute the free energies for a new set of states.
+        
         Here, we desire the free energy differences among a set of new states, as well as the uncertainty estimates in these differences.
 
-        REQUIRED ARGUMENTS
-          u_kln (KxLxNmax float array) - u_kln[k,l,n] is the reduced potential energy of uncorrelated configuration n sampled from state k, evaluated at new state l.
+        Parameters
+        ----------
+        u_kln : np.ndarray, float, shape=(K, L, Nmax)
+            u_kln[k,l,n] is the reduced potential energy of uncorrelated
+            configuration n sampled from state k, evaluated at new state l.
             L need not be the same as K.
+        compute_uncertainty : bool, optional
+            If False, the uncertainties will not be computed (default: True)
+        uncertainty_method : string, optional
+            Choice of method used to compute asymptotic covariance method, or None to use default
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+        warning_cutoff : float, optional
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
-        OPTINAL ARUMENTS
-          compute_uncertainty (boolean) - if set to False, the uncertainties will not be computed (default: True)
-          uncertainty_method (string) - choice of method used to compute asymptotic covariance method, or None to use default
-                            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
-          warning_cutoff (float) - warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
+        Returns
+        -------
+        Deltaf_ij : np.ndarray, float, shape=(L, L)
+            Deltaf_ij[i,j] = f_j - f_i, the dimensionless free energy difference between new states i and j
+        dDeltaf_ij : np.ndarray, float, shape=(L, L)
+            dDeltaf_ij[i,j] is the estimated statistical uncertainty in Deltaf_ij[i,j]
 
-        RETURN VALUES
-          Deltaf_ij (LxL numpy float64 array) - Deltaf_ij[i,j] = f_j - f_i, the dimensionless free energy difference between new states i and j
-          dDeltaf_ij (LxL numpy float64 array) - dDeltaf_ij[i,j] is the estimated statistical uncertainty in Deltaf_ij[i,j]
-
-        TEST
-
-        >>> import oldtestsystems
+        Examples
+        --------
+        >>> from pymbar import oldtestsystems
         >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
         >>> mbar = MBAR(u_kln, N_k)
         >>> [Deltaf_ij, dDeltaf_ij] = mbar.computePerturbedFreeEnergies(u_kln)
-
         """
 
         # Convert to numpy matrix.
