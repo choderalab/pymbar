@@ -32,7 +32,8 @@ extensions = ['sphinx.ext.mathjax', 'sphinx.ext.ifconfig', 'sphinx.ext.autosumma
               'sphinx.ext.viewcode', 'sphinx.ext.autodoc', 'numpy_ext.numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.viewcode',
 #              'ipython_console_highlighting', 'ipython_directive',  # Disabled because of readthedocs issues, lacks ipython
-              'matplotlib.sphinxext.plot_directive']
+#              'matplotlib.sphinxext.plot_directive'  # not available on readthedocs.  
+              ]
 
 autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
