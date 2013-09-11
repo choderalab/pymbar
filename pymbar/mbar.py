@@ -986,27 +986,43 @@ class MBAR:
         return returns
 
     def computeEntropyAndEnthalpy(self, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10):
-        """
-        Compute the decomposition of the free energy difference between states 1 and N into reduced free energy differences, reduced potential (enthalpy) differences, and reduced entropy (S/k) differences.
+        """Decompose free energy differences into enthalpy and entropy differences.
+        
+        Compute the decomposition of the free energy difference between
+        states 1 and N into reduced free energy differences, reduced potential
+        (enthalpy) differences, and reduced entropy (S/k) differences.
 
-        OPTINAL ARUMENTS
-          uncertainty_method (string) - choice of method used to compute asymptotic covariance method, or None to use default
-                            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
-          warning_cutoff (float) - warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        RETURN VALUES
-          Delta_f_ij (KxK numpy float matrix) - Delta_f_ij[i,j] is the dimensionless free energy difference f_j - f_i
-          dDelta_f_ij (KxK numpy float matrix) - uncertainty in Delta_f_ij
-          Delta_u_ij (KxK numpy float matrix) - Delta_u_ij[i,j] is the reduced potential energy difference u_j - u_i
-          dDelta_u_ij (KxK numpy float matrix) - uncertainty in Delta_f_ij
-          Delta_s_ij (KxK numpy float matrix) - Delta_s_ij[i,j] is the reduced entropy difference S/k between states i and j (s_j - s_i)
-          dDelta_s_ij (KxK numpy float matrix) - uncertainty in Delta_s_ij
+        Parameters
+        ----------
+        uncertainty_method : string , optional
+            Choice of method used to compute asymptotic covariance method, or None to use default
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+        warning_cutoff : float, optional
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
-        WARNING
-          This method is EXPERIMENTAL and should be used at your own risk.
+        Returns
+        -------
+        Delta_f_ij : np.ndarray, float, shape=(K, K)
+            Delta_f_ij[i,j] is the dimensionless free energy difference f_j - f_i
+        dDelta_f_ij : np.ndarray, float, shape=(K, K)
+            uncertainty in Delta_f_ij
+        Delta_u_ij : np.ndarray, float, shape=(K, K)
+            Delta_u_ij[i,j] is the reduced potential energy difference u_j - u_i
+        dDelta_u_ij : np.ndarray, float, shape=(K, K)
+            uncertainty in Delta_f_ij
+        Delta_s_ij : np.ndarray, float, shape=(K, K)
+            Delta_s_ij[i,j] is the reduced entropy difference S/k between states i and j (s_j - s_i)
+        dDelta_s_ij : np.ndarray, float, shape=(K, K)
+            uncertainty in Delta_s_ij
 
-        TEST
+        Notes
+        -----
+        This method is EXPERIMENTAL and should be used at your own risk.
 
-        >>> import oldtestsystems
+        Examples
+        --------
+
+        >>> from pymbar import oldtestsystems
         >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample()
         >>> mbar = MBAR(u_kln, N_k)
         >>> [Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij] = mbar.computeEntropyAndEnthalpy()
@@ -1134,39 +1150,47 @@ class MBAR:
     #=========================================================================
 
     def computePMF(self, u_kn, bin_kn, nbins, uncertainties='from-lowest', pmf_reference=None):
-        """
-        Compute the free energy of occupying a number of bins.
+        """Compute the free energy of occupying a number of bins.
+        
         This implementation computes the expectation of an indicator-function observable for each bin.
 
-        REQUIRED ARGUMENTS
-          u_kn[k,n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
-          bin_kn[k,n] is the bin index of snapshot n of state k.  bin_kn can assume a value in range(0,nbins)
-          nbins is the number of bins
-
-        OPTIONAL ARGUMENTS
-          uncertainties (string) - choose method for reporting uncertainties (default: 'from-lowest')
+        Parameters
+        ----------
+        u_kn : np.ndarray, float, shape=(K, N_max) ???
+            u_kn[k,n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
+        bin_kn : np.ndarray, float, shape=(K, N_max) ???
+            bin_kn[k,n] is the bin index of snapshot n of state k.  bin_kn can assume a value in range(0,nbins)
+        nbins : int
+            The number of bins
+        uncertainties : string, optional
+            Method for reporting uncertainties (default: 'from-lowest')
             'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
             'from-reference' - same as from lowest, but from a user specified point
             'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
-        RETURN VALUES
-          f_i[i], i = 0..nbins - the dimensionless free energy of state i, relative to the state of lowest free energy
-          df_i[i] is the uncertainty in the difference of f_i with respect to the state of lowest free energy
+        Returns
+        -------
+        f_i : np.ndarray, float, shape=(K)
+            f_i[i] is the dimensionless free energy of state i, relative to the state of lowest free energy
+        df_i : np.ndarray, float, shape=(K)
+            df_i[i] is the uncertainty in the difference of f_i with respect to the state of lowest free energy
 
-        NOTES
-          All bins must have some samples in them from at least one of the states -- this will not work if bin_kn.sum(0) == 0. Empty bins should be removed before calling computePMF().
-          This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
-          To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
-          the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy
-          are then computed in the standard way.
+        Notes
+        -----
+        All bins must have some samples in them from at least one of the states -- this will not work if bin_kn.sum(0) == 0. Empty bins should be removed before calling computePMF().
+        This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
+        To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
+        the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy
+        are then computed in the standard way.
 
         WARNING
-          This method is EXPERIMENTAL and should be used at your own risk.
+        This method is EXPERIMENTAL and should be used at your own risk.
 
-        TEST
+        Examples
+        --------
 
-        >>> import oldtestsystems
+        >>> from pymbar import oldtestsystems
         >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample(N_k=[100,100,100])
         >>> mbar = MBAR(u_kln, N_k)
         >>> u_kn = u_kln[0,:,:]
@@ -1290,31 +1314,38 @@ class MBAR:
 
     #=========================================================================
     def computePMF_states(self, u_kn, bin_kn, nbins):
-        """
-        Compute the free energy of occupying a number of bins.
+        """Compute the free energy of occupying a number of bins.
+        
         This implementation defines each bin as a separate thermodynamic state.
 
-        REQUIRED ARGUMENTS
-          u_kn[k,n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
-          bin_kn[k,n] is the bin index of snapshot n of state k.  bin_kn can assume a value in range(0,nbins)
-          nbins is the number of bins
+        Parameters
+        ----------
+        u_kn : np.ndarray, float, shape=(K, N_max) ???
+            u_kn[k,n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
+        bin_kn : np.ndarray, int, shape=(K, N_max) ???
+            bin_kn[k,n] is the bin index of snapshot n of state k.  bin_kn can assume a value in range(0,nbins)
+        nbins : int
+            The number of bins
+        fmax : float, optional
+            The maximum value of the free energy, used for an empty bin (default: 1000)
 
-        OPTIONAL ARGUMENTS
-          fmax is the maximum value of the free energy, used for an empty bin (default: 1000)
+        Returns
+        -------
+        f_i : np.ndarray, float, shape=(K)
+            f_i[i] is the dimensionless free energy of state i, relative to the state of lowest free energy
+        d2f_ij : np.ndarray, float, shape=(K)
+            d2f_ij[i,j] is the uncertainty in the difference of (f_i - f_j)
 
-        RETURN VALUES
-          f_i[i], i = 0..nbins - the dimensionless free energy of state i, relative to the state of lowest free energy
-          d2f_ij[i,j] is the uncertainty in the difference of (f_i - f_j)
+        Notes
+        -----
+        All bins must have some samples in them from at least one of the states -- this will not work if bin_kn.sum(0) == 0. Empty bins should be removed before calling computePMF().
+        This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
+        To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
+        the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy
+        are then computed in the standard way.
 
-        NOTES
-          All bins must have some samples in them from at least one of the states -- this will not work if bin_kn.sum(0) == 0. Empty bins should be removed before calling computePMF().
-          This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
-          To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
-          the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy
-          are then computed in the standard way.
-
-        WARNING
-          This method is EXPERIMENTAL and should be used at your own risk.
+        WARNING!
+        This method is EXPERIMENTAL and should be used at your own risk.
 
         """
 
@@ -1389,22 +1420,28 @@ class MBAR:
     #=========================================================================
 
     def _computeWeights(self, logform=False, include_nonzero=False, recalc_denom=True, return_f_k=False):
-        """
+        """Compute the normalized weights corresponding to samples for the given reduced potential.
+        
         Compute the normalized weights corresponding to samples for the given reduced potential.
         Also stores the all_log_denom array for reuse.
 
-        INPUT VALUES
+        Parameters
+        ----------
+        logform : bool, optional
+            Whether the output is in logarithmic form, which is better for stability, though sometimes
+            the exponential form is requires.
+        include_nonzero : bool, optional
+            whether to compute weights for states with nonzero states.  Not necessary
+            when performing self-consistent iteration.
+        recalc_denom : bool, optional
+            recalculate the denominator, must be done if the free energies change.
+            default is to do it, so that errors are not made.  But can be turned
+            off if it is known the free energies have not changed.
+        return_f_k : bool, optional
+            return the self-consistent f_k values
 
-        logform (bool): whether the output is in logarithmic form, which is better for stability, though sometimes
-                        the exponential form is requires.
-        include_nonzero (bool): whether to compute weights for states with nonzero states.  Not necessary
-                                 when performing self-consistent iteration.
-        recalc_denom (bool): recalculate the denominator, must be done if the free energies change.
-                             default is to do it, so that errors are not made.  But can be turned
-                             off if it is known the free energies have not changed.
-        return_f_k (bool): return the self-consistent f_k values
-
-        RETURN VALUES
+        Returns
+        -------
 
         if logform==True:
           Log_W_nk (double) - Log_W_nk[n,k] is the normalized log weight of sample n from state k.
