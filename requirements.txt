@@ -1,0 +1,2 @@
+matplotlib>=1.0
+pandas>=0.10.0

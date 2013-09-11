@@ -6,13 +6,15 @@ virtualenv:
   system_site_packages: true
 before_install:
  - sudo apt-get install -qq python-numpy python-scipy
+# Add and remove pandas to install all prerequisites, but use the more recent version available on pip.
+ - sudo apt-get install -qq python-pandas
+ - sudo apt-get remove -qq python-pandas
+ - sudo pip install pandas
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
   - "pip install . --use-mirrors"
 #  - "pip install -r requirements.txt --use-mirrors" # using apt-get instead
 # command to run tests, e.g. python setup.py test
 script: 
-  - "python tests/test-statistical-inefficiency.py"
-  - "python tests/test-harmonic-oscillators.py"
-
+  - nosetests
 
