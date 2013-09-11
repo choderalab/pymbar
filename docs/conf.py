@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.abspath('sphinxext'))
 extensions = ['sphinx.ext.mathjax', 'sphinx.ext.ifconfig', 'sphinx.ext.autosummary',
               'sphinx.ext.viewcode', 'sphinx.ext.autodoc', 'numpy_ext.numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.viewcode',
-              'ipython_console_highlighting', 'ipython_directive',
+#              'ipython_console_highlighting', 'ipython_directive',  # Disabled because of readthedocs issues, lacks ipython
               'matplotlib.sphinxext.plot_directive']
 
 autosummary_generate = True
