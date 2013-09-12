@@ -50,6 +50,35 @@ $$s_j = -\log \sum_k \exp[f_k + \mu_{kj}]$$
 
 $$f_i = -\log \sum_j \exp[-u_i(x_j) + s_j]$$
 
+\section{Minimization}
+
+Consider the objective function:
+
+$$F = \sum_k^K N_k f_k - \sum_n^N \log \sum_k N_k \exp(f_k - u_k(x_n))$$
+
+The partial derivatives are given by 
+
+$$\frac{\partial F}{\partial f_i} = N_i - \sum_n N_i \exp(f_i) \exp(-u_i(x_n)) \frac{1}{\sum_k N_k \exp(f_k - u_k(x_n))}$$
+
+$$\frac{\partial F}{\partial f_i} = N_i - N_i \exp(f_i) \sum_n \exp(-u_i(x_n)) \frac{1}{\sum_k N_k \exp(f_k - u_k(x_n))}$$
+
+Suppose we solve for the maximum of this equation:
+
+$$\frac{\partial F}{\partial f_i} = 0$$
+
+$$N_i = N_i \exp(f_i) \sum_n \exp(-u_i(x_n)) \frac{1}{\sum_k N_k \exp(f_k - u_k(x_n))}$$
+
+$$\exp(-f_i) = \sum_n \exp(-u_i(x_n)) \frac{1}{\sum_k N_k \exp(f_k - u_k(x_n))}$$
+
+$$f_i = -\log \sum_n \exp(-u_i(x_n)) \frac{1}{\sum_k N_k \exp(f_k - u_k(x_n))}$$
+
+Thus, the maximization problem encodes the MBAR equations.  Now, how does one best calculate the gradient?
+
+$$\frac{\partial F}{\partial f_i} = N_i - \sum_n N_i \exp(f_i) \exp(-u_i(x_n)) \frac{1}{\sum_k N_k \exp(f_k - u_k(x_n))}$$
+
+As we saw previously, we can decompose this into two $logsumexp$ calculations--first the denominator, then the numerator.  Again, this approach should be fairly robust as the logsumexp operation limits overflow error.
+
+
 
 
 \end{document}
