@@ -12,7 +12,7 @@
 # A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
-# mdtraj. If not, see http://www.gnu.org/licenses/.
+# pymbar. If not, see http://www.gnu.org/licenses/.
 
 """
 
@@ -28,6 +28,11 @@ that uses Kahan summation--as in `math.fsum()`.
 import numpy as np
 from mdtraj.utils import ensure_type
 from sklearn.utils.extmath import logsumexp
+import scipy.optimize
+
+def set_zero_component(f_i, zero_component=None):
+    if zero_component is not None:
+        f_i -= f_i[zero_component]
 
 class MBAR(object):
     """Object for performing MBAR calculations.
@@ -56,7 +61,9 @@ class MBAR(object):
         
         self.states = self.u_ki
 
-    def self_consistent_eqn_fast(self, f_i):
+    def self_consistent_eqn_fast(self, f_i, zero_component=None):
+        set_zero_component(f_i, zero_component)
+
         c_i = np.exp(f_i)
         denom_n = self.q_ki.T.dot(self.N_k * c_i)
         
@@ -64,9 +71,12 @@ class MBAR(object):
         
         new_f_i = 1.0 * np.log(num)
 
+        set_zero_component(new_f_i, zero_component)
+
         return f_i + new_f_i
 
-    def self_consistent_eqn(self, f_i):
+    def self_consistent_eqn(self, f_i, zero_component=None):
+        set_zero_component(f_i, zero_component)
       
         exp_args = self.log_N_k + f_i - self.u_ki.T
         L_n = logsumexp(exp_args, axis=1)
@@ -74,35 +84,24 @@ class MBAR(object):
         exp_args = -L_n - self.u_ki
         q_i = logsumexp(exp_args, axis=1)
         
+        set_zero_component(q_i, zero_component)
+        
         return f_i + q_i
 
-    def fixed_point_eqn(self, f_i):
-        return self.self_consistent_eqn(f_i) + f_i
+    def fixed_point_eqn(self, f_i, zero_component=None):
+        set_zero_component(f_i, zero_component)    
+        return self.self_consistent_eqn(f_i, zero_component=zero_component) + f_i
 
-    def fixed_point_eqn_fast(self, f_i):
-        return self.self_consistent_eqn_fast(f_i) + f_i
-
-    def solve_iterative(self, max_iter=10000, tol=1E-12):
-        """Iteratively solve the MBAR equations in 'f' space."""
-        f = np.zeros(self.n_states)
-        f_old = f.copy()
-        for k in xrange(max_iter):
-            f -= self.self_consistent_eqn(f)
-            f -= f[0]
-            epsilon = np.linalg.norm(f - f_old)
-            if epsilon <= tol:
-                break
-            f_old = f.copy()
-        return f
-
+    def fixed_point_eqn_fast(self, f_i, zero_component=None):
+        set_zero_component(f_i, zero_component)
+        return self.self_consistent_eqn_fast(f_i, zero_component=zero_component) + f_i
 
     def objective(self, f_i):
         F = self.N_k.dot(f_i)
         
         exp_arg = self.log_N_k + f_i - self.u_ki.T
         F -= logsumexp(exp_arg, axis=1).sum()
-        return F * -1.
-        
+        return F * -1.        
 
     def gradient(self, f_i):   
         exp_args = self.log_N_k + f_i - self.u_ki.T
@@ -115,11 +114,29 @@ class MBAR(object):
         
         return grad
         
-    def solve_minimize(self):
-        start = np.zeros(self.n_states)
-        f, final_objective, convergence_parms = scipy.optimize.fmin_l_bfgs_b(self.objective, start, self.gradient, factr=1E-2, pgtol=1E-8)
-        return f
+    def solve_bfgs(self, start=None, use_fast_first=True):
+        if start is None:
+            f_i = np.zeros(self.n_states)
+        
+        if use_fast_first == True:
+            f_i, final_objective, convergence_parms = scipy.optimize.fmin_l_bfgs_b(self.objective_fast, f_i, self.gradient_fast, factr=1E-2, pgtol=1E-8)
+        
+        f_i, final_objective, convergence_parms = scipy.optimize.fmin_l_bfgs_b(self.objective, f_i, self.gradient, factr=1E-2, pgtol=1E-8)
+        
+        return f_i
+        
+    def solve_fixed_point(self, start=None, use_fast_first=True, zero_component=None):
+        if start is None:
+            f_i = np.zeros(self.n_states)
 
+        if use_fast_first == True:
+            eqn = lambda x: self.fixed_point_eqn_fast(x, zero_component=zero_component)
+            f_i = scipy.optimize.fixed_point(eqn, f_i)
+        
+        eqn = lambda x: self.fixed_point_eqn_fast(x, zero_component=zero_component)
+        f_i = scipy.optimize.fixed_point(eqn, f_i)
+        
+        return f_i
 
     def objective_fast(self, f_i):
         F = self.N_k.dot(f_i)
