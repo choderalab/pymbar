@@ -61,7 +61,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pymbar'
-copyright = u'2006-2013 pymbar developerment team'
+copyright = u'2006-2013 pymbar developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
