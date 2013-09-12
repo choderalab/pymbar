@@ -64,15 +64,7 @@ import math
 import numpy 
 import numpy.linalg
 import sys
-
-#=============================================================================================
-# Exception class.
-#=============================================================================================
-
-class ParameterError(Exception):
-  """An error in the input parameters has been detected.
-
-  """
+from pymbar.utils import _logsum, ParameterError
 
 #=============================================================================================
 # Issue warning on import.
@@ -80,7 +72,7 @@ class ParameterError(Exception):
 
 LongWarning = "Warning on use of the timeseries module: If the inherent timescales of the system are long compared to those being analyzed, this statistical inefficiency may be an underestimate.  The estimate presumes the use of many statistically independent samples.  Tests should be performed to assess whether this condition is satisfied.   Be cautious in the interpretation of the data."
 
-sys.stderr.write(LongWarning + '\n')
+#sys.stderr.write(LongWarning + '\n')
 
 #=============================================================================================
 # METHODS
@@ -122,8 +114,8 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
 
   Compute statistical inefficiency of timeseries data with known correlation time.  
 
-  >>> import testsystems
-  >>> A_n = testsystems.generateCorrelatedTimeseries(N=100000, tau=5.0)
+  >>> from pymbar.testsystems import correlated_timeseries_example
+  >>> A_n = correlated_timeseries_example(N=100000, tau=5.0)
   >>> g = statisticalInefficiency(A_n, fast=True)
   
   """
@@ -219,10 +211,10 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
 
   Estimate statistical efficiency from multiple timeseries of different lengths.
 
-  >>> import testsystems
+  >>> from pymbar import testsystems
   >>> N_k = [1000, 2000, 3000, 4000, 5000]
   >>> tau = 5.0 # exponential relaxation time
-  >>> A_kn = [ testsystems.generateCorrelatedTimeseries(N=N, tau=tau) for N in N_k ]
+  >>> A_kn = [ testsystems.correlated_timeseries_example(N=N, tau=tau) for N in N_k ]
   >>> g = statisticalInefficiencyMultiple(A_kn)
 
   Also return the values of the normalized fluctuation autocorrelation function that were computed.
@@ -385,8 +377,8 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
 
   Estimate normalized fluctuation correlation function.
 
-  >>> import testsystems
-  >>> A_t = testsystems.generateCorrelatedTimeseries(N=10000, tau=5.0)
+  >>> from pymbar import testsystems
+  >>> A_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0)
   >>> C_t = normalizedFluctuationCorrelationFunction(A_t, N_max=25)
 
   """
@@ -470,10 +462,10 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
 
   Estimate a portion of the normalized fluctuation autocorrelation function from multiple timeseries of different length.
 
-  >>> import testsystems
+  >>> from pymbar import testsystems
   >>> N_k = [1000, 2000, 3000, 4000, 5000]
   >>> tau = 5.0 # exponential relaxation time
-  >>> A_kn = [ testsystems.generateCorrelatedTimeseries(N=N, tau=tau) for N in N_k ]
+  >>> A_kn = [ testsystems.correlated_timeseries_example(N=N, tau=tau) for N in N_k ]
   >>> C_n = normalizedFluctuationCorrelationFunctionMultiple(A_kn, N_max=25)
 
   """
@@ -591,8 +583,8 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
 
   Subsample a correlated timeseries to extract an effectively uncorrelated dataset.
 
-  >>> import testsystems
-  >>> A_t = testsystems.generateCorrelatedTimeseries(N=10000, tau=5.0) # generate a test correlated timeseries
+  >>> from pymbar import testsystems
+  >>> A_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
   >>> indices = subsampleCorrelatedData(A_t) # compute indices of uncorrelated timeseries
   >>> A_n = A_t[indices] # extract uncorrelated samples
 
@@ -602,7 +594,7 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
   >>> T_k = [1000, 2000, 3000, 4000, 5000]
   >>> K = len(T_k) # number of timeseries
   >>> tau = 5.0 # exponential relaxation time
-  >>> A_kt = [ testsystems.generateCorrelatedTimeseries(N=T, tau=tau) for T in T_k ] # A_kt[k] is correlated timeseries k
+  >>> A_kt = [ testsystems.correlated_timeseries_example(N=T, tau=tau) for T in T_k ] # A_kt[k] is correlated timeseries k
   >>> # Estimate statistical inefficiency from all timeseries data.
   >>> g = statisticalInefficiencyMultiple(A_kt)
   >>> # Count number of uncorrelated samples in each timeseries.
@@ -685,15 +677,15 @@ def detectEquilibration(A_t, fast=True, nskip=1):
 
     Determine start of equilibrated data for a correlated timeseries.
 
-    >>> import testsystems
-    >>> A_t = testsystems.generateCorrelatedTimeseries(N=1000, tau=5.0) # generate a test correlated timeseries
+    >>> from pymbar import testsystems
+    >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) # generate a test correlated timeseries
     >>> [t, g, Neff_max] = detectEquilibration(A_t) # compute indices of uncorrelated timeseries
 
     Determine start of equilibrated data for a correlated timeseries with a shift.
 
-    >>> import testsystems
-    >>> A_t = testsystems.generateCorrelatedTimeseries(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
-    >>> B_t = testsystems.generateCorrelatedTimeseries(N=10000, tau=5.0) # generate a test correlated timeseries
+    >>> from pymbar import testsystems
+    >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
+    >>> B_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
     >>> C_t = numpy.concatenate([A_t, B_t])
     >>> [t, g, Neff_max] = detectEquilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
     
@@ -715,12 +707,3 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     g = g_t[t]
     
     return (t, g, Neff_max)
-
-#=============================================================================================
-# MAIN AND TESTS
-#=============================================================================================
-
-if __name__ == "__main__":
-  import doctest
-  doctest.testmod()
-

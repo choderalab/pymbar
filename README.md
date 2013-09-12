@@ -9,6 +9,7 @@ Authors
 -------
 * John D. Chodera <choderaj@mskcc.org>
 * Michael R. Shirts <michael.shirts@virginia.edu>
+* Kyle A. Beauchamp <beauchak@mskcc.org>
 
 Manifest
 --------
