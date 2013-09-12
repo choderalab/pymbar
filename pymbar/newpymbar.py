@@ -36,24 +36,11 @@ class MBAR(object):
         self.u_ki = ensure_type(u_ki, np.float64, 2, 'u_ki')
         
         self.N_k = ensure_type(N_k, np.float64, 1, 'N_k', (self.n_states))
+        self.log_N_k = np.log(self.N_k)
         
         self.N = self.N_k.sum()
         
         self.states = self.u_ki
-
-    def _solve_iterative(self, max_iter=10000, tol=1E-12):
-        """Solve the MBAR equations in 'f' space."""
-        f = np.zeros(self.n_states)
-        f_old = f.copy()
-        for k in xrange(max_iter):
-            denom = (self.N_k * np.exp(f - self.u_ki.T)).sum(1)
-            f = -np.log((np.exp(-self.u_ki) / denom).sum(1))
-            epsilon = np.linalg.norm(f - f_old)
-            if epsilon <= tol:
-                break
-            f_old = f.copy()
-            print(f[0])
-        return f
 
     def _calc_s(self, c):
         return self.r_ki.dot(c ** -1.)
@@ -62,7 +49,13 @@ class MBAR(object):
         return self.q_ki.dot(s ** -1.)
 
     def _solve_iterative_c(self, max_iter=10000, tol=1E-12):
-        """Solve the MBAR equations in 'c' space."""
+        """Solve the MBAR equations in 'c' space.
+        
+        Notes
+        -----
+        WARNING: this may lead to precision issues.
+        BUT: this is really fast.
+        """
     
         self.q_ki = np.exp(-self.u_ki)
         self.q_ki /= self.q_ki.max(0)  # Divide for overflow.
@@ -80,17 +73,50 @@ class MBAR(object):
             print(c[0])
         return c
 
-    def _solve_iterative_logsumexp(self, max_iter=10000, tol=1E-12):
-        """Solve the MBAR equations in 'f' space using logsumexp whenever possible."""
-        mu = (np.log(self.N_k) - self.u_ki.T)
+    def self_consistent_eqn(self, f_i):
+      
+        exp_args = self.log_N_k + f_i - self.u_ki.T
+        L_n = logsumexp(exp_args, axis=1)
+        
+        exp_args = -L_n - self.u_ki
+        q_i = logsumexp(exp_args, axis=1)
+        
+        return  f_i + q_i
+
+    def solve_iterative(self, max_iter=10000, tol=1E-12):
+        """Iteratively solve the MBAR equations in 'f' space."""
         f = np.zeros(self.n_states)
         f_old = f.copy()
         for k in xrange(max_iter):
-            s = -logsumexp(f + mu, axis=1)
-            f = -logsumexp(-self.u_ki + s, axis=1)
+            f -= self.self_consistent_eqn(f)
+            f -= f[0]
             epsilon = np.linalg.norm(f - f_old)
             if epsilon <= tol:
                 break
             f_old = f.copy()
-            print(f[0])
+        return f
+
+
+    def objective(self, f_i):
+        F = self.N_k.dot(f_i)
+        
+        exp_arg = self.log_N_k + f_i - self.u_ki.T
+        F -= logsumexp(exp_arg, axis=1).sum()
+        return F * -1.
+        
+
+    def gradient(self, f_i):   
+        exp_args = self.log_N_k + f_i - self.u_ki.T
+        L_n = logsumexp(exp_args, axis=1)
+        
+        exp_args = -L_n - self.u_ki
+        q_i = logsumexp(exp_args, axis=1)
+        
+        grad = -1.0 * self.N_k * (1 - np.exp(f_i + q_i))
+        
+        return grad
+        
+    def solve_minimize(self):
+        start = np.zeros(self.n_states)
+        f, final_objective, convergence_parms = scipy.optimize.fmin_l_bfgs_b(self.objective, start, self.gradient, factr=1E-2, pgtol=1E-8)
         return f
