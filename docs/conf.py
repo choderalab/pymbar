@@ -61,7 +61,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pymbar'
-copyright = u'2013, Robert McGibbon and contributors'
+copyright = u'2006-2013 pymbar developerment team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -206,7 +206,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'pymbar.tex', u'pymbar Documentation',
-   u'Robert McGibbon', 'manual'),
+   u'John D. Chodera and Michael R. Shirts', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -236,7 +236,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'pymbar', u'pymbar Documentation',
-     [u'Robert McGibbon'], 1)
+     [u'John D. Chodera and Michael R. Shirts'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -250,7 +250,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'pymbar', u'pymbar Documentation',
-   u'Robert McGibbon', 'pymbar', 'One line description of project.',
+   u'John D. Chodera and Michael R. Shirts', 'pymbar', 'One line description of project.',
    'Miscellaneous'),
 ]
 
