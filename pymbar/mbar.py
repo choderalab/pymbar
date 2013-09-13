@@ -1193,7 +1193,7 @@ class MBAR:
         >>> from pymbar import oldtestsystems
         >>> [x_kn, u_kln, N_k] = oldtestsystems.HarmonicOscillatorsSample(N_k=[100,100,100])
         >>> mbar = MBAR(u_kln, N_k)
-        >>> u_kn = u_kln[0,:,:]
+        >>> u_kn = u_kln[:, 0, :]
         >>> xmin = x_kn.min()
         >>> xmax = x_kn.max()
         >>> nbins = 10
