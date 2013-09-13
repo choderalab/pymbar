@@ -26,6 +26,7 @@ that uses Kahan summation--as in `math.fsum()`.
 """
 
 import numpy as np
+import itertools
 from mdtraj.utils import ensure_type
 from sklearn.utils.extmath import logsumexp
 import scipy.optimize
@@ -35,23 +36,35 @@ def set_zero_component(f_i, zero_component=None):
         f_i -= f_i[zero_component]
 
 class MBAR(object):
-    """Object for performing MBAR calculations.
+    """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
+
+    Notes
+    -----    
+    Note that this method assumes the data are uncorrelated.
+    Correlated data must be subsampled to extract uncorrelated (effectively independent) samples (see example below).
+
+    References
+    ----------
+
+    [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
+    J. Chem. Phys. 129:124105, 2008
+    http://dx.doi.org/10.1063/1.2978177
     """
-    def __init__(self, u_ki, N_k):
+    def __init__(self, u_kn, N_k):
         """Create MBAR object from reduced energies.
 
         Parameters
         ----------
-        u_ki : np.ndarray, shape=(n_states, n_samples)
+        u_in : np.ndarray, shape=(n_states, n_samples)
             Reduced potential energies in states k for samples i.
         N_k : np.ndarray, shape=(n_states)
             Number of samples taken from each thermodynamic state
         """        
-        self.n_states, self.n_samples = u_ki.shape
+        self.n_states, self.n_samples = u_kn.shape
 
-        self.u_ki = ensure_type(u_ki, np.float64, 2, 'u_ki')
+        self.u_kn = ensure_type(u_kn, np.float64, 2, 'u_kn')
         
-        self.q_ki = np.exp(-self.u_ki)
+        self.q_ki = np.exp(-self.u_kn)
         self.q_ki /= self.q_ki.max(0)  # Divide for overflow.
         
         self.N_k = ensure_type(N_k, np.float64, 1, 'N_k', (self.n_states))
@@ -59,7 +72,20 @@ class MBAR(object):
         
         self.N = self.N_k.sum()
         
-        self.states = self.u_ki
+        self.states = self.u_kn
+        
+        self.check_self_consistency()
+    
+    def check_self_consistency(self):
+        self.check_same_states()
+        
+    def check_same_states(self, relative_tolerance=1E-7):
+        for (i, j) in itertools.combinations(xrange(self.n_states), 2):
+            delta = self.u_kn[i] - self.u_kn[j]
+            delta = np.linalg.norm(delta) ** 2. 
+            if delta < relative_tolerance:
+                raise(ValueError("Error: states %d and %d are likely identical: Delta U = %f" % (i, j, delta)))
+                
 
     def self_consistent_eqn_fast(self, f_i, zero_component=None):
         set_zero_component(f_i, zero_component)
@@ -78,10 +104,10 @@ class MBAR(object):
     def self_consistent_eqn(self, f_i, zero_component=None):
         set_zero_component(f_i, zero_component)
       
-        exp_args = self.log_N_k + f_i - self.u_ki.T
+        exp_args = self.log_N_k + f_i - self.u_kn.T
         L_n = logsumexp(exp_args, axis=1)
         
-        exp_args = -L_n - self.u_ki
+        exp_args = -L_n - self.u_kn
         q_i = logsumexp(exp_args, axis=1)
         
         set_zero_component(q_i, zero_component)
@@ -99,15 +125,15 @@ class MBAR(object):
     def objective(self, f_i):
         F = self.N_k.dot(f_i)
         
-        exp_arg = self.log_N_k + f_i - self.u_ki.T
+        exp_arg = self.log_N_k + f_i - self.u_kn.T
         F -= logsumexp(exp_arg, axis=1).sum()
         return F * -1.        
 
     def gradient(self, f_i):   
-        exp_args = self.log_N_k + f_i - self.u_ki.T
+        exp_args = self.log_N_k + f_i - self.u_kn.T
         L_n = logsumexp(exp_args, axis=1)
         
-        exp_args = -L_n - self.u_ki
+        exp_args = -L_n - self.u_kn
         q_i = logsumexp(exp_args, axis=1)
         
         grad = -1.0 * self.N_k * (1 - np.exp(f_i + q_i))
@@ -158,3 +184,4 @@ class MBAR(object):
         grad *= -1.
 
         return grad
+
