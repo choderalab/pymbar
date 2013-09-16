@@ -5,15 +5,16 @@ for which the true free energy differences can be computed analytically.
 import numpy as np
 from pymbar import MBAR
 from pymbar.testsystems import harmonic_oscillators
-from pymbar.utils import ensure_type
+from pymbar.utils import ensure_type, convert_ukn_to_uijn
 from pymbar.utils_for_testing import eq
-#from pymbar.old import MBAR as MBAR1  # Import mbar 1.0 for some reference calculations
+from pymbar.old.mbar import MBAR as MBAR1  # Import mbar 1.0 for some reference calculations
 
 z_scale_factor = 3.0  # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
 
 O_k = np.array([1.0, 2.0, 3.0])
 k_k = np.array([1.0, 1.5, 2.0])
 N_k = np.array([50, 60, 70])
+N_k_even = 50 * np.ones(3)
         
 def test_analytical_harmonic_oscillators():
     """Harmonic Oscillators Test: generate test object and calculate analytical results."""
@@ -44,7 +45,7 @@ def test_harmonic_oscillators_mbar_free_energies():
     z = z[1:]  # First component is undetermined.
     eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
-def test_exponential_mbar__xkn():
+def test_exponential_mbar_xkn():
     """Harmonic Oscillators Test: can MBAR calculate E(x_kn)??"""
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
     x_n, u_kn, origin = test.sample(N_k)
@@ -69,3 +70,17 @@ def test_exponential_mbar_xkn_squared():
     
     z = (mu0 - mu) / sigma
     eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+
+def test_unnormalized_log_weights():
+    """Harmonic Oscillators Test: Compare unnormalized log weights against pymbar 1.0 results."""
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    x_n, u_kn, origin = test.sample(N_k_even)
+
+    mbar = MBAR(u_kn.values, N_k_even)
+    w = mbar._compute_unnormalized_log_weights()
+    w_kn = np.array(np.split(w, mbar.n_states))
+
+    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
+    mbar1 = MBAR1(u_ijn.values, N_k_even)
+    bias = np.zeros((mbar.n_states, N_k_even[0]))  # pymbar1.0 requires a "biasing" potential as input.  
+    w1_kn = mbar1._computeUnnormalizedLogWeights(bias)

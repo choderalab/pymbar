@@ -779,19 +779,13 @@ class MBAR(object):
     def _compute_unnormalized_log_weights(self):
         """Return unnormalized log weights.
 
-        Parameters
-        ----------
-        
-        u_kn : np.ndarray, float, shape=(K, N)
-            reduced potential energies
-
         Returns
         -------
         log_w_kn : 
             (K x N np float64 array) - unnormalized log weights
 
         REFERENCE
-          'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
+          'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - u_k(x_n)] ]
         """
         
         log_w_kn = np.zeros(self.n_samples)
