@@ -593,8 +593,8 @@ class MBAR:
 
                 returns.append(dA_ij)
 
-            if return_theta:
-                returns.append(Theta_ij)
+        if return_theta:
+            returns.append(Theta_ij)
 
         return returns
 
