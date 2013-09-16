@@ -5,7 +5,7 @@ distributions, the true free energy differences can be computed analytically.
 import numpy as np
 from pymbar import MBAR
 from pymbar.testsystems import exponential_distributions
-from pymbar.utils import ensure_type, convert_ukn_to_uijn
+from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_xn_to_x_kn
 from pymbar.utils_for_testing import eq
 from pymbar.old.mbar import MBAR as MBAR1  # Import mbar 1.0 for some reference calculations
 
@@ -73,7 +73,7 @@ def test_exponential_mbar_xkn_squared():
     eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-def test_unnormalized_log_weights():
+def test_unnormalized_log_weights_against_mbar1():
     """Exponential Distribution Test: Compare unnormalized log weights against pymbar 1.0 results."""
     test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k_even)
@@ -86,3 +86,26 @@ def test_unnormalized_log_weights():
     mbar1 = MBAR1(u_ijn.values, N_k_even)
     bias = np.zeros((mbar.n_states, N_k_even[0]))  # pymbar1.0 requires a "biasing" potential as input.  
     w1_kn = mbar1._computeUnnormalizedLogWeights(bias)
+    
+    eq(w_kn, w1_kn)
+
+
+def test_expectation_against_mbar1():
+    """Exponential Distribution Test: Compare unnormalized log weights against pymbar 1.0 results."""
+    test = exponential_distributions.ExponentialTestCase(rates)
+    x_n, u_kn, origin = test.sample(N_k_even)
+
+    mbar = MBAR(u_kn.values, N_k_even)
+    mu, sigma = mbar.compute_expectation(x_n.values)
+    
+    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
+    mbar1 = MBAR1(u_ijn.values, N_k_even)
+    
+    x_kn = convert_xn_to_x_kn(x_n)
+
+    x_kn = x_kn.values  # Convert to numpy for MBAR
+    x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0
+        
+    mu1, sigma1 = mbar1.computeExpectations(x_kn)
+    
+    eq(mu1, mu)
