@@ -258,3 +258,24 @@ class BoundsError(Exception):
 
     """
     pass
+
+def validate_weight_matrix(W, N_k, tolerance=1E-4):
+    """Check that row and column sums are 1; else raise ParameterError."""
+    N, K = W.shape
+    column_sums = np.sum(W, axis=0)
+    badcolumns = (np.abs(column_sums - 1) > tolerance)
+    if np.any(badcolumns):
+        which_badcolumns = np.arange(K)[badcolumns]
+        firstbad = which_badcolumns[0]
+        raise ParameterError(
+            'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
+                             (firstbad, column_sums[firstbad], np.sum(badcolumns)))
+
+    row_sums = np.sum(W * N_k, axis=1)
+    badrows = (np.abs(row_sums - 1) > tolerance)
+    if np.any(badrows):
+        which_badrows = np.arange(N)[badrows]
+        firstbad = which_badrows[0]
+        raise ParameterError(
+            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
+                             (firstbad, row_sums[firstbad], np.sum(badrows)))

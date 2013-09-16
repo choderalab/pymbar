@@ -21,6 +21,7 @@ from pymbar.exponential_averaging import EXP, EXPgauss
 import pymbar.timeseries
 import pymbar.testsystems
 import pymbar.confidenceintervals
+import pymbar.old
 
-__all__ = ['EXP', 'EXPgauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
+__all__ = ['EXP', 'EXPgauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils', "old"]
 

@@ -95,7 +95,7 @@ def buildKeywordDictionary():
     setupKeywords["license"]           = "GPL 2.0"
     setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
     setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
-    setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems']
+    setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems', "pymbar.old"]
     setupKeywords["package_dir"]       = {'pymbar' : 'pymbar'}
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
     setupKeywords["data_files"]        = []
