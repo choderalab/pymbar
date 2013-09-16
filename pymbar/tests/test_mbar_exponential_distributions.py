@@ -91,12 +91,12 @@ def test_unnormalized_log_weights_against_mbar1():
 
 
 def test_expectation_against_mbar1():
-    """Exponential Distribution Test: Compare unnormalized log weights against pymbar 1.0 results."""
+    """Exponential Distribution Test: Compare expectations and uncertainties against pymbar 1.0 results."""
     test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k_even)
 
     mbar = MBAR(u_kn.values, N_k_even)
-    mu, sigma = mbar.compute_expectation(x_n.values)
+    mu, sigma, theta = mbar.compute_expectation(x_n.values, return_theta=True)
     
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
     mbar1 = MBAR1(u_ijn.values, N_k_even)
@@ -106,6 +106,8 @@ def test_expectation_against_mbar1():
     x_kn = x_kn.values  # Convert to numpy for MBAR
     x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0
         
-    mu1, sigma1 = mbar1.computeExpectations(x_kn)
+    mu1, sigma1, theta1= mbar1.computeExpectations(x_kn, return_theta=True)
     
     eq(mu1, mu)
+    eq(sigma1, sigma)
+    eq(theta1, theta)

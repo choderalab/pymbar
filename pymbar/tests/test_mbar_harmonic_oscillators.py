@@ -13,26 +13,28 @@ z_scale_factor = 3.0  # Scales the z_scores so that we can reject things that di
 
 O_k = np.array([1.0, 2.0, 3.0])
 k_k = np.array([1.0, 1.5, 2.0])
+beta_k = np.array([1.0, 1.1, 1.2])
+
 N_k = np.array([50, 60, 70])
 N_k_even = 50 * np.ones(3)
         
 def test_analytical_harmonic_oscillators():
     """Harmonic Oscillators Test: generate test object and calculate analytical results."""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     mu = test.analytical_means()
     variance = test.analytical_variances()
     f_k = test.analytical_free_energies()
 
 def test_harmonic_oscillators_samples():
     """Harmonic Oscillators Test:  draw samples via test object."""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(np.array([5, 6, 7]))
     x_n, u_kn, origin = test.sample(np.array([5, 5, 5]))
     x_n, u_kn, origin = test.sample(np.array([1., 1, 1.]))
         
 def test_harmonic_oscillators_mbar_free_energies():
     """Harmonic Oscillators Test: can MBAR calculate correct free energy differences?"""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k)
 
     mbar = MBAR(u_kn.values, N_k)
@@ -47,7 +49,7 @@ def test_harmonic_oscillators_mbar_free_energies():
 
 def test_exponential_mbar_xkn():
     """Harmonic Oscillators Test: can MBAR calculate E(x_kn)??"""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k)
 
     mbar = MBAR(u_kn.values, N_k)
@@ -60,7 +62,7 @@ def test_exponential_mbar_xkn():
 
 def test_exponential_mbar_xkn_squared():
     """Harmonic Oscillators Test: can MBAR calculate E(x_kn^2)??"""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k)
 
     mbar = MBAR(u_kn.values, N_k)
@@ -73,7 +75,7 @@ def test_exponential_mbar_xkn_squared():
 
 def test_unnormalized_log_weights_against_mbar1():
     """Harmonic Oscillators Test: Compare unnormalized log weights against pymbar 1.0 results."""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k_even)
 
     mbar = MBAR(u_kn.values, N_k_even)
@@ -89,12 +91,12 @@ def test_unnormalized_log_weights_against_mbar1():
 
 
 def test_expectation_against_mbar1():
-    """Harmonic Oscillators Test: Compare unnormalized log weights against pymbar 1.0 results."""
-    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
+    """Harmonic Oscillators Test: Compare expectations and uncertainties against pymbar 1.0 results."""
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k_even)
 
     mbar = MBAR(u_kn.values, N_k_even)
-    mu, sigma = mbar.compute_expectation(x_n.values)
+    mu, sigma, theta = mbar.compute_expectation(x_n.values, return_theta=True)
     
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
     mbar1 = MBAR1(u_ijn.values, N_k_even)
@@ -104,6 +106,9 @@ def test_expectation_against_mbar1():
     x_kn = x_kn.values  # Convert to numpy for MBAR
     x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0
         
-    mu1, sigma1 = mbar1.computeExpectations(x_kn)
+    mu1, sigma1, theta1= mbar1.computeExpectations(x_kn, return_theta=True)
     
     eq(mu1, mu)
+    eq(sigma1, sigma)
+    eq(theta1, theta)
+

@@ -3,7 +3,7 @@ import pandas as pd
 from pymbar.utils import ensure_type
 
 class HarmonicOscillatorsTestCase(object):
-    def __init__(self, O_k, K_k, beta=1.0):
+    def __init__(self, O_k, K_k, beta_k):
         """Generate test case with exponential distributions.
 
         Parameters
@@ -24,18 +24,18 @@ class HarmonicOscillatorsTestCase(object):
         """
         self.O_k = ensure_type(O_k, np.float64, 1, "O_k")
         self.n_states = len(self.O_k)
+        
         self.K_k = ensure_type(K_k, np.float64, 1, "K_k", self.n_states)
-
-        self.beta = beta
+        self.beta_k = ensure_type(beta_k, np.float64, 1, "beta_k", self.n_states)
     
     def analytical_means(self):
         return self.O_k
         
     def analytical_variances(self):
-        return (self.beta * self.K_k) ** -1.
+        return (self.beta_k * self.K_k) ** -1.
         
     def analytical_free_energies(self, subtract_component=0):
-        fe = -0.5 * np.log( 2 * np.pi / (self.beta * self.K_k))
+        fe = -0.5 * np.log( 2 * np.pi / (self.beta_k * self.K_k))
         if subtract_component is not None:
             fe -= fe[subtract_component]
         return fe
@@ -65,7 +65,7 @@ class HarmonicOscillatorsTestCase(object):
         origin_and_frame = []
         for k, N in enumerate(N_k):
             x0 = self.O_k[k]
-            sigma = (self.beta * self.K_k[k]) ** -0.5
+            sigma = (self.beta_k[k] * self.K_k[k]) ** -0.5
             x_n.extend(np.random.normal(loc=x0, scale=sigma, size=N))
             origin_and_frame.extend([(states[k], i) for i in range(int(N))])
         
