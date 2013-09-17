@@ -317,19 +317,17 @@ class MBAR(object):
         logging.debug("MBAR initialization complete.")
 
     def _zero_same_states(self, A):
-        """
-        zeros out states that should be identical
+        """Zeros out states that should be identical
 
-        REQUIRED ARGUMENTS
-
-        A: the matrix whose entries are to be zeroed.
-
+        Parameters
+        ----------
+        A : np.ndarray, float, shape=(K,K)
+            The matrix whose entries are to be zeroed.
         """
 
         for pair in self.same_states:
             A[pair[0], pair[1]] = 0
             A[pair[1], pair[0]] = 0
-
 
 
     def get_free_energy_differences(self, compute_uncertainty=True, uncertainty_method='svd-ew', warning_cutoff=1.0e-10, return_theta=False):
@@ -542,11 +540,24 @@ class MBAR(object):
             return A_ij
 
 def compute_log_weights(f_k, N_k, u_kn):
-    """
-    Compute the normalized weights corresponding to samples for the given reduced potential.
-    Also stores the all_log_denom array for reuse.
+    """Compute the normalized weights corresponding to samples for the given reduced potential.
 
+    Parameters
+    ----------
+    f_k : np.ndarray, shape=(n_states)
+        Dimensionless free energies of each thermodynamic state
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples taken from each thermodynamic state
+    u_kn : np.ndarray, shape=(n_states, n_samples)
+        Reduced potential energies in states k for samples i.
 
+    Returns
+    -------
+    log_W_nk : np.ndarray, shape=(n_states, n_samples)
+        Normalized log weights of each state and sample
+    f_k_output : np.ndarray, shape=(n_states)
+        Dimensionless free energies of each thermodynamic state
+        
    """
 
     n_states = len(f_k)
@@ -572,13 +583,23 @@ def compute_log_weights(f_k, N_k, u_kn):
 def compute_unnormalized_log_weights(u_kn, N_k, f_k):
     """Return unnormalized log weights.
 
+    Parameters
+    ----------
+    u_kn : np.ndarray, shape=(n_states, n_samples)
+        Reduced potential energies in states k for samples i.
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples taken from each thermodynamic state
+    f_k : np.ndarray, shape=(n_states)
+        Dimensionless free energies of each thermodynamic state
+
     Returns
     -------
-    log_w_kn : 
-        (K x N np float64 array) - unnormalized log weights
+    log_w_kn : np.ndarray, shape=(n_states, n_samples)
+        unnormalized log weights of each state and sample
 
-    REFERENCE
-      'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - u_k(x_n)] ]
+    Notes
+    -----
+    'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - u_k(x_n)] ]
     """
     
     n_states = len(f_k)
@@ -592,7 +613,27 @@ def compute_unnormalized_log_weights(u_kn, N_k, f_k):
 
 
 def _compute_expectation_differences(A_i, Theta_ij, A_n, compute_uncertainty=False):
-    """Return differences of expectations and uncertainties."""
+    """Return differences of expectations and uncertainties.
+
+    Parameters
+    ----------
+    A_i : np.ndarray, int, shape=(K)
+        Expected value of observable at state i
+    Theta : np.ndarray, float, shape=(K, K)
+        Asymptotic covariance matrix (see Eq. 8 of [1])
+    A_n : np.ndarray, int, shape=(N)
+        A_n is the observable at each sample n.        
+    compute_uncertainty : bool, optional
+        if True, also compute uncertainties on the differences in expectations.
+
+    Returns
+    -------
+    A_ij : np.ndarray, float, shape=(K, K)
+        Difference in expected observable between states i and j
+    dA_ij : np.ndarray, float, shape=(N, K * 2)
+        Uncertainty of difference in expected observable between states i and j
+
+    """
 
     n_states = len(A_i)
     K = n_states
@@ -630,7 +671,40 @@ def _compute_expectation_differences(A_i, Theta_ij, A_n, compute_uncertainty=Fal
         return A_ij, dA_ij
 
 def _compute_expectation(A_n, Log_W_nk, N_k):
+    """Compute expectation of an observable.
+
+    Parameters
+    ----------
+    A_n : np.ndarray, int, shape=(N)
+        A_n is the observable at each sample n.
+    Log_W_nk : np.ndarray, float, shape=(N, K)
+        Normalized weights (see Eq. 9 of [1]) - W[n,k] is the weight of snapshot n (n = 1..N) in state k
+        Note that sum(W(:,k)) = 1 for any k = 1..K, and sum(N_k(:) .* W(n,:)) = 1 for any n.
+    N_k_extended : np.ndarray, int, shape=(K)
+        N_k_extended[k] is the number of samples from state k.
+    uncertainty_method : string, optional
+        if not None, specified method is used to compute asymptotic covariance method:
+        method must be one of ['generalized-inverse', 'svd', 'svd-ew', 'inverse', 'tan-HGH', 'tan', 'approximate']
+        Defaults to 'svd-ew'.
     
+    Returns
+    -------
+    A_i : np.ndarray, float, shape=(K)
+        uncertainty of observable in each state.
+    Log_W_nk_extended : np.ndarray, float, shape=(N, K * 2)
+        Normalized weights (see Eq. 9 of [1]) - W[n,k] is the weight of snapshot n (n = 1..N) in state k
+        Note that sum(W(:,k)) = 1 for any k = 1..K, and sum(N_k(:) .* W(n,:)) = 1 for any n.
+    N_k_extended : np.ndarray, float, shape=(K * 2)
+        N_k_extended[k] is the number of samples from state k.
+        N_k_extended[k] should be 0.0 for k = K, ... , 2 * K - 1
+
+    Notes
+    -----
+    The various "extended" quantities have an extended (doubled) state
+    space.  States 0 , ..., K - 1 are 'real' states while states
+    K ... 2 * K - 1 are 'empty' states used in the expectation calculation.
+    See section IV of the MBAR paper.
+    """
     n_samples, n_states = Log_W_nk.shape
     
     Log_W_nk = ensure_type(Log_W_nk, np.float64, 2, 'Log_W_nk', shape=(n_samples, n_states))
@@ -671,6 +745,37 @@ def _compute_expectation(A_n, Log_W_nk, N_k):
     return A_i, Log_W_nk_extended, N_k_extended
 
 def _compute_uncertainty(Log_W_nk_extended, A_i, N_k_extended, A_n, uncertainty_method="svd-ew"):
+    """Compute estimate of the asymptotic covariance matrix.
+
+    Parameters
+    ----------
+    Log_W_nk_extended : np.ndarray, float, shape=(N, K * 2)
+        Normalized weights (see Eq. 9 of [1]) - W[n,k] is the weight of snapshot n (n = 1..N) in state k
+        Note that sum(W(:,k)) = 1 for any k = 1..K, and sum(N_k(:) .* W(n,:)) = 1 for any n.
+    A_i : np.ndarray, int, shape=(K)
+        A_i is the expected value of the observables at each state.
+    N_k_extended : np.ndarray, int, shape=(K * 2)
+        N_k_extended[k] is the number of samples from state k.
+    A_n : np.ndarray, int, shape=(N)
+        A_n is the observable at each sample n.
+    uncertainty_method : string, optional
+        if not None, specified method is used to compute asymptotic covariance method:
+        method must be one of ['generalized-inverse', 'svd', 'svd-ew', 'inverse', 'tan-HGH', 'tan', 'approximate']
+        Defaults to 'svd-ew'.
+    
+    Returns
+    -------
+    dA_i : np.ndarray, float, shape=(K)
+        uncertainty of observable in each state.
+    Theta_extended : np.ndarray, float, shape=(K * 2, K * 2)
+        Asymptotic covariance matrix (see Eq. 8 of [1]).  States 
+        
+    Notes
+    -----
+    The various "extended" quantities have an extended (doubled) state
+    space.  States 0 , ..., K - 1 are 'real' states while states
+    K ... 2 * K - 1 are 'empty' states used in the expectation calculation.
+    """
     n_samples, n_states = Log_W_nk_extended.shape
     n_states = n_states / 2  # Input from extended 
 
@@ -700,7 +805,7 @@ def _compute_covariance_matrix(W, N_k, method='svd-ew', pinv_tol=1E-12):
     method : string, optional
         if not None, specified method is used to compute asymptotic covariance method:
         method must be one of ['generalized-inverse', 'svd', 'svd-ew', 'inverse', 'tan-HGH', 'tan', 'approximate']
-        If None is specified, 'svd-ew' is used.
+        Defaults to 'svd-ew'.
     
     Returns
     -------
