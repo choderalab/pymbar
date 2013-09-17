@@ -308,7 +308,7 @@ class MBAR(object):
 
         logging.debug("Recomputing all free energies and log weights for storage")
        
-        self.Log_W_nk, self.f_k = self._compute_weights(logform=True, include_nonzero=True, return_f_k=True)
+        self.Log_W_nk, self.f_k = compute_log_weights(self.f_k, self.N_k, self.u_kn)
 
         # Print final dimensionless free energies.
         logging.debug("Final dimensionless free energies")
@@ -701,105 +701,14 @@ class MBAR(object):
         A_i += (A_min - 1)
 
         if return_theta:
-            return A_i, dA_i, Theta_ij, Log_W_nk
-            #return A_i, dA_i, Theta_ij
+            return A_i, dA_i, Theta_ij
         elif compute_uncertainty:
             return A_i, dA_i
         else:
             return A_i
 
 
-    def _compute_weights(self, logform=False, include_nonzero=False, recalc_denom=True, return_f_k=False):
-        """
-        Compute the normalized weights corresponding to samples for the given reduced potential.
-        Also stores the all_log_denom array for reuse.
-
-        INPUT VALUES
-
-        logform (bool): whether the output is in logarithmic form, which is better for stability, though sometimes
-                        the exponential form is required.
-        include_nonzero (bool): whether to compute weights for states with nonzero states.  Not necessary
-                                 when performing self-consistent iteration.
-        recalc_denom (bool): recalculate the denominator, must be done if the free energies change.
-                             default is to do it, so that errors are not made.  But can be turned
-                             off if it is known the free energies have not changed.
-        return_f_k (bool): return the self-consistent f_k values
-
-        RETURN VALUES
-
-        if logform==True:
-          Log_W_nk (double) - Log_W_nk[n,k] is the normalized log weight of sample n from state k.
-        else:
-          W_nk (double) - W_nk[n,k] is the log weight of sample n from state k.
-        if return_f_k==True:
-          optionally return the self-consistent free energy from these weights.
-
-       """
-
-        if (include_nonzero):
-            f_k = self.f_k
-            K = self.n_states
-            N_k = self.N_k
-        else:
-            f_k = self.f_k[self.nonzero_N_k_indices]
-            K = self.K_nonzero
-            N_k = self.N_nonzero
-
-        # array of either weights or normalized log weights
-        Warray_nk = np.zeros([self.n_samples, self.n_states], dtype=np.float64)
-        if (return_f_k):
-            f_k_out = np.zeros([K], dtype=np.float64)
-
-        if (recalc_denom):
-            self.log_weight_denom = self._compute_unnormalized_log_weights()
-
-        for l in range(K):
-            # Compute log weights.
-            if (include_nonzero):
-                index = l
-            else:
-                index = self.nonzero_N_k_indices[l]
-            log_w_kn = -self.u_kn[index, :] + self.log_weight_denom + f_k[l]
-
-            if (return_f_k):
-                f_k_out[l] = f_k[l] - logsumexp(log_w_kn)
-                if (include_nonzero):
-                    # renormalize the weights, needed for nonzero states.
-                    log_w_kn += (f_k_out[l] - f_k[l])
-
-            if (logform):
-                Warray_nk[:, l] = log_w_kn
-            else:
-                Warray_nk[:, l] = np.exp(log_w_kn)
-
-        # Return weights (or log weights)
-        if (return_f_k):
-            f_k_out[:] = f_k_out[:] - f_k_out[0]
-            return Warray_nk, f_k_out
-        else:
-            return Warray_nk
-
-
-    def _compute_unnormalized_log_weights(self):
-        """Return unnormalized log weights.
-
-        Returns
-        -------
-        log_w_kn : 
-            (K x N np float64 array) - unnormalized log weights
-
-        REFERENCE
-          'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - u_k(x_n)] ]
-        """
-        
-        log_w_kn = np.zeros(self.n_samples)
-        for n in range(0, self.n_samples):
-            log_w_kn[n] = - logsumexp(np.log(self.N_k[self.nonzero_N_k_indices]) + self.f_k[self.nonzero_N_k_indices] - (self.u_kn[self.nonzero_N_k_indices, n]))
-
-        return log_w_kn
-
-
-def compute_weights(f_k, N_k, u_kn):
+def compute_log_weights(f_k, N_k, u_kn):
     """
     Compute the normalized weights corresponding to samples for the given reduced potential.
     Also stores the all_log_denom array for reuse.

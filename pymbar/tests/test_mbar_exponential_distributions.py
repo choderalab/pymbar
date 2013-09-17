@@ -4,6 +4,7 @@ distributions, the true free energy differences can be computed analytically.
 
 import numpy as np
 from pymbar import MBAR
+import pymbar.mbar
 from pymbar.testsystems import exponential_distributions
 from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_xn_to_x_kn
 from pymbar.utils_for_testing import eq
@@ -79,8 +80,8 @@ def test_unnormalized_log_weights_against_mbar1():
     x_n, u_kn, origin = test.sample(N_k_even)
 
     mbar = MBAR(u_kn.values, N_k_even)
-    w = mbar._compute_unnormalized_log_weights()
-    w_kn = np.array(np.split(w, mbar.n_states))
+    w = pymbar.mbar.compute_unnormalized_log_weights(mbar.u_kn, mbar.N_k, mbar.f_k)
+    w_kn = np.array(np.split(w, mbar.n_states))  # THIS IS A HACK that assumes specific ordering, fix later!
 
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
     mbar1 = MBAR1(u_ijn.values, N_k_even)

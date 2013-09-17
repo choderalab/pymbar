@@ -4,6 +4,7 @@ for which the true free energy differences can be computed analytically.
 
 import numpy as np
 from pymbar import MBAR
+import pymbar.mbar
 from pymbar.testsystems import harmonic_oscillators
 from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_xn_to_x_kn
 from pymbar.utils_for_testing import eq
@@ -88,7 +89,7 @@ def test_unnormalized_log_weights_against_mbar1():
     x_n, u_kn, origin = test.sample(N_k_even)
 
     mbar = MBAR(u_kn.values, N_k_even)
-    w = mbar._compute_unnormalized_log_weights()
+    w = pymbar.mbar.compute_unnormalized_log_weights(mbar.u_kn, mbar.N_k, mbar.f_k)
     w_kn = np.array(np.split(w, mbar.n_states))
 
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
@@ -108,8 +109,8 @@ def test_unnormalized_log_weights_against_mbar1_random():
     x_n, u_kn, origin = test.sample(N_k_random)
 
     mbar = MBAR(u_kn.values, N_k_random)
-    w = mbar._compute_unnormalized_log_weights()
-    w_kn = np.array(np.split(w, mbar.n_states))
+    w = pymbar.mbar.compute_unnormalized_log_weights(mbar.u_kn, mbar.N_k, mbar.f_k)
+    w_kn = np.array(np.split(w, mbar.n_states))  # THIS IS A HACK that assumes specific ordering, fix later!
 
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
     mbar1 = MBAR1(u_ijn.values, N_k_random)
@@ -121,6 +122,20 @@ def test_unnormalized_log_weights_against_mbar1_random():
     
     eq(w_kn, w1_kn, decimal=4)  # Test manual conversion by np.split
     eq(w_kn_converted.values, w1_kn, decimal=4)  # Test the conversion function that I wrote
+    
+def test_log_weights_against_mbar1_random():
+    """Harmonic Oscillators Test: Compare log weights against pymbar 1.0 results for %d states and %d samples per state with randomly selected parameters.""" % (num_states, num_samples_per_state)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k_random, k_k_random, beta_k_random)
+    x_n, u_kn, origin = test.sample(N_k_random)
+
+    mbar = MBAR(u_kn.values, N_k_random)
+    weights, f_k = pymbar.mbar.compute_log_weights(mbar.f_k, mbar.N_k, mbar.u_kn)
+    
+    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
+    mbar1 = MBAR1(u_ijn.values, N_k_random)
+    weights1 = mbar1.Log_W_nk 
+
+    eq(weights1, weights)
 
 def test_expectation_against_mbar1():
     """Harmonic Oscillators Test: Compare expectations and uncertainties against pymbar 1.0 results."""

@@ -14,21 +14,21 @@ rates = np.array([1.0, 2.0, 3.0])  # Rates, e.g. Lambda
 N_k = np.array([50, 60, 70])
         
 def test_analytical_exponential():
-    """Exponential Distribution Test: generate test object and calculate analytical results."""
+    """Exponential Distribution Test (pymbar 1.0): generate test object and calculate analytical results."""
     test = exponential_distributions.ExponentialTestCase(rates)
     mu = test.analytical_means()
     variance = test.analytical_variances()
     f_k = test.analytical_free_energies()
 
 def test_exponential_samples():
-    """Exponential Distribution Test:  draw samples via test object."""
+    """Exponential Distribution Test (pymbar 1.0):  draw samples via test object."""
     test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(np.array([5, 6, 7]))
     x_n, u_kn, origin = test.sample(np.array([5, 5, 5]))
     x_n, u_kn, origin = test.sample(np.array([1., 1, 1.]))
     
 def test_shape_conversion_exponential():
-    """Exponential Distribution Test: convert shape from u_kn to u_ijn."""
+    """Exponential Distribution Test (pymbar 1.0): convert shape from u_kn to u_ijn."""
     test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(np.array([5, 6, 7]))
     u_ijn, N_k = convert_ukn_to_uijn(u_kn)
@@ -38,7 +38,7 @@ def test_shape_conversion_exponential():
     u_ijn, N_k = convert_ukn_to_uijn(u_kn)
     
 def test_exponential_mbar_free_energies():
-    """Exponential Distribution Test: can MBAR calculate correct free energy differences?"""
+    """Exponential Distribution Test (pymbar 1.0): can MBAR calculate correct free energy differences?"""
     test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k)
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
@@ -57,7 +57,7 @@ def test_exponential_mbar_free_energies():
 
 
 def test_exponential_mbar_xkn():
-    """Exponential Distribution Test: can MBAR calculate E(x_kn)?"""
+    """Exponential Distribution Test (pymbar 1.0): can MBAR calculate E(x_kn)?"""
     test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k)
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
@@ -79,7 +79,7 @@ def test_exponential_mbar_xkn():
 
 
 def test_exponential_mbar_xkn_squared():
-    """Exponential Distribution Test: can MBAR calculate E(x_kn^2)"""
+    """Exponential Distribution Test (pymbar 1.0): can MBAR calculate E(x_kn^2)"""
     test = exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, origin = test.sample(N_k)
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
