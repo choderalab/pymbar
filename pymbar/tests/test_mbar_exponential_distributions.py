@@ -53,7 +53,7 @@ def test_exponential_mbar_xkn():
 
     mbar = MBAR(u_kn.values, N_k)
 
-    mu, sigma = mbar.compute_expectation(x_n.values)
+    mu, sigma, theta = mbar.compute_expectation(x_n.values)
     mu0 = test.analytical_means()
 
     z = (mu0 - mu) / sigma    
@@ -67,7 +67,7 @@ def test_exponential_mbar_xkn_squared():
     
     mbar = MBAR(u_kn.values, N_k)
 
-    mu, sigma = mbar.compute_expectation(x_n.values ** 2.0)
+    mu, sigma, theta = mbar.compute_expectation(x_n.values ** 2.0)
     mu0 = test.analytical_x_squared()
     
     z = (mu0 - mu) / sigma
@@ -101,7 +101,7 @@ def test_expectation_against_mbar1():
     x_n, u_kn, origin = test.sample(N_k_even)
 
     mbar = MBAR(u_kn.values, N_k_even)
-    mu, sigma, theta = mbar.compute_expectation(x_n.values, return_theta=True)
+    mu, sigma, theta = mbar.compute_expectation(x_n.values)
     
     u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
     mbar1 = MBAR1(u_ijn.values, N_k_even)
@@ -111,7 +111,30 @@ def test_expectation_against_mbar1():
     x_kn = x_kn.values  # Convert to numpy for MBAR
     x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0
         
-    mu1, sigma1, theta1= mbar1.computeExpectations(x_kn, return_theta=True)
+    mu1, sigma1, theta1 = mbar1.computeExpectations(x_kn, return_theta=True)
+    
+    eq(mu1, mu)
+    eq(sigma1, sigma)
+    eq(theta1, theta)
+
+
+def test_expectation_against_mbar1():
+    """Exponential Distribution Test: Compare expectation differences and uncertainties against pymbar 1.0 results."""
+    test = exponential_distributions.ExponentialTestCase(rates)
+    x_n, u_kn, origin = test.sample(N_k_even)
+
+    mbar = MBAR(u_kn.values, N_k_even)
+    mu, sigma, theta = mbar.compute_expectation_difference(x_n.values)
+    
+    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
+    mbar1 = MBAR1(u_ijn.values, N_k_even)
+    
+    x_kn = convert_xn_to_x_kn(x_n)
+
+    x_kn = x_kn.values  # Convert to numpy for MBAR
+    x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0
+        
+    mu1, sigma1, theta1 = mbar1.computeExpectations(x_kn, return_theta=True, output="differences")
     
     eq(mu1, mu)
     eq(sigma1, sigma)
