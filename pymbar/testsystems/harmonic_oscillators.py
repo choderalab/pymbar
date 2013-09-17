@@ -59,7 +59,7 @@ class HarmonicOscillatorsTestCase(object):
         """
         N_k = ensure_type(N_k, np.float64, 1, "N_k", self.n_states, warn_on_cast=False)
 
-        states = ["state %d" % k for k in range(self.n_states)]
+        states = range(self.n_states)
         
         x_n = []
         origin_and_frame = []

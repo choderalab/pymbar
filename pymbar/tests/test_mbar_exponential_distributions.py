@@ -86,8 +86,12 @@ def test_unnormalized_log_weights_against_mbar1():
     mbar1 = MBAR1(u_ijn.values, N_k_even)
     bias = np.zeros((mbar.n_states, N_k_even[0]))  # pymbar1.0 requires a "biasing" potential as input.  
     w1_kn = mbar1._computeUnnormalizedLogWeights(bias)
-    
-    eq(w_kn, w1_kn)
+
+    x_n[:] = w[:]  # Using x_n as a pandas template for converting shape.
+    w_kn_converted = convert_xn_to_x_kn(x_n)
+        
+    eq(w_kn, w1_kn)  # Test manual conversion by np.split
+    eq(w_kn_converted.values, w1_kn)  # Test the conversion function that I wrote
 
 
 def test_expectation_against_mbar1():

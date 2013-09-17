@@ -201,6 +201,12 @@ class BFGSMBARSolver(MBARSolver):
 
         return grad
 
+def get_nonzero_indices(N_k):
+    """Determine list of k indices for which N_k != 0"""
+    nonzero_N_k_indices = np.where(N_k != 0)[0]
+    nonzero_N_k_indices = nonzero_N_k_indices.astype(np.int32)
+    return nonzero_N_k_indices
+
 class MBAR(object):
     """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
@@ -273,9 +279,7 @@ class MBAR(object):
 
         self.same_states = list_same_states(self.u_kn, self.N_k)
 
-        # Determine list of k indices for which N_k != 0
-        self.nonzero_N_k_indices = np.where(self.N_k != 0)[0]
-        self.nonzero_N_k_indices = self.nonzero_N_k_indices.astype(np.int32)
+        self.nonzero_N_k_indices = get_nonzero_indices(self.N_k)
 
         # Store versions of variables nonzero indices file
         # Number of states with samples.
@@ -412,7 +416,7 @@ class MBAR(object):
         else:
             return Deltaf_ij
 
-    def _compute_covariance_matrix(self, W, N_k, method='svd-ew'):
+    def _compute_covariance_matrix(self, W, N_k, method='svd-ew', pinv_tol=1E-12):
         """Compute estimate of the asymptotic covariance matrix.
 
         Parameters
@@ -523,7 +527,7 @@ class MBAR(object):
 
             # Compute covariance
             Theta = V * Sigma * np.linalg.pinv(
-                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
+                I - Sigma * V.T * Ndiag * V * Sigma, rcond=pinv_tol) * Sigma * V.T
 
         elif method == 'svd-ew':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
@@ -547,7 +551,7 @@ class MBAR(object):
 
             # Compute covariance
             Theta = V * Sigma * np.linalg.pinv(
-                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
+                I - Sigma * V.T * Ndiag * V * Sigma, rcond=pinv_tol) * Sigma * V.T
 
         elif method == 'tan-HGH':
             # Use method suggested by Zhiqiang Tan without further simplification.
@@ -674,7 +678,6 @@ class MBAR(object):
         # Compute the remaining rows/columns of W_nk and the rows c_k for the
         # observables.
 
-
         for l in range(0, K):
             # this works because all A_n are now positive; we took min at beginning
             Log_W_nk[:, K + l] = np.log(A_n) + self.Log_W_nk[:, l]
@@ -698,7 +701,8 @@ class MBAR(object):
         A_i += (A_min - 1)
 
         if return_theta:
-            return A_i, dA_i, Theta_ij
+            return A_i, dA_i, Theta_ij, Log_W_nk
+            #return A_i, dA_i, Theta_ij
         elif compute_uncertainty:
             return A_i, dA_i
         else:
@@ -793,3 +797,53 @@ class MBAR(object):
             log_w_kn[n] = - logsumexp(np.log(self.N_k[self.nonzero_N_k_indices]) + self.f_k[self.nonzero_N_k_indices] - (self.u_kn[self.nonzero_N_k_indices, n]))
 
         return log_w_kn
+
+
+def compute_weights(f_k, N_k, u_kn):
+    """
+    Compute the normalized weights corresponding to samples for the given reduced potential.
+    Also stores the all_log_denom array for reuse.
+
+
+   """
+
+    n_states = len(f_k)
+    n_samples = int(sum(N_k))
+
+    log_W_nk = np.zeros((n_samples, n_states))
+    f_k_out = np.zeros(n_states, dtype=np.float64)
+
+    log_weight_denom = compute_unnormalized_log_weights(u_kn, N_k, f_k)    
+
+    for l in range(n_states):
+        current_log_w_kn = -u_kn[l, :] + log_weight_denom + f_k[l]
+
+        f_k_out[l] = f_k[l] - logsumexp(current_log_w_kn)
+        # renormalize the weights, needed for nonzero states.
+        current_log_w_kn += (f_k_out[l] - f_k[l])
+        log_W_nk[:, l] = current_log_w_kn
+
+    f_k_out = f_k_out - f_k_out[0]
+    
+    return log_W_nk, f_k_out
+
+def compute_unnormalized_log_weights(u_kn, N_k, f_k):
+    """Return unnormalized log weights.
+
+    Returns
+    -------
+    log_w_kn : 
+        (K x N np float64 array) - unnormalized log weights
+
+    REFERENCE
+      'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - u_k(x_n)] ]
+    """
+    
+    n_states = len(f_k)
+    n_samples = int(sum(N_k))
+    
+    nonzero_N_k_indices = get_nonzero_indices(N_k)
+    
+    log_w_kn = np.zeros(n_samples)
+    exp_arg = (np.log(N_k[nonzero_N_k_indices]) + f_k[nonzero_N_k_indices] - u_kn[nonzero_N_k_indices].T).T
+    return -1.0 * logsumexp(exp_arg)

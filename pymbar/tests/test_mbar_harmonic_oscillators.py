@@ -17,6 +17,15 @@ beta_k = np.array([1.0, 1.1, 1.2])
 
 N_k = np.array([50, 60, 70])
 N_k_even = 50 * np.ones(3)
+
+num_samples_per_state = 100
+num_states = 20
+
+O_k_random = np.random.normal(size=num_states)
+k_k_random = np.random.uniform(1.0, 2.0, size=num_states)
+beta_k_random = np.random.uniform(1.0, 2.0, size=num_states)
+N_k_random = np.ones(num_states) * num_samples_per_state
+
         
 def test_analytical_harmonic_oscillators():
     """Harmonic Oscillators Test: generate test object and calculate analytical results."""
@@ -87,8 +96,31 @@ def test_unnormalized_log_weights_against_mbar1():
     bias = np.zeros((mbar.n_states, N_k_even[0]))  # pymbar1.0 requires a "biasing" potential as input.  
     w1_kn = mbar1._computeUnnormalizedLogWeights(bias)
     
-    eq(w_kn, w1_kn)
+    x_n[:] = w[:]  # Using x_n as a pandas template for converting shape.
+    w_kn_converted = convert_xn_to_x_kn(x_n)
+    
+    eq(w_kn, w1_kn)  # Test manual conversion by np.split
+    eq(w_kn_converted.values, w1_kn)  # Test the conversion function that I wrote
 
+def test_unnormalized_log_weights_against_mbar1_random():
+    """Harmonic Oscillators Test: Compare unnormalized log weights against pymbar 1.0 results for %d states and %d samples per state with randomly selected parameters.""" % (num_states, num_samples_per_state)
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k_random, k_k_random, beta_k_random)
+    x_n, u_kn, origin = test.sample(N_k_random)
+
+    mbar = MBAR(u_kn.values, N_k_random)
+    w = mbar._compute_unnormalized_log_weights()
+    w_kn = np.array(np.split(w, mbar.n_states))
+
+    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)    
+    mbar1 = MBAR1(u_ijn.values, N_k_random)
+    bias = np.zeros((mbar.n_states, N_k_random[0]))  # pymbar1.0 requires a "biasing" potential as input.  
+    w1_kn = mbar1._computeUnnormalizedLogWeights(bias)
+    
+    x_n[:] = w[:]  # Using x_n as a pandas template for converting shape.
+    w_kn_converted = convert_xn_to_x_kn(x_n)
+    
+    eq(w_kn, w1_kn, decimal=4)  # Test manual conversion by np.split
+    eq(w_kn_converted.values, w1_kn, decimal=4)  # Test the conversion function that I wrote
 
 def test_expectation_against_mbar1():
     """Harmonic Oscillators Test: Compare expectations and uncertainties against pymbar 1.0 results."""

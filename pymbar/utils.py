@@ -151,23 +151,11 @@ def convert_ukn_to_uijn(u_kn):
     Notes
     -----
     This is useful for converting data from pymbar 1.0 to pymbar 2.0
-    formats.
+    formats.  NOTE: CURRENTLY SLOW.
     """
     origin = u_kn.columns
     N_k = pd.value_counts(origin.get_level_values(0)).sort_index()
-    
-    states = u_kn.index
-    sample_ids = u_kn.columns
-
-    n_states = len(states)
-    N_max = N_k.max()
-    
-    u_ijn = np.zeros((n_states, n_states, N_max))
-    u_ijn = pd.Panel(u_ijn, items=states, major_axis=states, minor_axis=range(N_max))
-    for state_evaluated in states:
-        for ind in origin:
-            state_origin, sample_id = ind
-            u_ijn[state_evaluated] = u_kn[state_evaluated]
+    u_ijn = u_kn.T.to_panel().transpose(1,0,2)
 
     return u_ijn, N_k
 

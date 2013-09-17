@@ -595,7 +595,7 @@ class MBAR:
 
         if return_theta:
             returns.append(Theta_ij)
-
+        returns.append(Log_W_nk)
         return returns
 
     #=========================================================================
