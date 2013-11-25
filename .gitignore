@@ -60,3 +60,7 @@ docs/pymbar-docs
 docs/_build
 tools/hash_dict.pickle
 docs/examples/generated/
+
+# Latex intermediate files
+*.log
+*.aux
