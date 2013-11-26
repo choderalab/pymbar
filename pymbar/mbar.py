@@ -27,8 +27,7 @@ that uses Kahan summation--as in `math.fsum()`.
 
 import numpy as np
 import itertools
-from pymbar.utils import ensure_type, ParameterError, validate_weight_matrix
-from sklearn.utils.extmath import logsumexp
+from pymbar.utils import ensure_type, ParameterError, validate_weight_matrix, logsumexp
 import scipy.optimize
 import logging
 
