@@ -28,7 +28,7 @@ that uses Kahan summation--as in `math.fsum()`.
 import numpy as np
 import itertools
 from pymbar.utils import ensure_type, ParameterError, validate_weight_matrix, logsumexp
-from pymbar.legacy_interface import LegacyMBarMixin
+from pymbar.legacy_interface import LegacyMBARMixin
 import scipy.optimize
 
 import logging
@@ -210,7 +210,7 @@ def get_nonzero_indices(N_k):
     nonzero_N_k_indices = nonzero_N_k_indices.astype(np.int32)
     return nonzero_N_k_indices
 
-class MBAR(LegacyMBarMixin):
+class MBAR(LegacyMBARMixin):
     """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
     Notes

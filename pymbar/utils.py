@@ -137,61 +137,7 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
     return val
 
 
-def convert_ukn_to_uijn(u_kn):
-    """Convert from 2D representation to 3D representation.
-
-    Parameters
-    ----------
-    u_kn : pd.DataFrame, shape=(n_states, n_samples)
-        Reduced potentials evaluated in each state for each sample x_n
-
-    Returns
-    -------
-    u_ijn : pd.Panel, shape=(n_states, n_states, n_samples)
-        The reduced potential evaluated in state i, for a sample taken 
-        from state j, with sample index n.
-
-    Notes
-    -----
-    This is useful for converting data from pymbar 1.0 to pymbar 2.0
-    formats.  NOTE: CURRENTLY SLOW.
-    """
-    origin = u_kn.columns
-    N_k = pd.value_counts(origin.get_level_values(0)).sort_index()
-    u_ijn = u_kn.T.to_panel().transpose(1,0,2)
-
-    return u_ijn, N_k
-
-def convert_xn_to_x_kn(x_n, zero_fill_nans=True):
-    """Convert from 1D (pd.Series) representation to 2D (pd.DataFrame).
-
-    Parameters
-    ----------
-    x_n : pd.DataFrame, shape=(n_samples)
-        Reduced potentials evaluated in each state for each sample x_n
-    zero_fill_nans : bool, default=True
-        if True, replace nan values in output with zeros.  This is required
-        to prevent errors in some legacy pymbar 1.0 calculations.  The 
-        nans (zeros) arise when you have different numbers of samples
-        from each state--the "extra" places in the array will have either
-        nan or zero.
-
-    Returns
-    -------
-    x_kn : pd.DataFrame, shape=(n_states, N_max)
-        The samples grouped by their origin and frame number.
-    
-    Notes
-    -----
-    The `n` variable in x_n and x_kn are different--the one ranges from 
-    1 to n_samples, while the second ranges from 1 to N_max.  
-    """
-    x_kn = x_n.reset_index().pivot("origin", "frame", "x")
-    if zero_fill_nans is True:
-        x_kn.replace(np.nan, 0.0, inplace=True)
-    return x_kn
-
-def convert_ukn_to_uijn_array(u_kn, N_k):
+def convert_ukn_to_uijn(u_kn, N_k):
     """Convert from 2D representation to 3D representation.
 
     Parameters
@@ -210,9 +156,14 @@ def convert_ukn_to_uijn_array(u_kn, N_k):
     This is useful for converting data from pymbar 1.0 to pymbar 2.0
     formats.  NOTE: CURRENTLY SLOW.
     """
-    n_states, n_samples = u_kn.shape
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
+    
+    n_states = len(N_k)
     N_max = N_k.max()
-
+    n_samples = N_k.sum()
+    
+    u_kn = ensure_type(u_kn, dtype='float', ndim=2, name="u_kn", shape=(n_states, n_samples))
+    
     u_ijn = np.zeros((n_states, n_states, N_max))
     
     #Create mapping from jk to j, k
@@ -226,7 +177,7 @@ def convert_ukn_to_uijn_array(u_kn, N_k):
     
     return u_ijn
     
-def convert_uijn_to_ukn_array(u_ijn, N_k):
+def convert_uijn_to_ukn(u_ijn, N_k):
     """Convert from 2D representation to 3D representation.
 
     Parameters
@@ -269,8 +220,8 @@ def convert_uijn_to_ukn_array(u_ijn, N_k):
     
     return u_kn
     
-def convert_Akn_to_Ak_array(A_kn, N_k):
-    """Convert from 2D representation to 3D representation.
+def convert_Akn_to_An(A_kn, N_k):
+    """Convert from 2D representation to 1D representation of a single observable.
 
     Parameters
     ----------
@@ -309,7 +260,49 @@ def convert_Akn_to_Ak_array(A_kn, N_k):
         i, k = states[ik], frames[ik]
         A_k[ik] = A_kn[i, k]
     
-    return A_k    
+    return A_k
+    
+def convert_An_to_Akn(A_n, N_k):
+    """Convert from 1D representation to 2D representation of a single observable.
+
+    Parameters
+    ----------
+    A_n : np.ndarray, shape=(n_samples)
+        Observable reshaped    
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples from each state
+
+    Returns
+    -------
+    A_kn : np.ndarray, shape=(n_states, n_max)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.    
+
+
+    Notes
+    -----
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.  NOTE: CURRENTLY SLOW.
+    """
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
+    
+    n_states = len(N_k)
+    N_max = N_k.max()
+    n_samples = N_k.sum()
+    
+    A_n = ensure_type(A_n, dtype='float', ndim=1, name="A_n", shape=(n_samples,))
+    
+    A_kn = np.zeros((n_states, N_max))
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for ik in range(n_samples):
+        i, k = states[ik], frames[ik]
+        A_kn[i, k] = A_n[ik]
+    
+    return A_kn       
 
 def _logsum(a_n):
     """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.

@@ -5,7 +5,7 @@ for which the true free energy differences can be computed analytically.
 import numpy as np
 from pymbar.old.mbar import MBAR
 from pymbar.testsystems import harmonic_oscillators
-from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_xn_to_x_kn
+from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_An_to_Akn
 from pymbar.utils_for_testing import eq
 
 z_scale_factor = 3.0  # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
@@ -33,22 +33,26 @@ def test_harmonic_oscillators_samples():
 def test_shape_conversion_harmonic_oscillators():
     """Harmonic Oscillators Test (pymbar 1.0): convert shape from u_kn to u_ijn."""
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
-    x_n, u_kn, origin = test.sample(np.array([5, 6, 7]))
-    u_ijn, N_k = convert_ukn_to_uijn(u_kn)
-    x_n, u_kn, origin = test.sample(np.array([5, 5, 5]))
-    u_ijn, N_k = convert_ukn_to_uijn(u_kn)
-    x_n, u_kn, origin = test.sample(np.array([1., 1, 1.]))
-    u_ijn, N_k = convert_ukn_to_uijn(u_kn)
+    
+    N_k = np.array([5, 6, 7])
+    x_n, u_kn, origin = test.sample(N_k)
+    u_ijn = convert_ukn_to_uijn(u_kn, N_k)
+    
+    N_k = np.array([5, 5, 5])
+    x_n, u_kn, origin = test.sample(N_k)
+    u_ijn = convert_ukn_to_uijn(u_kn, N_k)
+    
+    N_k = np.array([1., 1, 1.])
+    x_n, u_kn, origin = test.sample(N_k)
+    u_ijn = convert_ukn_to_uijn(u_kn, N_k)
     
 def test_harmonic_oscillators_mbar_free_energies():
     """Harmonic Oscillators Test (pymbar 1.0): can MBAR calculate correct free energy differences?"""
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k)
-    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
-    
-    eq(N_k, N_k_output.values)
+    u_ijn = convert_ukn_to_uijn(u_kn, N_k)
 
-    mbar = MBAR(u_ijn.values, N_k)
+    mbar = MBAR(u_ijn, N_k)
     fe, fe_sigma = mbar.getFreeEnergyDifferences()
     fe, fe_sigma = fe[0], fe_sigma[0]
 
@@ -62,15 +66,11 @@ def test_exponential_mbar__xkn():
     """Harmonic Oscillators Test (pymbar 1.0): can MBAR calculate E(x_kn)??"""
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k)
-    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
-    
-    eq(N_k, N_k_output.values)
+    u_ijn = convert_ukn_to_uijn(u_kn, N_k)
 
-    mbar = MBAR(u_ijn.values, N_k)
+    mbar = MBAR(u_ijn, N_k)
     
-    x_kn = convert_xn_to_x_kn(x_n)
-
-    x_kn = x_kn.values  # Convert to numpy for MBAR
+    x_kn = convert_An_to_Akn(x_n, N_k)
     x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0
 
     mu, sigma = mbar.computeExpectations(x_kn)
@@ -83,15 +83,11 @@ def test_exponential_mbar_xkn_squared():
     """Harmonic Oscillators Test (pymbar 1.0): can MBAR calculate E(x_kn^2)??"""
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k)
-    u_ijn, N_k_output = convert_ukn_to_uijn(u_kn)
-    
-    eq(N_k, N_k_output.values)
+    u_ijn = convert_ukn_to_uijn(u_kn, N_k)
 
-    mbar = MBAR(u_ijn.values, N_k)
+    mbar = MBAR(u_ijn, N_k)
     
-    x_kn = convert_xn_to_x_kn(x_n) ** 2.
-
-    x_kn = x_kn.values  # Convert to numpy for MBAR
+    x_kn = convert_An_to_Akn(x_n, N_k) ** 2.
     x_kn[np.isnan(x_kn)] = 0.0  # Convert nans to 0.0
 
     mu, sigma = mbar.computeExpectations(x_kn)

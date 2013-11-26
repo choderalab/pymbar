@@ -20,13 +20,13 @@ A pymbar1.0 compatible interface for pymbar2.0
 
 import numpy as np
 
-from pymbar.utils import deprecated, convert_uijn_to_ukn_array, ensure_type, convert_Akn_to_Ak_array
+from pymbar.utils import deprecated, convert_uijn_to_ukn, ensure_type, convert_Akn_to_An
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class LegacyMBarMixin(object):
+class LegacyMBARMixin(object):
     """This class provides wrappers for pymbar1.0 member functions."""
 
 
@@ -174,7 +174,7 @@ class LegacyMBarMixin(object):
             raise(Exception("A_kn must have rank 2 or 3!"))
 
         if input_rank == 2:
-            A_n = convert_Akn_to_Ak_array(A_kn, self.N_k)            
+            A_n = convert_Akn_to_An(A_kn, self.N_k)            
             if output == "differences":
                 return self.compute_expectation_difference(A_n, compute_uncertainty=compute_uncertainty, uncertainty_method=uncertainty_method, warning_cutoff=warning_cutoff)
             elif output == "averages":
@@ -183,7 +183,7 @@ class LegacyMBarMixin(object):
                 raise(Exception("output must be either 'differences' or 'averages'"))
         
         elif input_rank == 3:
-            A = convert_uijn_to_ukn_array(A_kn, self.N_k)
+            A = convert_uijn_to_ukn(A_kn, self.N_k)
             # To do: write 3D expectation code.
             raise(Exception("Not implemented!"))
 
@@ -238,7 +238,7 @@ class LegacyMBarMixin(object):
 
         """
 
-        pass
+        raise(Exception("Not Implemented!"))
 
     @deprecated()
     def computeOverlap(self, output='scalar'):
@@ -274,7 +274,7 @@ class LegacyMBarMixin(object):
         >>> O_ij = mbar.computeOverlap()
         """
 
-        pass
+        raise(Exception("Not Implemented!"))
 
     
     @deprecated()    
@@ -312,7 +312,7 @@ class LegacyMBarMixin(object):
         #A = sum(W_nk[:,K] * A_n[:]) # Eq. 15 of [1]
         #dA = abs(A) * numpy.sqrt(Theta_ij[K,K] + Theta_ij[K+1,K+1] - 2.0 * Theta_ij[K,K+1]) # Eq. 16 of [1]
         """
-        pass
+        raise(Exception("Not Implemented!"))
 
 
     @deprecated()
@@ -349,7 +349,7 @@ class LegacyMBarMixin(object):
         >>> mbar = MBAR(u_kln, N_k)
         >>> [Deltaf_ij, dDeltaf_ij] = mbar.computePerturbedFreeEnergies(u_kln)
         """
-        pass
+        raise(Exception("Not Implemented!"))
 
     
     @deprecated()
@@ -380,7 +380,7 @@ class LegacyMBarMixin(object):
         >>> [Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij] = mbar.computeEntropyAndEnthalpy()
 
         """
-        pass
+        raise(Exception("Not Implemented!"))
 
 
     @deprecated()
@@ -429,7 +429,7 @@ class LegacyMBarMixin(object):
         >>> [f_i, df_i] = mbar.computePMF(u_kn, bin_kn, nbins)
 
         """
-        pass
+        raise(Exception("Not Implemented!"))
 
 
     @deprecated()
@@ -461,4 +461,4 @@ class LegacyMBarMixin(object):
           This method is EXPERIMENTAL and should be used at your own risk.
 
         """
-        pass
+        raise(Exception("Not Implemented!"))

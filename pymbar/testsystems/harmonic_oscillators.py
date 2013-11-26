@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from pymbar.utils import ensure_type
 
 import logging
@@ -76,11 +75,12 @@ class HarmonicOscillatorsTestCase(object):
             x_n.extend(np.random.normal(loc=x0, scale=sigma, size=N))
             origin_and_frame.extend([(states[k], i) for i in range(int(N))])
         
-        origin_and_frame = pd.MultiIndex.from_tuples(origin_and_frame, names=["origin", "frame"])
-        x_n = pd.Series(x_n, name="x", index=origin_and_frame)
+        origin_and_frame = np.array(origin_and_frame)
+        x_n = np.array(x_n)
 
-        u_kn = pd.DataFrame(dict([(state, x_n) for state in states]))
-        u_kn = 0.5 * self.beta_k * self.K_k * (u_kn - self.O_k) ** 2.0        
+        u_kn = np.array([x_n for state in states])
+
+        u_kn = 0.5 * self.beta_k * self.K_k * (u_kn.T - self.O_k) ** 2.0        
         u_kn = u_kn.T
 
         return x_n, u_kn, origin_and_frame

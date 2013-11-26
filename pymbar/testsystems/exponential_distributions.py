@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from pymbar.utils import ensure_type
 
 
@@ -58,10 +57,9 @@ class ExponentialTestCase(object):
             x_n.extend(np.random.exponential(scale=self.rates[k] ** -1., size=N))
             origin_and_frame.extend([(states[k], i) for i in range(int(N))])
         
-        origin_and_frame = pd.MultiIndex.from_tuples(origin_and_frame, names=["origin", "frame"])
-        x_n = pd.Series(x_n, name="x", index=origin_and_frame)
+        origin_and_frame = np.array(origin_and_frame)
+        x_n = np.array(x_n)
 
-        u_kn = np.outer(x_n, self.rates)
-        u_kn = pd.DataFrame(u_kn, columns=states, index=origin_and_frame).T  # Note the transpose
+        u_kn = np.outer(x_n, self.rates).T
 
         return x_n, u_kn, origin_and_frame
