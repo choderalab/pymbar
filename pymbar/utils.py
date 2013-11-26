@@ -24,6 +24,9 @@ import warnings
 import numpy as np
 import pandas as pd
 
+import logging
+logger = logging.getLogger(__name__)
+
 ##############################################################################
 # functions / classes
 ##############################################################################
@@ -188,6 +191,126 @@ def convert_xn_to_x_kn(x_n, zero_fill_nans=True):
         x_kn.replace(np.nan, 0.0, inplace=True)
     return x_kn
 
+def convert_ukn_to_uijn_array(u_kn, N_k):
+    """Convert from 2D representation to 3D representation.
+
+    Parameters
+    ----------
+    u_kn : np.ndarray, shape=(n_states, n_samples)
+        Reduced potentials evaluated in each state for each sample x_n
+
+    Returns
+    -------
+    u_ijn : np.ndarray, shape=(n_states, n_states, n_max)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.
+
+    Notes
+    -----
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.  NOTE: CURRENTLY SLOW.
+    """
+    n_states, n_samples = u_kn.shape
+    N_max = N_k.max()
+
+    u_ijn = np.zeros((n_states, n_states, N_max))
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for j in range(n_states):
+        for ik in range(n_samples):
+            i, k = states[ik], frames[ik]
+            u_ijn[i, j, k] = u_kn[j, ik]
+    
+    return u_ijn
+    
+def convert_uijn_to_ukn_array(u_ijn, N_k):
+    """Convert from 2D representation to 3D representation.
+
+    Parameters
+    ----------
+    u_ijn : np.ndarray, shape=(n_states, n_states, n_max)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.    
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples from each state
+
+    Returns
+    -------
+    u_kn : np.ndarray, shape=(n_states, n_samples)
+        Reduced potentials evaluated in each state for each sample x_n
+
+
+    Notes
+    -----
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.  NOTE: CURRENTLY SLOW.
+    """
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
+    
+    n_states = len(N_k)
+    N_max = N_k.max()
+    n_samples = N_k.sum()
+    
+    u_ijn = ensure_type(u_ijn, dtype='float', ndim=3, name="u_ijn", shape=(n_states, n_states, N_max))
+    
+    u_kn = np.zeros((n_states, n_samples))
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for j in range(n_states):
+        for ik in range(n_samples):
+            i, k = states[ik], frames[ik]
+            u_kn[j, ik] = u_ijn[i, j, k]
+    
+    return u_kn
+    
+def convert_Akn_to_Ak_array(A_kn, N_k):
+    """Convert from 2D representation to 3D representation.
+
+    Parameters
+    ----------
+    A_kn : np.ndarray, shape=(n_states, n_max)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.    
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples from each state
+
+    Returns
+    -------
+    A_n : np.ndarray, shape=(n_samples)
+        Observable reshaped
+
+
+    Notes
+    -----
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.  NOTE: CURRENTLY SLOW.
+    """
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
+    
+    n_states = len(N_k)
+    N_max = N_k.max()
+    n_samples = N_k.sum()
+    
+    A_kn = ensure_type(A_kn, dtype='float', ndim=2, name="A_kn", shape=(n_states, N_max))
+    
+    A_k = np.zeros((n_samples))
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for ik in range(n_samples):
+        i, k = states[ik], frames[ik]
+        A_k[ik] = A_kn[i, k]
+    
+    return A_k    
+
 def _logsum(a_n):
     """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.
 
@@ -304,3 +427,50 @@ def validate_weight_matrix(W, N_k, tolerance=1E-4):
         raise ParameterError(
             'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
                              (firstbad, row_sums[firstbad], np.sum(badrows)))
+
+
+def deprecated(replacement=None):
+    """A decorator which can be used to mark functions as deprecated.
+    replacement is a callable that will be called with the same args
+    as the decorated function.
+    
+    Notes
+    -----
+    
+    Adapted from http://code.activestate.com/recipes/577819-deprecated-decorator/
+
+    >>> @deprecated()
+    ... def foo(x):
+    ...     return x
+    ...
+    >>> ret = foo(1)
+    DeprecationWarning: foo is deprecated
+    >>> ret
+    1
+    >>>
+    >>>
+    >>> def newfun(x):
+    ...     return 0
+    ...
+    >>> @deprecated(newfun)
+    ... def foo(x):
+    ...     return x
+    ...
+    >>> ret = foo(1)
+    DeprecationWarning: foo is deprecated; use newfun instead
+    >>> ret
+    0
+    >>>
+    """
+    def outer(oldfun):
+        def inner(*args, **kwargs):
+            msg = "%s is deprecated" % oldfun.__name__
+            if replacement is not None:
+                msg += "; use %s instead" % (replacement.__name__)
+            logger.warn(msg)
+            if replacement is not None:
+                return replacement(*args, **kwargs)
+            else:
+                return oldfun(*args, **kwargs)
+        return inner
+    return outer

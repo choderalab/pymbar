@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 from pymbar.utils import ensure_type
 
+import logging
+logger = logging.getLogger(__name__)
+
 class HarmonicOscillatorsTestCase(object):
     def __init__(self, O_k, K_k, beta_k):
         """Generate test case with harmonic oscillators.

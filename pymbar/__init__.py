@@ -17,6 +17,7 @@ __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exponential_averaging import EXP, EXPgauss
+from pymbar import utils
 
 import pymbar.timeseries
 import pymbar.testsystems

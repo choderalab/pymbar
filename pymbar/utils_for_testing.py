@@ -30,6 +30,8 @@ from nose.tools import ok_, eq_, raises
 from nose import SkipTest
 from pkg_resources import resource_filename
 
+import logging
+logger = logging.getLogger(__name__)
 
 # if the system doesn't have scipy, we'd like
 # this package to still work:

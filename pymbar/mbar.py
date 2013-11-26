@@ -28,8 +28,12 @@ that uses Kahan summation--as in `math.fsum()`.
 import numpy as np
 import itertools
 from pymbar.utils import ensure_type, ParameterError, validate_weight_matrix, logsumexp
+from pymbar.legacy_interface import LegacyMBarMixin
 import scipy.optimize
+
 import logging
+logger = logging.getLogger(__name__)
+
 
 def check_same_states(u_kn, relative_tolerance=1E-7):
     n_states, n_samples = u_kn.shape
@@ -40,7 +44,7 @@ def check_same_states(u_kn, relative_tolerance=1E-7):
             raise(ValueError("Error: states %d and %d are likely identical: Delta U = %f" % (i, j, delta)))
 
 def list_same_states(u_kn, N_k):
-    logging.warn("WARNING, list_same_states has not been written yet!!!")
+    logger.warn("WARNING, list_same_states has not been written yet!!!")
     return []
 
 
@@ -83,7 +87,7 @@ class MBARSolver(object):
         self.N_k = ensure_type(N_k, np.float64, 1, 'N_k', (self.n_states))
         self.log_N_k = np.log(self.N_k)
         
-        self.N = self.N_k.sum()
+        self.N = self.N_k.sum()        
         
         self.states = self.u_kn
         
@@ -206,7 +210,7 @@ def get_nonzero_indices(N_k):
     nonzero_N_k_indices = nonzero_N_k_indices.astype(np.int32)
     return nonzero_N_k_indices
 
-class MBAR(object):
+class MBAR(LegacyMBarMixin):
     """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
     Notes
@@ -275,6 +279,7 @@ class MBAR(object):
         self.log_N_k = np.log(self.N_k)
 
         self.N = self.N_k.sum()  # N_k is the total number of uncorrelated configurations pooled across all states
+        self.N_max = self.N_k.max()  # The number of samples from the state with the most samples.  
 
         self.same_states = list_same_states(self.u_kn, self.N_k)
 
@@ -283,12 +288,12 @@ class MBAR(object):
         # Store versions of variables nonzero indices file
         # Number of states with samples.
         self.K_nonzero = self.nonzero_N_k_indices.size
-        logging.debug("There are %d states with samples." % self.K_nonzero)
+        logger.debug("There are %d states with samples." % self.K_nonzero)
 
         self.N_nonzero = self.N_k[self.nonzero_N_k_indices].copy()
 
-        logging.debug("N_k = ")  # Print number of samples from each state.
-        logging.debug(N_k)
+        logger.debug("N_k = ")  # Print number of samples from each state.
+        logger.debug(N_k)
 
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
@@ -296,24 +301,24 @@ class MBAR(object):
         if initial_f_k is None:       
             self.f_k = np.zeros((self.n_states), dtype=np.float64)
         else:
-            logging.debug("Initializing f_k with provided initial guess.")
+            logger.debug("Initializing f_k with provided initial guess.")
             self.f_k = ensure_type(initial_f_k, 'float', (1), "f_k", (self.n_states), can_be_none=True)
-            logging.debug("Subtracting f_k[0]")
+            logger.debug("Subtracting f_k[0]")
             self.f_k -= self.f_k[0]
-            logging.debug(self.f_k)
+            logger.debug(self.f_k)
 
         self.mbar_solver = FixedPointMBARSolver(u_kn, N_k)  # NEED to deal with zero count states!!!!!!
         self.f_k = self.mbar_solver.solve()
 
-        logging.debug("Recomputing all free energies and log weights for storage")
+        logger.debug("Recomputing all free energies and log weights for storage")
        
         self.Log_W_nk, self.f_k = compute_log_weights(self.f_k, self.N_k, self.u_kn)
 
         # Print final dimensionless free energies.
-        logging.debug("Final dimensionless free energies")
-        logging.debug("f_k = ")
-        logging.debug(self.f_k)
-        logging.debug("MBAR initialization complete.")
+        logger.debug("Final dimensionless free energies")
+        logger.debug("f_k = ")
+        logger.debug(self.f_k)
+        logger.debug("MBAR initialization complete.")
 
     def _zero_same_states(self, A):
         """Zeros out states that should be identical
@@ -398,7 +403,7 @@ class MBAR(object):
             if (np.any(d2DeltaF < 0.0)):
                 if(np.any(d2DeltaF) < warning_cutoff):
                     # Hmm.  Will this print correctly?
-                    logging.warn("A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)])
+                    logger.warn("A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)])
                 else:
                     d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)] = 0.0
 
