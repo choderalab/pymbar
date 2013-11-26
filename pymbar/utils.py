@@ -244,7 +244,7 @@ def logsumexp(arr, axis=0):
     --------
 
     >>> import numpy as np
-    >>> from sklearn.utils.extmath import logsumexp
+    >>> from pymbar.utils import logsumexp
     >>> a = np.arange(10)
     >>> np.log(np.sum(np.exp(a)))
     9.4586297444267107
