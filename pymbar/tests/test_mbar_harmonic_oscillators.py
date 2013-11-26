@@ -16,7 +16,7 @@ O_k = np.array([1.0, 2.0, 3.0])
 k_k = np.array([1.0, 1.5, 2.0])
 beta_k = np.array([1.0, 1.1, 1.2])
 
-N_k = np.array([50, 60, 70])
+N_k = np.array([50, 60, 70]) * 500
 N_k_even = 50 * np.ones(3)
 
 num_samples_per_state = 100
@@ -53,9 +53,7 @@ def test_harmonic_oscillators_mbar_free_energies():
 
     fe0 = test.analytical_free_energies()
 
-    z = (fe - fe0) / fe_sigma
-    z = z[1:]  # First component is undetermined.
-    eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+    eq(fe, fe0, decimal=1)
 
 def test_exponential_mbar_xkn():
     """Harmonic Oscillators Test: can MBAR calculate E(x_kn)??"""

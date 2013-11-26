@@ -46,7 +46,7 @@ class ExponentialTestCase(object):
         Returns
         -------
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
-            1D harmonic oscillator positions            
+            1D exponential distribution positions            
         """
         N_k = ensure_type(N_k, np.float64, 1, "N_k", self.n_states, warn_on_cast=False)
 

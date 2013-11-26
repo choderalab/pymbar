@@ -4,7 +4,7 @@ from pymbar.utils import ensure_type
 
 class HarmonicOscillatorsTestCase(object):
     def __init__(self, O_k, K_k, beta_k):
-        """Generate test case with exponential distributions.
+        """Generate test case with harmonic oscillators.
 
         Parameters
         ----------
@@ -54,8 +54,12 @@ class HarmonicOscillatorsTestCase(object):
             
         Returns
         -------
-        x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
+        x_n : np.ndarray, shape=(n_samples), dtype=float
             1D harmonic oscillator positions            
+        u_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
+            1D harmonic oscillator reduced (unitless) potential energies
+        origin : np.ndarray, shape=(n_states, n_samples), dtype=float
+            State of origin of each sample
         """
         N_k = ensure_type(N_k, np.float64, 1, "N_k", self.n_states, warn_on_cast=False)
 
@@ -73,7 +77,7 @@ class HarmonicOscillatorsTestCase(object):
         x_n = pd.Series(x_n, name="x", index=origin_and_frame)
 
         u_kn = pd.DataFrame(dict([(state, x_n) for state in states]))
-        u_kn = 0.5 * self.K_k * (u_kn - self.O_k) ** 2.0        
+        u_kn = 0.5 * self.beta_k * self.K_k * (u_kn - self.O_k) ** 2.0        
         u_kn = u_kn.T
 
         return x_n, u_kn, origin_and_frame

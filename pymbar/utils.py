@@ -159,13 +159,19 @@ def convert_ukn_to_uijn(u_kn):
 
     return u_ijn, N_k
 
-def convert_xn_to_x_kn(x_n):
+def convert_xn_to_x_kn(x_n, zero_fill_nans=True):
     """Convert from 1D (pd.Series) representation to 2D (pd.DataFrame).
 
     Parameters
     ----------
     x_n : pd.DataFrame, shape=(n_samples)
         Reduced potentials evaluated in each state for each sample x_n
+    zero_fill_nans : bool, default=True
+        if True, replace nan values in output with zeros.  This is required
+        to prevent errors in some legacy pymbar 1.0 calculations.  The 
+        nans (zeros) arise when you have different numbers of samples
+        from each state--the "extra" places in the array will have either
+        nan or zero.
 
     Returns
     -------
@@ -178,6 +184,8 @@ def convert_xn_to_x_kn(x_n):
     1 to n_samples, while the second ranges from 1 to N_max.  
     """
     x_kn = x_n.reset_index().pivot("origin", "frame", "x")
+    if zero_fill_nans is True:
+        x_kn.replace(np.nan, 0.0, inplace=True)
     return x_kn
 
 def _logsum(a_n):

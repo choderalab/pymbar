@@ -13,7 +13,7 @@ from pymbar.old.mbar import MBAR as MBAR1  # Import mbar 1.0 for some reference 
 z_scale_factor = 3.0  # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
 
 rates = np.array([1.0, 2.0, 3.0])  # Rates, e.g. Lambda
-N_k = np.array([50, 60, 70])
+N_k = np.array([50, 60, 70]) * 500
 N_k_even = 50 * np.ones(3)
         
 def test_analytical_exponential():
@@ -41,10 +41,7 @@ def test_exponential_mbar_free_energies():
 
     fe0 = test.analytical_free_energies()
 
-    z = (fe - fe0) / fe_sigma
-    z = z[1:]  # First component is undetermined.
-    eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
-
+    eq(fe, fe0, decimal=1)
 
 def test_exponential_mbar_xkn():
     """Exponential Distribution Test: can MBAR calculate E(x_kn)?"""
