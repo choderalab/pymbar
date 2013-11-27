@@ -27,7 +27,7 @@ that uses Kahan summation--as in `math.fsum()`.
 
 import numpy as np
 import itertools
-from pymbar.utils import ensure_type, ParameterError, validate_weight_matrix, logsumexp
+from pymbar.utils import ensure_type, ParameterError, validate_weight_matrix, logsumexp, convert_uijn_to_ukn
 from pymbar.legacy_interface import LegacyMBARMixin
 import scipy.optimize
 
@@ -264,6 +264,10 @@ class MBAR(LegacyMBARMixin):
         The configurations x_kn must be uncorrelated.  This can be ensured by subsampling a correlated timeseries with a period larger than the statistical inefficiency,
         which can be estimated from the potential energy timeseries {u_k(x_n)}_{n=1}^{N} using the provided utility function 'statisticalInefficiency()'.
         See the help for this function for more information.
+        
+        The input u_kn can also be u_kln with shape (K, K, N_max), which
+        allows compatibility with pymbar1.0.  Internally, u_kln is
+        immediately converted (and copied) to u_kn.  
 
         Examples
         --------
@@ -271,6 +275,11 @@ class MBAR(LegacyMBARMixin):
         """
 
         # Store local copies of necessary data.
+        input_rank = np.rank(u_kn)
+        
+        if input_rank == 3:  # pymbar 1.0 compatibility, reshape input to 2D
+            u_kn = convert_uijn_to_ukn(u_kn, N_k)
+
         self.n_states, self.n_samples = u_kn.shape
         self.K = self.n_states
 

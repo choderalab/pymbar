@@ -15,7 +15,26 @@ k_k = np.array([1.0, 1.5, 2.0])
 beta_k = np.array([1.0, 1.1, 1.2])
 
 N_k = np.array([50, 60, 70]) * 500
+
+def test_mbar_2D_input():
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
+    x_n, u_kn, origin = test.sample(N_k)
+
+    mbar = MBAR(u_kn, N_k)
+    weights = mbar.getWeights()
+
+    u_ijn = convert_ukn_to_uijn(u_kn, N_k)    
+    mbar1 = MBAR1(u_ijn, N_k)
+    weights1 = mbar1.getWeights()
+    
+    mbar2 = MBAR(u_ijn, N_k)
+    weights2 = mbar2.getWeights()
         
+    eq(weights, weights1)
+    eq(weights, weights2)
+    eq(weights1, weights2)
+
+
 def test_getWeights():
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     x_n, u_kn, origin = test.sample(N_k)
