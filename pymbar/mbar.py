@@ -176,7 +176,7 @@ class BFGSMBARSolver(MBARSolver):
         
         return grad
         
-    def solve(self, start=None, use_fast_first=True):
+    def solve(self, start=None, use_fast_first=True, zero_component=0):
         if start is None:
             f_i = np.zeros(self.n_states)
         else:
@@ -186,6 +186,7 @@ class BFGSMBARSolver(MBARSolver):
             f_i, final_objective, convergence_parms = scipy.optimize.fmin_l_bfgs_b(self.objective_fast, f_i, self.gradient_fast, factr=1E-2, pgtol=1E-8)
         
         f_i, final_objective, convergence_parms = scipy.optimize.fmin_l_bfgs_b(self.objective, f_i, self.gradient, factr=1E-2, pgtol=1E-8)
+        set_zero_component(f_i, zero_component)
         
         return f_i        
 
@@ -323,7 +324,7 @@ class MBAR(LegacyMBARMixin):
             self.f_k -= self.f_k[0]
             logger.debug(self.f_k)
 
-        self.mbar_solver = BFGSMBARSolver(u_kn[self.nonzero_N_k_indices], N_k[self.nonzero_N_k_indices])  # NEED to deal with zero count states!!!!!!
+        self.mbar_solver = BFGSMBARSolver(u_kn[self.nonzero_N_k_indices], N_k[self.nonzero_N_k_indices])
         f_k_partial = self.mbar_solver.solve(start=self.f_k[self.nonzero_N_k_indices])
 
         self.f_k = np.zeros(self.n_states)
