@@ -203,4 +203,22 @@ def test_expectation_difference_against_mbar1():
     eq(mu1, mu)
     eq(sigma1, sigma)
     eq(theta1, theta)
+    
+def test_expectation_linear_many():
+    """Harmonic Oscillators Test: Testing against linearly spaced HOs."""
+    
+    n_states = 50
+    O_k = np.arange(n_states)
+    k_k = np.ones(n_states)
+    beta_k = np.ones(n_states)
+    N_k = 500 * np.ones(n_states)
 
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
+    x_n, u_kn, origin = test.sample(N_k)
+
+    mbar = MBAR(u_kn, N_k)
+
+    mu, sigma, theta = mbar.compute_expectation(x_n)
+    mu0 = test.analytical_means()
+    
+    eq(mu, mu0, decimal=1)
