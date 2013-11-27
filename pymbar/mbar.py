@@ -84,7 +84,9 @@ class MBARSolver(object):
         self.q_ki = np.exp(-self.u_kn)
         self.q_ki /= self.q_ki.max(0)  # Divide for overflow.
         
+        assert N_k.min() > 0, "Solver requires nonzero counts in each state."        
         self.N_k = ensure_type(N_k, np.float64, 1, 'N_k', (self.n_states))
+        
         self.log_N_k = np.log(self.N_k)
         
         self.N = self.N_k.sum()        

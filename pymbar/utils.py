@@ -20,6 +20,8 @@
 
 import itertools
 import warnings
+from pkg_resources import resource_filename
+import os
 
 import numpy as np
 import pandas as pd
@@ -467,3 +469,21 @@ def deprecated(replacement=None):
                 return oldfun(*args, **kwargs)
         return inner
     return outer
+
+
+def get_data_filename(relative_path):
+    """Get the full path to one of the reference files shipped for testing
+
+    Parameters
+    ----------
+    name : str
+        Name of the file to load (with respect to the pymbar folder).
+
+    """
+
+    fn = resource_filename('pymbar', relative_path)
+
+    if not os.path.exists(fn):
+        raise ValueError("Sorry! %s does not exist. If you just added it, you'll have to re-install" % fn)
+
+    return fn
