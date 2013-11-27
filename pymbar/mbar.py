@@ -138,6 +138,8 @@ class FixedPointMBARSolver(MBARSolver):
     def solve(self, start=None, use_fast_first=True, zero_component=0):
         if start is None:
             f_i = np.zeros(self.n_states)
+        else:
+            f_i = start
 
         if use_fast_first == True:
             eqn = lambda x: self.fixed_point_eqn_fast(x, zero_component=zero_component)
@@ -317,12 +319,15 @@ class MBAR(LegacyMBARMixin):
             self.f_k -= self.f_k[0]
             logger.debug(self.f_k)
 
-        self.mbar_solver = FixedPointMBARSolver(u_kn, N_k)  # NEED to deal with zero count states!!!!!!
-        self.f_k = self.mbar_solver.solve()
+        self.mbar_solver = FixedPointMBARSolver(u_kn[self.nonzero_N_k_indices], N_k[self.nonzero_N_k_indices])  # NEED to deal with zero count states!!!!!!
+        f_k_partial = self.mbar_solver.solve(start=self.f_k[self.nonzero_N_k_indices])
+
+        self.f_k = np.zeros(self.n_states)
+        self.f_k[self.nonzero_N_k_indices] = f_k_partial
 
         logger.debug("Recomputing all free energies and log weights for storage")
-       
-        self.Log_W_nk, self.f_k = compute_log_weights(self.f_k, self.N_k, self.u_kn)
+              
+        self.Log_W_nk, self.f_k = compute_log_weights(self.f_k, self.N_k, self.u_kn)  # This will fill in the values of f_k for states with zero counts.  
 
         # Print final dimensionless free energies.
         logger.debug("Final dimensionless free energies")
@@ -622,6 +627,11 @@ def compute_unnormalized_log_weights(u_kn, N_k, f_k):
     nonzero_N_k_indices = get_nonzero_indices(N_k)
     
     log_w_kn = np.zeros(n_samples)
+    print N_k[nonzero_N_k_indices].shape
+    print f_k.shape
+    print nonzero_N_k_indices.shape
+    print f_k[nonzero_N_k_indices].shape
+    print u_kn[nonzero_N_k_indices].shape
     exp_arg = (np.log(N_k[nonzero_N_k_indices]) + f_k[nonzero_N_k_indices] - u_kn[nonzero_N_k_indices].T).T
     return -1.0 * logsumexp(exp_arg)
 

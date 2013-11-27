@@ -42,6 +42,28 @@ def test_harmonic_oscillators_samples():
     x_n, u_kn, origin = test.sample(np.array([5, 5, 5]))
     x_n, u_kn, origin = test.sample(np.array([1., 1, 1.]))
         
+def test_harmonic_oscillators_mbar_free_energies_empty_state():
+    """Harmonic Oscillators Test: can MBAR calculate correct free energy differences with empty states?"""
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
+    
+    N_k = np.array([40000, 0, 50000])
+    x_n, u_kn, origin = test.sample(N_k)
+
+    mbar = MBAR(u_kn, N_k)
+    fe, fe_sigma = mbar.get_free_energy_differences()
+    fe, fe_sigma = fe[0], fe_sigma[0]
+    
+    initial_f_k = 0.1 * np.ones(len(O_k))
+    mbar = MBAR(u_kn, N_k, initial_f_k=initial_f_k)
+    fe2, fe_sigma2 = mbar.get_free_energy_differences()
+    fe2, fe_sigma2 = fe2[0], fe_sigma2[0]
+
+    fe0 = test.analytical_free_energies()
+
+    eq(fe, fe0, decimal=2)
+    eq(fe2, fe0, decimal=2)
+    eq(fe2, fe, decimal=2)
+
 def test_harmonic_oscillators_mbar_free_energies():
     """Harmonic Oscillators Test: can MBAR calculate correct free energy differences?"""
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
@@ -50,10 +72,17 @@ def test_harmonic_oscillators_mbar_free_energies():
     mbar = MBAR(u_kn, N_k)
     fe, fe_sigma = mbar.get_free_energy_differences()
     fe, fe_sigma = fe[0], fe_sigma[0]
+    
+    initial_f_k = 0.1 * np.ones(len(O_k))
+    mbar = MBAR(u_kn, N_k, initial_f_k=initial_f_k)
+    fe2, fe_sigma2 = mbar.get_free_energy_differences()
+    fe2, fe_sigma2 = fe2[0], fe_sigma2[0]
 
     fe0 = test.analytical_free_energies()
 
     eq(fe, fe0, decimal=1)
+    eq(fe2, fe0, decimal=1)
+    eq(fe2, fe, decimal=1)
 
 def test_exponential_mbar_xkn():
     """Harmonic Oscillators Test: can MBAR calculate E(x_kn)??"""
