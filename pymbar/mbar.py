@@ -135,7 +135,7 @@ class FixedPointMBARSolver(MBARSolver):
         set_zero_component(f_i, zero_component)
         return self.self_consistent_eqn_fast(f_i, zero_component=zero_component) + f_i
         
-    def solve(self, start=None, use_fast_first=True, zero_component=0):
+    def solve(self, start=None, use_fast_first=True, zero_component=0, max_iter=2500):
         if start is None:
             f_i = np.zeros(self.n_states)
         else:
@@ -143,10 +143,10 @@ class FixedPointMBARSolver(MBARSolver):
 
         if use_fast_first == True:
             eqn = lambda x: self.fixed_point_eqn_fast(x, zero_component=zero_component)
-            f_i = scipy.optimize.fixed_point(eqn, f_i)
+            f_i = scipy.optimize.fixed_point(eqn, f_i, maxiter=max_iter)
         
-        eqn = lambda x: self.fixed_point_eqn_fast(x, zero_component=zero_component)
-        f_i = scipy.optimize.fixed_point(eqn, f_i)
+        eqn = lambda x: self.fixed_point_eqn(x, zero_component=zero_component)
+        f_i = scipy.optimize.fixed_point(eqn, f_i, maxiter=max_iter)
         
         return f_i
         
