@@ -46,7 +46,7 @@ def test_harmonic_oscillators_mbar_free_energies_empty_state():
     """Harmonic Oscillators Test: can MBAR calculate correct free energy differences with empty states?"""
     test = harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k, beta_k)
     
-    N_k = np.array([40000, 0, 50000])
+    N_k = np.array([140000, 0, 150000])
     x_n, u_kn, origin = test.sample(N_k)
 
     mbar = MBAR(u_kn, N_k)

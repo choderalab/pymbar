@@ -626,12 +626,6 @@ def compute_unnormalized_log_weights(u_kn, N_k, f_k):
     
     nonzero_N_k_indices = get_nonzero_indices(N_k)
     
-    log_w_kn = np.zeros(n_samples)
-    print N_k[nonzero_N_k_indices].shape
-    print f_k.shape
-    print nonzero_N_k_indices.shape
-    print f_k[nonzero_N_k_indices].shape
-    print u_kn[nonzero_N_k_indices].shape
     exp_arg = (np.log(N_k[nonzero_N_k_indices]) + f_k[nonzero_N_k_indices] - u_kn[nonzero_N_k_indices].T).T
     return -1.0 * logsumexp(exp_arg)
 
