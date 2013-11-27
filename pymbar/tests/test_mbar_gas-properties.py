@@ -4,8 +4,6 @@ for which the true free energy differences can be computed analytically.
 
 import numpy as np
 from pymbar import MBAR
-import pymbar.mbar
-from pymbar.testsystems import harmonic_oscillators
 from pymbar.utils import ensure_type, convert_ukn_to_uijn, convert_An_to_Akn, get_data_filename
 from pymbar.utils_for_testing import eq
 from pymbar.old.mbar import MBAR as MBAR1  # Import mbar 1.0 for some reference calculations
