@@ -285,7 +285,7 @@ class MBAR(LegacyMBARMixin):
         input_rank = np.rank(u_kn)
         
         if input_rank == 3:  # pymbar 1.0 compatibility, reshape input to 2D
-            logger.warn("Warning: you 3D input (u_ijn) is deprecated in pymbar2.0 and will be replaced by 2D input (u_kn).")
+            logger.warn("Warning: 3D input (u_ijn) is deprecated in pymbar2.0 and will be replaced by 2D input (u_kn).")
             u_kn = convert_uijn_to_ukn(u_kn, N_k)
 
         self.n_states, self.n_samples = u_kn.shape
