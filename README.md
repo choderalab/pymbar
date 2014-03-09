@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/choderalab/pymbar.png)](https://travis-ci.org/choderalab/pymbar)
+[![PyPI Version](https://badge.fury.io/py/pymbar.png)](https://pypi.python.org/pypi/pymbar)
+[![Downloads](https://pypip.in/d/pymbar/badge.png)](https://pypi.python.org/pypi/pymbar)
 
 pymbar
 ======
