@@ -95,15 +95,15 @@ def buildKeywordDictionary():
     setupKeywords["license"]           = "GPL 2.0"
     setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
     setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
-    setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems']
+    setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems', "pymbar.old"]
     setupKeywords["package_dir"]       = {'pymbar' : 'pymbar'}
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
-    setupKeywords["data_files"]        = []
     setupKeywords["ext_modules"]       = [CMBAR]
     # setupKeywords["test_suite"]        = "tests" # requires we migrate to setuptools
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
     setupKeywords["description"]       = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method."
     setupKeywords["requires"]          = ["numpy", "scipy", "pandas", "nose"]
+    setupKeywords["package_data"]      = {"pymbar" : ["testsystems/datasets/gas-properties/*", "testsystems/datasets/8proteins/*"]}
     setupKeywords["long_description"]  = """
     Pymbar (https://simtk.org/home/pymbar) is a library
     that provides tools for optimally combining simulations 

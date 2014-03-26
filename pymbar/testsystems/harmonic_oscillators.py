@@ -1,10 +1,12 @@
 import numpy as np
-import pandas as pd
 from pymbar.utils import ensure_type
 
+import logging
+logger = logging.getLogger(__name__)
+
 class HarmonicOscillatorsTestCase(object):
-    def __init__(self, O_k, K_k, beta=1.0):
-        """Generate test case with exponential distributions.
+    def __init__(self, O_k, K_k, beta_k):
+        """Generate test case with harmonic oscillators.
 
         Parameters
         ----------
@@ -24,18 +26,18 @@ class HarmonicOscillatorsTestCase(object):
         """
         self.O_k = ensure_type(O_k, np.float64, 1, "O_k")
         self.n_states = len(self.O_k)
+        
         self.K_k = ensure_type(K_k, np.float64, 1, "K_k", self.n_states)
-
-        self.beta = beta
+        self.beta_k = ensure_type(beta_k, np.float64, 1, "beta_k", self.n_states)
     
     def analytical_means(self):
         return self.O_k
         
     def analytical_variances(self):
-        return (self.beta * self.K_k) ** -1.
+        return (self.beta_k * self.K_k) ** -1.
         
     def analytical_free_energies(self, subtract_component=0):
-        fe = -0.5 * np.log( 2 * np.pi / (self.beta * self.K_k))
+        fe = -0.5 * np.log( 2 * np.pi / (self.beta_k * self.K_k))
         if subtract_component is not None:
             fe -= fe[subtract_component]
         return fe
@@ -54,26 +56,31 @@ class HarmonicOscillatorsTestCase(object):
             
         Returns
         -------
-        x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
+        x_n : np.ndarray, shape=(n_samples), dtype=float
             1D harmonic oscillator positions            
+        u_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
+            1D harmonic oscillator reduced (unitless) potential energies
+        origin : np.ndarray, shape=(n_states, n_samples), dtype=float
+            State of origin of each sample
         """
         N_k = ensure_type(N_k, np.float64, 1, "N_k", self.n_states, warn_on_cast=False)
 
-        states = ["state %d" % k for k in range(self.n_states)]
+        states = range(self.n_states)
         
         x_n = []
         origin_and_frame = []
         for k, N in enumerate(N_k):
             x0 = self.O_k[k]
-            sigma = (self.beta * self.K_k[k]) ** -0.5
+            sigma = (self.beta_k[k] * self.K_k[k]) ** -0.5
             x_n.extend(np.random.normal(loc=x0, scale=sigma, size=N))
             origin_and_frame.extend([(states[k], i) for i in range(int(N))])
         
-        origin_and_frame = pd.MultiIndex.from_tuples(origin_and_frame, names=["origin", "frame"])
-        x_n = pd.Series(x_n, name="x", index=origin_and_frame)
+        origin_and_frame = np.array(origin_and_frame)
+        x_n = np.array(x_n)
 
-        u_kn = pd.DataFrame(dict([(state, x_n) for state in states]))
-        u_kn = 0.5 * self.K_k * (u_kn - self.O_k) ** 2.0        
+        u_kn = np.array([x_n for state in states])
+
+        u_kn = 0.5 * self.beta_k * self.K_k * (u_kn.T - self.O_k) ** 2.0        
         u_kn = u_kn.T
 
         return x_n, u_kn, origin_and_frame

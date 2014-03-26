@@ -20,9 +20,14 @@
 
 import itertools
 import warnings
+from pkg_resources import resource_filename
+import os
 
 import numpy as np
 import pandas as pd
+
+import logging
+logger = logging.getLogger(__name__)
 
 ##############################################################################
 # functions / classes
@@ -134,63 +139,172 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
     return val
 
 
-def convert_ukn_to_uijn(u_kn):
+def convert_ukn_to_uijn(u_kn, N_k):
     """Convert from 2D representation to 3D representation.
 
     Parameters
     ----------
-    u_kn : pd.DataFrame, shape=(n_states, n_samples)
+    u_kn : np.ndarray, shape=(n_states, n_samples)
         Reduced potentials evaluated in each state for each sample x_n
 
     Returns
     -------
-    u_ijn : pd.Panel, shape=(n_states, n_states, n_samples)
+    u_ijn : np.ndarray, shape=(n_states, n_states, n_max)
         The reduced potential evaluated in state i, for a sample taken 
         from state j, with sample index n.
 
     Notes
     -----
     This is useful for converting data from pymbar 1.0 to pymbar 2.0
-    formats.
+    formats.  NOTE: CURRENTLY SLOW.
     """
-    origin = u_kn.columns
-    N_k = pd.value_counts(origin.get_level_values(0)).sort_index()
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
     
-    states = u_kn.index
-    sample_ids = u_kn.columns
-
-    n_states = len(states)
+    n_states = len(N_k)
     N_max = N_k.max()
+    n_samples = N_k.sum()
+    
+    u_kn = ensure_type(u_kn, dtype='float', ndim=2, name="u_kn", shape=(n_states, n_samples))
     
     u_ijn = np.zeros((n_states, n_states, N_max))
-    u_ijn = pd.Panel(u_ijn, items=states, major_axis=states, minor_axis=range(N_max))
-    for state_evaluated in states:
-        for ind in origin:
-            state_origin, sample_id = ind
-            u_ijn[state_evaluated] = u_kn[state_evaluated]
-
-    return u_ijn, N_k
-
-def convert_xn_to_x_kn(x_n):
-    """Convert from 1D (pd.Series) representation to 2D (pd.DataFrame).
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for j in range(n_states):
+        for ik in range(n_samples):
+            i, k = states[ik], frames[ik]
+            u_ijn[i, j, k] = u_kn[j, ik]
+    
+    return u_ijn
+    
+def convert_uijn_to_ukn(u_ijn, N_k):
+    """Convert from 2D representation to 3D representation.
 
     Parameters
     ----------
-    x_n : pd.DataFrame, shape=(n_samples)
-        Reduced potentials evaluated in each state for each sample x_n
+    u_ijn : np.ndarray, shape=(n_states, n_states, n_max)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.    
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples from each state
 
     Returns
     -------
-    x_kn : pd.DataFrame, shape=(n_states, N_max)
-        The samples grouped by their origin and frame number.
-    
+    u_kn : np.ndarray, shape=(n_states, n_samples)
+        Reduced potentials evaluated in each state for each sample x_n
+
+
     Notes
     -----
-    The `n` variable in x_n and x_kn are different--the one ranges from 
-    1 to n_samples, while the second ranges from 1 to N_max.  
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.  NOTE: CURRENTLY SLOW.
     """
-    x_kn = x_n.reset_index().pivot("origin", "frame", "x")
-    return x_kn
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
+    
+    n_states = len(N_k)
+    N_max = N_k.max()
+    n_samples = N_k.sum()
+    
+    u_ijn = ensure_type(u_ijn, dtype='float', ndim=3, name="u_ijn", shape=(n_states, n_states, N_max))
+    
+    u_kn = np.zeros((n_states, n_samples))
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for j in range(n_states):
+        for ik in range(n_samples):
+            i, k = states[ik], frames[ik]
+            u_kn[j, ik] = u_ijn[i, j, k]
+    
+    return u_kn
+    
+def convert_Akn_to_An(A_kn, N_k):
+    """Convert from 2D representation to 1D representation of a single observable.
+
+    Parameters
+    ----------
+    A_kn : np.ndarray, shape=(n_states, n_max)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.    
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples from each state
+
+    Returns
+    -------
+    A_n : np.ndarray, shape=(n_samples)
+        Observable reshaped
+
+
+    Notes
+    -----
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.  NOTE: CURRENTLY SLOW.
+    """
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
+    
+    n_states = len(N_k)
+    N_max = N_k.max()
+    n_samples = N_k.sum()
+    
+    A_kn = ensure_type(A_kn, dtype='float', ndim=2, name="A_kn", shape=(n_states, N_max))
+    
+    A_k = np.zeros((n_samples))
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for ik in range(n_samples):
+        i, k = states[ik], frames[ik]
+        A_k[ik] = A_kn[i, k]
+    
+    return A_k
+    
+def convert_An_to_Akn(A_n, N_k):
+    """Convert from 1D representation to 2D representation of a single observable.
+
+    Parameters
+    ----------
+    A_n : np.ndarray, shape=(n_samples)
+        Observable reshaped    
+    N_k : np.ndarray, shape=(n_states)
+        Number of samples from each state
+
+    Returns
+    -------
+    A_kn : np.ndarray, shape=(n_states, n_max)
+        The reduced potential evaluated in state i, for a sample taken 
+        from state j, with sample index n.    
+
+
+    Notes
+    -----
+    This is useful for converting data from pymbar 1.0 to pymbar 2.0
+    formats.  NOTE: CURRENTLY SLOW.
+    """
+    N_k = ensure_type(N_k, dtype='int', ndim=1, name="N_k")
+    
+    n_states = len(N_k)
+    N_max = N_k.max()
+    n_samples = N_k.sum()
+    
+    A_n = ensure_type(A_n, dtype='float', ndim=1, name="A_n", shape=(n_samples,))
+    
+    A_kn = np.zeros((n_states, N_max))
+    
+    #Create mapping from jk to j, k
+    states = np.repeat(np.arange(n_states), N_k)
+    frames = np.concatenate([np.arange(N_k[i]) for i in range(n_states)])
+    
+    for ik in range(n_samples):
+        i, k = states[ik], frames[ik]
+        A_kn[i, k] = A_n[ik]
+    
+    return A_kn       
 
 def _logsum(a_n):
     """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.
@@ -234,6 +348,35 @@ def _logsum(a_n):
         
     return log_sum
 
+def logsumexp(arr, axis=0):
+    """Computes the sum of arr assuming arr is in the log domain.
+
+    Returns log(sum(exp(arr))) while minimizing the possibility of
+    over/underflow.
+    
+    Notes
+    -----
+    Backported from sklearn.utils.extmath.
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> from pymbar.utils import logsumexp
+    >>> a = np.arange(10)
+    >>> np.log(np.sum(np.exp(a)))
+    9.4586297444267107
+    >>> logsumexp(a)
+    9.4586297444267107
+    """
+    arr = np.rollaxis(arr, axis)
+    # Use the max to normalize, as with the log this is what accumulates
+    # the less errors
+    vmax = arr.max(axis=0)
+    out = np.log(np.sum(np.exp(arr - vmax), axis=0))
+    out += vmax
+    return out
+
 #=============================================================================================
 # Exception classes
 #=============================================================================================
@@ -258,3 +401,89 @@ class BoundsError(Exception):
 
     """
     pass
+
+def validate_weight_matrix(W, N_k, tolerance=1E-4):
+    """Check that row and column sums are 1; else raise ParameterError."""
+    N, K = W.shape
+    column_sums = np.sum(W, axis=0)
+    badcolumns = (np.abs(column_sums - 1) > tolerance)
+    if np.any(badcolumns):
+        which_badcolumns = np.arange(K)[badcolumns]
+        firstbad = which_badcolumns[0]
+        raise ParameterError(
+            'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
+                             (firstbad, column_sums[firstbad], np.sum(badcolumns)))
+
+    row_sums = np.sum(W * N_k, axis=1)
+    badrows = (np.abs(row_sums - 1) > tolerance)
+    if np.any(badrows):
+        which_badrows = np.arange(N)[badrows]
+        firstbad = which_badrows[0]
+        raise ParameterError(
+            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
+                             (firstbad, row_sums[firstbad], np.sum(badrows)))
+
+
+def deprecated(replacement=None):
+    """A decorator which can be used to mark functions as deprecated.
+    replacement is a callable that will be called with the same args
+    as the decorated function.
+    
+    Notes
+    -----
+    
+    Adapted from http://code.activestate.com/recipes/577819-deprecated-decorator/
+
+    >>> @deprecated()
+    ... def foo(x):
+    ...     return x
+    ...
+    >>> ret = foo(1)
+    DeprecationWarning: foo is deprecated
+    >>> ret
+    1
+    >>>
+    >>>
+    >>> def newfun(x):
+    ...     return 0
+    ...
+    >>> @deprecated(newfun)
+    ... def foo(x):
+    ...     return x
+    ...
+    >>> ret = foo(1)
+    DeprecationWarning: foo is deprecated; use newfun instead
+    >>> ret
+    0
+    >>>
+    """
+    def outer(oldfun):
+        def inner(*args, **kwargs):
+            msg = "%s is deprecated" % oldfun.__name__
+            if replacement is not None:
+                msg += "; use %s instead" % (replacement.__name__)
+            logger.warn(msg)
+            if replacement is not None:
+                return replacement(*args, **kwargs)
+            else:
+                return oldfun(*args, **kwargs)
+        return inner
+    return outer
+
+
+def get_data_filename(relative_path):
+    """Get the full path to one of the reference files shipped for testing
+
+    Parameters
+    ----------
+    name : str
+        Name of the file to load (with respect to the pymbar folder).
+
+    """
+
+    fn = resource_filename('pymbar', relative_path)
+
+    if not os.path.exists(fn):
+        raise ValueError("Sorry! %s does not exist. If you just added it, you'll have to re-install" % fn)
+
+    return fn

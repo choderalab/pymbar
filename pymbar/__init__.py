@@ -13,14 +13,16 @@ __license__ = "GPL"
 __maintainer__ = "Michael R. Shirts and John D. Chodera"
 __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 
-import pymbar
+
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exponential_averaging import EXP, EXPgauss
+from pymbar import utils
 
 import pymbar.timeseries
 import pymbar.testsystems
 import pymbar.confidenceintervals
+import pymbar.old
 
-__all__ = ['EXP', 'EXPgauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
+__all__ = ['EXP', 'EXPgauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils', "old"]
 
