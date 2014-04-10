@@ -1826,7 +1826,8 @@ class MBAR:
                 if (len(w_F) > 0 and len(w_R) > 0):
                     # BAR solution doesn't need to be incredibly accurate to
                     # kickstart NR.
-                    self.f_k[l] = self.f_k[k] + BAR(
+                    import pymbar.bar
+                    self.f_k[l] = self.f_k[k] + pymbar.bar.BAR(
                         w_F, w_R, relative_tolerance=0.000001, verbose=False, compute_uncertainty=False)
                 else:
                     # no states observed, so we don't need to initialize this free energy anyway, as

@@ -130,7 +130,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 # Gaussian approximation to exponential averaging (Gauss).
 #=============================================================================================
 
-def EXPgauss(w_F, compute_uncertainty=True, is_timeseries=False):
+def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
   """
   Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
@@ -156,10 +156,10 @@ def EXPgauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
   >>> import testsystems
   >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-  >>> [DeltaF, dDeltaF] = EXPgauss(w_F)
+  >>> [DeltaF, dDeltaF] = EXPGauss(w_F)
   >>> print 'Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-  >>> [DeltaF, dDeltaF] = EXPgauss(w_R)
+  >>> [DeltaF, dDeltaF] = EXPGauss(w_R)
   >>> print 'Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
   
