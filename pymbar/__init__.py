@@ -8,8 +8,7 @@ ratio (MBAR) estimator.
 """
 
 __author__ = "Michael R. Shirts and John D. Chodera"
-__version__ = "2.0beta"
-__license__ = "GPL"
+__license__ = "LGPL"
 __maintainer__ = "Michael R. Shirts and John D. Chodera"
 __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 
@@ -21,6 +20,7 @@ from pymbar.exponential_averaging import EXP, EXPGauss
 import pymbar.timeseries
 import pymbar.testsystems
 import pymbar.confidenceintervals
+import pymbar.version
 
 __all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
 
