@@ -3,68 +3,20 @@
 Getting started
 ###############
 
-Installing pymbar
-=================
-
-pymbar currently runs best on Python 2.7.x; earlier versions of Python are not
-supported. We are working on support for Python 3.3+. pymbar is developed and
-tested on mac and linux platforms. It probably works on windows, but might
-require some hacking.
-
-Easy Way
---------
-
-Just run ::
-
-  pip install pymbar
-
-Medium Way
-----------
-Clone the source code repository from github::
-
-  $ git clone git://github.com/choderalab/pymbar.git
-
-If you don't have ``git``, you can download the source code as a zip file from
-https://github.com/choderalab/pymbar/archive/master.zip. Then, in the directory containing the source code, you can install it with. ::
-
-  $ python setup.py install
-
-Running the tests
-=================
-Running the tests is a great way to verify that everything is working. The test
-suite uses `nose <https://nose.readthedocs.org/en/latest/>`_, which you can pick
-up via ``pip`` if you don't already have it. ::
-
-  pip install nose
-  
-Then, to run the tests, open a python shell and do ::
-
-  >>> import pymbar
-  >>> pymbar.test()
-
-From the source directory, you can also run the tests with ``nosetests`` on
-the command line
-
 Dependencies
 ============
 
-pymbar requires a few external libraries to work properly. Some of them are
-optional. You'll definitely need ``numpy``. You'll also need a working C
-compiler and build environment, to compile the C-level extensions that connect
-the python code to the bit-twiddling C libraries that read and  write most of
-these binary formats.
+``pymbar`` requires ``numpy`` and ``scipy``. You'll also need a working C
+compiler and build environment, to compile various C-level extensions.
 
-Easy Way
---------
+Easy Way (Recommended)
+----------------------
 
 The easiest way to get all of the dependencies is to install one of the 
 pre-packaged scientific python distributes like `Enthought's Canopy 
 <https://www.enthought.com/products/canopy/>`_ or `Continuum's Anaconda 
 <https://store.continuum.io/>`_. These distributions already contain all of 
-the dependences, and are distributed via 1-click installers for Windows, Mac 
-and Linux. You won't have to install anything except pymbar, which can be done, as shown above, with ::
-
-  pip install git+git://github.com/choderalab/pymbar.git
+the dependences, and are distributed via 1-click installers.
 
 Medium Way
 ----------
@@ -73,7 +25,7 @@ Linux
 ++++++
 If you're on ubuntu and have root, you can install everything through your package manager. ::
 
-  $ sudo apt-get install libhdf5-serial-dev python-dev python-numpy python-nose python-setuptools cython python-numexpr python-tables netcdf-bin libnetcdf-dev python-netcdf python-networkx python-netcdf
+  $ sudo apt-get install python-dev python-numpy python-nose python-setuptools python-scipy
 
 Mac
 +++
@@ -84,13 +36,6 @@ samueljohn's tap. ::
   $ brew install python
   $ brew install numpy
   $ brew install scipy
-  $ brew install hdf5
-  $ brew install netcdf
-
-Then, you can install the remaining packages with pip. ::
-
-  $ pip install nose numexpr cython tables
-  $ pip install netcdf4
 
 Harder Way : Compiling from source (no root needed)
 ---------------------------------------------------
@@ -106,32 +51,6 @@ If you don't already have a python installation you want to use, you can compile
 
   $ export PATH=$HOME/local/python/bin:$PATH
 
-To compile the dependences from source, you need to get ``libhdf5``, ``libnetcdf``, and ``numpy``, which can have some BLAS issues. I recommend configuring everything with ``--prefix`` so that you don't get your packages mixed up with system packages. NetCDF4 depends on hdf5, so you need to install HDF5 first. ::
-
-  $ wget http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.11.tar.gz
-  $ tar -xzvf hdf5-1.8.11.tar.gz
-  $ cd hdf5-1.8.11
-  $ ./configure --prefix=$HOME/opt/hdf5-1.8.11
-  $ make
-  $ make install
-
-  $ export LD_LIBRARY_PATH=$HOME/opt/hdf5-1.8.11/lib:$LD_LIBRARY_PATH
-  $ export PATH=$HOME/opt/hdf5-1.8.11/bin:$PATH
-
-  $ cd ..
-  $ wget http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-4.3.0.tar.gz
-  $ tar -xzvf netcdf-4.3.0.tar.gz
-  $ cd netcdf-4.3.0
-  $ CFLAGS="-I$HOME/opt/hdf5-1.8.11/include -L$HOME/opt/hdf5-1.8.11/lib"
-  $ ./configure --prefix=$HOME/opt/netcdf-4.3.0
-  $ make
-  $ make install
-
-  $ export LD_LIBRARY_PATH=$HOME/opt/netcdf-4.3.0/lib:$LD_LIBRARY_PATH
-  $ export PATH=$HOME/opt/netcdf-4.3.0/bin:$PATH
-
-You'll probably want to add those ``export`` statements to your bashrc too.
-
 If you don't have ``easy_install`` or ``pip`` yet, you can get them with ::
 
   $ wget http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz
@@ -144,8 +63,40 @@ Now you're home free ::
 
   $ pip install numpy
   $ pip install scipy
-  $ pip install cython
-  $ pip install numexpr
-  $ pip install tables
-  $ pip install netcdf4
+
+Installing ``pymbar``
+=================
+
+``pymbar`` currently runs best on Python 2.7.x; earlier versions of Python are not
+supported.  ``pymbar`` is developed and
+tested on mac and linux platforms. 
+
+Easy Way (Recommended)
+----------------------
+
+Just run ::
+
+  $ pip install pymbar
+
+Medium Way (Advanced Users Only)
+------------------------------------
+To get the latest unstable version, clone the source code repository from github::
+
+  $ git clone git://github.com/choderalab/pymbar.git
+
+Then, in the directory containing the source code, you can install it with. ::
+
+  $ python setup.py install
+
+
+Running the tests
+=================
+Running the tests is a great way to verify that everything is working. The test
+suite uses `nose <https://nose.readthedocs.org/en/latest/>`_, which you can pick
+up via ``pip`` if you don't already have it. ::
+
   $ pip install nose
+  
+Then enter the ``pymbar`` the source directory and run
+
+  $ nosetests
