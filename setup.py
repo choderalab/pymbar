@@ -1,8 +1,12 @@
 """
-setup.py: Install pymbar.  
+The pymbar package contains the pymbar suite of tools for the analysis of
+simulated and experimental data with the multistate Bennett acceptance
+ratio (MBAR) estimator.
+
 """
-from distutils.sysconfig import get_config_var
+#from distutils.sysconfig import get_config_var
 from distutils.core import setup, Extension
+from setuptools import setup, Extension
 import numpy
 import glob
 import os
@@ -120,7 +124,7 @@ def buildKeywordDictionary():
     
     print("%s" % outputString)
 
-    get_config_var(None)  # this line is necessary to fix the imports Mac OS X
+    #get_config_var(None)  # this line is necessary to fix the imports Mac OS X
     return setupKeywords
     
 
