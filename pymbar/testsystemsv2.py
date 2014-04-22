@@ -1,45 +1,30 @@
 #!/usr/bin/env python
+##############################################################################
+# pymbar: A Python Library for MBAR
+#
+# Copyright 2010-2014 University of Virginia, Memorial Sloan-Kettering Cancer Center
+#
+# Authors: Michael Shirts, John Chodera
+# Contributors: Kyle Beauchamp
+#
+# pymbar is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 2.1
+# of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pymbar. If not, see <http://www.gnu.org/licenses/>.
+##############################################################################
 
 """
 Test systems for pymbar.
 
 """
-
-#=============================================================================================
-# COPYRIGHT NOTICE
-#
-# Written by John D. Chodera <jchodera@gmail.com> and Michael R. Shirts <mrshirts@gmail.com>.
-#
-# Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
-# Portions of this software are Copyright (c) 20010-2012 University of California and University of Virginia
-#
-# This program is free software; you can redistribute it and/or modify it under the terms of
-# the GNU General Public License as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License along with this program;
-# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-# Boston, MA  02110-1301, USA.
-#=============================================================================================
-
-#=============================================================================================
-# TODO
-#=============================================================================================
-
-#=============================================================================================
-# VERSION CONTROL INFORMATION
-#=============================================================================================
-
-__version__ = "$Revision: $ $Date: $"
-# $Date: 2009-11-03 21:43:35 -0600 (Tue, 03 Nov 2009) $
-# $Revision: 87 $
-# $LastChangedBy: mrshirts $
-# $HeadURL: https://simtk.org/svn/pymbar/trunk/pymbar/testsystems.py $
-# $Id: MBAR.py 87 2009-11-04 03:43:35Z mrshirts $
 
 #=============================================================================================
 # IMPORTS
