@@ -97,6 +97,7 @@ up via ``pip`` if you don't already have it. ::
 
   $ pip install nose
   
-Then enter the ``pymbar`` the source directory and run
+Then enter the ``pymbar`` the source directory and run ::
 
   $ nosetests
+
