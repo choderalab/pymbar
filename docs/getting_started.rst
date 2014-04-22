@@ -3,50 +3,20 @@
 Getting started
 ###############
 
-Installing pymbar
-=================
-
-pymbar currently runs best on Python 2.7.x; earlier versions of Python are not
-supported. We are working on support for Python 3.3+. pymbar is developed and
-tested on mac and linux platforms. It probably works on windows, but might
-require some hacking.
-
-Easy Way (Recommended)
-----------------------
-
-Just run ::
-
-  pip install pymbar
-
-Medium Way (For Advanced Users Only)
-------------------------------------
-To get the latest unstable version, clone the source code repository from github::
-
-  $ git clone git://github.com/choderalab/pymbar.git
-
-Then, in the directory containing the source code, you can install it with. ::
-
-  $ python setup.py install
-
-
 Dependencies
 ============
 
-pymbar requires a few external libraries to work properly. Some of them are
-optional. You'll definitely need ``numpy`` and ``scipy``. You'll also need a working C
-compiler and build environment, to compile the C-level extensions that connect
-the python code to the bit-twiddling C libraries that read and  write most of
-these binary formats.
+``pymbar`` requires ``numpy`` and ``scipy``. You'll also need a working C
+compiler and build environment, to compile various C-level extensions.
 
-Easy Way
---------
+Easy Way (Recommended)
+----------------------
 
 The easiest way to get all of the dependencies is to install one of the 
 pre-packaged scientific python distributes like `Enthought's Canopy 
 <https://www.enthought.com/products/canopy/>`_ or `Continuum's Anaconda 
 <https://store.continuum.io/>`_. These distributions already contain all of 
-the dependences, and are distributed via 1-click installers for Windows, Mac 
-and Linux.
+the dependences, and are distributed via 1-click installers.
 
 Medium Way
 ----------
@@ -66,10 +36,6 @@ samueljohn's tap. ::
   $ brew install python
   $ brew install numpy
   $ brew install scipy
-
-Then, you can install the remaining packages with pip. ::
-
-  $ pip install nose 
 
 Harder Way : Compiling from source (no root needed)
 ---------------------------------------------------
@@ -98,6 +64,30 @@ Now you're home free ::
   $ pip install numpy
   $ pip install scipy
 
+Installing ``pymbar``
+=================
+
+``pymbar`` currently runs best on Python 2.7.x; earlier versions of Python are not
+supported.  ``pymbar`` is developed and
+tested on mac and linux platforms. 
+
+Easy Way (Recommended)
+----------------------
+
+Just run ::
+
+  $ pip install pymbar
+
+Medium Way (Advanced Users Only)
+------------------------------------
+To get the latest unstable version, clone the source code repository from github::
+
+  $ git clone git://github.com/choderalab/pymbar.git
+
+Then, in the directory containing the source code, you can install it with. ::
+
+  $ python setup.py install
+
 
 Running the tests
 =================
@@ -105,7 +95,8 @@ Running the tests is a great way to verify that everything is working. The test
 suite uses `nose <https://nose.readthedocs.org/en/latest/>`_, which you can pick
 up via ``pip`` if you don't already have it. ::
 
-  pip install nose
+  $ pip install nose
   
-From the source directory, run the tests with ``nosetests`` on
-the command line.
+Then enter the ``pymbar`` the source directory and run
+
+  $ nosetests
