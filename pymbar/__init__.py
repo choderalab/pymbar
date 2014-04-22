@@ -20,7 +20,7 @@ from pymbar.exponential_averaging import EXP, EXPGauss
 import pymbar.timeseries
 import pymbar.testsystems
 import pymbar.confidenceintervals
-from mdtraj import version
+from pymbar import version
 
 __all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
 
