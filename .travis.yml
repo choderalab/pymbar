@@ -12,7 +12,8 @@ before_install:
  - sudo pip install pandas
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install: 
-  - "pip install . --use-mirrors"
+ - python setup.py install
+  #- "pip install . --use-mirrors"  # Can't seem to use pip on travis
 #  - "pip install -r requirements.txt --use-mirrors" # using apt-get instead
 # command to run tests, e.g. python setup.py test
 script: 
