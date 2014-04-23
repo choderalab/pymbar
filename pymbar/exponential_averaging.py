@@ -78,7 +78,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
   Compute the free energy difference given a sample of forward work values.
 
-  >>> import testsystems
+  >>> from pymbar import testsystems
   >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
   >>> [DeltaF, dDeltaF] = EXP(w_F)
   >>> print 'Forward free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
@@ -150,7 +150,7 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
   Compute the free energy difference given a sample of forward work values.
 
-  >>> import testsystems
+  >>> from pymbar import testsystems
   >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
   >>> [DeltaF, dDeltaF] = EXPGauss(w_F)
   >>> print 'Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)

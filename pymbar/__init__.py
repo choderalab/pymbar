@@ -37,7 +37,7 @@ from pymbar.bar import BAR, BARzero
 from pymbar.exponential_averaging import EXP, EXPGauss
 
 import pymbar.timeseries
-import pymbar.testsystems
+import pymbar.testsystems as testsystems
 import pymbar.confidenceintervals
 from pymbar import version
 

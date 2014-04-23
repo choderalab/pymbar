@@ -52,7 +52,7 @@ import numpy
 import numpy.linalg
 from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
 from pymbar.exponential_averaging import EXP
-  
+
 #=============================================================================================
 # Bennett acceptance ratio function to be zeroed to solve for BAR.
 #=============================================================================================
@@ -69,7 +69,20 @@ def BARzero(w_F,w_R,DeltaF):
     RETURNS
 
       fzero - a variable that is zeroed when DeltaF satisfies BAR.
+
+    EXAMPLES
+
+    Compute free energy difference between two specified samples of work values.
+
+    >>> from pymbar import testsystems
+    >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
+    >>> DeltaF = BARzero(w_F, w_R, 0.0)
+
     """
+
+    w_F = numpy.array(w_F, numpy.float64)
+    w_R = numpy.array(w_R, numpy.float64)
+    DeltaF = float(DeltaF)
 
     # Recommended stable implementation of BAR.
 
@@ -79,7 +92,7 @@ def BARzero(w_F,w_R,DeltaF):
 
     # Compute log ratio of forward and reverse counts.
     M = numpy.log(T_F / T_R)
-    
+
     # Compute log numerator.
     # log f(W) = - log [1 + exp((M + W - DeltaF))]
     #          = - log ( exp[+maxarg] [exp[-maxarg] + exp[(M + W - DeltaF) - maxarg]] )
@@ -89,7 +102,7 @@ def BARzero(w_F,w_R,DeltaF):
     max_arg_F = numpy.choose(numpy.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
     log_f_F = - max_arg_F - numpy.log( numpy.exp(-max_arg_F) + numpy.exp(exp_arg_F - max_arg_F) )
     log_numer = _logsum(log_f_F) - numpy.log(T_F)
-    
+
     # Compute log_denominator.
     # log_denom = log < f(-W) exp[-W] >_R
     # NOTE: log [f(-W) exp(-W)] = log f(-W) - W
@@ -140,12 +153,18 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
 
   Compute free energy difference between two specified samples of work values.
 
-  >>> import testsystems
+  >>> from pymbar import testsystems
   >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
   >>> [DeltaF, dDeltaF] = BAR(w_F, w_R)
   >>> print 'Free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF)
   Free energy difference is 1.088 +- 0.050 kT
-    
+
+  Test various other schemes.
+
+  >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='self-consistent-iteration')
+  >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='false-position')
+  >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='bisection')
+
   """
 
   # if computing nonoptimized, one step value, we set the max-iterations 
