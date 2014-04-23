@@ -80,6 +80,7 @@ def BARzero(w_F,w_R,DeltaF):
 
     """
 
+    numpy.seterr(over='raise')  # raise exceptions to overflows
     w_F = numpy.array(w_F, numpy.float64)
     w_R = numpy.array(w_R, numpy.float64)
     DeltaF = float(DeltaF)
@@ -98,9 +99,16 @@ def BARzero(w_F,w_R,DeltaF):
     #          = - log ( exp[+maxarg] [exp[-maxarg] + exp[(M + W - DeltaF) - maxarg]] )
     #          = - maxarg - log[exp[-maxarg] + (T_F/T_R) exp[(M + W - DeltaF) - maxarg]]
     # where maxarg = max( (M + W - DeltaF) )
+
     exp_arg_F = (M + w_F - DeltaF)
     max_arg_F = numpy.choose(numpy.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
-    log_f_F = - max_arg_F - numpy.log( numpy.exp(-max_arg_F) + numpy.exp(exp_arg_F - max_arg_F) )
+    import pdb
+    try:
+        log_f_F = - max_arg_F - numpy.log( numpy.exp(-max_arg_F) + numpy.exp(exp_arg_F - max_arg_F) )
+    except:
+        # give up; if there's overflow, return zero
+        print "The input data results in overflow in BAR"
+        return numpy.nan
     log_numer = _logsum(log_f_F) - numpy.log(T_F)
 
     # Compute log_denominator.
@@ -108,12 +116,17 @@ def BARzero(w_F,w_R,DeltaF):
     # NOTE: log [f(-W) exp(-W)] = log f(-W) - W
     exp_arg_R = (M - w_R - DeltaF)
     max_arg_R = numpy.choose(numpy.greater(0.0, exp_arg_R), (0.0, exp_arg_R))
-    log_f_R = - max_arg_R - numpy.log( numpy.exp(-max_arg_R) + numpy.exp(exp_arg_R - max_arg_R) ) - w_R 
+    try:
+        log_f_R = - max_arg_R - numpy.log( numpy.exp(-max_arg_R) + numpy.exp(exp_arg_R - max_arg_R) ) - w_R 
+    except:
+        print "The input data results in overflow in BAR"
+        return numpy.nan
     log_denom = _logsum(log_f_R) - numpy.log(T_R)
 
     # This function must be zeroed to find a root
     fzero  = DeltaF - (log_denom - log_numer)
 
+    numpy.seterr(over='warn')  # return options to standard settings so we don't disturb other functionality.
     return fzero
 
 def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, relative_tolerance=1.0e-11, verbose=False, method='false-position', iterated_solution = True):
@@ -187,7 +200,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
     
     if (numpy.isnan(FUpperB) or numpy.isnan(FLowerB)):
       # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
-      print "Warning: BAR is likely to be inaccurate because of poor sampling. Guessing 0."
+      print "Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty."
       if compute_uncertainty:
         return [0.0, 0.0]
       else:
