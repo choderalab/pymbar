@@ -77,6 +77,7 @@ from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
 
 
 class MBAR:
+
     """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
     Notes
@@ -93,7 +94,7 @@ class MBAR:
     """
     #=========================================================================
 
-    def __init__(self, u_kln, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, method='adaptive', use_optimized=None, newton_first_gamma=0.1,  newton_self_consistent=2, maxrange=1.0e5, initialize='zeros'):
+    def __init__(self, u_kln, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, method='adaptive', use_optimized=None, newton_first_gamma=0.1, newton_self_consistent=2, maxrange=1.0e5, initialize='zeros'):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -231,7 +232,7 @@ class MBAR:
                     for j in range(K):  # find the nonzero sets of data:
                         if (self.N_k[j] > 0):
                             uzero = u_kln[j, k, :] - u_kln[j, l,:]
-                            diffsum += numpy.dot(uzero, uzero);
+                            diffsum += numpy.dot(uzero, uzero)
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
                         self.samestates.append([l, k])
@@ -333,7 +334,7 @@ class MBAR:
     #=========================================================================
     def getWeights(self):
         """Retrieve the weight matrix W_nk from the MBAR algorithm.
-        
+
         Necessary because they are stored internally as log weights.
 
         Returns
@@ -441,7 +442,7 @@ class MBAR:
 
     def computeExpectations(self, A_kn, output='averages', compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
         """Compute the expectation of an observable of phase space function.
-         
+
         Compute the expectation of an observable of phase space function 
         A(x) at all K states, including states for which no samples 
         were drawn. A may be a function of the state k.
@@ -492,7 +493,7 @@ class MBAR:
 
         References
         ----------
-          
+
         See Section IV of [1].
 
         Examples
@@ -548,9 +549,9 @@ class MBAR:
 
             # this works because all A_n are now positive;
             Log_W_nk[:, K + l] = numpy.log(A_n) + self.Log_W_nk[:, l]
-                                                                  # we took the
-                                                                  # min at the
-                                                                  # beginning.
+            # we took the
+            # min at the
+            # beginning.
             f_k[l] = -_logsum(Log_W_nk[:, K + l])
             Log_W_nk[:, K + l] += f_k[l]              # normalize the row
             A_i[l] = numpy.exp(-f_k[l])
@@ -599,15 +600,15 @@ class MBAR:
 
                         try:
                             dA_ij[i, j] = math.sqrt(
-                              + A_i[i] * Theta_ij[i, i] * A_i[i] - A_i[i] * Theta_ij[i, j] * A_i[j] - A_i[
-                                  i] * Theta_ij[i, K + i] * A_i[i] + A_i[i] * Theta_ij[i, K + j] * A_i[j]
+                                + A_i[i] * Theta_ij[i, i] * A_i[i] - A_i[i] * Theta_ij[i, j] * A_i[j] - A_i[
+                                    i] * Theta_ij[i, K + i] * A_i[i] + A_i[i] * Theta_ij[i, K + j] * A_i[j]
                                 - A_i[j] * Theta_ij[j, i] * A_i[i] + A_i[j] * Theta_ij[j, j] * A_i[j] + A_i[
                                     j] * Theta_ij[j, K + i] * A_i[i] - A_i[j] * Theta_ij[j, K + j] * A_i[j]
                                 - A_i[i] * Theta_ij[K + i, i] * A_i[i] + A_i[i] * Theta_ij[K + i, j] * A_i[j] + A_i[
                                     i] * Theta_ij[K + i, K + i] * A_i[i] - A_i[i] * Theta_ij[K + i, K + j] * A_i[j]
                                 + A_i[j] * Theta_ij[K + j, i] * A_i[i] - A_i[j] * Theta_ij[K + j, j] * A_i[j] - A_i[
                                     j] * Theta_ij[K + j, K + i] * A_i[i] + A_i[j] * Theta_ij[K + j, K + j] * A_i[j]
-                                )
+                            )
                         except:
                             dA_ij[i, j] = 0.0
 
@@ -621,7 +622,7 @@ class MBAR:
     #=========================================================================
     def computeMultipleExpectations(self, A_ikn, u_kn, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
         """Compute the expectations of multiple observables of phase space functions.
-        
+
         Compute the expectations of multiple observables of phase space functions.
         [A_0(x),A_1(x),...,A_n(x)] at single specified state, 
         along with the covariances of their estimates.  The state is specified by
@@ -787,7 +788,7 @@ class MBAR:
         (eigenval, eigevec) = numpy.linalg.eig(O)
         # sort in descending order
         eigenval = numpy.sort(eigenval)[::-1]
-        overlap_scalar = 1 - eigenval[1];
+        overlap_scalar = 1 - eigenval[1]
         if (output == 'scalar'):
             return overlap_scalar
         elif (output == 'eigenvalues'):
@@ -899,7 +900,7 @@ class MBAR:
     #=========================================================================
     def computePerturbedFreeEnergies(self, u_kln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
         """Compute the free energies for a new set of states.
-        
+
         Here, we desire the free energy differences among a set of new states, as well as the uncertainty estimates in these differences.
 
         Parameters
@@ -1007,7 +1008,7 @@ class MBAR:
 
     def computeEntropyAndEnthalpy(self, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10):
         """Decompose free energy differences into enthalpy and entropy differences.
-        
+
         Compute the decomposition of the free energy difference between
         states 1 and N into reduced free energy differences, reduced potential
         (enthalpy) differences, and reduced entropy (S/k) differences.
@@ -1076,7 +1077,7 @@ class MBAR:
         for l in range(0, K):
             # Convert potential energies to n = 1..N indexing.
             u_kn = self.u_kln[:, l, :] - (u_min-1)  # all positive now!  Subtracting off arbitrary constants doesn't affect results.
-                                                  # since they are all differences.
+            # since they are all differences.
             # Compute unnormalized weights.
             # A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
             # harden for over/underflow with logarithms
@@ -1136,32 +1137,32 @@ class MBAR:
             for j in range(0, K):
                 try:
                     dDelta_u_ij[i, j] = math.sqrt(
-                      + u_i[i] * Theta_ij[i, i] * u_i[i] - u_i[i] * Theta_ij[i, j] * u_i[j] - u_i[
-                          i] * Theta_ij[i, K + i] * u_i[i] + u_i[i] * Theta_ij[i, K + j] * u_i[j]
-                      - u_i[j] * Theta_ij[j, i] * u_i[i] + u_i[j] * Theta_ij[j, j] * u_i[j] + u_i[
-                          j] * Theta_ij[j, K + i] * u_i[i] - u_i[j] * Theta_ij[j, K + j] * u_i[j]
-                      - u_i[i] * Theta_ij[K + i, i] * u_i[i] + u_i[i] * Theta_ij[K + i, j] * u_i[
-                          j] + u_i[i] * Theta_ij[K + i, K + i] * u_i[i] - u_i[i] * Theta_ij[K + i, K + j] * u_i[j]
-                      + u_i[j] * Theta_ij[K + j, i] * u_i[i] - u_i[j] * Theta_ij[K + j, j] * u_i[
-                          j] - u_i[j] * Theta_ij[K + j, K + i] * u_i[i] + u_i[j] * Theta_ij[K + j, K + j] * u_i[j]
-                      )
+                        + u_i[i] * Theta_ij[i, i] * u_i[i] - u_i[i] * Theta_ij[i, j] * u_i[j] - u_i[
+                            i] * Theta_ij[i, K + i] * u_i[i] + u_i[i] * Theta_ij[i, K + j] * u_i[j]
+                        - u_i[j] * Theta_ij[j, i] * u_i[i] + u_i[j] * Theta_ij[j, j] * u_i[j] + u_i[
+                            j] * Theta_ij[j, K + i] * u_i[i] - u_i[j] * Theta_ij[j, K + j] * u_i[j]
+                        - u_i[i] * Theta_ij[K + i, i] * u_i[i] + u_i[i] * Theta_ij[K + i, j] * u_i[
+                            j] + u_i[i] * Theta_ij[K + i, K + i] * u_i[i] - u_i[i] * Theta_ij[K + i, K + j] * u_i[j]
+                        + u_i[j] * Theta_ij[K + j, i] * u_i[i] - u_i[j] * Theta_ij[K + j, j] * u_i[
+                            j] - u_i[j] * Theta_ij[K + j, K + i] * u_i[i] + u_i[j] * Theta_ij[K + j, K + j] * u_i[j]
+                    )
                 except:
                     dDelta_u_ij[i, j] = 0.0
 
                 # Compute reduced entropy difference.
                 try:
                     dDelta_s_ij[i, j] = math.sqrt(
-                      + (u_i[i] - 1) * Theta_ij[i, i] * (u_i[i] - 1) + (u_i[i] - 1) * Theta_ij[i, j] * (-u_i[j] + 1) + (
-                          u_i[i] - 1) * Theta_ij[i, K + i] * (-u_i[i]) + (u_i[i] - 1) * Theta_ij[i, K + j] * u_i[j]
-                      + (-u_i[j] + 1) * Theta_ij[j, i] * (u_i[i] - 1) + (-u_i[j] + 1) * Theta_ij[j, j] * (-u_i[j] + 1) +
-                         (-u_i[j] + 1) * Theta_ij[j, K + i] * (-u_i[i]) +
-                          (-u_i[j] + 1) * Theta_ij[j, K + j] * u_i[j]
-                      + (-u_i[i]) * Theta_ij[K + i, i] * (u_i[i] - 1) + (-u_i[i]) * Theta_ij[K + i, j] * (-u_i[j] + 1) +
-                         (-u_i[i]) * Theta_ij[K + i, K + i] * (-u_i[i]) +
-                          (-u_i[i]) * Theta_ij[K + i, K + j] * u_i[j]
-                      + u_i[j] * Theta_ij[K + j, i] * (u_i[i] - 1) + u_i[j] * Theta_ij[K + j, j] * (-u_i[j] + 1) + u_i[
-                                                          j] * Theta_ij[K + j, K + i] * (-u_i[i]) + u_i[j] * Theta_ij[K + j, K + j] * u_i[j]
-                      )
+                        + (u_i[i] - 1) * Theta_ij[i, i] * (u_i[i] - 1) + (u_i[i] - 1) * Theta_ij[i, j] * (-u_i[j] + 1) + (
+                            u_i[i] - 1) * Theta_ij[i, K + i] * (-u_i[i]) + (u_i[i] - 1) * Theta_ij[i, K + j] * u_i[j]
+                        + (-u_i[j] + 1) * Theta_ij[j, i] * (u_i[i] - 1) + (-u_i[j] + 1) * Theta_ij[j, j] * (-u_i[j] + 1) +
+                        (-u_i[j] + 1) * Theta_ij[j, K + i] * (-u_i[i]) +
+                        (-u_i[j] + 1) * Theta_ij[j, K + j] * u_i[j]
+                        + (-u_i[i]) * Theta_ij[K + i, i] * (u_i[i] - 1) + (-u_i[i]) * Theta_ij[K + i, j] * (-u_i[j] + 1) +
+                        (-u_i[i]) * Theta_ij[K + i, K + i] * (-u_i[i]) +
+                        (-u_i[i]) * Theta_ij[K + i, K + j] * u_i[j]
+                        + u_i[j] * Theta_ij[K + j, i] * (u_i[i] - 1) + u_i[j] * Theta_ij[K + j, j] * (-u_i[j] + 1) + u_i[
+                            j] * Theta_ij[K + j, K + i] * (-u_i[i]) + u_i[j] * Theta_ij[K + j, K + j] * u_i[j]
+                    )
                 except:
                     dDelta_s_ij[i, j] = 0.0
 
@@ -1171,7 +1172,7 @@ class MBAR:
 
     def computePMF(self, u_kn, bin_kn, nbins, uncertainties='from-lowest', pmf_reference=None):
         """Compute the free energy of occupying a number of bins.
-        
+
         This implementation computes the expectation of an indicator-function observable for each bin.
 
         Parameters
@@ -1318,7 +1319,7 @@ class MBAR:
                         delta_ik = 1.0 * (i == k)
                         delta_jk = 1.0 * (j == k)
                         d2p_i[k] += p_i[k] * (p_i[i] - delta_ik) * p_i[
-                                              k] * (p_i[j] - delta_jk) * Theta_ij[K + i, K + j]
+                            k] * (p_i[j] - delta_jk) * Theta_ij[K + i, K + j]
 
             # Transform from d2p_i to df_i
             d2f_i = d2p_i / p_i ** 2
@@ -1335,7 +1336,7 @@ class MBAR:
     #=========================================================================
     def computePMF_states(self, u_kn, bin_kn, nbins):
         """Compute the free energy of occupying a number of bins.
-        
+
         This implementation defines each bin as a separate thermodynamic state.
 
         Parameters
@@ -1441,7 +1442,7 @@ class MBAR:
 
     def _computeWeights(self, logform=False, include_nonzero=False, recalc_denom=True, return_f_k=False):
         """Compute the normalized weights corresponding to samples for the given reduced potential.
-        
+
         Compute the normalized weights corresponding to samples for the given reduced potential.
         Also stores the all_log_denom array for reuse.
 
@@ -1654,7 +1655,7 @@ class MBAR:
             firstbad = which_badcolumns[0]
             raise ParameterError(
                 'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
-                                 (firstbad, column_sums[firstbad], numpy.sum(badcolumns)))
+                (firstbad, column_sums[firstbad], numpy.sum(badcolumns)))
 
         row_sums = numpy.sum(W * N_k, axis=1)
         badrows = (numpy.abs(row_sums - 1) > tolerance)
@@ -1663,7 +1664,7 @@ class MBAR:
             firstbad = which_badrows[0]
             raise ParameterError(
                 'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
-                                 (firstbad, row_sums[firstbad], numpy.sum(badrows)))
+                (firstbad, row_sums[firstbad], numpy.sum(badrows)))
 
         # Compute estimate of asymptotic covariance matrix using specified
         # method.
@@ -1886,7 +1887,7 @@ class MBAR:
             # necessary for helper code to interpret type of u_kn
             u_kn = numpy.array(u_kn, dtype=numpy.float64)
             log_w_kn = _pymbar.computeUnnormalizedLogWeightsCpp(
-                self.K, self.N_max, self.K_nonzero, self.nonzero_N_k_indices, self.N_k, self.f_k, self.u_kln, u_kn);
+                self.K, self.N_max, self.K_nonzero, self.nonzero_N_k_indices, self.N_k, self.f_k, self.u_kln, u_kn)
         else:
             try:
                 #z= 1/0
@@ -2295,7 +2296,7 @@ class MBAR:
             if (self._amIdoneIterating(f_k_new, relative_tolerance, iteration, maximum_iterations, print_warning, verbose)):
                 if verbose:
                     print 'Of %d iterations, %d were Newton-Raphson iterations and %d were self-consistent iterations' % (iteration + 1, nr_iter, sci_iter)
-                break;
+                break
 
         return
 
