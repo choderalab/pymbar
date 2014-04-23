@@ -1,7 +1,9 @@
 import numpy as np
 from pymbar.utils import ensure_type
 
+
 class HarmonicOscillatorsTestCase(object):
+
     """Test cases using harmonic oscillators.
 
     Examples
@@ -74,7 +76,7 @@ class HarmonicOscillatorsTestCase(object):
         return (self.beta * self.K_k) ** -0.5
 
     def analytical_free_energies(self, subtract_component=0):
-        fe = -0.5 * np.log( 2 * np.pi / (self.beta * self.K_k))
+        fe = -0.5 * np.log(2 * np.pi / (self.beta * self.K_k))
         if subtract_component is not None:
             fe -= fe[subtract_component]
         return fe
@@ -119,8 +121,8 @@ class HarmonicOscillatorsTestCase(object):
 
         states = ["state %d" % k for k in range(self.n_states)]
 
-        N_max = N_k.max() # maximum number of samples per state
-        N_tot = N_k.sum() # total number of samples
+        N_max = N_k.max()  # maximum number of samples per state
+        N_tot = N_k.sum()  # total number of samples
 
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
@@ -131,12 +133,12 @@ class HarmonicOscillatorsTestCase(object):
             x0 = self.O_k[k]
             sigma = (self.beta * self.K_k[k]) ** -0.5
             x = np.random.normal(loc=x0, scale=sigma, size=N)
-            x_kn[k,0:N] = x
-            x_n[index:(index+N)] = x
+            x_kn[k, 0:N] = x
+            x_n[index:(index + N)] = x
             for l in range(self.n_states):
                 u = self.beta * 0.5 * self.K_k[l] * (x - self.O_k[l]) ** 2.0
-                u_kln[k,l,0:N] = u
-                u_kn[l,index:(index+N)] = u
+                u_kln[k, l, 0:N] = u
+                u_kn[l, index:(index + N)] = u
             index += N
 
         if (mode == 'u_kn'):
