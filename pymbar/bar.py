@@ -51,7 +51,7 @@ import math
 import numpy
 import numpy.linalg
 from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
-from pymbar.exponential_averaging import EXP
+from pymbar.exp import EXP
 
 #=============================================================================================
 # Bennett acceptance ratio function to be zeroed to solve for BAR.
