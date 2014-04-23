@@ -31,15 +31,11 @@ __license__ = "LGPL"
 __maintainer__ = "Michael R. Shirts and John D. Chodera"
 __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 
-import pymbar
+from pymbar import timeseries, testsystems, confidenceintervals, version
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exp import EXP, EXPGauss
 
-import pymbar.timeseries
-import pymbar.testsystems as testsystems
-import pymbar.confidenceintervals
-from pymbar import version
 
 __all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
 
