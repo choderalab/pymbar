@@ -134,7 +134,7 @@ class HarmonicOscillatorsTestCase(object):
             x_kn[k,0:N] = x
             x_n[index:(index+N)] = x
             for l in range(self.n_states):
-                u = self.beta * 0.5 * self.K_k[l] * (x - x0) ** 2.0
+                u = self.beta * 0.5 * self.K_k[l] * (x - self.O_k[l]) ** 2.0
                 u_kln[k,l,0:N] = u
                 u_kn[l,index:(index+N)] = u
             index += N
