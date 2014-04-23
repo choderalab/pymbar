@@ -3,6 +3,7 @@ from pymbar.utils import ensure_type
 
 
 class ExponentialTestCase(object):
+
     """Test cases using exponential distributions.
 
     Examples
@@ -75,7 +76,7 @@ class ExponentialTestCase(object):
     def analytical_x_squared(self):
         return self.analytical_variances() + self.analytical_means() ** 2.
 
-    def sample(self, N_k=[10,20,30,40,50], mode='u_kln'):
+    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kln'):
         """Draw samples from the distribution.
 
         Parameters
@@ -112,8 +113,8 @@ class ExponentialTestCase(object):
 
         states = ["state %d" % k for k in range(self.n_states)]
 
-        N_max = N_k.max() # maximum number of samples per state
-        N_tot = N_k.sum() # total number of samples
+        N_max = N_k.max()  # maximum number of samples per state
+        N_tot = N_k.sum()  # total number of samples
 
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
@@ -122,12 +123,12 @@ class ExponentialTestCase(object):
         index = 0
         for k, N in enumerate(N_k):
             x = np.random.exponential(scale=self.rates[k] ** -1., size=N)
-            x_kn[k,0:N] = x
-            x_n[index:(index+N)] = x
+            x_kn[k, 0:N] = x
+            x_n[index:(index + N)] = x
             for l in range(self.n_states):
                 u = self.beta * self.rates[l] * x
-                u_kln[k,l,0:N] = u
-                u_kn[l,index:(index+N)] = u
+                u_kln[k, l, 0:N] = u
+                u_kn[l, index:(index + N)] = u
             index += N
 
         if (mode == 'u_kn'):
