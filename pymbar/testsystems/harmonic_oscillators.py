@@ -29,6 +29,11 @@ class HarmonicOscillatorsTestCase(object):
     >>> testcase = HarmonicOscillatorsTestCase(O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
     >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50])
 
+    Test sampling in different output modes.
+
+    >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
+    >>> [x_n, u_kn, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+
     """
 
     def __init__(self, O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16], beta=1.0):
@@ -40,6 +45,9 @@ class HarmonicOscillatorsTestCase(object):
             Offset parameters for each state.
         K_k : np.ndarray, float, shape=(n_states)
             Force constants for each state.
+        beta : float, optional, default=1.0
+            Inverse temperature.
+
         Notes
         -----
         We assume potentials of the form U(x) = (k / 2) * (x - o)^2
