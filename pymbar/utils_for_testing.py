@@ -24,9 +24,9 @@ import os
 import functools
 import numpy as np
 from numpy.testing import (assert_allclose, assert_almost_equal,
-  assert_approx_equal, assert_array_almost_equal, assert_array_almost_equal_nulp,
-  assert_array_equal, assert_array_less, assert_array_max_ulp, assert_equal,
-  assert_raises, assert_string_equal, assert_warns)
+                           assert_approx_equal, assert_array_almost_equal, assert_array_almost_equal_nulp,
+                           assert_array_equal, assert_array_less, assert_array_max_ulp, assert_equal,
+                           assert_raises, assert_string_equal, assert_warns)
 from numpy.testing.decorators import skipif, slow
 from nose.tools import ok_, eq_, raises
 from nose import SkipTest
@@ -78,7 +78,7 @@ def get_fn(name):
 
     if not os.path.exists(fn):
         raise ValueError('Sorry! %s does not exists. If you just '
-            'added it, you\'ll have to re install' % fn)
+                         'added it, you\'ll have to re install' % fn)
 
     return fn
 
@@ -140,6 +140,7 @@ def eq(o1, o2, decimal=6, err_msg=''):
 
     return True
 
+
 def assert_dict_equal(t1, t2, decimal=6):
     """
     Assert two dicts are equal.
@@ -153,7 +154,7 @@ def assert_dict_equal(t1, t2, decimal=6):
     for key, val in t1.iteritems():
         # compare numpy arrays using numpy.testing
         if isinstance(val, np.ndarray):
-            if val.dtype.kind ==  'f':
+            if val.dtype.kind == 'f':
                 # compare floats for almost equality
                 assert_array_almost_equal(val, t2[key], decimal)
             else:

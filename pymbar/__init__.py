@@ -38,4 +38,3 @@ from pymbar.exp import EXP, EXPGauss
 
 
 __all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
-

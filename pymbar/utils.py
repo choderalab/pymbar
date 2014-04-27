@@ -39,7 +39,7 @@ class TypeCastPerformanceWarning(RuntimeWarning):
 
 
 def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=None,
-    warn_on_cast=True, add_newaxis_on_deficient_ndim=False):
+                warn_on_cast=True, add_newaxis_on_deficient_ndim=False):
     """Typecheck the size, shape and dtype of a numpy array, with optional
     casting.
 
@@ -98,24 +98,24 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
             val = np.array([val])
         else:
             raise TypeError(("%s must be numpy array. "
-                " You supplied type %s" % (name, type(val))))
+                             " You supplied type %s" % (name, type(val))))
 
     if warn_on_cast and val.dtype != dtype:
         warnings.warn("Casting %s dtype=%s to %s " % (name, val.dtype, dtype),
-            TypeCastPerformanceWarning)
+                      TypeCastPerformanceWarning)
 
     if not val.ndim == ndim:
         if add_newaxis_on_deficient_ndim and val.ndim + 1 == ndim:
             val = val[np.newaxis, ...]
         else:
             raise ValueError(("%s must be ndim %s. "
-                "You supplied %s" % (name, ndim, val.ndim)))
+                              "You supplied %s" % (name, ndim, val.ndim)))
 
     val = np.ascontiguousarray(val, dtype=dtype)
 
     if length is not None and len(val) != length:
         raise ValueError(("%s must be length %s. "
-            "You supplied %s" % (name, length, len(val))))
+                          "You supplied %s" % (name, length, len(val))))
 
     if shape is not None:
         # the shape specified given by the user can look like (None, None 3)
@@ -123,7 +123,7 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
         # dimension 1
         sentenel = object()
         error = ValueError(("%s must be shape %s. You supplied  "
-                "%s" % (name, str(shape).replace('None', 'Any'), val.shape)))
+                            "%s" % (name, str(shape).replace('None', 'Any'), val.shape)))
         for a, b in itertools.izip_longest(val.shape, shape, fillvalue=sentenel):
             if a is sentenel or b is sentenel:
                 # if the sentenel was reached, it means that the ndim didn't
@@ -137,6 +137,7 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
                 raise error
 
     return val
+
 
 def _logsum(a_n):
     """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.
@@ -184,21 +185,27 @@ def _logsum(a_n):
 # Exception classes
 #=============================================================================================
 
+
 class ParameterError(Exception):
+
     """
     An error in the input parameters has been detected.
 
     """
     pass
 
+
 class ConvergenceError(Exception):
+
     """
     Convergence could not be achieved.
 
     """
     pass
 
+
 class BoundsError(Exception):
+
     """
     Could not determine bounds on free energy
 
