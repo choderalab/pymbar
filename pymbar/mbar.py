@@ -1230,7 +1230,7 @@ class MBAR:
         >>> # Compute PMF for these unequally-sized bins.
         >>> [f_i, df_i] = mbar.computePMF(u_kn, bin_kn, nbins)
         >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
-        >>> f_i_corrected = f_i + np.log(bin_widths)
+        >>> f_i_corrected = f_i - np.log(bin_widths)
 
         """
 
