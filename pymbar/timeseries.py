@@ -74,12 +74,10 @@ __license__ = "GPL 2.0"
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-
 import math
 import numpy
 import numpy.linalg
-import sys
-from pymbar.utils import _logsum, ParameterError
+from pymbar.utils import ParameterError
 
 #=============================================================================================
 # Issue warning on import.
@@ -660,7 +658,6 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
 
     if conservative:
         # Round g up to determine the stride we can use to pick out regularly-spaced uncorrelated samples.
-        import math
         stride = int(math.ceil(g))
         if verbose:
             print "conservative subsampling: using stride of %d" % stride
@@ -669,7 +666,6 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
         indices = range(0, T, stride)
     else:
         # Choose indices as floor(n*g), with n = 0,1,2,..., until we run out of data.
-        import math
         indices = []
         n = 0
         while int(round(n * g)) < T:
