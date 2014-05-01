@@ -892,7 +892,7 @@ class MBAR:
             returns.append(dA)
 
         if (return_theta):
-            returns.append(theta)
+            returns.append(Theta_ij)
 
         # Return expectations and uncertainties.
         return returns
