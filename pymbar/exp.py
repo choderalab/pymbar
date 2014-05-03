@@ -52,7 +52,6 @@ from pymbar.utils import _logsum
 # One-sided exponential averaging (EXP).
 #=============================================================================================
 
-
 def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     """
     Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
@@ -120,7 +119,6 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     else:
         return DeltaF
 
-
 #=============================================================================================
 # Gaussian approximation to exponential averaging (Gauss).
 #=============================================================================================
@@ -185,3 +183,34 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
         return (DeltaF, dDeltaF)
     else:
         return DeltaF
+
+
+#=============================================================================================
+# For compatibility with 2.0.1-beta
+#=============================================================================================
+
+deprecation_warning = """
+Warning
+-------
+This method name is deprecated, and provided for backward-compatibility only.
+It may be removed in future versions.
+"""
+
+def computeEXP(*args, **kwargs):
+    return EXP(*args, **kwargs)
+computeEXP.__doc__ = EXP.__doc__ + deprecation_warning
+
+def computeEXPGauss(*args, **kwargs):
+    return EXPGauss(*args, **kwargs)
+computeEXPGauss.__doc__ = EXPGauss.__doc__ + deprecation_warning
+
+def _compatibilityDoctests():
+    """
+    Backwards-compatibility doctests.
+
+    >>> from pymbar import testsystems
+    >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
+    >>> [DeltaF, dDeltaF] = computeEXP(w_F)
+    >>> [DeltaF, dDeltaF] = computeEXPGauss(w_F)
+    """
+    pass
