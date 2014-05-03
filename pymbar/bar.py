@@ -47,7 +47,6 @@ __license__ = "LGPL 2.1"
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-import math
 import numpy
 import numpy.linalg
 from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
@@ -104,7 +103,6 @@ def BARzero(w_F, w_R, DeltaF):
 
     exp_arg_F = (M + w_F - DeltaF)
     max_arg_F = numpy.choose(numpy.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
-    import pdb
     try:
         log_f_F = - max_arg_F - numpy.log(numpy.exp(-max_arg_F) + numpy.exp(exp_arg_F - max_arg_F))
     except:

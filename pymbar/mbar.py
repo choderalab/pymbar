@@ -843,7 +843,6 @@ class MBAR:
 
         # Make A_kn all positive so we can operate logarithmically for
         # robustness
-        A_i = numpy.zeros([K], numpy.float64)
         A_min = numpy.min(A_kn)
         A_kn = A_kn - (A_min - 1)
 
@@ -892,7 +891,7 @@ class MBAR:
             returns.append(dA)
 
         if (return_theta):
-            returns.append(theta)
+            returns.append(Theta_ij)
 
         # Return expectations and uncertainties.
         return returns
@@ -1486,11 +1485,9 @@ class MBAR:
         if (include_nonzero):
             f_k = self.f_k
             K = self.L
-            N_k = self.N_k
         else:
             f_k = self.f_k[self.nonzero_N_k_indices]
             K = self.K_nonzero
-            N_k = self.N_nonzero
 
         # array of either weights or normalized log weights
         Warray_nk = numpy.zeros([self.N, K], dtype=numpy.float64)

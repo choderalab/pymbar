@@ -20,7 +20,6 @@
 # License along with pymbar. If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 
-import pdb
 import numpy
 import scipy
 import scipy.special
