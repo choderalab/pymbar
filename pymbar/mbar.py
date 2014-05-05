@@ -20,19 +20,19 @@
 # License along with pymbar. If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 
-"""
+"""Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
+
 A module implementing the multistate Bennett acceptance ratio (MBAR) method for the analysis
 of equilibrium samples from multiple arbitrary thermodynamic states in computing equilibrium
 expectations, free energy differences, potentials of mean force, and entropy and enthalpy contributions.
 
 Please reference the following if you use this code in your research:
 
+References
+----------
+
 [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
-J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
-
-This module contains implementations of
-
-* MBAR - multistate Bennett acceptance ratio estimator
+J. Chem. Phys. 129:124105, 2008  http://dx.doi.org/10.1063/1.2978177
 
 """
 
@@ -77,7 +77,6 @@ from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
 
 
 class MBAR:
-
     """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
     Notes
@@ -89,10 +88,8 @@ class MBAR:
     ----------
 
     [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
-    J. Chem. Phys. 129:124105, 2008
-    http://dx.doi.org/10.1063/1.2978177
+    J. Chem. Phys. 129:124105, 2008 http://dx.doi.org/10.1063/1.2978177
     """
-    #=========================================================================
 
     def __init__(self, u_kln, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, method='adaptive', use_optimized=None, newton_first_gamma=0.1, newton_self_consistent=2, maxrange=1.0e5, initialize='zeros'):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
