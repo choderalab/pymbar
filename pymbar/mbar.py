@@ -25,15 +25,6 @@
 A module implementing the multistate Bennett acceptance ratio (MBAR) method for the analysis
 of equilibrium samples from multiple arbitrary thermodynamic states in computing equilibrium
 expectations, free energy differences, potentials of mean force, and entropy and enthalpy contributions.
-
-Please reference the following if you use this code in your research:
-
-References
-----------
-
-[1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
-J. Chem. Phys. 129:124105, 2008  http://dx.doi.org/10.1063/1.2978177
-
 """
 
 #=========================================================================
@@ -77,89 +68,89 @@ from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
 
 
 class MBAR:
-    """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
+    """
+    Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
+
+    Parameters
+    ----------
+    u_kln : np.ndarray, float, shape=(K, L, N_max)
+        u_kln[k,l,n] is the reduced potential energy of uncorrelated
+        configuration n sampled from state k, evaluated at state l.  K >= L             
+    N_k :  np.ndarray, int, shape=(K)
+        N_k[k] is the number of uncorrelated snapshots sampled from state k
+        This can be zero if the expectation or free energy of this
+        state is desired but no samples were drawn from this state.
+    maximum_iterations : int, optional
+        Set to limit the maximum number of iterations performed (default 1000)
+    relative_tolerance : float, optional
+        Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+    verbosity : bool, optional
+        Set to True if verbose debug output is desired (default False)
+    initial_f_k : np.ndarray, float, shape=(K), optional
+        Set to the initial dimensionless free energies to use as a 
+        guess (default None, which sets all f_k = 0)
+    method : string, optional
+        Method for determination of dimensionless free energies: 
+        Must be one of 'self-consistent-iteration','Newton-Raphson', 
+        or 'adaptive' (default: 'adaptive').
+        Newton-Raphson is deprecated and defaults to adaptive
+    use_optimized : bool, optional
+        If False, will explicitly disable use of C++ extensions.
+        If None or True, extensions will be autodetected (default: None)
+    initialize : string, optional
+        If equal to 'BAR', use BAR between the pairwise state to 
+        initialize the free energies.  Eventually, should specify a path; 
+        for now, it just does it zipping up the states. 
+        (default: 'zeros', unless specific values are passed in.)            
+    newton_first_gamma : float, optional
+        Initial gamma for newton-raphson (default = 0.1)            
+    newton_self_consistent : int, optional
+        Mininum number of self-consistent iterations before 
+        Newton-Raphson iteration (default = 2)
 
     Notes
-    -----    
+    -----
     Note that this method assumes the data are uncorrelated.
     Correlated data must be subsampled to extract uncorrelated (effectively independent) samples (see example below).
+    
+    Upon initialization, the dimensionless free energies for all states are computed.
+    This may take anywhere from seconds to minutes, depending upon the quantity of data.
+    After initialization, the computed free energies may be obtained by a call to 'getFreeEnergies()', or
+    free energies or expectation at any state of interest can be computed by calls to 'computeFreeEnergy()' or
+    'computeExpectations()'.
+
+    The reduced potential energy u_kln[k,l,n] = u_l(x_{kn}), where the reduced potential energy u_l(x) is defined (as in the text) by:
+    u_l(x) = beta_l [ U_l(x) + p_l V(x) + mu_l' n(x) ]
+    where
+    beta_l = 1/(kB T_l) is the inverse temperature of condition l, where kB is Boltzmann's constant
+    U_l(x) is the potential energy function for state l
+    p_l is the pressure at state l (if an isobaric ensemble is specified)
+    V(x) is the volume of configuration x
+    mu_l is the M-vector of chemical potentials for the various species, if a (semi)grand ensemble is specified, and ' denotes transpose
+    n(x) is the M-vector of numbers of the various molecular species for configuration x, corresponding to the chemical potential components of mu_m.
+
+    The configurations x_kn must be uncorrelated.  This can be ensured by subsampling a correlated timeseries with a period larger than the statistical inefficiency,
+    which can be estimated from the potential energy timeseries {u_k(x_kn)}_{n=1}^{N_k} using the provided utility function 'statisticalInefficiency()'.
+    See the help for this function for more information.
+
+    Examples
+    --------
+
+    >>> from pymbar import testsystems
+    >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
+    >>> mbar = MBAR(u_kln, N_k)    
+    
 
     References
     ----------
 
     [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
     J. Chem. Phys. 129:124105, 2008 http://dx.doi.org/10.1063/1.2978177
+
     """
 
     def __init__(self, u_kln, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, method='adaptive', use_optimized=None, newton_first_gamma=0.1, newton_self_consistent=2, maxrange=1.0e5, initialize='zeros'):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
-
-        Upon initialization, the dimensionless free energies for all states are computed.
-        This may take anywhere from seconds to minutes, depending upon the quantity of data.
-        After initialization, the computed free energies may be obtained by a call to 'getFreeEnergies()', or
-        free energies or expectation at any state of interest can be computed by calls to 'computeFreeEnergy()' or
-        'computeExpectations()'.
-
-        Parameters
-        ----------
-        u_kln : np.ndarray, float, shape=(K, L, N_max)
-            u_kln[k,l,n] is the reduced potential energy of uncorrelated
-            configuration n sampled from state k, evaluated at state l.  K >= L             
-        N_k :  np.ndarray, int, shape=(K)
-            N_k[k] is the number of uncorrelated snapshots sampled from state k
-            This can be zero if the expectation or free energy of this
-            state is desired but no samples were drawn from this state.
-        maximum_iterations : int, optional
-            Set to limit the maximum number of iterations performed (default 1000)
-        relative_tolerance : float, optional
-            Set to determine the relative tolerance convergence criteria (default 1.0e-6)
-        verbosity : bool, optional
-            Set to True if verbose debug output is desired (default False)
-        initial_f_k : np.ndarray, float, shape=(K), optional
-            Set to the initial dimensionless free energies to use as a 
-            guess (default None, which sets all f_k = 0)
-        method : string, optional
-            Method for determination of dimensionless free energies: 
-            Must be one of 'self-consistent-iteration','Newton-Raphson', 
-            or 'adaptive' (default: 'adaptive').
-            Newton-Raphson is deprecated and defaults to adaptive
-        use_optimized : bool, optional
-            If False, will explicitly disable use of C++ extensions.
-            If None or True, extensions will be autodetected (default: None)
-        initialize : string, optional
-            If equal to 'BAR', use BAR between the pairwise state to 
-            initialize the free energies.  Eventually, should specify a path; 
-            for now, it just does it zipping up the states. 
-            (default: 'zeros', unless specific values are passed in.)            
-        newton_first_gamma : float, optional
-            Initial gamma for newton-raphson (default = 0.1)            
-        newton_self_consistent : int, optional
-            Mininum number of self-consistent iterations before 
-            Newton-Raphson iteration (default = 2)
-
-        Notes
-        -----
-        The reduced potential energy u_kln[k,l,n] = u_l(x_{kn}), where the reduced potential energy u_l(x) is defined (as in the text) by:
-        u_l(x) = beta_l [ U_l(x) + p_l V(x) + mu_l' n(x) ]
-        where
-        beta_l = 1/(kB T_l) is the inverse temperature of condition l, where kB is Boltzmann's constant
-        U_l(x) is the potential energy function for state l
-        p_l is the pressure at state l (if an isobaric ensemble is specified)
-        V(x) is the volume of configuration x
-        mu_l is the M-vector of chemical potentials for the various species, if a (semi)grand ensemble is specified, and ' denotes transpose
-        n(x) is the M-vector of numbers of the various molecular species for configuration x, corresponding to the chemical potential components of mu_m.
-
-        The configurations x_kn must be uncorrelated.  This can be ensured by subsampling a correlated timeseries with a period larger than the statistical inefficiency,
-        which can be estimated from the potential energy timeseries {u_k(x_kn)}_{n=1}^{N_k} using the provided utility function 'statisticalInefficiency()'.
-        See the help for this function for more information.
-
-        Examples
-        --------
-
-        >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
-        >>> mbar = MBAR(u_kln, N_k)
-
         """
 
         if method == 'Newton-Raphson':
