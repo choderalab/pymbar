@@ -52,27 +52,29 @@ import numpy.linalg
 from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
 from pymbar.exp import EXP
 
-#=============================================================================================
-# Bennett acceptance ratio function to be zeroed to solve for BAR.
-#=============================================================================================
 
 
 def BARzero(w_F, w_R, DeltaF):
-    """
-    ARGUMENTS
-      w_F (numpy.array) - w_F[t] is the forward work value from snapshot t.
-                        t = 0...(T_F-1)  Length T_F is deduced from vector.
-      w_R (numpy.array) - w_R[t] is the reverse work value from snapshot t.
-                        t = 0...(T_R-1)  Length T_R is deduced from vector.
+    """Bennett acceptance ratio function to be zeroed to solve for BAR.
 
-      DeltaF (float) - Our current guess
+    Parameters
+    ----------
+    w_F : np.ndarray
+        w_F[t] is the forward work value from snapshot t.
+        t = 0...(T_F-1)  Length T_F is deduced from vector.
+    w_R : np.ndarray
+        w_R[t] is the reverse work value from snapshot t.
+        t = 0...(T_R-1)  Length T_R is deduced from vector.
+    DeltaF : float
+        Our current guess
 
-    RETURNS
+    Returns
+    -------
+    fzero : float
+        a variable that is zeroed when DeltaF satisfies BAR.
 
-      fzero - a variable that is zeroed when DeltaF satisfies BAR.
-
-    EXAMPLES
-
+    Examples
+    --------
     Compute free energy difference between two specified samples of work values.
 
     >>> from pymbar import testsystems
@@ -131,40 +133,51 @@ def BARzero(w_F, w_R, DeltaF):
 
 
 def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, relative_tolerance=1.0e-11, verbose=False, method='false-position', iterated_solution=True):
-    """
-    Compute free energy difference using the Bennett acceptance ratio (BAR) method.
+    """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
-    ARGUMENTS
-      w_F (numpy.array) - w_F[t] is the forward work value from snapshot t.
-                          t = 0...(T_F-1)  Length T_F is deduced from vector.
-      w_R (numpy.array) - w_R[t] is the reverse work value from snapshot t.
-                          t = 0...(T_R-1)  Length T_R is deduced from vector.
+    Parameters
+    ----------
+    w_F : numpy.ndarray
+        w_F[t] is the forward work value from snapshot t.
+        t = 0...(T_F-1)  Length T_F is deduced from vector.
+    w_R : np.ndarray
+        w_R[t] is the reverse work value from snapshot t.
+        t = 0...(T_R-1)  Length T_R is deduced from vector.
+    DeltaF : float, optional, default=0.0
+        DeltaF can be set to initialize the free energy difference with a guess
+    compute_uncertainty : bool, optional, default=True
+        if False, only the free energy is returned
+    maximum_iterations : int, optional, default=500
+        can be set to limit the maximum number of iterations performed
+    relative_tolerance : float, optional, default=1E-11
+        can be set to determine the relative tolerance convergence criteria (defailt 1.0e-11)
+    verbose : bool
+        should be set to True if verbse debug output is desired (default False)
+    method : str, optional, defualt='false-position'
+        choice of method to solve BAR nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-position')
+    iterated_solution : bool, optional, default=True
+        whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be 
+        equivalent to transition matrix sampling.
 
-    OPTIONAL ARGUMENTS
+    Returns
+    -------
+    DeltaF : float
+        Free energy difference
+    dDeltaF : float
+     Estimated standard deviation of free energy difference
 
-      DeltaF (float) - DeltaF can be set to initialize the free energy difference with a guess (default 0.0)
-      compute_uncertainty (boolean) - if False, only the free energy is returned (default: True)
-      maximum_iterations (int) - can be set to limit the maximum number of iterations performed (default 500)
-      relative_tolerance (float) - can be set to determine the relative tolerance convergence criteria (defailt 1.0e-5)
-      verbose (boolean) - should be set to True if verbse debug output is desired (default False)
-      method - choice of method to solve BAR nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-positions')
-      iterated_solution (bool) - whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be 
-                  equivalent to transition matrix sampling.
-    RETURNS
+    References
+    ----------
 
-      [DeltaF, dDeltaF] where dDeltaF is the estimated std dev uncertainty
+    [1] Shirts MR, Bair E, Hooker G, and Pande VS. Equilibrium free energies from nonequilibrium
+    measurements using maximum-likelihood methods. PRL 91(14):140601, 2003.
 
-    REFERENCE
+    Notes
+    -----
+    The false position method is used to solve the implicit equation.
 
-      [1] Shirts MR, Bair E, Hooker G, and Pande VS. Equilibrium free energies from nonequilibrium
-      measurements using maximum-likelihood methods. PRL 91(14):140601, 2003.
-
-    NOTE
-
-      The false position method is used to solve the implicit equation.
-
-    EXAMPLES
-
+    Examples
+    --------
     Compute free energy difference between two specified samples of work values.
 
     >>> from pymbar import testsystems
