@@ -15,6 +15,13 @@
 import sys
 import os
 
+# Use mock to make our code think that numpy and scipy are available, even though they might not be available on readthedocs
+import mock
+ 
+MOCK_MODULES = ['numpy', 'scipy', "numpy.linalg", "scipy.special", "scipy.stats"]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
