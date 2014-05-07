@@ -53,26 +53,31 @@ from pymbar.utils import _logsum
 #=============================================================================================
 
 def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
-    """
-    Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
+    """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
 
-    ARGUMENTS
-      w_F (numpy array) - w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
+    Parameters
+    ----------
+    w_F : np.ndarray, float
+        w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
+    compute_uncertainty : bool, optional, default=True
+        if False, will disable computation of the statistical uncertainty (default: True)
+    is_timeseries : bool, default=False
+        if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
+        Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
 
-    OPTIONAL ARGUMENTS
-      compute_uncertainty (boolean) - if False, will disable computation of the statistical uncertainty (default: True)
-      is_timeseries (boolean) - if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
-                                Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+    Returns
+    -------
+    DeltaF : float
+        DeltaF is the free energy difference between the two states.
+    dDeltaF : float
+        dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
 
-    RETURNS
-      DeltaF (float) - DeltaF is the free energy difference between the two states.
-      dDeltaF (float) - dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
+    Notes
+    -----
+    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
 
-    NOTE
-
-      If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
-
-    EXAMPLES
+    Examples
+    --------
 
     Compute the free energy difference given a sample of forward work values.
 
@@ -124,27 +129,31 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 #=============================================================================================
 
 def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
-    """
-    Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
+    """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
-    ARGUMENTS
-      w_F (numpy array) - w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
+    Parameters
+    ----------
+    w_F : np.ndarray, float
+        w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
+    compute_uncertainty : bool, optional, default=True
+        if False, will disable computation of the statistical uncertainty (default: True)
+    is_timeseries : bool, default=False
+        if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
+        Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
 
-    OPTIONAL ARGUMENTS
-      compute_uncertainty (boolean) - if False, will disable computation of the statistical uncertainty (default: True)
-      is_timeseries (boolean) - if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
-                                Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+    Returns
+    -------
+    DeltaF : float
+        DeltaF is the free energy difference between the two states.
+    dDeltaF : float
+        dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
 
-    RETURNS
-      DeltaF (float) - DeltaF is the free energy difference between the two states.
-      dDeltaF (float) - dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
+    Notes
+    -----
+    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
 
-    NOTE
-
-      If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
-
-    EXAMPLES
-
+    Examples
+    --------
     Compute the free energy difference given a sample of forward work values.
 
     >>> from pymbar import testsystems
