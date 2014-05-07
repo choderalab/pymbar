@@ -65,7 +65,7 @@ Now you're home free ::
   $ pip install scipy
 
 Installing ``pymbar``
-=================
+=====================
 
 ``pymbar`` currently runs best on Python 2.7.x; earlier versions of Python are not
 supported.  ``pymbar`` is developed and
