@@ -1,5 +1,4 @@
 numpy
-scipy
 nose
 numpydoc
 mock
