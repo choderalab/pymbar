@@ -20,7 +20,6 @@ Documentation
    mbar
    timeseries
    testsystems
-   utils
 
 
 
