@@ -29,6 +29,7 @@ Prerequisites
 The pymbar module requires the following:
 
 * Python 2.4 or later: http://www.python.org/
+* The `Python.h` header file (either installed via the Python installer, but a separate `python-dev` package on distributions like Ubunti)
 * the NumPy package: http://numpy.scipy.org/
 * the SciPy package: http://www.scipy.org/
 * Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
@@ -49,7 +50,20 @@ or using `pip install`:
 pip install pymbar
 ```
 
-Or, if you download the [GitHub version](http://github.com/choderalab/pymbar), you can use the provided `setup.py` to install.
+If you see an error like
+```
+gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -I/usr/lib/python2.7/dist-packages/numpy/core/include -I/usr/lib/python2.7/dist-packages/numpy/core/include/numpy/ -I/usr/include/python2.7 -c pymbar/_pymbar.c -o build/temp.linux-x86_64-2.7/pymbar/_pymbar.o -std=c99 -O2 -shared -msse2 -msse3
+
+pymbar/_pymbar.c:80:20: fatal error: Python.h: No such file or directory
+
+#include "Python.h"
+```
+and you are using a Linux distro like Ubuntu, you may need to also install the `python-dev` package:
+```
+sudo apt-get install python-dev
+```
+
+If you download the [GitHub version](http://github.com/choderalab/pymbar), you can use the provided `setup.py` to install.
 
 To install to your default Python site-packages location:
 ```tcsh
