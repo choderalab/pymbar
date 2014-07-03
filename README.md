@@ -47,7 +47,12 @@ easy_install pymbar
 ```
 or using `pip install`:
 ```tcsh
-pip install pymbar
+pip install pymbar==2.1.0-beta
+```
+
+The bleeding-edge development version can be installed using [conda](http://conda.pydata.org) via
+```tcsh
+conda install -c https://conda.binstar.org/omnia pymbar-dev
 ```
 
 If you see an error like
