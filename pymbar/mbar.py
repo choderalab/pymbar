@@ -438,7 +438,7 @@ class MBAR:
                     # Hmm.  Will this print correctly?
                     print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
                 else:
-                    d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
+                    d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)] = 0.0
 
             # take the square root of the matrix
             dDeltaf_ij = np.sqrt(d2DeltaF)
@@ -1227,7 +1227,7 @@ class MBAR:
                 if(np.any(d2DeltaF) < warning_cutoff):
                     print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
                 else:
-                    d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
+                    d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)] = 0.0
 
             # take the square root of the matrix
             dDeltaf_ij = np.sqrt(d2DeltaF)
@@ -1358,7 +1358,7 @@ class MBAR:
                 # Hmm.  Will this print correctly?
                 print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
             else:
-                d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
+                d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)] = 0.0
 
         # take the square root of the matrix
         dDelta_f_ij = np.sqrt(d2DeltaF)
