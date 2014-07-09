@@ -63,13 +63,13 @@ This module contains implementations of
 # * Make functions that don't need to be exported (like logsum) private by prefixing an underscore.
 # * Make asymptotic covariance matrix computation more robust to over/underflow.
 # * Double-check correspondence of comments to equation numbers once manuscript has been finalized.
-# * Change self.nonzero_N_k_indices to self.states_with_samples
 #=========================================================================
 
 import math
-import numpy
-import numpy.linalg
+import numpy as np
+import numpy.linalg as linalg
 from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
+import pdb
 
 #=========================================================================
 # MBAR class definition
@@ -94,7 +94,7 @@ class MBAR:
     """
     #=========================================================================
 
-    def __init__(self, u_kln, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, method='adaptive', use_optimized=None, newton_first_gamma=0.1, newton_self_consistent=2, maxrange=1.0e5, initialize='zeros'):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, method='adaptive', use_optimized=None, newton_first_gamma=0.1, newton_self_consistent=2, maxrange=1.0e5, initialize='zeros', x_kindices=None):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -103,15 +103,29 @@ class MBAR:
         free energies or expectation at any state of interest can be computed by calls to 'computeFreeEnergy()' or
         'computeExpectations()'.
 
-        Parameters
         ----------
-        u_kln : np.ndarray, float, shape=(K, L, N_max)
-            u_kln[k,l,n] is the reduced potential energy of uncorrelated
-            configuration n sampled from state k, evaluated at state l.  K >= L             
+        u_kn : np.ndarray, float, shape=(K, N_max)
+            u_kn[k,n] is the reduced potential energy of uncorrelated
+            configuration n evaluated at state k.
+            u_kln: np.ndarray, float, shape (K, L, N_max)
+               if the simulation is in form u_kln[k,l,n] it is converted to u_kn format
+
+        u_kn = [ u_1(x_1) u_1(x_2) u_1(x_3) . . . u_1(x_n)
+                 u_2(x_1) u_2(x_2) u_2(x_3) . . . u_2(x_n)
+                                .  .  .
+                 u_k(x_1) u_k(x_2) u_k(x_3) . . . u_k(x_n)]
+
         N_k :  np.ndarray, int, shape=(K)
-            N_k[k] is the number of uncorrelated snapshots sampled from state k
-            This can be zero if the expectation or free energy of this
-            state is desired but no samples were drawn from this state.
+            N_k[k] is the number of uncorrelated snapshots sampled from state k.
+            Some may be zero, indicating that there are no samples from that state.
+
+        We assume that the states are ordered such that the first N_k
+        are from the first state, the 2nd N_k the second state, and so
+        forth. This only becomes important for BAR -- MBAR does not
+        care which samples are from which state.  We should eventually
+        allow this assumption to be overwritten by parameters passed
+        from above, once u_kln is phased out.
+
         maximum_iterations : int, optional
             Set to limit the maximum number of iterations performed (default 1000)
         relative_tolerance : float, optional
@@ -122,46 +136,50 @@ class MBAR:
             Set to the initial dimensionless free energies to use as a 
             guess (default None, which sets all f_k = 0)
         method : string, optional
-            Method for determination of dimensionless free energies: 
-            Must be one of 'self-consistent-iteration','Newton-Raphson', 
+            Method for determination of dimensionless free energies:
+            Must be one of 'self-consistent-iteration','Newton-Raphson',
             or 'adaptive' (default: 'adaptive').
             Newton-Raphson is deprecated and defaults to adaptive
         use_optimized : bool, optional
             If False, will explicitly disable use of C++ extensions.
             If None or True, extensions will be autodetected (default: None)
         initialize : string, optional
-            If equal to 'BAR', use BAR between the pairwise state to 
-            initialize the free energies.  Eventually, should specify a path; 
-            for now, it just does it zipping up the states. 
-            (default: 'zeros', unless specific values are passed in.)            
+            If equal to 'BAR', use BAR between the pairwise state to
+            initialize the free energies.  Eventually, should specify a path;
+            for now, it just does it zipping up the states.
+            (default: 'zeros', unless specific values are passed in.)
         newton_first_gamma : float, optional
-            Initial gamma for newton-raphson (default = 0.1)            
+            Initial gamma for newton-raphson (default = 0.1)
         newton_self_consistent : int, optional
-            Mininum number of self-consistent iterations before 
+            Mininum number of self-consistent iterations before
             Newton-Raphson iteration (default = 2)
+        x_kindices
+            Which state is each x from?  Usually doesn't matter, but does for BAR. We assume the samples
+            are in K order (the first N_k[0] samples are from the 0th state, the next N_k[1] samples from 
+            the 1st state, and so forth.
 
         Notes
         -----
-        The reduced potential energy u_kln[k,l,n] = u_l(x_{kn}), where the reduced potential energy u_l(x) is defined (as in the text) by:
-        u_l(x) = beta_l [ U_l(x) + p_l V(x) + mu_l' n(x) ]
+        The reduced potential energy u_kn[k,n] = u_k(x_{ln}), where the reduced potential energy u_l(x) is defined (as in the text) by:
+        u_k(x) = beta_k [ U_k(x) + p_k V(x) + mu_k' n(x) ]
         where
-        beta_l = 1/(kB T_l) is the inverse temperature of condition l, where kB is Boltzmann's constant
-        U_l(x) is the potential energy function for state l
-        p_l is the pressure at state l (if an isobaric ensemble is specified)
+        beta_k = 1/(kB T_k) is the inverse temperature of condition k, where kB is Boltzmann's constant
+        U_k(x) is the potential energy function for state k
+        p_k is the pressure at state k (if an isobaric ensemble is specified)
         V(x) is the volume of configuration x
-        mu_l is the M-vector of chemical potentials for the various species, if a (semi)grand ensemble is specified, and ' denotes transpose
+        mu_k is the M-vector of chemical potentials for the various species, if a (semi)grand ensemble is specified, and ' denotes transpose
         n(x) is the M-vector of numbers of the various molecular species for configuration x, corresponding to the chemical potential components of mu_m.
-
-        The configurations x_kn must be uncorrelated.  This can be ensured by subsampling a correlated timeseries with a period larger than the statistical inefficiency,
-        which can be estimated from the potential energy timeseries {u_k(x_kn)}_{n=1}^{N_k} using the provided utility function 'statisticalInefficiency()'.
+        x_n indicates that the samples are from k different simulations of the n states. These simulations need only be a subset of the k states.
+        The configurations x_ln must be uncorrelated.  This can be ensured by subsampling a correlated timeseries with a period larger than the statistical inefficiency,
+        which can be estimated from the potential energy timeseries {u_k(x_ln)}_{n=1}^{N_k} using the provided utility function 'statisticalInefficiency()'.
         See the help for this function for more information.
 
         Examples
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
-        >>> mbar = MBAR(u_kln, N_k)
+        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> mbar = MBAR(u_kn, N_k)
 
         """
 
@@ -188,30 +206,40 @@ class MBAR:
                     print "Could not import working embedded C++ helper code -- using pure Python version instead."
 
         # Store local copies of necessary data.
-        # N_k[k] is the number of samples from state k
-        self.N_k = numpy.array(N_k, dtype=numpy.int32)
-        # u_kln[k,l,n] is the reduced potential energy of sample n from state k
-        # evaluated at state l
-        self.u_kln = numpy.array(u_kln, dtype=numpy.float64)
+        # N_k[k] is the number of samples from state k, some of which might be zero.
+        self.N_k = np.array(N_k, dtype=np.int32)
+        self.N = np.sum(self.N_k)
 
-        # Get dimensions of reduced potential energy matrix.
-        [K, L, N_max] = self.u_kln.shape
+        # Get dimensions of reduced potential energy matrix, and convert to KxN form if needed.
+        if len(np.shape(u_kn)) == 3:
+            self.K = np.shape(u_kn)[1]  # need to set self.K, and it's the second index
+            u_kn = self._kln_to_kn(u_kn)
+
+        # u_kn[k,n] is the reduced potential energy of sample n evaluated at state k
+        self.u_kn = np.array(u_kn, dtype=np.float64)
+
+        [K, N] = np.shape(u_kn)
+
         if verbose:
-            print "K = (states with samples) %d, L (total states) = %d, N_max = %d, total samples = %d" % (K, L, N_max, self.N_k.sum())
-        if K > L:
+            print "K (total states) = %d, total samples = %d" % (K, N)
+
+        if np.sum(N_k) != N:
             raise ParameterError(
-                'u_kln[0:K, 0:L, 0:N_max] must have dimensions K <= L.')
-        if numpy.any(N_k > N_max):
-            raise ParameterError(
-                'All N_k must be <= N_max, the third dimension of u_kln[0:K, 0:L, 0:N_max].')
+                'The sum of all N_k must equal the total number of samples (length of second dimension of u_kn.')
 
         # Store local copies of other data
-        self.K = K  # number of thermodynamic states sampled from
-        self.L = L  # number of thermodynamic states computed at
-        self.N_max = N_max  # maximum number of configurations per state
-        # N = \sum_{k=1}^K N_k is the total number of uncorrelated
-        # configurations pooled across all states
-        self.N = numpy.sum(self.N_k)
+        self.K = K  # number of thermodynamic states energies are evaluated at
+        # N = \sum_{k=1}^K N_k is the total number of samples
+        self.N = N  # maximum number of configurations
+
+        # if not defined, identify from which state each sample comes from.
+        if (x_kindices != None):
+            x_kindices = np.array(N,dtype=np.int32)
+            Nsum = 0
+            for k in range(K):
+                x_kindices[Nsum:Nsum+N_k[k]] = k
+                Nsum += N_k[k]
+
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
 
@@ -221,18 +249,13 @@ class MBAR:
         # they are probably the same state.  We check to within
         # relative_tolerance.
 
-        self.samestates = []
-        if (self.L > 100):
-            print 'Skipping check of whether the states have the same reduced energy,'
-            print 'as the number of states is greater than 100'
-        else:
-            for k in range(L):
+        if self.verbose:
+            self.samestates = []
+            for k in range(K):
                 for l in range(k):
                     diffsum = 0
-                    for j in range(K):  # find the nonzero sets of data:
-                        if (self.N_k[j] > 0):
-                            uzero = u_kln[j, k, :] - u_kln[j, l,:]
-                            diffsum += numpy.dot(uzero, uzero)
+                    uzero = u_kn[k, :] - u_kn[l, :]
+                    diffsum += np.dot(uzero, uzero)
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
                         self.samestates.append([l, k])
@@ -243,46 +266,36 @@ class MBAR:
                         print 'identically zero in any case. Consider combining them into a single state.'
                         print ''
 
-        # Create a list of indices of all configurations in kn-indexing.
-        mask_kn = numpy.zeros([self.K, self.N_max], dtype=numpy.bool_)
-        for k in range(0, self.K):
-            mask_kn[k, 0:N_k[k]] = True
-        # Create a list from this mask.
-        self.indices = numpy.where(mask_kn)
-
-        # Determine list of k indices for which N_k != 0
-        self.nonzero_N_k_indices = numpy.where(self.N_k != 0)[0]
-        self.nonzero_N_k_indices = self.nonzero_N_k_indices.astype(numpy.int32)
-
-        # Store versions of variables nonzero indices file
-        # Number of states with samples.
-        self.K_nonzero = self.nonzero_N_k_indices.size
-        if verbose:
-            print "There are %d states with samples." % self.K_nonzero
-
-        self.N_nonzero = self.N_k[self.nonzero_N_k_indices].copy()
-
         # Print number of samples from each state.
         if self.verbose:
             print "N_k = "
             print N_k
 
+        # Determine list of k indices for which N_k != 0
+        self.states_with_samples = np.where(self.N_k != 0)[0]
+        self.states_with_samples = self.states_with_samples.astype(np.int32)
+
+        # Number of states with samples.
+        self.K_nonzero = self.states_with_samples.size
+        if verbose:
+            print "There are %d states with samples." % self.K_nonzero
+
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
         # this is default
-        self.f_k = numpy.zeros([self.L], dtype=numpy.float64)
+        self.f_k = np.zeros([self.K], dtype=np.float64)
 
         # If an initial guess of the relative dimensionless free energies is
         # specified, start with that.
         if initial_f_k != None:
             if self.verbose:
                 print "Initializing f_k with provided initial guess."
-            # Cast to numpy array.
-            initial_f_k = numpy.array(initial_f_k, dtype=numpy.float64)
+            # Cast to np array.
+            initial_f_k = np.array(initial_f_k, dtype=np.float64)
             # Check shape
             if initial_f_k.shape != self.f_k.shape:
                 raise ParameterError(
-                    "initial_f_k must be a %d-dimensional numpy array." % self.K)
+                    "initial_f_k must be a %d-dimensional np array." % self.K)
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
             if self.verbose:
@@ -344,7 +357,7 @@ class MBAR:
 
         """
 
-        return numpy.exp(self.Log_W_nk)
+        return np.exp(self.Log_W_nk)
 
     #=========================================================================
     def getFreeEnergyDifferences(self, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
@@ -362,7 +375,7 @@ class MBAR:
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
             than this number (default: 1.0e-10)
-        return_theta : bool, optional 
+        return_theta : bool, optional
             Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
         Returns
@@ -388,26 +401,26 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
-        >>> mbar = MBAR(u_kln, N_k)
+        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> mbar = MBAR(u_kn, N_k)
         >>> [Deltaf_ij, dDeltaf_ij] = mbar.getFreeEnergyDifferences()
 
         """
 
         # Compute free energy differences.
-        f_i = numpy.matrix(self.f_k)
+        f_i = np.matrix(self.f_k)
         Deltaf_ij = f_i - f_i.transpose()
 
         # zero out numerical error for thermodynamically identical states
         self._zerosamestates(Deltaf_ij)
 
         returns = []
-        returns.append(numpy.array(Deltaf_ij))
+        returns.append(np.array(Deltaf_ij))
 
         if compute_uncertainty or return_theta:
             # Compute asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
-                numpy.exp(self.Log_W_nk), self.N_k, method=uncertainty_method)
+                np.exp(self.Log_W_nk), self.N_k, method=uncertainty_method)
 
         if compute_uncertainty:
             # compute the covariance component without doing the double loop.
@@ -420,50 +433,56 @@ class MBAR:
             self._zerosamestates(d2DeltaF)
 
             # check for any numbers below zero.
-            if (numpy.any(d2DeltaF < 0.0)):
-                if(numpy.any(d2DeltaF) < warning_cutoff):
+            if (np.any(d2DeltaF < 0.0)):
+                if(np.any(d2DeltaF) < warning_cutoff):
                     # Hmm.  Will this print correctly?
-                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)]
+                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
                 else:
                     d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
 
             # take the square root of the matrix
-            dDeltaf_ij = numpy.sqrt(d2DeltaF)
+            dDeltaf_ij = np.sqrt(d2DeltaF)
 
             # Return matrix of free energy differences and uncertainties.
-            returns.append(numpy.array(dDeltaf_ij))
+            returns.append(np.array(dDeltaf_ij))
 
         if (return_theta):
-            returns.append(numpy.array(Theta_ij))
+            returns.append(np.array(Theta_ij))
 
         return returns
 
     #=========================================================================
+    def computeGeneralExpectations(self, A_in, u_ln, state_list, compute_uncertainty=True,
+                                   uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
+        """Compute the expectations of multiple observables of phase space functions on multiple states.
 
-    def computeExpectations(self, A_kn, output='averages', compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
-        """Compute the expectation of an observable of phase space function.
+        Compute the expectations of multiple observables of phase
+        space functions.  [A_0(x),A_1(x),...,A_i(x)] along with the
+        covariances of their estimates at multiple states.
 
-        Compute the expectation of an observable of phase space function 
-        A(x) at all K states, including states for which no samples 
-        were drawn. A may be a function of the state k.
+        We calculate all observables at all states that are specified by the choice of state list.
+        Generally, it will be called in specific conditions.
 
         Parameters
         ----------
-        A : np.ndarray, float          
-            Two possibilities, depending on if the observable is a function of the state or not.
-            either: not dependent on the state
-            A_kn (KxN_max numpy float64 array) - A_kn[k,n] = A(x_kn)
-            or: dependent on state
-            A_kn (KxKxN_max numpy float64 array) - A_kn[k,l,n] = A(x_kn)
-            where the 2nd dimension is the observable as a function of the state
-        output : string, optional
-            Either output averages, and uncertainties, or output a matrix of differences, with uncertainties.
-        compute_uncertainty : bool, optional
-            If False, the uncertainties will not be computed (default: True)
+        A_in : np.ndarray, float, shape=(I, N)
+            A_in[i,n] = A_i(x_n), the value of phase observable i for configuration n
+        u_ln : np.ndarray, float, shape=(L, N)
+            u_n[l,n] is the reduced potential of configuration n at state l
+            if u_ln = None, we use self.u_kn
+
+        state_list : np.ndarray, int, shape (NS,2), where NS is the
+                     total number of states of interest.  it will be
+                     of the form [[0,0],[1,1],[2,1]] which would
+                     indicate we want to output the properties of
+                     three observables total: the first property A[0]
+                     at the 0th state, the 2nd property A[1] at the
+                     1th state, and the 2nd property A[1] at the 2nd
+                     state.  This allows us to tailor this to a number of different situations.
+
         uncertainty_method : string, optional
-            Choice of method used to compute asymptotic covariance method, 
-            or None to use default See help for computeAsymptoticCovarianceMatrix()
-            for more information on various methods. (default: None)
+            Choice of method used to compute asymptotic covariance method, or None to use default
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
         return_theta : bool, optional
@@ -471,15 +490,172 @@ class MBAR:
 
         Returns
         -------
+
+        A_i : np.ndarray, float, shape = (I)
+            A_i[i] is the estimate for the expectation of A_state_list[i](x) at the state specified by u_n[state_list[i],:]
+
+        d2A_ik : np.ndarray, float, shape = (I, J)
+            d2A_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
+            (* not the square root *)
+
+        General cases this will be used for.
+            single observable, multiple states (replacement for computeExpectations)
+            multiple observables, single state (replacement for computeMultipleExpectations)
+            diagonal cases of multiple states, single states.
+
+        Examples
+        --------
+
+        update this example to be more general
+        >>> from pymbar import testsystems
+        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> mbar = MBAR(u_kn, N_k)
+        >>> A_in = np.array([x_kn,x_kn**2,x_kn**3])
+        >>> u_ln = u_kn[:1,:]
+        >>> state_list = np.array([[0,0],[1,0],[2,0],[2,1]],int)
+        >>> [A_i, d2A_ij] = mbar.computeGeneralExpectations(A_in, state_list, u_n)
+
+        """
+
+        # Retrieve N and K for convenience.
+        S = len(state_list) # number of computed expectations examined
+        K = self.K
+
+        L = u_ln.shape[0]  # number of states
+        N = self.N  # N is total number of samples
+
+        # make observables all positive
+        A_list = np.unique(state_list[:,0])
+        I = len(A_list) # number of observables used
+        A_min = np.zeros([I], dtype=np.float64)
+
+        for i in A_list:  # only need to zero the ones we will use.  May be some repetition here.
+            A_min[i] = np.min(A_in[i, :]) #find the minimum
+            A_in[i, :] = A_in[i,:] - (A_min[i] - 1)  #all values now positive so that we can work in logarithmic scale
+
+        # Augment W_nk, N_k, and c_k for q_A(x) for the observables, with one
+        # row for the specified state and I rows for the observable at that
+        # state.
+        # log weight matrix
+        sizea = K + 2*S # augmented size
+        Log_W_nk = np.zeros([N, sizea], np.float64) # log weight matrix
+        N_k = np.zeros([sizea], np.int32)  # counts
+        f_k = np.zeros([sizea], np.float64)  # free energies
+
+        # Fill in first section of matrix with existing q_k(x) from states.
+        Log_W_nk[:, 0:K] = self.Log_W_nk
+        N_k[0:K] = self.N_k
+        f_k[0:K] = self.f_k
+
+        # Compute row of W matrix for the extra states corresponding to u_ln according to the state list
+        for s in range(S):
+            l = state_list[s,1]
+            la = K+l  #l augmented
+            Log_W_nk[:, la] = self._computeUnnormalizedLogWeights(u_ln[l,:])
+            f_k[la] = -_logsum(Log_W_nk[:, la])
+            Log_W_nk[:, la] += f_k[l]
+
+        # Compute the remaining rows/columns of W_nk and c_k for the
+        # observables.
+        for s in range(S):
+            sa = K+S+s  # augmented s
+            i = state_list[s,0]
+            l = state_list[s,1]
+            Log_W_nk[:, sa] = np.log(A_in[i, :]) + Log_W_nk[:, K+l]
+            f_k[sa] = -_logsum(Log_W_nk[:, sa])
+            Log_W_nk[:, sa] += f_k[sa]    # normalize this row
+
+        # Compute estimates.
+        A_i = np.zeros([S], np.float64)
+        for s in range(S):
+            A_i[s] = np.exp(-f_k[K + S + s])
+
+        if compute_uncertainty or return_theta:
+            # Compute augmented asymptotic covariance matrix.
+            W_nk = np.exp(Log_W_nk)
+            Theta_ij = self._computeAsymptoticCovarianceMatrix(
+                W_nk, N_k, method=uncertainty_method)
+
+        if compute_uncertainty:
+            # Compute estimates of statistical covariance
+            # these variances will be the same whether or not we subtract a different constant from each A_i
+            # todo: vectorize
+            # compute the covariance component without doing the double loop
+            d2A_ij = np.zeros([S, S], np.float64)
+            for i in range(S):
+                si = K+S+i
+                li = K+state_list[i,1]
+                for j in range(S):
+                    sj = K+S+j
+                    lj = K+state_list[j,1]
+                    d2A_ij[i, j] = A_i[i] * A_i[j] * (
+                        Theta_ij[si, sj] - Theta_ij[si, li] - Theta_ij[lj, sj] + Theta_ij[li, lj])
+
+        # Now that covariances are computed, add the constants back to A_i that
+        # were required to enforce positivity
+        for s in range(S):
+            A_i[s] += (A_min[state_list[s,0]] - 1)
+
+        # these values may be used outside the routine, so copy back.
+        for i in A_list:
+            A_in[i, :] = A_in[i,:] + (A_min[i] - 1)
+
+        returns = []
+        returns.append(A_i)
+
+        if compute_uncertainty:
+            returns.append(d2A_ij)
+
+        if return_theta:
+            returns.append(Theta_ij)
+
+        # Return expectations and uncertainties.
+        return returns
+
+    #=========================================================================
+
+    def computeExpectations(self, A_n, output='averages', compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False, useGeneral = False, state_dependent = False):
+        """Compute the expectation of an observable of a phase space function.
+
+        Compute the expectation of an observable of phase space
+        function A(x) at all states where potentials are generated,
+        including states for which no samples were drawn.
+
+        We assume observables are not function of the state.  u is not
+        an observable -- it changes depending on the state. u_k is an
+        observable; the energy of state k does not depend on the
+        state. To compute the estimators of the energy at all K
+        states, use . . .
+
+        Parameters
+        ----------
+        A_n : np.ndarray, float
+            A_n (N_max np float64 array) - A_n[n] = A(x_n)
+        output : string, optional
+            Either output averages, and uncertainties, or output a matrix of differences, with uncertainties.
+        compute_uncertainty : bool, optional
+            If False, the uncertainties will not be computed (default: True)
+        uncertainty_method : string, optional
+            Choice of method used to compute asymptotic covariance method,
+            or None to use default See help for computeAsymptoticCovarianceMatrix()
+            for more information on various methods. (default: None)
+        warning_cutoff : float, optional
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
+        return_theta : bool, optional
+            Whether or not to return the theta matrix.  Can be useful for complicated differences.
+        useGeneral: bool, whether to use the GeneralExpectations formalism = False,
+        state_dependent: bool, whether the expectations are state-dependent.
+
+        Returns
+        -------
         A : np.ndarray, float
             if output is 'averages'
-            A_i  (K numpy float64 array) -  A_i[k] is the estimate for the expectation of A(x) for state k.
+            A_i  (K np float64 array) -  A_i[i] is the estimate for the expectation of A(x) for state i.
             if output is 'differences'
-            A_ij (K numpy float64 array) -  A_ij[i,j] is the difference in the estimates for the expectation of A(x).
         dA : np.ndarray, float
-            dA_i  (K numpy float64 array) - dA_i[k] is uncertainty estimate (one standard deviation) for A_k[k]
+            dA_i  (K np float64 array) - dA_i[i] is uncertainty estimate (one standard deviation) for A_i[i]
             or
-            dA_ij (K numpy float64 array) - dA_ij[i,j] is uncertainty estimate (one standard deviation) for the difference in A beteen i and j
+            dA_ij (K np float64 array) - dA_ij[i,j] is uncertainty estimate (one standard deviation) for the difference in A beteen i and j
 
         Notes
         -----
@@ -500,142 +676,194 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
+        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kln, N_k)
-        >>> A_kn = x_kn
+        >>> A_n = x_n
         >>> (A_ij, dA_ij) = mbar.computeExpectations(A_kn)
-        >>> A_kn = u_kln
+        >>> A_kn = u_kn[0,:]
         >>> (A_ij, dA_ij) = mbar.computeExpectations(A_kn, output='differences')
         """
 
-        # Convert to numpy matrix.
-        A_kn = numpy.array(A_kn, numpy.float64)
+        dims = len(np.shape(A_n))
 
         # Retrieve N and K for convenience.
         N = self.N
         K = self.K
 
-        dim = len(numpy.shape(A_kn))
+        if dims == 3:
+            print "expecting dim=1 or dim=2"
+            return None
 
-        # Augment W_nk, N_k, and c_k for q_A(x) for the observable, with one
-        # extra row/column for each state (Eq. 13 of [1]).
-        # log of weight matrix
-        Log_W_nk = numpy.zeros([N, K * 2], numpy.float64)
-        N_k = numpy.zeros([K * 2], numpy.int32)  # counts
-        # "free energies" of the new states
-        f_k = numpy.zeros([K], numpy.float64)
+        if (useGeneral):
 
-        # Fill in first half of matrix with existing q_k(x) from states.
-        Log_W_nk[:, 0:K] = self.Log_W_nk
-        N_k[0:K] = self.N_k
+            state_list = np.zeros([K,2],int)
+            if (state_dependent):
+                for k in range(K):
+                    state_list[k,0] = k
+                    state_list[k,1] = k
+                A_in = A_n
+            else:
+                A_in = np.zeros([1,N], dtype=np.float64)
+                if dims == 2:
+                    A_n = self._kn_to_n(A_n)
+                A_in[0,:] = A_n
 
-        # Make A_kn all positive so we can operate logarithmically for
-        # robustness
-        A_i = numpy.zeros([K], numpy.float64)
-        A_min = numpy.min(A_kn)
-        A_kn = A_kn - (A_min - 1)
+                for k in range(K):
+                    state_list[k,0] = 0
+                    state_list[k,1] = k
 
-        # Compute the remaining rows/columns of W_nk and the rows c_k for the
-        # observables.
+            general_results = self.computeGeneralExpectations(A_in, self.u_kn, state_list,
+                                                              compute_uncertainty=compute_uncertainty,
+                                                              uncertainty_method=uncertainty_method,
+                                                              warning_cutoff=warning_cutoff,
+                                                              return_theta=return_theta)
+            returns = []
 
-        if (dim == 2):
-            # Convert A_kn to n = 1..N indexing.
-            A_n = A_kn[self.indices]
+            if output == 'averages':
+                # Return expectations and uncertainties.
+                returns.append(general_results[0])
 
-        for l in range(0, K):
-            if (dim == 3):
-                A_nkstate = A_kn[:, l, :]
-                A_n = A_nkstate[self.indices]
+                if compute_uncertainty:
+                    indices = np.eye(K,dtype=bool)
+                    returns.append(np.sqrt(general_results[1][indices]))
 
-            # this works because all A_n are now positive;
-            Log_W_nk[:, K + l] = numpy.log(A_n) + self.Log_W_nk[:, l]
-            # we took the
-            # min at the
-            # beginning.
-            f_k[l] = -_logsum(Log_W_nk[:, K + l])
-            Log_W_nk[:, K + l] += f_k[l]              # normalize the row
-            A_i[l] = numpy.exp(-f_k[l])
+            if output == 'differences':
+                A_im = np.matrix(general_results[0])
+                A_ij = A_im - A_im.transpose()
 
-        if compute_uncertainty or return_theta:
-            # Compute augmented asymptotic covariance matrix.
-            Theta_ij = self._computeAsymptoticCovarianceMatrix(
-                numpy.exp(Log_W_nk), N_k, method=uncertainty_method)
-
-        returns = []
-
-        if output == 'averages':
-
-            if compute_uncertainty:
-                # Compute uncertainties.
-                dA_i = numpy.zeros([K], numpy.float64)
-                for k in range(0, K):
-                    dA_i[k] = numpy.abs(A_i[k]) * numpy.sqrt(
-                        Theta_ij[K + k, K + k] + Theta_ij[k, k] - 2.0 * Theta_ij[k, K + k])  # Eq. 16 of [1]
-
-            # add back minima now now that uncertainties are computed.
-            A_i += (A_min - 1)
-
-            # Return expectations and uncertainties.
-            returns.append(numpy.array(A_i))
-
-            if compute_uncertainty:
-                returns.append(numpy.array(dA_i))
-
-        if output == 'differences':
-            # Return differences of expectations and uncertainties.
-
-            # compute expectation differences
-            A_im = numpy.matrix(A_i)
-            A_ij = A_im - A_im.transpose()
-
-            returns.append(numpy.array(A_ij))
-
-            # todo - vectorize the differences.
-
-            if compute_uncertainty:
-                dA_ij = numpy.zeros([K, K], dtype=numpy.float64)
-
-                for i in range(0, K):
-                    for j in range(0, K):
-
-                        try:
-                            dA_ij[i, j] = math.sqrt(
-                                + A_i[i] * Theta_ij[i, i] * A_i[i] - A_i[i] * Theta_ij[i, j] * A_i[j] - A_i[
-                                    i] * Theta_ij[i, K + i] * A_i[i] + A_i[i] * Theta_ij[i, K + j] * A_i[j]
-                                - A_i[j] * Theta_ij[j, i] * A_i[i] + A_i[j] * Theta_ij[j, j] * A_i[j] + A_i[
-                                    j] * Theta_ij[j, K + i] * A_i[i] - A_i[j] * Theta_ij[j, K + j] * A_i[j]
-                                - A_i[i] * Theta_ij[K + i, i] * A_i[i] + A_i[i] * Theta_ij[K + i, j] * A_i[j] + A_i[
-                                    i] * Theta_ij[K + i, K + i] * A_i[i] - A_i[i] * Theta_ij[K + i, K + j] * A_i[j]
-                                + A_i[j] * Theta_ij[K + j, i] * A_i[i] - A_i[j] * Theta_ij[K + j, j] * A_i[j] - A_i[
-                                    j] * Theta_ij[K + j, K + i] * A_i[i] + A_i[j] * Theta_ij[K + j, K + j] * A_i[j]
-                            )
-                        except:
-                            dA_ij[i, j] = 0.0
-
-                returns.append(dA_ij)
+                returns.append(np.array(A_ij))
+                if compute_uncertainty:
+                    return np.sqrt(general_returns[1])
 
             if return_theta:
-                returns.append(Theta_ij)
+                returns.append(general_results[2])
+
+        else:  # current style
+
+            if dims == 2: #convert to 1xN shape
+                A_n = self._kn_to_n(A_n)
+                # Convert to np array.
+                A_n = np.array(A_n, np.float64)
+
+            # Augment W_nk, N_k, and c_k for q_A(x) for the observable, with one
+            # extra row/column for each state (Eq. 13 of [1]).
+            # log of weight matrix
+            Log_W_nk = np.zeros([N, K * 2], np.float64)
+            N_k = np.zeros([K * 2], np.int32)  # counts
+            # "free energies" of the new states
+            f_k = np.zeros([K], np.float64)
+
+            # Fill in first half of matrix with existing q_k(x) from states.
+            Log_W_nk[:, 0:K] = self.Log_W_nk
+            N_k[0:K] = self.N_k
+
+            # Make A_n all positive so we can operate logarithmically for
+            # robustness
+            A_i = np.zeros([K], np.float64)
+            A_min = np.min(A_n)
+            A_n = A_n - (A_min - 1)
+
+            # Compute the remaining rows/columns of W_nk and the rows c_k for the
+            # observables.
+
+            for l in range(K):
+
+                # this works because all A_n are now positive;
+                Log_W_nk[:, K + l] = np.log(A_n) + self.Log_W_nk[:, l]
+                # we took the min at the beginning.
+                f_k[l] = -_logsum(Log_W_nk[:, K + l])
+                Log_W_nk[:, K + l] += f_k[l]              # normalize the row
+                A_i[l] = np.exp(-f_k[l])
+
+            if compute_uncertainty or return_theta:
+                # Compute augmented asymptotic covariance matrix.
+                Theta_ij = self._computeAsymptoticCovarianceMatrix(
+                    np.exp(Log_W_nk), N_k, method=uncertainty_method)
+
+            returns = []
+
+            if output == 'averages':
+
+                if compute_uncertainty:
+                    # Compute uncertainties.
+                    dA_i = np.zeros([K], np.float64)
+                # just the diagonals
+                    for k in range(0, K):
+                        dA_i[k] = np.abs(A_i[k]) * np.sqrt(
+                            Theta_ij[K + k, K + k] + Theta_ij[k, k] - 2.0 * Theta_ij[k, K + k])
+
+                # add back minima now now that uncertainties are computed.
+                        A_i += (A_min - 1)
+
+                # Return expectations and uncertainties.
+                returns.append(np.array(A_i))
+
+                if compute_uncertainty:
+                    returns.append(np.array(dA_i))
+
+            if output == 'differences':
+                # Return differences of expectations and uncertainties.
+
+                # compute expectation differences
+                A_im = np.matrix(A_i)
+                A_ij = A_im - A_im.transpose()
+
+                returns.append(np.array(A_ij))
+
+                # todo - vectorize the differences!  Faster and less likely to give errors.
+
+                if compute_uncertainty:
+                    dA_ij = np.zeros([K, K], dtype=np.float64)
+
+                    T_kk = dot(A_i,Theta_ij[0:K,0:K])
+
+                    for i in range(0, K):
+                        for j in range(0, K):
+                            try:
+                                dA_ij[i, j] = np.sqrt(
+                                    + A_i[i] * Theta_ij[i, i] * A_i[i]
+                                      - A_i[i] * Theta_ij[i, j] * A_i[j]
+                                      - A_i[i] * Theta_ij[i, K + i] * A_i[i]
+                                      + A_i[i] * Theta_ij[i, K + j] * A_i[j]
+                                      - A_i[j] * Theta_ij[j, i] * A_i[i]
+                                      + A_i[j] * Theta_ij[j, j] * A_i[j]
+                                      + A_i[j] * Theta_ij[j, K + i] * A_i[i]
+                                      - A_i[j] * Theta_ij[j, K + j] * A_i[j]
+                                      - A_i[i] * Theta_ij[K + i, i] * A_i[i]
+                                      + A_i[i] * Theta_ij[K + i, j] * A_i[j]
+                                      + A_i[i] * Theta_ij[K + i, K + i] * A_i[i]
+                                      - A_i[i] * Theta_ij[K + i, K + j] * A_i[j]
+                                      + A_i[j] * Theta_ij[K + j, i] * A_i[i]
+                                      - A_i[j] * Theta_ij[K + j, j] * A_i[j]
+                                      - A_i[j] * Theta_ij[K + j, K + i] * A_i[i]
+                                      + A_i[j] * Theta_ij[K + j, K + j] * A_i[j]
+                                      )
+                            except:
+                                dA_ij[i, j] = 0.0
+
+                    returns.append(dA_ij)
+
+                if return_theta:
+                    returns.append(Theta_ij)
 
         return returns
 
+
     #=========================================================================
-    def computeMultipleExpectations(self, A_ikn, u_kn, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
+    def computeMultipleExpectations(self, A_in, u_n, compute_uncertainty=True,
+                                    uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
         """Compute the expectations of multiple observables of phase space functions.
 
         Compute the expectations of multiple observables of phase space functions.
-        [A_0(x),A_1(x),...,A_n(x)] at single specified state, 
-        along with the covariances of their estimates.  The state is specified by
-        the choice of u_kn, which is the energy of the kxn samples evaluated at the chosen state.  Note that
-        these variables A should NOT be functions of the state!
-
+        [A_0(x),A_1(x),...,A_i(x)] along with the covariances of their estimates.  The state is specified by
+        the choice of u_n, which is the energy of the n samples evaluated at a the chosen state.
 
         Parameters
         ----------
-        A_ikn : np.ndarray, float, shape=(I, k, N_max)       
-            A_ikn[i,k,n] = A_i(x_kn), the value of phase observable i for configuration n at state k
-        u_kn : np.ndarray, float, shape=(K, N_max)
-            u_kn[k,n] is the reduced potential of configuration n gathered from state k, at the state of interest
+        A_in : np.ndarray, float, shape=(I, k, N)
+            A_in[i,n] = A_i(x_n), the value of phase observable i for configuration n at state of interest
+        u_n : np.ndarray, float, shape=(N)
+            u_n[n] is the reduced potential of configuration n at the state of interest
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
@@ -661,64 +889,68 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
-        >>> mbar = MBAR(u_kln, N_k)
-        >>> A_ikn = numpy.array([x_kn,x_kn**2,x_kn**3])
-        >>> u_kn = u_kln[:,0,:]
+        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> mbar = MBAR(u_kn, N_k)
+        >>> A_in = np.array([x_kn,x_kn**2,x_kn**3])
+        >>> u_n = u_kn[0,:]
         >>> [A_i, d2A_ij] = mbar.computeMultipleExpectations(A_ikn, u_kn)
 
         """
 
         # Retrieve N and K for convenience.
-        I = A_ikn.shape[0]  # number of observables
+        I = A_in.shape[0]  # number of observables
         K = self.K
         N = self.N  # N is total number of samples
 
-        # Convert A_kn to n = 1..N indexing.
-        A_in = numpy.zeros([I, N], numpy.float64)
-        A_min = numpy.zeros([I], dtype=numpy.float64)
+        if len(np.shape(A_in)) == 3:
+            A_in_old = A_in.copy()
+            A_in = np.zeros([I, N], np.float64)
+            for i in range(I):
+                A_in[i,:] = self._kn_to_n(A_in_old[i,:,:])
+
+        A_min = np.zeros([I], dtype=np.float64)
         for i in range(I):
-            A_kn = numpy.array(A_ikn[i, :,:])
-            A_in[i, :] = A_kn[self.indices]
-            A_min[i] = numpy.min(A_in[i, :]) #find the minimum
+            A_min[i] = np.min(A_in[i, :]) #find the minimum
             A_in[i, :] -= (A_min[i]-1)  #all now values will be positive so that we can work in logarithmic scale
+
+        if len(np.shape(u_n)) == 2:
+            u_n = self._kn_to_n(u_n)
 
         # Augment W_nk, N_k, and c_k for q_A(x) for the observables, with one
         # row for the specified state and I rows for the observable at that
         # state.
         # log weight matrix
-        Log_W_nk = numpy.zeros([N, K + 1 + I], numpy.float64)
-        W_nk = numpy.zeros([N, K + 1 + I], numpy.float64)  # weight matrix
-        N_k = numpy.zeros([K + 1 + I], numpy.int32)  # counts
-        f_k = numpy.zeros([K + 1 + I], numpy.float64)  # free energies
+        Log_W_nk = np.zeros([N, K + 1 + I], np.float64)
+        W_nk = np.zeros([N, K + 1 + I], np.float64)  # weight matrix
+        N_k = np.zeros([K + 1 + I], np.int32)  # counts
+        f_k = np.zeros([K + 1 + I], np.float64)  # free energies
 
         # Fill in first section of matrix with existing q_k(x) from states.
         Log_W_nk[:, 0:K] = self.Log_W_nk
-        W_nk[:, 0:K] = numpy.exp(self.Log_W_nk)
+        W_nk[:, 0:K] = np.exp(self.Log_W_nk)
         N_k[0:K] = self.N_k
         f_k[0:K] = self.f_k
 
         # Compute row of W matrix for the extra state corresponding to u_kn.
-        Log_w_kn = self._computeUnnormalizedLogWeights(u_kn)
-        Log_W_nk[:, K] = Log_w_kn[self.indices]
+        Log_W_nk[:, K]  = self._computeUnnormalizedLogWeights(u_n)
         f_k[K] = -_logsum(Log_W_nk[:, K])
         Log_W_nk[:, K] += f_k[K]
 
         # Compute the remaining rows/columns of W_nk and c_k for the
         # observables.
         for i in range(I):
-            Log_W_nk[:, K+1+i] = numpy.log(A_in[i, :]) + Log_W_nk[:, K]
+            Log_W_nk[:, K+1+i] = np.log(A_in[i, :]) + Log_W_nk[:, K]
             f_k[K + 1 + i] = -_logsum(Log_W_nk[:, K + 1 + i])
             Log_W_nk[:, K + 1 + i] += f_k[K + 1 + i]    # normalize this row
 
         # Compute estimates.
-        A_i = numpy.zeros([I], numpy.float64)
+        A_i = np.zeros([I], np.float64)
         for i in range(I):
-            A_i[i] = numpy.exp(-f_k[K + 1 + i])
+            A_i[i] = np.exp(-f_k[K + 1 + i])
 
         if compute_uncertainty or return_theta:
             # Compute augmented asymptotic covariance matrix.
-            W_nk = numpy.exp(Log_W_nk)
+            W_nk = np.exp(Log_W_nk)
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
                 W_nk, N_k, method=uncertainty_method)
 
@@ -727,7 +959,7 @@ class MBAR:
             # these variances will be the same whether or not we subtract a different constant from each A_i
             # todo: vectorize
             # compute the covariance component without doing the double loop
-            d2A_ij = numpy.zeros([I, I], numpy.float64)
+            d2A_ij = np.zeros([I, I], np.float64)
             for i in range(I):
                 for j in range(I):
                     d2A_ij[i, j] = A_i[i] * A_i[j] * (Theta_ij[K + 1 + i, K + 1 + j] - Theta_ij[
@@ -735,7 +967,7 @@ class MBAR:
 
         # Now that covariances are computed, add the constants back to A_i that
         # were required to enforce positivity
-        A_i += (A_min - 1)
+        A_i = A_i + (A_min - 1)
 
         returns = []
         returns.append(A_i)
@@ -778,16 +1010,16 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
-        >>> mbar = MBAR(u_kln, N_k)
+        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> mbar = MBAR(u_kn, N_k)
         >>> O_ij = mbar.computeOverlap()
         """
 
-        W = numpy.matrix(self.getWeights(), numpy.float64)
-        O = numpy.multiply(self.N_k, W.T * W)
-        (eigenval, eigevec) = numpy.linalg.eig(O)
+        W = np.matrix(self.getWeights(), np.float64)
+        O = np.multiply(self.N_k, W.T * W)
+        (eigenval, eigevec) = linalg.eig(O)
         # sort in descending order
-        eigenval = numpy.sort(eigenval)[::-1]
+        eigenval = np.sort(eigenval)[::-1]
         overlap_scalar = 1 - eigenval[1]
         if (output == 'scalar'):
             return overlap_scalar
@@ -799,15 +1031,15 @@ class MBAR:
             return overlap_scalar, eigenval, O
 
     #=========================================================================
-    def computePerturbedExpectation(self, u_kn, A_kn, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
+    def computePerturbedExpectation(self, u_n, A_n, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
         """Compute the expectation of an observable of phase space function A(x) for a single new state.
 
         Parameters
         ----------
-        u_kn : np.ndarray, float, shape=(K, N_max)
-            u_kn[k,n] = u(x_kn) - the energy of the new state at all N samples previously sampled.
-        A_kn : np.ndarray, float, shape=(K, N_max)
-            A_kn[k,n] = A(x_kn) - the phase space function of the new state at all N samples previously sampled.  If this does NOT depend on state (e.g. position), it's simply the value of the observation.  If it DOES depend on the current state, then the observables from the previous states need to be reevaluated at THIS state.
+        u_n : np.ndarray, float, shape=(K, N_max)
+            u_n[n] = u(x_n) - the energy of the new state at all N samples previously sampled.
+        A_n : np.ndarray, float, shape=(K, N_max)
+            A_n[n] = A(x_n) - the phase space function of the new state at all N samples previously sampled.  If this does NOT depend on state (e.g. position), it's simply the value of the observation.  If it DOES depend on the current state, then the observables from the previous states need to be reevaluated at THIS state.
         compute_uncertainty : bool, optional
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
@@ -815,7 +1047,7 @@ class MBAR:
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        return_theta : bool, optional            
+        return_theta : bool, optional
             Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
 
@@ -830,55 +1062,58 @@ class MBAR:
         -----
         See Section IV of [1].
         # Compute estimators and uncertainty.
-        #A = sum(W_nk[:,K] * A_n[:]) # Eq. 15 of [1]
-        #dA = abs(A) * numpy.sqrt(Theta_ij[K,K] + Theta_ij[K+1,K+1] - 2.0 * Theta_ij[K,K+1]) # Eq. 16 of [1]
+        #A = sum(W_n[:,K] * A_n[:]) # Eq. 15 of [1]
+        #dA = abs(A) * np.sqrt(Theta_ij[K,K] + Theta_ij[K+1,K+1] - 2.0 * Theta_ij[K,K+1]) # Eq. 16 of [1]
         """
 
-        # Convert to numpy matrix.
-        A_kn = numpy.array(A_kn, dtype=numpy.float64)
+        if len(np.shape(u_n)) == 2:
+            u_n = self._kn_to_n(u_n)
+
+        if len(np.shape(A_n)) == 2:
+            A_n = self._kn_to_n(A_n)
+
+        # Convert to np matrix.
+        A_n = np.array(A_n, dtype=np.float64)
 
         # Retrieve N and K for convenience.
         N = self.N
         K = self.K
 
-        # Make A_kn all positive so we can operate logarithmically for
+        # Make A_k all positive so we can operate logarithmically for
         # robustness
-        A_min = numpy.min(A_kn)
-        A_kn = A_kn - (A_min - 1)
-
-        # Convert A_kn to n = 1..N indexing.
-        A_n = A_kn[self.indices]
+        A_min = np.min(A_n)
+        A_n = A_n - (A_min - 1)
 
         # Augment W_nk, N_k, and c_k for q_A(x) for the observable, with one
         # extra row/column for the specified state (Eq. 13 of [1]).
         # weight matrix
-        Log_W_nk = numpy.zeros([N, K + 2], dtype=numpy.float64)
-        N_k = numpy.zeros([K + 2], dtype=numpy.int32)  # counts
-        f_k = numpy.zeros([K + 2], dtype=numpy.float64)  # free energies
+        Log_W_nk = np.zeros([N, K + 2], dtype=np.float64)
+        N_k = np.zeros([K + 2], dtype=np.int32)  # counts
+        f_k = np.zeros([K + 2], dtype=np.float64)  # free energies
 
         # Fill in first K states with existing q_k(x) from states.
         Log_W_nk[:, 0:K] = self.Log_W_nk
         N_k[0:K] = self.N_k
 
         # compute the free energy of the additional state
-        log_w_kn = self._computeUnnormalizedLogWeights(u_kn)
+        log_w_n = self._computeUnnormalizedLogWeights(u_n)
         # Compute free energies
-        f_k[K] = -_logsum(log_w_kn[self.indices])
-        Log_W_nk[:, K] = log_w_kn[self.indices] + f_k[K]
+        f_k[K] = -_logsum(log_w_n)
+        Log_W_nk[:, K] = log_w_n + f_k[K]
 
         # compute the observable at this state
-        Log_W_nk[:, K + 1] = numpy.log(A_n) + Log_W_nk[:, K]
+        Log_W_nk[:, K + 1] = np.log(A_n) + Log_W_nk[:, K]
         f_k[K + 1] = -_logsum(Log_W_nk[:, K + 1])
         Log_W_nk[:, K + 1] += f_k[K + 1]              # normalize the row
-        A = numpy.exp(-f_k[K + 1])
+        A = np.exp(-f_k[K + 1])
 
         if (compute_uncertainty or return_theta):
             # Compute augmented asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
-                numpy.exp(Log_W_nk), N_k, method=uncertainty_method)
+                np.exp(Log_W_nk), N_k, method=uncertainty_method)
 
         if (compute_uncertainty):
-            dA = numpy.abs(A) * numpy.sqrt(
+            dA = np.abs(A) * np.sqrt(
                 Theta_ij[K + 1, K + 1] + Theta_ij[K, K] - 2.0 * Theta_ij[K, K + 1])  # Eq. 16 of [1]
 
         # shift answers back with the offset now that variances are computed
@@ -897,17 +1132,16 @@ class MBAR:
         return returns
 
     #=========================================================================
-    def computePerturbedFreeEnergies(self, u_kln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
+    def computePerturbedFreeEnergies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
         """Compute the free energies for a new set of states.
 
         Here, we desire the free energy differences among a set of new states, as well as the uncertainty estimates in these differences.
 
         Parameters
         ----------
-        u_kln : np.ndarray, float, shape=(K, L, Nmax)
-            u_kln[k,l,n] is the reduced potential energy of uncorrelated
-            configuration n sampled from state k, evaluated at new state l.
-            L need not be the same as K.
+        u_ln : np.ndarray, float, shape=(L, Nmax)
+            u_ln[l,n] is the reduced potential energy of uncorrelated
+            configuration n evaluated at new state k.  Can be completely indepednent of the original number of states.
         compute_uncertainty : bool, optional
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
@@ -926,56 +1160,57 @@ class MBAR:
         Examples
         --------
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
-        >>> mbar = MBAR(u_kln, N_k)
-        >>> [Deltaf_ij, dDeltaf_ij] = mbar.computePerturbedFreeEnergies(u_kln)
+        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> mbar = MBAR(u_kn, N_k)
+        >>> [Deltaf_ij, dDeltaf_ij] = mbar.computePerturbedFreeEnergies(u_kn)
         """
 
-        # Convert to numpy matrix.
-        u_kln = numpy.array(u_kln, dtype=numpy.float64)
+        # Convert to np matrix.
+        u_ln = np.array(u_ln, dtype=np.float64)
 
-        # Get the dimensions of the matrix of reduced potential energies.
-        [K, L, N_max] = u_kln.shape
+        # Get the dimensions of the matrix of reduced potential energies, and convert if necessary
+        if len(np.shape(u_ln)) == 3:
+            u_ln = self._kln_to_kn(u_ln)
+
+        [L, N] = u_ln.shape
 
         # Check dimensions.
-        if (K != self.K):
-            raise "K-dimension of u_kln must be the same as K-dimension of original states."
-        if (N_max < self.N_k.max()):
-            raise "There seems to be too few samples in u_kln."
+        if (N < self.N):
+            raise "There seems to be too few samples in u_kn. You must evaluate at the new potential with all of the samples used originally."
 
         # Retrieve N and K for convenience.
         N = self.N
         K = self.K
 
         # Augment W_nk, N_k, and c_k for the new states.
-        W_nk = numpy.zeros([N, K + L], dtype=numpy.float64)  # weight matrix
-        N_k = numpy.zeros([K + L], dtype=numpy.int32)  # counts
-        f_k = numpy.zeros([K + L], dtype=numpy.float64)  # free energies
+        W_nk = np.zeros([N, K + L], dtype=np.float64)  # weight matrix
+        N_k = np.zeros([K + L], dtype=np.int32)  # counts
+        f_k = np.zeros([K + L], dtype=np.float64)  # free energies
 
         # Fill in first half of matrix with existing q_k(x) from states.
-        W_nk[:, 0:K] = numpy.exp(self.Log_W_nk)
+        W_nk[:, 0:K] = np.exp(self.Log_W_nk)
         N_k[0:K] = self.N_k
         f_k[0:K] = self.f_k
 
         # Compute normalized weights.
         for l in range(0, L):
             # Compute unnormalized log weights.
-            log_w_kn = self._computeUnnormalizedLogWeights(u_kln[:, l, :])
+            log_w_n = self._computeUnnormalizedLogWeights(u_ln[l, :])
             # Compute free energies
-            f_k[K + l] = - _logsum(log_w_kn[self.indices])
+            f_k[K + l] = - _logsum(log_w_n)
             # Store normalized weights.  Keep in exponential not log form
             # because we will not store W_nk
-            W_nk[:, K + l] = numpy.exp(log_w_kn[self.indices] + f_k[K + l])
+            W_nk[:, K + l] = np.exp(log_w_n + f_k[K + l])
 
         if (compute_uncertainty or return_theta):
             # Compute augmented asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
-                W_nk, N_k, method=uncertainty_method)
+                W_nk, N_k, method = uncertainty_method)
 
         # Compute matrix of free energy differences between states and
         # associated uncertainties.
         # makes matrix operations easier to recast
-        f_k = numpy.matrix(f_k[K:K + L])
+        f_k = np.matrix(f_k[K:K + L])
 
         Deltaf_ij = f_k - f_k.transpose()
 
@@ -988,14 +1223,14 @@ class MBAR:
             d2DeltaF = dii + dii.transpose() - 2 * Theta_ij[K:K + L, K:K + L]
 
             # check for any numbers below zero.
-            if (numpy.any(d2DeltaF < 0.0)):
-                if(numpy.any(d2DeltaF) < warning_cutoff):
-                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)]
+            if (np.any(d2DeltaF < 0.0)):
+                if(np.any(d2DeltaF) < warning_cutoff):
+                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
                 else:
                     d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
 
             # take the square root of the matrix
-            dDeltaf_ij = numpy.sqrt(d2DeltaF)
+            dDeltaf_ij = np.sqrt(d2DeltaF)
 
             returns.append(dDeltaf_ij)
 
@@ -1043,8 +1278,8 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
-        >>> mbar = MBAR(u_kln, N_k)
+        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> mbar = MBAR(u_kn, N_k)
         >>> [Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij] = mbar.computeEntropyAndEnthalpy()
 
         """
@@ -1059,10 +1294,10 @@ class MBAR:
         # Augment W_nk, N_k, and c_k for q_A(x) for the potential energies,
         # with one extra row/column for each state.
         # weight matrix
-        Log_W_nk = numpy.zeros([N, K * 2], dtype=numpy.float64)
-        N_k = numpy.zeros([K * 2], dtype=numpy.int32)  # counts
+        Log_W_nk = np.zeros([N, K * 2], dtype=np.float64)
+        N_k = np.zeros([K * 2], dtype=np.int32)  # counts
         # "free energies" of average states
-        f_k = numpy.zeros(K, dtype=numpy.float64)
+        f_k = np.zeros(K, dtype=np.float64)
 
         # Fill in first half of matrix with existing q_k(x) from states.
         Log_W_nk[:, 0:K] = self.Log_W_nk
@@ -1071,41 +1306,39 @@ class MBAR:
         # Compute the remaining rows/columns of W_nk and c_k for the potential
         # energy observable.
 
-        u_min = self.u_kln.min()
-        u_i = numpy.zeros([K], dtype=numpy.float64)
+        u_min = self.u_kn.min()
+        u_i = np.zeros([K], dtype=np.float64)
         for l in range(0, K):
-            # Convert potential energies to n = 1..N indexing.
-            u_kn = self.u_kln[:, l, :] - (u_min-1)  # all positive now!  Subtracting off arbitrary constants doesn't affect results.
+            u_kn = self.u_kn[l, :] - (u_min-1)  # all positive now!  Subtracting off arbitrary constants doesn't affect results
             # since they are all differences.
             # Compute unnormalized weights.
             # A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
             # harden for over/underflow with logarithms
 
-            Log_W_nk[:, K + l] = numpy.log(
-                u_kn[self.indices]) + self.Log_W_nk[:, l]
+            Log_W_nk[:, K + l] = np.log(u_kn) + self.Log_W_nk[:, l]
 
             f_k[l] = -_logsum(Log_W_nk[:, K + l])
             Log_W_nk[:, K + l] += f_k[l]              # normalize the row
-            u_i[l] = numpy.exp(-f_k[l])
+            u_i[l] = np.exp(-f_k[l])
 
             # print "MBAR u_i[%d]: %10.5f,%10.5f" % (l,u_i[l]+u_min, u_i[l])
 
         # Compute augmented asymptotic covariance matrix.
-        W_nk = numpy.exp(Log_W_nk)
+        W_nk = np.exp(Log_W_nk)
         Theta_ij = self._computeAsymptoticCovarianceMatrix(
             W_nk, N_k, method=uncertainty_method)
 
         # Compute estimators and uncertainties.
-        dDelta_f_ij = numpy.zeros([K, K], dtype=numpy.float64)
-        dDelta_u_ij = numpy.zeros([K, K], dtype=numpy.float64)
-        dDelta_s_ij = numpy.zeros([K, K], dtype=numpy.float64)
+        dDelta_f_ij = np.zeros([K, K], dtype=np.float64)
+        dDelta_u_ij = np.zeros([K, K], dtype=np.float64)
+        dDelta_s_ij = np.zeros([K, K], dtype=np.float64)
 
         # Compute reduced free energy difference.
-        f_k = numpy.matrix(self.f_k)
+        f_k = np.matrix(self.f_k)
         Delta_f_ij = f_k - f_k.transpose()
 
         # Compute reduced enthalpy difference.
-        u_k = numpy.matrix(u_i)
+        u_k = np.matrix(u_i)
         Delta_u_ij = u_k - u_k.transpose()
 
         # Compute reduced entropy difference
@@ -1120,15 +1353,15 @@ class MBAR:
         d2DeltaF = dii + dii.transpose() - 2 * Theta_ij[0:K, 0:K]
 
         # check for any numbers below zero.
-        if (numpy.any(d2DeltaF < 0.0)):
-            if(numpy.any(d2DeltaF) < warning_cutoff):
+        if (np.any(d2DeltaF < 0.0)):
+            if(np.any(d2DeltaF) < warning_cutoff):
                 # Hmm.  Will this print correctly?
-                print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)]
+                print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
             else:
                 d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
 
         # take the square root of the matrix
-        dDelta_f_ij = numpy.sqrt(d2DeltaF)
+        dDelta_f_ij = np.sqrt(d2DeltaF)
 
         # TODO -- vectorize this calculation for entropy and enthalpy!
 
@@ -1169,17 +1402,17 @@ class MBAR:
         return (Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij)
     #=========================================================================
 
-    def computePMF(self, u_kn, bin_kn, nbins, uncertainties='from-lowest', pmf_reference=None):
+    def computePMF(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None):
         """Compute the free energy of occupying a number of bins.
 
         This implementation computes the expectation of an indicator-function observable for each bin.
 
         Parameters
         ----------
-        u_kn : np.ndarray, float, shape=(K, N_max) ???
-            u_kn[k,n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
-        bin_kn : np.ndarray, float, shape=(K, N_max) ???
-            bin_kn[k,n] is the bin index of snapshot n of state k.  bin_kn can assume a value in range(0,nbins)
+        u_n : np.ndarray, float, shape=(N)
+            u_n[n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
+        bin_n : np.ndarray, float, shape=(N)
+            bin_kn[n] is the bin index of snapshot n of state k.  bin_kn can assume a value in range(0,nbins)
         nbins : int
             The number of bins
         uncertainties : string, optional
@@ -1212,22 +1445,22 @@ class MBAR:
 
         >>> # Generate some test data
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
+        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> # Initialize MBAR on data.
-        >>> mbar = MBAR(u_kln, N_k)
+        >>> mbar = MBAR(u_kn, N_k)
         >>> # Select the potential we want to compute the PMF for (here, condition 0).
-        >>> u_kn = u_kln[:, 0, :]
+        >>> u_n = u_kn[0, :]
         >>> # Sort into nbins equally-populated bins
         >>> nbins = 10 # number of equally-populated bins to use
-        >>> import numpy as np
+        >>> import np as np
         >>> N_tot = N_k.sum()
-        >>> x_n_sorted = np.sort(x_kn[mbar.indices]) # unroll to n-indices
+        >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
         >>> bins = np.append(x_n_sorted[0::(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
-        >>> bin_kn = np.zeros(x_kn.shape, np.int32)
-        >>> for k in range(bin_kn.shape[0]): bin_kn[k,:] = np.digitize(x_kn[k,:], bins) - 1
+        >>> bin_n = np.zeros(x_n.shape, np.int32)
+        >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
-        >>> [f_i, df_i] = mbar.computePMF(u_kn, bin_kn, nbins)
+        >>> [f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins)
         >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
         >>> f_i_corrected = f_i - np.log(bin_widths)
 
@@ -1236,40 +1469,42 @@ class MBAR:
         # Verify that no PMF bins are empty -- we can't deal with empty bins,
         # because the free energy is infinite.
         for i in range(nbins):
-            if numpy.sum(bin_kn == i) == 0:
+            if np.sum(bin_n == i) == 0:
                 raise ParameterError(
-                    "At least one bin in provided bin_kn argument has no samples.  All bins must have samples for free energies to be finite.  Adjust bin sizes or eliminate empty bins to ensure at least one sample per bin.")
-
+                    "At least one bin in provided bin_n argument has no samples.  All bins must have samples for free energies to be finite.  Adjust bin sizes or eliminate empty bins to ensure at least one sample per bin.")
         K = self.K
 
         # Compute unnormalized log weights for the given reduced potential
-        # u_kn.
-        log_w_kn = self._computeUnnormalizedLogWeights(u_kn)
+        # u_n.
+        log_w_n = self._computeUnnormalizedLogWeights(u_n)
 
-        # Unroll to n-indices
-        log_w_n = log_w_kn[self.indices]
+        if len(np.shape(u_n)) == 2: 
+            u_n = self._kn_to_n(u_n)
+
+        if len(np.shape(bin_n)) == 2:
+            bin_n = self._kn_to_n(bin_n)
 
         # Compute the free energies for these states.
-        f_i = numpy.zeros([nbins], numpy.float64)
-        df_i = numpy.zeros([nbins], numpy.float64)
+        f_i = np.zeros([nbins], np.float64)
+        df_i = np.zeros([nbins], np.float64)
         for i in range(nbins):
             # Get linear n-indices of samples that fall in this bin.
-            indices = numpy.where(bin_kn[self.indices] == i)[0]
+            indices = np.where(bin_n == i)
 
             # Compute dimensionless free energy of occupying state i.
             f_i[i] = - _logsum(log_w_n[indices])
 
         # Compute uncertainties by forming matrix of W_nk.
-        N_k = numpy.zeros([self.K + nbins], numpy.int32)
+        N_k = np.zeros([self.K + nbins], np.int32)
         N_k[0:K] = self.N_k
-        W_nk = numpy.zeros([self.N, self.K + nbins], numpy.float64)
-        W_nk[:, 0:K] = numpy.exp(self.Log_W_nk)
+        W_nk = np.zeros([self.N, self.K + nbins], np.float64)
+        W_nk[:, 0:K] = np.exp(self.Log_W_nk)
         for i in range(nbins):
             # Get indices of samples that fall in this bin.
-            indices = numpy.where(bin_kn[self.indices] == i)[0]
+            indices = np.where(bin_n == i)
 
             # Compute normalized weights for this state.
-            W_nk[indices, K + i] = numpy.exp(log_w_n[indices] + f_i[i])
+            W_nk[indices, K + i] = np.exp(log_w_n[indices] + f_i[i])
 
         # Compute asymptotic covariance matrix using specified method.
         Theta_ij = self._computeAsymptoticCovarianceMatrix(W_nk, N_k)
@@ -1308,7 +1543,7 @@ class MBAR:
                 dii.transpose() - 2 * Theta_ij[K:K + nbins, K:K + nbins]
 
             # unsquare uncertainties
-            df_ij = numpy.sqrt(d2f_ij)
+            df_ij = np.sqrt(d2f_ij)
 
             # Return dimensionless free energy and uncertainty.
             return (f_i, df_ij)
@@ -1317,11 +1552,11 @@ class MBAR:
             # Determine uncertainties from normalization that \sum_i p_i = 1.
 
             # Compute bin probabilities p_i
-            p_i = numpy.exp(-f_i - _logsum(-f_i))
+            p_i = np.exp(-f_i - _logsum(-f_i))
 
             # todo -- eliminate triple loop over nbins!
             # Compute uncertainties in bin probabilities.
-            d2p_i = numpy.zeros([nbins], numpy.float64)
+            d2p_i = np.zeros([nbins], np.float64)
             for k in range(nbins):
                 for i in range(nbins):
                     for j in range(nbins):
@@ -1332,7 +1567,7 @@ class MBAR:
 
             # Transform from d2p_i to df_i
             d2f_i = d2p_i / p_i ** 2
-            df_i = numpy.sqrt(d2f_i)
+            df_i = np.sqrt(d2f_i)
 
             # return free energy and uncertainty
             return (f_i, df_i)
@@ -1343,17 +1578,17 @@ class MBAR:
         return
 
     #=========================================================================
-    def computePMF_states(self, u_kn, bin_kn, nbins):
+    def computePMF_states(self, u_n, bin_n, nbins):
         """Compute the free energy of occupying a number of bins.
 
         This implementation defines each bin as a separate thermodynamic state.
 
         Parameters
         ----------
-        u_kn : np.ndarray, float, shape=(K, N_max) ???
-            u_kn[k,n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
-        bin_kn : np.ndarray, int, shape=(K, N_max) ???
-            bin_kn[k,n] is the bin index of snapshot n of state k.  bin_kn can assume a value in range(0,nbins)
+        u_n : np.ndarray, float, shape=(K, N)
+            u_n[n] is the reduced potential energy of snapshot n for which the PMF is to be computed.
+        bin_n : np.ndarray, int, shape=(N)
+            bin_kn[n] is the bin index of snapshot n.  bin_n can assume a value in range(0,nbins)
         nbins : int
             The number of bins
         fmax : float, optional
@@ -1368,7 +1603,7 @@ class MBAR:
 
         Notes
         -----
-        All bins must have some samples in them from at least one of the states -- this will not work if bin_kn.sum(0) == 0. Empty bins should be removed before calling computePMF().
+        All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
         This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
         To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
         the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy
@@ -1382,23 +1617,20 @@ class MBAR:
         # Verify that no PMF bins are empty -- we can't deal with empty bins,
         # because the free energy is infinite.
         for i in range(nbins):
-            if numpy.sum(bin_kn == i) == 0:
+            if np.sum(bin_n == i) == 0:
                 raise ParameterError(
                     "At least one bin in provided bin_kn argument has no samples.  All bins must have samples for free energies to be finite.  Adjust bin sizes or eliminate empty bins to ensure at least one sample per bin.")
 
         K = self.K
 
-        # Compute unnormalized log weights for the given reduced potential
-        # u_kn.
-        log_w_kn = self._computeUnnormalizedLogWeights(u_kn)
         # Unroll to n-indices
-        log_w_n = log_w_kn[self.indices]
+        log_w_n = self._computeUnnormalizedLogWeights(u_n)
 
         # Compute the free energies for these states.
-        f_i = numpy.zeros([nbins], numpy.float64)
+        f_i = np.zeros([nbins], np.float64)
         for i in range(nbins):
             # Get linear n-indices of samples that fall in this bin.
-            indices = numpy.where(bin_kn[self.indices] == i)[0]
+            indices = np.where(bin_k[self.indices] == i)[0]
 
             # Sanity check.
             if (len(indices) == 0):
@@ -1418,19 +1650,19 @@ class MBAR:
         # Compute uncertainties by forming matrix of W_nk.
         if self.verbose:
             print "Forming W_nk matrix..."
-        N_k = numpy.zeros([self.K + nbins], numpy.int32)
+        N_k = np.zeros([self.K + nbins], np.int32)
         N_k[0:K] = self.N_k
-        W_nk = numpy.zeros([self.N, self.K + nbins], numpy.float64)
-        W_nk[:, 0:K] = numpy.exp(self.Log_W_nk)
+        W_nk = np.zeros([self.N, self.K + nbins], np.float64)
+        W_nk[:, 0:K] = np.exp(self.Log_W_nk)
         for i in range(nbins):
             # Get indices of samples that fall in this bin.
-            indices = numpy.where(bin_kn[self.indices] == i)[0]
+            indices = np.where(bin_kn[self.indices] == i)[0]
 
             if self.verbose:
                 print "bin %5d count = %10d" % (i, len(indices))
 
             # Compute normalized weights for this state.
-            W_nk[indices, K + i] = numpy.exp(
+            W_nk[indices, K + i] = np.exp(
                 log_w_n[indices] + f_i[i] + f_i_min)
 
         # Compute asymptotic covariance matrix using specified method.
@@ -1448,6 +1680,60 @@ class MBAR:
     #=========================================================================
     # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
     #=========================================================================
+
+    def _kln_to_kn(self, kln):
+        """ Convert KxKxN_max array to KxN max array
+
+        if self.N is not initialized, it will be here.
+
+        Parameters
+        ----------
+        u_kln: np.ndarray, float, shape=(KxLxN_max)
+
+        Outputs
+        -------
+        u_kn: np.ndarray, float, shape=(LxN)
+        """
+
+        print "warning: KxLxN_max arrays deprecated; convering into new preferred KxN shape"
+
+        # rewrite into kn shape
+        [K, L, N_max] = np.shape(kln)
+        kn = np.zeros([L,self.N], dtype=np.float64)
+        i = 0
+        for k in range(self.K):  # loop through the old K; some might be zero
+            for ik in range(self.N_k[k]):
+                kn[:,i] = kln[k,:,ik]
+                i+=1
+        del(kln)  # very big, let's explicitly delete
+        if self.N != i:
+            print "warning: number of sampled points in KxKxN_max array is not equal to self.N"
+        return kn
+
+    def _kn_to_n(self,kn):
+        """ Convert KxN_max array to N array
+
+        Parameters
+        ----------
+        u_kn: np.ndarray, float, shape=(KxN_max)
+
+        Outputs
+        -------
+        u_n: np.ndarray, float, shape=(N)
+        """
+
+        print "warning: KxN arrays deprecated; convering into new preferred N shape"
+        # rewrite into kn shape
+        n = np.zeros([self.N], dtype=np.float64)
+        i = 0
+        for k in range(self.K):  # loop through the old K; some might be zero
+            for ik in range(self.N_k[k]):
+                n[i] = kn[k,ik]
+                i+=1
+        if self.N != i:
+            print "warning: number of points in NxK array is not equal to self.N"
+        del(kn)  # very big, let's explicitly delete
+        return n
 
     def _computeWeights(self, logform=False, include_nonzero=False, recalc_denom=True, return_f_k=False):
         """Compute the normalized weights corresponding to samples for the given reduced potential.
@@ -1481,41 +1767,39 @@ class MBAR:
           optionally return the self-consistent free energy from these weights.
 
        """
-
         if (include_nonzero):
             f_k = self.f_k
-            K = self.L
+            K = self.K
         else:
-            f_k = self.f_k[self.nonzero_N_k_indices]
-            K = self.K_nonzero
+            f_k = self.f_k[self.states_with_samples]
+            K = len(self.states_with_samples)
 
         # array of either weights or normalized log weights
-        Warray_nk = numpy.zeros([self.N, K], dtype=numpy.float64)
+        Warray_nk = np.zeros([self.N, K], dtype=np.float64)
         if (return_f_k):
-            f_k_out = numpy.zeros([K], dtype=numpy.float64)
+            f_k_out = np.zeros([K], dtype=np.float64)
 
         if (recalc_denom):
             self.log_weight_denom = self._computeUnnormalizedLogWeights(
-                numpy.zeros([self.K, self.N_max], dtype=numpy.float64))
+                np.zeros([self.N], dtype=np.float64))
 
-        for l in range(K):
-            # Compute log weights.
+        for k in range(K):
             if (include_nonzero):
-                index = l
+                index = k
             else:
-                index = self.nonzero_N_k_indices[l]
-            log_w_kn = -self.u_kln[:, index, :] + self.log_weight_denom + f_k[l]
+                index = self.states_with_samples[k]
+            log_w_n = -self.u_kn[index, :] + self.log_weight_denom + f_k[k]
 
             if (return_f_k):
-                f_k_out[l] = f_k[l] - _logsum(log_w_kn[self.indices])
+                f_k_out[k] = f_k[k] - _logsum(log_w_n)
                 if (include_nonzero):
                     # renormalize the weights, needed for nonzero states.
-                    log_w_kn[self.indices] += (f_k_out[l] - f_k[l])
+                    log_w_n += (f_k_out[k] - f_k[k])
 
             if (logform):
-                Warray_nk[:, l] = log_w_kn[self.indices]
+                Warray_nk[:, k] = log_w_n
             else:
-                Warray_nk[:, l] = numpy.exp(log_w_kn[self.indices])
+                Warray_nk[:, k] = np.exp(log_w_n)
 
         # Return weights (or log weights)
         if (return_f_k):
@@ -1531,25 +1815,25 @@ class MBAR:
         Compute the Moore-Penrose pseudoinverse.
 
         REQUIRED ARGUMENTS
-          A (numpy KxK matrix) - the square matrix whose pseudoinverse is to be computed
+          A (np KxK matrix) - the square matrix whose pseudoinverse is to be computed
 
         RETURN VALUES
-          Ainv (numpy KxK matrix) - the pseudoinverse
+          Ainv (np KxK matrix) - the pseudoinverse
 
         OPTIONAL VALUES
           tol - the tolerance (relative to largest magnitude singlular value) below which singular values are to not be include in forming pseudoinverse (default: 1.0e-10)
 
         NOTES
-          This implementation is provided because the 'pinv' function of numpy is broken in the version we were using.
+          This implementation is provided because the 'pinv' function of np is broken in the version we were using.
 
         TODO
-          Can we get rid of this and use numpy.linalg.pinv instead?
+          Can we get rid of this and use np.linalg.pinv instead?
 
         """
 
         # DEBUG
         # TODO: Should we use pinv, or _pseudoinverse?
-        # return numpy.linalg.pinv(A)
+        # return np.linalg.pinv(A)
 
         # Get size
         [M, N] = A.shape
@@ -1558,7 +1842,7 @@ class MBAR:
                 M, N)
 
         # Make sure A contains no nan.
-        if(numpy.any(numpy.isnan(A))):
+        if(np.any(np.isnan(A))):
             print "attempted to compute pseudoinverse of A ="
             print A
             raise ParameterError("A contains nan.")
@@ -1567,24 +1851,24 @@ class MBAR:
         diagonal_loading = False
         if diagonal_loading:
             # Modify matrix by diagonal loading.
-            eigs = numpy.linalg.eigvalsh(A)
+            eigs = linalg.eigvalsh(A)
             most_negative_eigenvalue = eigs.min()
             if (most_negative_eigenvalue < 0.0):
                 print "most negative eigenvalue = %e" % most_negative_eigenvalue
                 # Choose loading value.
                 gamma = -most_negative_eigenvalue * 1.05
                 # Modify Theta by diagonal loading
-                A += gamma * numpy.eye(A.shape[0])
+                A += gamma * np.eye(A.shape[0])
 
         # Compute SVD of A.
-        [U, S, Vt] = numpy.linalg.svd(A)
+        [U, S, Vt] = linalg.svd(A)
 
         # Compute pseudoinverse by taking square root of nonzero singular
         # values.
-        Ainv = numpy.matrix(numpy.zeros([M, M], dtype=numpy.float64))
+        Ainv = np.matrix(np.zeros([M, M], dtype=np.float64))
         for k in range(M):
             if (abs(S[k]) > tol * abs(S[0])):
-                Ainv += (1.0/S[k]) * numpy.outer(U[:, k], Vt[k, :]).T
+                Ainv += (1.0/S[k]) * np.outer(U[:, k], Vt[k, :]).T
 
         return Ainv
     #=========================================================================
@@ -1609,12 +1893,12 @@ class MBAR:
         Compute estimate of the asymptotic covariance matrix.
 
         REQUIRED ARGUMENTS
-          W (numpy.array of numpy.float of dimension [N,K]) - matrix of normalized weights (see Eq. 9 of [1]) - W[n,k] is the weight of snapshot n (n = 1..N) in state k
+          W (np.array of np.float of dimension [N,K]) - matrix of normalized weights (see Eq. 9 of [1]) - W[n,k] is the weight of snapshot n (n = 1..N) in state k
                                           Note that sum(W(:,k)) = 1 for any k = 1..K, and sum(N_k(:) .* W(n,:)) = 1 for any n.
-          N_k (numpy.array of numpy.int32 of dimension [K]) - N_k[k] is the number of samples from state K
+          N_k (np.array of np.int32 of dimension [K]) - N_k[k] is the number of samples from state K
 
         RETURN VALUES
-          Theta (KxK numpy float64 array) - asymptotic covariance matrix (see Eq. 8 of [1])
+          Theta (KxK np float64 array) - asymptotic covariance matrix (see Eq. 8 of [1])
 
         OPTIONAL ARGUMENTS
           method (string) - if not None, specified method is used to compute asymptotic covariance method:
@@ -1649,29 +1933,29 @@ class MBAR:
         if(K != N_k.size):
             raise ParameterError(
                 'W must be NxK, where N_k is a K-dimensional array.')
-        if(numpy.sum(N_k) != N):
+        if(np.sum(N_k) != N):
             raise ParameterError('W must be NxK, where N = sum_k N_k.')
 
         # Check to make sure the weight matrix W is properly normalized.
         tolerance = 1.0e-4  # tolerance for checking equality of sums
 
-        column_sums = numpy.sum(W, axis=0)
-        badcolumns = (numpy.abs(column_sums - 1) > tolerance)
-        if numpy.any(badcolumns):
-            which_badcolumns = numpy.arange(K)[badcolumns]
+        column_sums = np.sum(W, axis=0)
+        badcolumns = (np.abs(column_sums - 1) > tolerance)
+        if np.any(badcolumns):
+            which_badcolumns = np.arange(K)[badcolumns]
             firstbad = which_badcolumns[0]
             raise ParameterError(
                 'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
-                (firstbad, column_sums[firstbad], numpy.sum(badcolumns)))
+                (firstbad, column_sums[firstbad], np.sum(badcolumns)))
 
-        row_sums = numpy.sum(W * N_k, axis=1)
-        badrows = (numpy.abs(row_sums - 1) > tolerance)
-        if numpy.any(badrows):
-            which_badrows = numpy.arange(N)[badrows]
+        row_sums = np.sum(W * N_k, axis=1)
+        badrows = (np.abs(row_sums - 1) > tolerance)
+        if np.any(badrows):
+            which_badrows = np.arange(N)[badrows]
             firstbad = which_badrows[0]
             raise ParameterError(
                 'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
-                (firstbad, row_sums[firstbad], numpy.sum(badrows)))
+                (firstbad, row_sums[firstbad], np.sum(badrows)))
 
         # Compute estimate of asymptotic covariance matrix using specified
         # method.
@@ -1681,9 +1965,9 @@ class MBAR:
 
             # Construct matrices
             # Diagonal N_k matrix.
-            Ndiag = numpy.matrix(numpy.diag(N_k), dtype=numpy.float64)
-            W = numpy.matrix(W, dtype=numpy.float64)
-            I = numpy.identity(N, dtype=numpy.float64)
+            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
+            W = np.matrix(W, dtype=np.float64)
+            I = np.identity(N, dtype=np.float64)
 
             # Compute covariance
             Theta = W.T * self._pseudoinverse(I - W * Ndiag * W.T) * W
@@ -1694,14 +1978,14 @@ class MBAR:
 
             # Construct matrices
             # Diagonal N_k matrix.
-            Ndiag = numpy.matrix(numpy.diag(N_k), dtype=numpy.float64)
-            W = numpy.matrix(W, dtype=numpy.float64)
-            I = numpy.identity(N, dtype=numpy.float64)
+            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
+            W = np.matrix(W, dtype=np.float64)
+            I = np.identity(N, dtype=np.float64)
             # matrix of ones, times 1/N
-            O = numpy.ones([K, K], dtype=numpy.float64) / float(N)
+            O = np.ones([K, K], dtype=np.float64) / float(N)
 
             # Make sure W is nonsingular.
-            if (abs(numpy.linalg.det(W.T * W)) < tolerance):
+            if (abs(linalg.det(W.T * W)) < tolerance):
                 print "Warning: W'W appears to be singular, yet 'inverse' method of uncertainty estimation requires W contain no duplicate states."
 
             # Compute covariance
@@ -1712,7 +1996,7 @@ class MBAR:
             # Theta = P'P
 
             # Construct matrices
-            W = numpy.matrix(W, dtype=numpy.float64)
+            W = np.matrix(W, dtype=np.float64)
 
             # Compute covariance
             Theta = W.T * W
@@ -1722,14 +2006,14 @@ class MBAR:
             # See Appendix D.1, Eq. D4 in [1].
 
             # Construct matrices
-            Ndiag = numpy.matrix(numpy.diag(N_k), dtype=numpy.float64)
-            W = numpy.matrix(W, dtype=numpy.float64)
-            I = numpy.identity(K, dtype=numpy.float64)
+            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
+            W = np.matrix(W, dtype=np.float64)
+            I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
-            [U, S, Vt] = numpy.linalg.svd(W)
-            Sigma = numpy.matrix(numpy.diag(S))
-            V = numpy.matrix(Vt).T
+            [U, S, Vt] = linalg.svd(W)
+            Sigma = np.matrix(np.diag(S))
+            V = np.matrix(Vt).T
 
             # Compute covariance
             Theta = V * Sigma * self._pseudoinverse(
@@ -1741,19 +2025,19 @@ class MBAR:
             # See Appendix D.1, Eqs. D4 and D5 of [1].
 
             # Construct matrices
-            Ndiag = numpy.matrix(numpy.diag(N_k), dtype=numpy.float64)
-            W = numpy.matrix(W, dtype=numpy.float64)
-            I = numpy.identity(K, dtype=numpy.float64)
+            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
+            W = np.matrix(W, dtype=np.float64)
+            I = np.identity(K, dtype=np.float64)
 
             # Compute singular values and right singular vectors of W without using SVD
             # Instead, we compute eigenvalues and eigenvectors of W'W.
             # Note W'W = (U S V')'(U S V') = V S' U' U S V' = V (S'S) V'
-            [S2, V] = numpy.linalg.eigh(W.T * W)
+            [S2, V] = linalg.eigh(W.T * W)
             # Set any slightly negative eigenvalues to zero.
-            S2[numpy.where(S2 < 0.0)] = 0.0
+            S2[np.where(S2 < 0.0)] = 0.0
             # Form matrix of singular values Sigma, and V.
-            Sigma = numpy.matrix(numpy.diag(numpy.sqrt(S2)))
-            V = numpy.matrix(V)
+            Sigma = np.matrix(np.diag(np.sqrt(S2)))
+            V = np.matrix(V)
 
             # Compute covariance
             Theta = V * Sigma * self._pseudoinverse(
@@ -1766,14 +2050,14 @@ class MBAR:
             [N, K] = W.shape
 
             # Estimate O matrix from W'W.
-            W = numpy.matrix(W, dtype=numpy.float64)
+            W = np.matrix(W, dtype=np.float64)
             O = W.T * W
 
             # Assemble the Lambda matrix.
-            Lambda = numpy.matrix(numpy.diag(N_k), dtype=numpy.float64)
+            Lambda = np.matrix(np.diag(N_k), dtype=np.float64)
 
             # Identity matrix.
-            I = numpy.matrix(numpy.eye(K), dtype=numpy.float64)
+            I = np.matrix(np.eye(K), dtype=np.float64)
 
             # Compute H and G matrices.
             H = O * Lambda - I
@@ -1789,11 +2073,11 @@ class MBAR:
             # Use method suggested by Zhiqiang Tan.
 
             # Estimate O matrix from W'W.
-            W = numpy.matrix(W, dtype=numpy.float64)
+            W = np.matrix(W, dtype=np.float64)
             O = W.T * W
 
             # Assemble the Lambda matrix.
-            Lambda = numpy.matrix(numpy.diag(N_k), dtype=numpy.float64)
+            Lambda = np.matrix(np.diag(N_k), dtype=np.float64)
 
             # Compute covariance.
             Oinv = self._pseudoinverse(O)
@@ -1811,10 +2095,10 @@ class MBAR:
         Compute an initial guess at the relative free energies.
 
         OPTIONAL ARGUMENTS
-          verbose (boolean) - If True, will print debug information (default: False)
-          method (string) - Method for initializing guess at free energies.
-            'zeros' - all free energies are initially set to zero
-            'mean-reduced-potential' - the mean reduced potential is used
+        verbose (boolean) - If True, will print debug information (default: False)
+        method (string) - Method for initializing guess at free energies.
+        'zeros' - all free energies are initially set to zero
+        'mean-reduced-potential' - the mean reduced potential is used
 
         """
 
@@ -1828,28 +2112,31 @@ class MBAR:
             # potential from each state
             if verbose:
                 print "Initializing free energies with mean reduced potential for each state."
-            means = numpy.zeros([self.K], float)
-            for k in self.nonzero_N_k_indices:
-                means[k] = self.u_kln[k, k, 0:self.N_k[k]].mean()
-            if (numpy.max(numpy.abs(means)) < 0.000001):
+            means = np.zeros([self.K], float)
+            for k in self.states_with_samples:
+                means[k] = self.u_kn[k, 0:self.N_k[k]].mean()
+            if (np.max(np.abs(means)) < 0.000001):
                 print "Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir."
             self.f_k = means
         elif (method == 'BAR'):
             # TODO: Can we guess a good path for this initial guess for arbitrary "topologies"?
             # For now, make a simple list of those states with samples.
-            initialization_order = numpy.where(self.N_k > 0)[0]
+            initialization_order = np.where(self.N_k > 0)[0]
             # Initialize all f_k to zero.
             self.f_k[:] = 0.0
             # Initialize the rest
-            for index in range(0, numpy.size(initialization_order) - 1):
+            for index in range(0, np.size(initialization_order) - 1):
                 k = initialization_order[index]
                 l = initialization_order[index + 1]
                 # forward work
+                # here, we actually need to distinguish which states are which
                 w_F = (
-                    self.u_kln[k, l, 0:self.N_k[k]] - self.u_kln[k, k, 0:self.N_k[k]])
-                # reverse work
+                    self.u_kn[l,x_kindices==k] - self.u_kn[k,x_kindices==k])
+                    #self.u_kln[k, l, 0:self.N_k[k]] - self.u_kln[k, k, 0:self.N_k[k]])
+                    # reverse work
                 w_R = (
-                    self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
+                    self.u_kn[k,x_kindices==l] - self.u_kn[l,x_kindices==l])
+                    #self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
 
                 if (len(w_F) > 0 and len(w_R) > 0):
                     # BAR solution doesn't need to be incredibly accurate to
@@ -1872,17 +2159,17 @@ class MBAR:
         return
     #=========================================================================
 
-    def _computeUnnormalizedLogWeights(self, u_kn):
+    def _computeUnnormalizedLogWeights(self, u_n):
         """
         Return unnormalized log weights.
 
         REQUIRED ARGUMENTS
-          u_kn (K x N_max numpy float64 array) - reduced potential energies
+          u_n (N np float64 array) - reduced potential energies at single state
 
         OPTIONAL ARGUMENTS
 
         RETURN VALUES
-          log_w_kn (K x N_max numpy float64 array) - unnormalized log weights
+          log_w_n (N array) - unnormalized log weights of each of a number of states
 
         REFERENCE
           'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
@@ -1892,34 +2179,33 @@ class MBAR:
             # Use embedded C++ optimizations.
             import _pymbar
             # necessary for helper code to interpret type of u_kn
-            u_kn = numpy.array(u_kn, dtype=numpy.float64)
-            log_w_kn = _pymbar.computeUnnormalizedLogWeightsCpp(
-                self.K, self.N_max, self.K_nonzero, self.nonzero_N_k_indices, self.N_k, self.f_k, self.u_kln, u_kn)
+            u_n = np.array(u_n, dtype=np.float64)
+            log_w_n = _pymbar.computeUnnormalizedLogWeightsCpp(
+                self.K, self.N, self.K_nonzero, self.states_with_samples, self.N_k, self.f_k, self.u_kn, u_n)
         else:
             try:
-                #z= 1/0
+                z= 1/0
                 # pass
                 from scipy import weave
                 # Allocate storage for return values.
-                log_w_kn = numpy.zeros(
-                    [self.K, self.N_max], dtype=numpy.float64)
+                log_w_n = np.zeros([self.N], dtype=np.float64)
                 # Copy useful class members to local variables.
                 K = self.K
                 f_k = self.f_k
+                N = self.N
                 N_k = self.N_k
-                u_kln = self.u_kln
+                u_kn = self.u_kn
                 # Weave inline C++ code.
                 code = """
         double log_terms[%(K)d]; // temporary storage for log terms
-        for (int k = 0; k < K; k++) {
-          for (int n = 0; n < N_K1(k); n++) {
+        for (int n = 0; n < N; n++) {
             double max_log_term = 0.0;
             bool first_nonzero = true;
-            for (int j = 0; j < K; j++) {
+            for (int k = 0; k < K; k++) {
               // skip empty states
-              if (N_K1(j) == 0) continue;
-              double log_term = log(N_K1(j)) + F_K1(j) - U_KLN3(k,j,n) + U_KN2(k,n);
-              log_terms[j] = log_term;
+              if (N_K1(k) == 0) continue;
+              double log_term = log(N_K1(k)) + F_K1(k) - U_KN2(k,n) + U_N1(n);
+              log_terms[k] = log_term;
               if (first_nonzero || (log_term > max_log_term)) {
                 max_log_term = log_term;
                 first_nonzero = false;
@@ -1927,29 +2213,27 @@ class MBAR:
             }
 
             double term_sum = 0.0;
-            for (int j = 0; j < K; j++) {
+            for (int k = 0; k < K; k++) {
               // skip empty states
-              if (N_K1(j) == 0) continue;
-              term_sum += exp(log_terms[j] - max_log_term);
+              if (N_K1(k) == 0) continue;
+              term_sum += exp(log_terms[k] - max_log_term);
             }
             double log_term_sum = log(term_sum) + max_log_term;
-            LOG_W_KN2(k,n) = - log_term_sum;
-          }
+            LOG_W_N1(n) = - log_term_sum;
         }
         """ % vars()
                 # Execute inline C code with weave.
                 info = weave.inline(
-                    code, ['K', 'N_k', 'u_kn', 'u_kln', 'f_k', 'log_w_kn'], headers=['<math.h>', '<stdlib.h>'], verbose=2)
+                    code, ['K', 'N', 'N_k', 'u_n', 'u_kn', 'f_k', 'log_w_n'], headers=['<math.h>', '<stdlib.h>'], verbose=2)
             except:
                 # Compute unnormalized log weights in pure Python.
-                log_w_kn = numpy.zeros(
-                    [self.K, self.N_max], dtype=numpy.float64)
-                for k in range(0, self.K):
-                    for n in range(0, self.N_k[k]):
-                        log_w_kn[k, n] = - _logsum(numpy.log(self.N_k[self.nonzero_N_k_indices]) + self.f_k[
-                                                   self.nonzero_N_k_indices] - (self.u_kln[k, self.nonzero_N_k_indices, n] - u_kn[k, n]))
+                log_w_n = np.zeros([self.N], dtype=np.float64)
+                for n in range(0, self.N):
+                    log_w_n[n] = - _logsum(np.log(self.N_k[self.states_with_samples]) +
+                                           self.f_k[self.states_with_samples] -
+                                           (self.u_kn[self.states_with_samples, n] - u_n[n]))
 
-        return log_w_kn
+        return log_w_n
 
     #=========================================================================
     def _amIdoneIterating(self, f_k_new, relative_tolerance, iteration, maximum_iterations, print_warning, verbose):
@@ -1971,17 +2255,17 @@ class MBAR:
         yesIam = False
 
         # Compute change from old to new estimate.
-        Delta_f_k = f_k_new - self.f_k[self.nonzero_N_k_indices]
+        Delta_f_k = f_k_new - self.f_k[self.states_with_samples]
 
         # Check convergence criteria.
         # Terminate when max((f - fold) / f) < relative_tolerance for all
         # nonzero f.
-        max_delta = numpy.max(
-            numpy.abs(Delta_f_k) / numpy.max(numpy.abs(f_k_new)))
+        max_delta = np.max(
+            np.abs(Delta_f_k) / np.max(np.abs(f_k_new)))
 
         # Update stored free energies.
         f_k = f_k_new.copy()
-        self.f_k[self.nonzero_N_k_indices] = f_k
+        self.f_k[self.states_with_samples] = f_k
 
         # write out current estimate
         if verbose:
@@ -1992,12 +2276,12 @@ class MBAR:
         # Check convergence criteria.
         # Terminate when max((f - fold) / f) < relative_tolerance for all
         # nonzero f.
-        if numpy.isnan(max_delta) or (max_delta < relative_tolerance):
+        if np.isnan(max_delta) or (max_delta < relative_tolerance):
             yesIam = True
 
         if (yesIam):
             # Report convergence, or warn user if convergence was not achieved.
-            if numpy.all(self.f_k == 0.0):
+            if np.all(self.f_k == 0.0):
                 # all f_k appear to be zero
                 print 'WARNING: All f_k appear to be zero.'
             elif (max_delta < relative_tolerance):
@@ -2046,90 +2330,14 @@ class MBAR:
             (W_nk, f_k_new) = self._computeWeights(
                 logform=True, return_f_k=True)
 
-            if (self._amIdoneIterating(f_k_new, relative_tolerance, iteration, maximum_iterations, print_warning, verbose)):
+            if self._amIdoneIterating(
+                                f_k_new, relative_tolerance, iteration,
+                                maximum_iterations, print_warning, verbose):
                 break
 
         return
 
-    #=========================================================================
-    def _NewtonRaphson(self, first_gamma=0.1, gamma=1.0, relative_tolerance=1.0e-6, maximum_iterations=1000, verbose=True, print_warning=True):
-        """
-        Determine dimensionless free energies by Newton-Raphson iteration.
 
-        OPTIONAL ARGUMENTS
-          first_gamma (float between 0 and 1) - step size multiplier to use for first step (default 0.1)
-          gamma (float between 0 and 1) - step size multiplier for subsequent steps (default 1.0)
-          relative_tolerance (float between 0 and 1) - relative tolerance for convergence (default 1.0e-6)
-          maximum_iterations (int) - maximum number of Newton-Raphson iterations (default 1000)
-          verbose (boolean) - verbosity level for debug output
-
-        CAUTIONS
-          This algorithm can sometimes cause the estimate to blow up -- we should add a check to make sure this doesn't happen, and switch
-          to self-consistent iteration if it does.
-
-        NOTES
-          This method determines the dimensionless free energies by minimizing a convex function whose solution is the desired estimator.
-          The original idea came from the construction of a likelihood function that independently reproduced the work of Geyer (see [1]
-          and Section 6 of [2]).
-          This can alternatively be formulated as a root-finding algorithm for the Z-estimator.
-          More details of this procedure will follow in a subsequent paper.
-          Only those states with nonzero counts are include in the estimation procedure.
-
-        REFERENCES
-          See Appendix C.2 of [1].
-
-        """
-        # commenting out Newton-Raphson for now, adaptive replaces
-        """
-    if verbose: print "Determining dimensionless free energies by Newton-Raphson iteration."
-
-    K = self.K_nonzero
-    N_k = self.N_nonzero
-
-    # Perform Newton-Raphson iterations
-    for iteration in range(0, maximum_iterations):
-      if verbose: print "Newton-Raphson iteration %d" % iteration
-
-      # Store for new estimate of dimensionless relative free energies.
-      f_k_new = self.f_k[self.nonzero_N_k_indices].copy()
-      
-      # compute the weights
-      W_nk = self._computeWeights()  
-
-      # Compute gradient and Hessian of last (K-1) states.
-      #
-      # gradient (defined by Eq. C6 of [1])
-      # g_i(theta) = N_i - \sum_n N_i W_ni
-      #
-      # Hessian (defined by Eq. C9 of [1])
-      # H_ii(theta) = - \sum_n N_i W_ni (1 - N_i W_ni)
-      # H_ij(theta) = \sum_n N_i W_ni N_j W_nj
-      #
-      # NOTE: Calculation of the gradient and Hessian could be further optimized.
-
-      g = numpy.matrix(numpy.zeros([K-1,1], dtype=numpy.float64)) # gradient
-      H = numpy.matrix(numpy.zeros([K-1,K-1], dtype=numpy.float64)) # Hessian
-      for i in range(1,K):
-        g[i-1] = N_k[i] - N_k[i] * W_nk[:,i].sum()
-        H[i-1,i-1] = - (N_k[i] * W_nk[:,i] * (1.0 - N_k[i] * W_nk[:,i])).sum() 
-        for j in range(1,i):
-          H[i-1,j-1] = (N_k[i] * W_nk[:,i] * N_k[j] * W_nk[:,j]).sum()
-          H[j-1,i-1] = H[i-1,j-1]
-
-      # Update the free energy estimate (Eq. C11 of [1]).
-      Hinvg = numpy.linalg.lstsq(H,g)[0]      # solve the system of equations (may have less than full rank)
-      #Hinvg = numpy.linalg.solve(H,g)  # if we can count on full rank, we can use this, which might be faster
-      for k in range(0,K-1):   # offset by 1 because of the extra degree of freedom
-        if iteration == 0:
-          f_k_new[k+1] -= first_gamma * Hinvg[k]
-        else:
-          f_k_new[k+1] -= gamma * Hinvg[k]          
-          
-      if (self._amIdoneIterating(f_k_new,relative_tolerance,iteration,maximum_iterations,print_warning,verbose)): 
-        break;
-
-    return
-  """
     # commenting out likelihood minimization for now
     """
   #=============================================================================================
@@ -2153,15 +2361,15 @@ class MBAR:
       if verbose: print "Determining dimensionless free energies by LBFG minimization"
   
     # Number of states with samples.
-    K = self.nonzero_N_k_indices.size
+    K = self.states_with_samples.size
     if verbose:
       print "There are %d states with samples." % K
   
     # Free energies
-    f_k = self.f_k[self.nonzero_N_k_indices].copy()
+    f_k = self.f_k[self.states_with_samples].copy()
       
     # Samples
-    N_k = self.N_k[self.nonzero_N_k_indices].copy()
+    N_k = self.N_k[self.states_with_samples].copy()
   
     from scipy import optimize
     
@@ -2204,22 +2412,21 @@ class MBAR:
         if verbose:
             print "Determining dimensionless free energies by Newton-Raphson iteration."
 
-        # nonzero versions of variables
-        K = self.K_nonzero
-        N_k = self.N_nonzero
-
         # keep track of Newton-Raphson and self-consistent iterations
         nr_iter = 0
         sci_iter = 0
 
-        f_k_sci = numpy.zeros([K], dtype=numpy.float64)
-        f_k_new = numpy.zeros([K], dtype=numpy.float64)
+        N_k = self.N_k[self.states_with_samples]
+        K = len(N_k)
+
+        f_k_sci = np.zeros([K], dtype=np.float64)
+        f_k_new = np.zeros([K], dtype=np.float64)
 
         # Perform Newton-Raphson iterations (with sci computed on the way)
         for iteration in range(0, maximum_iterations):
 
             # Store for new estimate of dimensionless relative free energies.
-            f_k = self.f_k[self.nonzero_N_k_indices].copy()
+            f_k = self.f_k[self.states_with_samples].copy()
 
             # compute weights for gradients: the denominators and free energies are from the previous
             # iteration in most cases.
@@ -2237,8 +2444,8 @@ class MBAR:
             #
 
             """
-      g = numpy.matrix(numpy.zeros([K-1,1], dtype=numpy.float64)) # gradient
-      H = numpy.matrix(numpy.zeros([K-1,K-1], dtype=numpy.float64)) # Hessian
+      g = np.matrix(np.zeros([K-1,1], dtype=np.float64)) # gradient
+      H = np.matrix(np.zeros([K-1,K-1], dtype=np.float64)) # Hessian
       for i in range(1,K):
         g[i-1] = N_k[i] - N_k[i] * W_nk[:,i].sum()
         H[i-1,i-1] = - (N_k[i] * W_nk[:,i] * (1.0 - N_k[i] * W_nk[:,i])).sum() 
@@ -2247,31 +2454,31 @@ class MBAR:
           H[j-1,i-1] = H[i-1,j-1]
 
       # Update the free energy estimate (Eq. C11 of [1]).
-      Hinvg = numpy.linalg.lstsq(H,g)[0]      # 
-      # Hinvg = numpy.linalg.solve(H,g)       # This might be faster if we can guarantee full rank.
+      Hinvg = linalg.lstsq(H,g)[0]      #
+      # Hinvg = linalg.solve(H,g)       # This might be faster if we can guarantee full rank.
       for k in range(0,K-1):
         f_k_new[k+1] = f_k[k+1] - gamma*Hinvg[k]
 
       """
             g = N_k - N_k * W_nk.sum(axis=0)
             NW = N_k * W_nk
-            H = numpy.dot(NW.T, NW)
-            H += (g.T - N_k) * numpy.eye(K)
+            H = np.dot(NW.T, NW)
+            H += (g.T - N_k) * np.eye(K)
             # Update the free energy estimate (Eq. C11 of [1]).
             # will always have lower rank the way it is set up
-            Hinvg = numpy.linalg.lstsq(H, g)[0]
+            Hinvg = linalg.lstsq(H, g)[0]
             Hinvg -= Hinvg[0]
             f_k_new = f_k - gamma * Hinvg
 
             # self-consistent iteration gradient norm and saved log sums.
             g_sci = self._gradientF(f_k_sci)
-            gnorm_sci = numpy.dot(g_sci, g_sci)
+            gnorm_sci = np.dot(g_sci, g_sci)
             # save this so we can switch it back in if g_sci is lower.
             log_weight_denom = self.log_weight_denom.copy()
 
             # newton raphson gradient norm and saved log sums.
             g_nr = self._gradientF(f_k_new)
-            gnorm_nr = numpy.dot(g_nr, g_nr)
+            gnorm_nr = np.dot(g_nr, g_nr)
 
             # we could save the gradient, too, but it's not too expensive to
             # compute since we are doing the Hessian anyway.
@@ -2299,7 +2506,7 @@ class MBAR:
 
             # have to set the free energies back in self, since the gradient
             # routine changes them.
-            self.f_k[self.nonzero_N_k_indices] = f_k
+            self.f_k[self.states_with_samples] = f_k
             if (self._amIdoneIterating(f_k_new, relative_tolerance, iteration, maximum_iterations, print_warning, verbose)):
                 if verbose:
                     print 'Of %d iterations, %d were Newton-Raphson iterations and %d were self-consistent iterations' % (iteration + 1, nr_iter, sci_iter)
@@ -2321,22 +2528,22 @@ class MBAR:
         #           = N_i - N_i\sum_{n=1}^N W_{ni}
 
         # actually using the negative, in order to maximize instead of minimize
-        self.f_k[self.nonzero_N_k_indices] = f_k
-        return -(numpy.dot(self.N_nonzero, f_k) + numpy.sum(self._computeUnnormalizedLogWeights(numpy.zeros([self.K_nonzero, self.N_max]))))
+        self.f_k[self.states_with_samples] = f_k
+        return -(np.dot(N_k[self.states_with_samples], f_k) + np.sum(self._computeUnnormalizedLogWeights(np.zeros([self.states_with_samples, self.N]))))
 
     #=========================================================================
     def _gradientF(self, f_k):
 
         # take into account entries with zero samples
-        self.f_k[self.nonzero_N_k_indices] = f_k
-        K = self.K_nonzero
-        N_k = self.N_nonzero
+        self.f_k[self.states_with_samples] = f_k
+        K = len(self.states_with_samples)
 
         W_nk = self._computeWeights(recalc_denom=True)
 
-        g = numpy.array(numpy.zeros([K], dtype=numpy.float64))  # gradient
+        g = np.array(np.zeros([K], dtype=np.float64))  # gradient
 
         for i in range(1, K):
-            g[i] = N_k[i] - N_k[i] * W_nk[:, i].sum()
+            N_i = self.N_k[self.states_with_samples[i]]
+            g[i] = N_i - N_i * W_nk[:, i].sum()
 
         return g
