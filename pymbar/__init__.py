@@ -31,7 +31,7 @@ __license__ = "LGPL"
 __maintainer__ = "Michael R. Shirts and John D. Chodera"
 __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 
-from pymbar import timeseries, testsystems, confidenceintervals
+from pymbar import timeseries, testsystems, confidenceintervals, version
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exp import EXP, EXPGauss
