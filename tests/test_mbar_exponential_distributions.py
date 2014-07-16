@@ -35,10 +35,10 @@ def test_exponential_samples():
 def test_exponential_mbar_free_energies():
     """Exponential Distribution Test: can MBAR calculate correct free energy differences?"""
     test = exponential_distributions.ExponentialTestCase(rates)
-    x_kn, u_kln, N_k_output = test.sample(N_k, mode='u_kln')
+    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
     eq(N_k, N_k_output)
 
-    mbar = MBAR(u_kln, N_k)
+    mbar = MBAR(u_kn, N_k)
     fe, fe_sigma = mbar.getFreeEnergyDifferences()
     fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
 
@@ -50,15 +50,15 @@ def test_exponential_mbar_free_energies():
 
 
 def test_exponential_mbar_xkn():
-    """Exponential Distribution Test: can MBAR calculate E(x_kn)?"""
+    """Exponential Distribution Test: can MBAR calculate E(x_n)?"""
     test = exponential_distributions.ExponentialTestCase(rates)
-    x_kn, u_kln, N_k_output = test.sample(N_k)
+    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
 
     eq(N_k, N_k_output)
 
-    mbar = MBAR(u_kln, N_k)
+    mbar = MBAR(u_kn, N_k)
 
-    mu, sigma = mbar.computeExpectations(x_kn)
+    mu, sigma = mbar.computeExpectations(x_n)
     mu0 = test.analytical_means()
 
     z = (mu0 - mu) / sigma
@@ -66,15 +66,15 @@ def test_exponential_mbar_xkn():
 
 
 def test_exponential_mbar_xkn_squared():
-    """Exponential Distribution Test: can MBAR calculate E(x_kn^2)"""
+    """Exponential Distribution Test: can MBAR calculate E(x_n^2)"""
     test = exponential_distributions.ExponentialTestCase(rates)
-    x_kn, u_kln, N_k_output = test.sample(N_k)
+    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
 
     eq(N_k, N_k_output)
 
-    mbar = MBAR(u_kln, N_k)
+    mbar = MBAR(u_kn, N_k)
 
-    mu, sigma = mbar.computeExpectations(x_kn ** 2)
+    mu, sigma = mbar.computeExpectations(x_n ** 2)
     mu0 = test.analytical_x_squared()
 
     z = (mu0 - mu) / sigma
