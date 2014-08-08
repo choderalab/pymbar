@@ -1440,7 +1440,7 @@ class MBAR:
         >>> u_n = u_kn[0, :]
         >>> # Sort into nbins equally-populated bins
         >>> nbins = 10 # number of equally-populated bins to use
-        >>> import np
+        >>> import numpy as np
         >>> N_tot = N_k.sum()
         >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
         >>> bins = np.append(x_n_sorted[0::(N_tot/nbins)], x_n_sorted.max()+0.1)
