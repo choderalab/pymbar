@@ -87,7 +87,7 @@ if not release:
 
 write_version_py()
 CMBAR = Extension('_pymbar',
-                  sources = ["pymbar/_pymbar.c"],
+                  sources = ["PYMBAR/_pymbar.c"],
                   extra_compile_args=["-std=c99","-O2","-shared","-msse2","-msse3"],
                   include_dirs = [numpy.get_include(),numpy.get_include()+"/numpy/"]
                   )
