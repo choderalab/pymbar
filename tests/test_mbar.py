@@ -1,4 +1,4 @@
-"""Test MBAR by performing statistical tests on a set of of 1D harmonic oscillators.
+"""Test MBAR by performing statistical tests on a set of model systems
 for which the true free energy differences can be computed analytically.
 """
 
