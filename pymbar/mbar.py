@@ -503,9 +503,9 @@ class MBAR:
         >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_in = np.array([x_kn,x_kn**2,x_kn**3])
-        >>> u_n = u_kn[:1,:]
+        >>> u_n = u_kn[:2,:]
         >>> state_list = np.array([[0,0],[1,0],[2,0],[2,1]],int)
-        >>> [A_i, d2A_ij] = mbar.computeGeneralExpectations(A_in, state_list, u_n)
+        >>> [A_i, d2A_ij] = mbar.computeGeneralExpectations(A_in, u_n, state_list)
 
         """
 
@@ -541,7 +541,7 @@ class MBAR:
         # Compute row of W matrix for the extra states corresponding to u_ln according to the state list
         for s in range(S):
             l = state_list[s,1]
-            la = K+l  #l augmented
+            la = K+s  #l augmented
             Log_W_nk[:, la] = self._computeUnnormalizedLogWeights(u_ln[l,:])
             f_k[la] = -_logsum(Log_W_nk[:, la])
             Log_W_nk[:, la] += f_k[l]
