@@ -119,12 +119,14 @@ class ExponentialTestCase(object):
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
         x_n = np.zeros([N_tot], np.float64)
+        s_n = np.zeros([N_tot], np.int)
         u_kn = np.zeros([self.n_states, N_tot], np.float64)
         index = 0
         for k, N in enumerate(N_k):
             x = np.random.exponential(scale=self.rates[k] ** -1., size=N)
             x_kn[k, 0:N] = x
             x_n[index:(index + N)] = x
+            s_n[index:(index + N)] = k
             for l in range(self.n_states):
                 u = self.beta * self.rates[l] * x
                 u_kln[k, l, 0:N] = u
@@ -132,7 +134,7 @@ class ExponentialTestCase(object):
             index += N
 
         if (mode == 'u_kn'):
-            return x_n, u_kn, N_k
+            return x_n, u_kn, N_k, s_n
         elif (mode == 'u_kln'):
             return x_kn, u_kln, N_k
         else:

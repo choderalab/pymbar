@@ -513,6 +513,10 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, fast=False, method="
 
     if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
         results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
+    elif method == "adaptive":
+        results = {}
+        sci_lambda = lambda x: self_consistent_update(u_kn_nonzero, N_k_nonzero, pad(x))[1:]  # Objective function gradient
+        results["x"] = adaptive(grad_and_obj, hess, sci_lambda, N_k_nonzero[1:], f_k_nonzero[1:])
     else:
         results = scipy.optimize.root(eqns, f_k_nonzero[1:], jac=jac, method=method, tol=tol, options=options)
 
@@ -575,3 +579,54 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
         print("Final gradient norm: %.3g" % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero)))
 
     return f_k_nonzero, all_results
+
+
+def adaptive(obj_and_grad_lambda, hess_lambda, sci_lambda, N_k, f_k, max_iter=5000, grad_norm_tol=1E-13):
+    for i in range(max_iter):
+        obj0, grad = obj_and_grad_lambda(f_k)
+        nrm0 = np.linalg.norm(grad)
+        print(nrm0)
+        H = hess_lambda(f_k)
+        Hinvg = np.linalg.lstsq(H, grad)[0]
+
+        f_nr = f_k - Hinvg
+        f_sci = sci_lambda(f_k)
+        
+        obj_sci, grad_sci = obj_and_grad_lambda(f_sci)
+        obj_nr, grad_nr = obj_and_grad_lambda(f_nr)
+
+        # Use the ||gradient|| as objective function, rather than partition sum.
+        nrm_sci = np.linalg.norm(grad_sci)
+        nrm_nr = np.linalg.norm(grad_nr)
+
+        print("%.3d:  %.3g %.3g %.3g %s" % (i, nrm0, nrm_sci, nrm_nr, {True:"SC", False:"NR"}[nrm_sci < nrm_nr]))    
+        if nrm_sci < nrm_nr or np.isnan(nrm_nr):
+            f_k = f_sci
+            nrm = nrm_sci
+        else:
+            f_k = f_nr
+            nrm = nrm_nr
+    
+        if nrm <= grad_norm_tol:
+            print("Break due to grad_norm_tol")
+            break
+            
+        if nrm > nrm0:
+            print("nrm_increase")
+            break
+        nrm0 = nrm
+        
+    return f_k    
+
+
+def get_two_sample_representation(u_kn0, N_k0, s_n):
+    n_states = N_k0.shape[0]
+
+    mu_k = np.array([u_kn0[:, s_n == k].mean(1) for k in range(n_states)]).T
+    sigma_k = np.array([u_kn0[:, s_n == k].std(1) for k in range(n_states)]).T
+    a = 2 ** -0.5    
+
+    u_kn = np.hstack((mu_k + a * sigma_k, mu_k - a * sigma_k))
+    N_k = 2 * np.ones_like(N_k0)
+    
+    return u_kn, N_k

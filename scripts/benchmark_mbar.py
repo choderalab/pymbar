@@ -10,20 +10,21 @@ def load_oscillators(n_states, n_samples):
     k_k = np.linspace(1, 3, n_states)
     N_k = (np.ones(n_states) * n_samples).astype('int')
     test = pymbar.testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
-    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
-    return name, u_kn, N_k_output
+    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+    return name, u_kn, N_k_output, s_n
 
 def load_exponentials(n_states, n_samples):
     name = "%dx%d exponentials" % (n_states, n_samples)
     rates = np.linspace(1, 3, n_states)
     N_k = (np.ones(n_states) * n_samples).astype('int')
     test = pymbar.testsystems.exponential_distributions.ExponentialTestCase(rates)
-    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
-    return name, u_kn, N_k_output
+    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+    return name, u_kn, N_k_output, s_n
 
 
 solver_protocol = None
 mbar_gens = {"new":lambda u_kn, N_k: pymbar.MBAR(u_kn, N_k), "old":lambda u_kn, N_k: pymbar.old_mbar.MBAR(u_kn, N_k)}
+mbar_gens = {"new":lambda u_kn, N_k, x_kindices: pymbar.MBAR(u_kn, N_k, x_kindices=x_kindices)}
 systems = [lambda : load_exponentials(25, 100), lambda : load_exponentials(100, 100), lambda : load_exponentials(250, 250),
 lambda : load_oscillators(25, 100), lambda : load_oscillators(100, 100), lambda : load_oscillators(250, 250),
 load_gas_data, load_8proteins_data]
@@ -31,9 +32,9 @@ load_gas_data, load_8proteins_data]
 timedata = []
 for version, mbar_gen in mbar_gens.items():
     for sysgen in systems:
-        name, u_kn, N_k = sysgen()
+        name, u_kn, N_k, s_n = sysgen()
         time0 = time.time()
-        mbar = mbar_gen(u_kn, N_k)
+        mbar = mbar_gen(u_kn, N_k, s_n)
         wsum = np.linalg.norm(np.exp(mbar.Log_W_nk).sum(0) - 1.0)
         wdot = np.linalg.norm(np.exp(mbar.Log_W_nk).dot(N_k) - 1.0)
         obj, grad = pymbar.mbar_solvers.mbar_objective_and_gradient(u_kn, N_k, mbar.f_k)

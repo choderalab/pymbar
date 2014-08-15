@@ -197,14 +197,15 @@ class MBAR:
         self.N = N  # maximum number of configurations
 
         # if not defined, identify from which state each sample comes from.
-        if (x_kindices != None):
-            self.x_kindices = np.array(N,dtype=np.int32)
+        if x_kindices is not None:
+            self.x_kindices = x_kindices
+        else:
+            self.x_kindices = np.array(N, dtype=np.int32)
             Nsum = 0
             for k in range(K):
                 self.x_kindices[Nsum:Nsum+N_k[k]] = k
                 Nsum += N_k[k]
-        else:
-            self.x_kindices = x_kindices
+            
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
 
@@ -288,8 +289,14 @@ class MBAR:
             print "MBAR initialization complete."
         return
 
-    def solve_mbar(self, solver_protocol=None):
+    def solve_mbar(self, solver_protocol=None, start_small=True):
         """Solve for free energies of states with samples, then calculate for empty states."""
+
+        if start_small:
+            u_kn, N_k = mbar_solvers.get_two_sample_representation(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.x_kindices)
+            f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol)
+            self.f_k[self.states_with_samples] = f_k_nonzero
+
         f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol)
         self.f_k[self.states_with_samples] = f_k_nonzero
         # Recompute all free energies because those from states with zero samples are not correctly computed by Newton-Raphson.
