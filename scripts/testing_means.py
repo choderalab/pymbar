@@ -22,21 +22,18 @@ def load_exponentials(n_states, n_samples):
     return name, u_kn, N_k_output, s_n
 
 
-#n_states = 50
+n_states = 50
 #name, u_kn0, N_k0, s_n = load_exponentials(n_states, 500)
 name, u_kn0, N_k0, s_n = load_8proteins_data()
+#name, u_kn0, N_k0, s_n = load_gas_data()
 n_states = len(N_k0)
 
-n_states = len(N_k0)
-#u_kn, N_k = pymbar.mbar_solvers.get_two_sample_representation(u_kn0, N_k0, s_n)
-u_kn, N_k = pymbar.mbar_solvers.get_representative_sample(u_kn0, N_k0, s_n, n_choose=200)
+solver_protocol0 = None
+solver_protocol1 = None
 
-#solver_protocol = [dict(method="L-BFGS-B"), dict(method="hybr")]
-#solver_protocol = [dict(method="L-BFGS-B"), dict(method="adaptive")]
-solver_protocol = None
-#solver_protocol = [dict(method="adaptive")]
-#solver_protocol = [dict(method="hybr")]
+u_kn, N_k = pymbar.mbar_solvers.get_representative_sample(u_kn0, N_k0, s_n, subsampling=10)
+#u_kn, N_k = pymbar.mbar_solvers.get_representative_sample_old(u_kn0, N_k0, s_n)
+%time fsub1, asub1 = pymbar.mbar_solvers.solve_mbar(u_kn, N_k, np.zeros_like(N_k), solver_protocol=solver_protocol0)
+%time f0, a0 = pymbar.mbar_solvers.solve_mbar(u_kn0, N_k0, fsub1, solver_protocol=solver_protocol1)
 
-%time fsub, asub = pymbar.mbar_solvers.solve_mbar(u_kn, N_k, np.zeros_like(N_k), solver_protocol=solver_protocol)
-%time f0, a0 = pymbar.mbar_solvers.solve_mbar(u_kn0, N_k0, fsub, solver_protocol=solver_protocol)
-%time f1, a1 = pymbar.mbar_solvers.solve_mbar(u_kn0, N_k0, np.zeros_like(N_k), solver_protocol=solver_protocol)
+%time f1, a1 = pymbar.mbar_solvers.solve_mbar(u_kn0, N_k0, np.zeros_like(N_k), solver_protocol=solver_protocol1)

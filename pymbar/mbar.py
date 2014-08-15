@@ -293,7 +293,8 @@ class MBAR:
         """Solve for free energies of states with samples, then calculate for empty states."""
 
         if start_small:
-            u_kn, N_k = mbar_solvers.get_two_sample_representation(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.x_kindices)
+            u_kn, N_k = mbar_solvers.get_representative_sample(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.x_kindices, n_choose=50, rescale=True)
+            #u_kn, N_k = mbar_solvers.get_two_sample_representation(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.x_kindices)
             f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol)
             self.f_k[self.states_with_samples] = f_k_nonzero
 

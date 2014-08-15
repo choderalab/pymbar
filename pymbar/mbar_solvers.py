@@ -512,6 +512,8 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, fast=False, method="
         jac = hess
 
     if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
+        #x, f, results = scipy.optimize.fmin_l_bfgs_b(grad_and_obj, f_k_nonzero[1:], **options)
+        #results["x"] = x
         results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
     elif method == "adaptive":
         results = {}
@@ -632,22 +634,52 @@ def get_two_sample_representation(u_kn0, N_k0, s_n):
     return u_kn, N_k
 
 
-def get_representative_sample(u_kn0, N_k0, s_n, n_choose=10):
+def get_representative_sample_old(u_kn0, N_k0, s_n, subsampling=10, rescale=False):
     n_states = N_k0.shape[0]
-    
-    mu_k = np.array([u_kn0[:, s_n == k].mean(1) for k in range(n_states)]).T
-    sigma_k = np.array([u_kn0[:, s_n == k].std(1) for k in range(n_states)]).T
-    
-    N_k = n_choose * np.ones(n_states)
-    samples = np.array([np.random.choice(np.where(s_n == k)[0], size=n_choose) for k in range(n_states)])
+
+    N_k = N_k0 / subsampling
+    samples = np.array([np.random.choice(np.where(s_n == k)[0], size=N_k[k]) for k in range(n_states)])
     u_kn = u_kn0[:, samples]
 
-    u_kn /= u_kn.std(-1)[:, :, np.newaxis]
-    u_kn -= u_kn.mean(-1)[:, :, np.newaxis]
-
-    u_kn *= sigma_k[:, :, np.newaxis]
-    u_kn += mu_k[:, :, np.newaxis]
+    if rescale:
+        mu_k = np.array([u_kn0[:, s_n == k].mean(1) for k in range(n_states)]).T
+        sigma_k = np.array([u_kn0[:, s_n == k].std(1) for k in range(n_states)]).T
+        
+        u_kn /= u_kn.std(-1)[:, :, np.newaxis]
+        u_kn -= u_kn.mean(-1)[:, :, np.newaxis]
+        
+        u_kn *= sigma_k[:, :, np.newaxis]
+        u_kn += mu_k[:, :, np.newaxis]
 
     u_kn = np.hstack(u_kn.swapaxes(0, 1))
+
+    return u_kn, N_k
+
+
+def get_representative_sample(u_kn0, N_k0, s_n, subsampling=10, rescale=True):
+    n_states = len(N_k0)
+    N_k = N_k0 / subsampling
+    N_k[(N_k == 0) & (N_k0 > 0)] = 1
+
+    u_kn = np.zeros((n_states, N_k.sum()))
+
+    if rescale:
+        mu_k = np.array([u_kn0[:, s_n == k].mean(1) for k in range(n_states)])
+        sigma_k = np.array([u_kn0[:, s_n == k].std(1) for k in range(n_states)])
+        standardize = lambda x: (x - x.mean(1)[:, np.newaxis]) / x.std(1)[:, np.newaxis]
+    else:
+        mu_k = np.zeros((n_states, n_states))
+        sigma_k = np.ones((n_states, n_states))
+        standardize = lambda x: x
+
+    start = 0
+    for k in range(n_states):
+        if N_k[k] <= 0:
+            continue
+        samples = np.random.choice(np.where(s_n == k)[0], size=N_k[k], replace=False)
+        u_k = standardize(u_kn0[:, samples]) * sigma_k[k][:, np.newaxis] + mu_k[k][:, np.newaxis]
+        num = N_k[k]
+        u_kn[:, start:start + num] = u_k
+        start += num
 
     return u_kn, N_k
