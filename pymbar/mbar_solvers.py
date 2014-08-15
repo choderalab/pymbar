@@ -11,7 +11,9 @@ except ImportError:
     HAVE_NUMEXPR = False
 
 # This is the default protocol (ordered list of minimization algorithms / NLE solvers) for solving the MBAR equations.
-DEFAULT_SOLVER_PROTOCOL = [dict(method="L-BFGS-B", fast=True), dict(method="L-BFGS-B", fast=True), dict(method="hybr", fast=True), dict(method="hybr")]
+#DEFAULT_SOLVER_PROTOCOL = [dict(method="L-BFGS-B", fast=True), dict(method="L-BFGS-B", fast=True), dict(method="hybr", fast=True), dict(method="hybr")]
+#DEFAULT_SOLVER_PROTOCOL = [dict(method="hybr", fast=True), dict(method="hybr")]
+DEFAULT_SOLVER_PROTOCOL = [dict(method="adaptive")]
 
 
 def logsumexp(a, axis=None, b=None, use_numexpr=True):
