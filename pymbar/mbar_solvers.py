@@ -630,3 +630,24 @@ def get_two_sample_representation(u_kn0, N_k0, s_n):
     N_k = 2 * np.ones_like(N_k0)
     
     return u_kn, N_k
+
+
+def get_representative_sample(u_kn0, N_k0, s_n, n_choose=10):
+    n_states = N_k0.shape[0]
+    
+    mu_k = np.array([u_kn0[:, s_n == k].mean(1) for k in range(n_states)]).T
+    sigma_k = np.array([u_kn0[:, s_n == k].std(1) for k in range(n_states)]).T
+    
+    N_k = n_choose * np.ones(n_states)
+    samples = np.array([np.random.choice(np.where(s_n == k)[0], size=n_choose) for k in range(n_states)])
+    u_kn = u_kn0[:, samples]
+
+    u_kn /= u_kn.std(-1)[:, :, np.newaxis]
+    u_kn -= u_kn.mean(-1)[:, :, np.newaxis]
+
+    u_kn *= sigma_k[:, :, np.newaxis]
+    u_kn += mu_k[:, :, np.newaxis]
+
+    u_kn = np.hstack(u_kn.swapaxes(0, 1))
+
+    return u_kn, N_k
