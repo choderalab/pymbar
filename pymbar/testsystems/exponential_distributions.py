@@ -34,7 +34,7 @@ class ExponentialTestCase(object):
     Test sampling in different output modes.
 
     >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
-    >>> [x_n, u_kn, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> [x_n, u_kn, N_k, s_n] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
 
     """
 
@@ -98,6 +98,8 @@ class ExponentialTestCase(object):
            u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
         N_k : np.ndarray, shape=(n_states), dtype=float
            N_k[k] is the number of samples generated from state k
+        s_n : np.ndarray, shape=(n_samples), dtype='int'
+            s_n is the state of origin of x_n           
 
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
             1D harmonic oscillator positions

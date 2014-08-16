@@ -11,9 +11,7 @@ except ImportError:
     HAVE_NUMEXPR = False
 
 # This is the default protocol (ordered list of minimization algorithms / NLE solvers) for solving the MBAR equations.
-#DEFAULT_SOLVER_PROTOCOL = [dict(method="L-BFGS-B", fast=True), dict(method="L-BFGS-B", fast=True), dict(method="hybr", fast=True), dict(method="hybr")]
-#DEFAULT_SOLVER_PROTOCOL = [dict(method="hybr", fast=True), dict(method="hybr")]
-DEFAULT_SOLVER_PROTOCOL = [dict(method="adaptive")]
+DEFAULT_SOLVER_PROTOCOL = [dict(method="L-BFGS-B", fast=True), dict(method="L-BFGS-B", fast=True), dict(method="hybr", fast=True), dict(method="hybr")]
 
 
 def logsumexp(a, axis=None, b=None, use_numexpr=True):
@@ -514,13 +512,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, fast=False, method="
         jac = hess
 
     if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
-        #x, f, results = scipy.optimize.fmin_l_bfgs_b(grad_and_obj, f_k_nonzero[1:], **options)
-        #results["x"] = x
         results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
-    elif method == "adaptive":
-        results = {}
-        sci_lambda = lambda x: self_consistent_update(u_kn_nonzero, N_k_nonzero, pad(x))[1:]  # Objective function gradient
-        results["x"] = adaptive(grad_and_obj, hess, sci_lambda, N_k_nonzero[1:], f_k_nonzero[1:])
     else:
         results = scipy.optimize.root(eqns, f_k_nonzero[1:], jac=jac, method=method, tol=tol, options=options)
 
@@ -585,80 +577,37 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
     return f_k_nonzero, all_results
 
 
-def adaptive(obj_and_grad_lambda, hess_lambda, sci_lambda, N_k, f_k, max_iter=5000, grad_norm_tol=1E-13):
-    for i in range(max_iter):
-        obj0, grad = obj_and_grad_lambda(f_k)
-        nrm0 = np.linalg.norm(grad)
-        print(nrm0)
-        H = hess_lambda(f_k)
-        Hinvg = np.linalg.lstsq(H, grad)[0]
+def subsample_data(u_kn0, N_k0, s_n, subsampling, rescale=True, replace=False):
+    """Return a subsample from dataset.
 
-        f_nr = f_k - Hinvg
-        f_sci = sci_lambda(f_k)
-        
-        obj_sci, grad_sci = obj_and_grad_lambda(f_sci)
-        obj_nr, grad_nr = obj_and_grad_lambda(f_nr)
+    Parameters
+    ----------
+    u_kn0 : np.ndarray, shape=(n_states, n_samples), dtype='float'
+        The reduced potential energies, i.e. -log unnormalized probabilities
+    N_k0 : np.ndarray, shape=(n_states), dtype='int'
+        The number of samples in each state
+    s_n : np.ndarray, shape=(n_samples), dtype='int'
+        State of origin of each sample x_n
+    subsampling : int
+        The factor by which to subsample (E.g. 10 for 10X).
+    rescale : bool, optional, default=True
+        If True, rescale and shift the subset to have same mean and variance
+        as full dataset
+    replace : bool, optional, default=False
+        Subsample with replacement
 
-        # Use the ||gradient|| as objective function, rather than partition sum.
-        nrm_sci = np.linalg.norm(grad_sci)
-        nrm_nr = np.linalg.norm(grad_nr)
+    Returns
+    -------
+    u_kn : np.ndarray, shape=(n_states, n_samples), dtype='float'
+        The reduced potential energies, i.e. -log unnormalized probabilities
+    N_k : np.ndarray, shape=(n_states), dtype='float'
+        The new number of samples in each state
 
-        print("%.3d:  %.3g %.3g %.3g %s" % (i, nrm0, nrm_sci, nrm_nr, {True:"SC", False:"NR"}[nrm_sci < nrm_nr]))    
-        if nrm_sci < nrm_nr or np.isnan(nrm_nr):
-            f_k = f_sci
-            nrm = nrm_sci
-        else:
-            f_k = f_nr
-            nrm = nrm_nr
-    
-        if nrm <= grad_norm_tol:
-            print("Break due to grad_norm_tol")
-            break
-            
-        if nrm > nrm0:
-            print("nrm_increase")
-            break
-        nrm0 = nrm
-        
-    return f_k    
-
-
-def get_two_sample_representation(u_kn0, N_k0, s_n):
-    n_states = N_k0.shape[0]
-
-    mu_k = np.array([u_kn0[:, s_n == k].mean(1) for k in range(n_states)]).T
-    sigma_k = np.array([u_kn0[:, s_n == k].std(1) for k in range(n_states)]).T
-    a = 2 ** -0.5    
-
-    u_kn = np.hstack((mu_k + a * sigma_k, mu_k - a * sigma_k))
-    N_k = 2 * np.ones_like(N_k0)
-    
-    return u_kn, N_k
-
-
-def get_representative_sample_old(u_kn0, N_k0, s_n, subsampling=10, rescale=False):
-    n_states = N_k0.shape[0]
-
-    N_k = N_k0 / subsampling
-    samples = np.array([np.random.choice(np.where(s_n == k)[0], size=N_k[k]) for k in range(n_states)])
-    u_kn = u_kn0[:, samples]
-
-    if rescale:
-        mu_k = np.array([u_kn0[:, s_n == k].mean(1) for k in range(n_states)]).T
-        sigma_k = np.array([u_kn0[:, s_n == k].std(1) for k in range(n_states)]).T
-        
-        u_kn /= u_kn.std(-1)[:, :, np.newaxis]
-        u_kn -= u_kn.mean(-1)[:, :, np.newaxis]
-        
-        u_kn *= sigma_k[:, :, np.newaxis]
-        u_kn += mu_k[:, :, np.newaxis]
-
-    u_kn = np.hstack(u_kn.swapaxes(0, 1))
-
-    return u_kn, N_k
-
-
-def get_representative_sample(u_kn0, N_k0, s_n, subsampling=10, rescale=True):
+    Notes
+    -----
+    In situations where N >> K and the overlap is good, one might use
+    subsampling to solve MBAR on a smaller dataset as an initial guess.
+    """    
     n_states = len(N_k0)
     N_k = N_k0 / subsampling
     N_k[(N_k == 0) & (N_k0 > 0)] = 1
@@ -678,7 +627,7 @@ def get_representative_sample(u_kn0, N_k0, s_n, subsampling=10, rescale=True):
     for k in range(n_states):
         if N_k[k] <= 0:
             continue
-        samples = np.random.choice(np.where(s_n == k)[0], size=N_k[k], replace=False)
+        samples = np.random.choice(np.where(s_n == k)[0], size=N_k[k], replace=replace)
         u_k = standardize(u_kn0[:, samples]) * sigma_k[k][:, np.newaxis] + mu_k[k][:, np.newaxis]
         num = N_k[k]
         u_kn[:, start:start + num] = u_k

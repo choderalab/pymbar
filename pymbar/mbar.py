@@ -162,7 +162,7 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
 
         """
@@ -200,7 +200,7 @@ class MBAR:
         if x_kindices is not None:
             self.x_kindices = x_kindices
         else:
-            self.x_kindices = np.array(N, dtype=np.int32)
+            self.x_kindices = np.arange(N, dtype=np.int32)
             Nsum = 0
             for k in range(K):
                 self.x_kindices[Nsum:Nsum+N_k[k]] = k
@@ -289,13 +289,12 @@ class MBAR:
             print "MBAR initialization complete."
         return
 
-    def solve_mbar(self, solver_protocol=None, start_small=True):
+    def solve_mbar(self, solver_protocol=None, start_small=False):
         """Solve for free energies of states with samples, then calculate for empty states."""
 
         if start_small:
             s_n = np.unique(self.x_kindices, return_inverse=True)[1]
-            u_kn, N_k = mbar_solvers.get_representative_sample(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=5, rescale=True)
-            #u_kn, N_k = mbar_solvers.get_two_sample_representation(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.x_kindices)
+            u_kn, N_k = mbar_solvers.subsample(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=5, rescale=True)
             f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol=[dict(method="L-BFGS-B", fast=True), dict(method="adaptive")])
             self.f_k[self.states_with_samples] = f_k_nonzero
 
@@ -367,7 +366,7 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> [Deltaf_ij, dDeltaf_ij] = mbar.getFreeEnergyDifferences()
 
@@ -474,9 +473,9 @@ class MBAR:
 
         update this example to be more general
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> A_in = np.array([x_kn,x_kn**2,x_kn**3])
+        >>> A_in = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[:2,:]
         >>> state_list = np.array([[0,0],[1,0],[2,0],[2,1]],int)
         >>> [A_i, d2A_ij] = mbar.computeGeneralExpectations(A_in, u_n, state_list)
@@ -641,7 +640,7 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_n = x_n
         >>> (A_ij, dA_ij) = mbar.computeExpectations(A_n)
@@ -852,9 +851,9 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> A_in = np.array([x_kn,x_kn**2,x_kn**3])
+        >>> A_in = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[0,:]
         >>> [A_i, d2A_ij] = mbar.computeMultipleExpectations(A_in, u_kn)
 
@@ -973,7 +972,7 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> O_ij = mbar.computeOverlap()
         """
@@ -1123,7 +1122,7 @@ class MBAR:
         Examples
         --------
         >>> from pymbar import testsystems
-        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> [Deltaf_ij, dDeltaf_ij] = mbar.computePerturbedFreeEnergies(u_kn)
         """
@@ -1241,7 +1240,7 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> [Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij] = mbar.computeEntropyAndEnthalpy()
 
@@ -1407,7 +1406,7 @@ class MBAR:
 
         >>> # Generate some test data
         >>> from pymbar import testsystems
-        >>> [x_n, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> # Initialize MBAR on data.
         >>> mbar = MBAR(u_kn, N_k)
         >>> # Select the potential we want to compute the PMF for (here, condition 0).

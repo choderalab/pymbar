@@ -32,20 +32,20 @@ def load_oscillators(n_states, n_samples):
     k_k = np.linspace(1, 3, n_states)
     N_k = (np.ones(n_states) * n_samples).astype('int')
     test = pymbar.testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
-    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
-    return name, u_kn, N_k_output
+    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+    return name, u_kn, N_k_output, s_n
 
 def load_exponentials(n_states, n_samples):
     name = "%dx%d exponentials" % (n_states, n_samples)
     rates = np.linspace(1, 3, n_states)
     N_k = (np.ones(n_states) * n_samples).astype('int')
     test = pymbar.testsystems.exponential_distributions.ExponentialTestCase(rates)
-    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
-    return name, u_kn, N_k_output
+    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+    return name, u_kn, N_k_output, s_n
 
 def _test(data_generator):
     try:
-        name, U, N_k = data_generator()
+        name, U, N_k, s_n = data_generator()
     except IOError as exc:
         raise(SkipTest("Cannot load dataset; skipping test.  Try downloading pymbar-datasets GitHub repository and setting PYMBAR-DATASETS environment variable.  Error was '%s'" % exc))
     except ImportError as exc:
@@ -82,3 +82,12 @@ def test_gas():
 def test_8proteins():
     data_generator = pymbar.testsystems.pymbar_datasets.load_8proteins_data
     _test(data_generator)
+
+
+def test_subsampling():
+    name, u_kn, N_k, s_n = load_exponentials(5, 4000)
+    mbar = pymbar.MBAR(u_kn, N_k)
+    u_kn_sub, N_k_sub = pymbar.mbar_solvers.subsample_data(u_kn, N_k, s_n, 4)
+    mbar_sub = pymbar.MBAR(u_kn_sub, N_k_sub)
+    eq(mbar.f_k, mbar_sub.f_k, decimal=2)
+    
