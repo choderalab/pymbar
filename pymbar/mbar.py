@@ -289,14 +289,8 @@ class MBAR:
             print "MBAR initialization complete."
         return
 
-    def solve_mbar(self, solver_protocol=None, start_small=False):
+    def solve_mbar(self, solver_protocol=None):
         """Solve for free energies of states with samples, then calculate for empty states."""
-
-        if start_small:
-            s_n = np.unique(self.x_kindices, return_inverse=True)[1]
-            u_kn, N_k = mbar_solvers.subsample(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=5, rescale=True)
-            f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol=[dict(method="L-BFGS-B", fast=True), dict(method="adaptive")])
-            self.f_k[self.states_with_samples] = f_k_nonzero
 
         f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol)
         self.f_k[self.states_with_samples] = f_k_nonzero
