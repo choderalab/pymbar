@@ -1842,7 +1842,7 @@ class MBAR:
 
             # Compute covariance
             Theta = V * Sigma * np.linalg.pinv(
-                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
+                I - Sigma * V.T * Ndiag * V * Sigma, rcond=1E-10) * Sigma * V.T
 
         elif method == 'svd':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
