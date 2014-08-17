@@ -1826,6 +1826,24 @@ class MBAR:
             # Compute covariance
             Theta = W.T * W
 
+        elif method == 'svdk':
+            # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
+            # See Appendix D.1, Eq. D4 in [1].
+
+            # Construct matrices
+            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
+            W = np.matrix(W, dtype=np.float64)
+            I = np.identity(K, dtype=np.float64)
+
+            # Compute SVD of W
+            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            Sigma = np.matrix(np.diag(S))
+            V = np.matrix(Vt).T
+
+            # Compute covariance
+            Theta = V * Sigma * np.linalg.pinv(
+                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
+
         elif method == 'svd':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
             # See Appendix D.1, Eq. D4 in [1].
