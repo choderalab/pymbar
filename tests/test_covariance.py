@@ -30,7 +30,8 @@ def _test(data_generator):
         raise(SkipTest("Error importing pytables to load dataset; skipping test. Error was '%s'" % exc))
     print(name)
     mbar = pymbar.MBAR(U, N_k)
-    fij, dfij = mbar.getFreeEnergyDifferences(uncertainty_method="svdk")
+    fij1, dfij1 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-kab")
+    fij2, dfij2 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew-kab")
     eq(pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8)
     eq(np.exp(mbar.Log_W_nk).sum(0), np.ones(len(N_k)), decimal=10)
     eq(np.exp(mbar.Log_W_nk).dot(N_k), np.ones(U.shape[1]), decimal=10)
@@ -41,8 +42,12 @@ def _test(data_generator):
     fij0, dfij0 = mbar0.getFreeEnergyDifferences(uncertainty_method="svd")
     eq(mbar.f_k, mbar0.f_k, decimal=8)
     eq(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
-    eq(fij0, fij, decimal=8)
-    eq(dfij0, dfij, decimal=8)
+
+    eq(fij0, fij1, decimal=8)
+    eq(dfij0, dfij1, decimal=8)
+    
+    eq(fij0, fij2, decimal=8)
+    eq(dfij0, dfij2, decimal=8)
     
 
 

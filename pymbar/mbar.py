@@ -1826,7 +1826,7 @@ class MBAR:
             # Compute covariance
             Theta = W.T * W
 
-        elif method == 'svdk':
+        elif method == 'svd-kab':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
             # See Appendix D.1, Eq. D4 in [1].
 
@@ -1839,6 +1839,31 @@ class MBAR:
             [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
             Sigma = np.matrix(np.diag(S))
             V = np.matrix(Vt).T
+
+            # Compute covariance
+            Theta = V * Sigma * np.linalg.pinv(
+                I - Sigma * V.T * Ndiag * V * Sigma, rcond=1E-10) * Sigma * V.T
+
+
+        elif method == 'svd-ew-kab':
+            # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
+            # The eigenvalue decomposition of W'W is used to forego computing the SVD.
+            # See Appendix D.1, Eqs. D4 and D5 of [1].
+
+            # Construct matrices
+            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
+            W = np.matrix(W, dtype=np.float64)
+            I = np.identity(K, dtype=np.float64)
+
+            # Compute singular values and right singular vectors of W without using SVD
+            # Instead, we compute eigenvalues and eigenvectors of W'W.
+            # Note W'W = (U S V')'(U S V') = V S' U' U S V' = V (S'S) V'
+            [S2, V] = linalg.eigh(W.T * W)
+            # Set any slightly negative eigenvalues to zero.
+            S2[np.where(S2 < 0.0)] = 0.0
+            # Form matrix of singular values Sigma, and V.
+            Sigma = np.matrix(np.diag(np.sqrt(S2)))
+            V = np.matrix(V)
 
             # Compute covariance
             Theta = V * Sigma * np.linalg.pinv(
