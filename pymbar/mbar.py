@@ -291,7 +291,12 @@ class MBAR:
 
     def solve_mbar(self, solver_protocol=None):
         """Solve for free energies of states with samples, then calculate for empty states."""
-        f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol)
+        
+        if len(self.states_with_samples) == 1:
+            f_k_nonzero = np.array([0.0])
+        else:
+            f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol)
+        
         self.f_k[self.states_with_samples] = f_k_nonzero
         # Recompute all free energies because those from states with zero samples are not correctly computed by Newton-Raphson.
         # and store the log weights
