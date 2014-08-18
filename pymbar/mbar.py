@@ -1805,7 +1805,6 @@ class MBAR:
             # Diagonal N_k matrix.
             Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
             W = np.matrix(W, dtype=np.float64)
-            I = np.identity(N, dtype=np.float64)
             # matrix of ones, times 1/N
             O = np.ones([K, K], dtype=np.float64) / float(N)
 
