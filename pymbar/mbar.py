@@ -86,7 +86,7 @@ class MBAR:
     """
     #=========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=None, initialize='zeros', x_kindices=None, **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=[dict(method="hybr")], initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=[dict(method="L-BFGS-B")], **kwargs):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -277,7 +277,7 @@ class MBAR:
                 print "f_k = "
                 print self.f_k
         
-        self.solve_mbar(solver_protocol=solver_protocol)
+        self.solve_mbar(solver_protocol, subsampling_protocol, subsampling)
         
         # Print final dimensionless free energies.
         if self.verbose:
@@ -289,13 +289,22 @@ class MBAR:
             print "MBAR initialization complete."
         return
 
-    def solve_mbar(self, solver_protocol=None):
+    def solve_mbar(self, solver_protocol, subsampling_protocol, subsampling):
         """Solve for free energies of states with samples, then calculate for empty states."""
-        
+                
         if len(self.states_with_samples) == 1:
             f_k_nonzero = np.array([0.0])
         else:
-            f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol)
+            if subsampling is not None and self.x_kindices is not None:
+                s_n = np.unique(self.x_kindices, return_inverse=True)[1]
+                u_kn, N_k = mbar_solvers.subsample_data(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=subsampling, rescale=True)
+                f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol=subsampling_protocol)
+                self.f_k[self.states_with_samples] = f_k_nonzero
+            else:
+                f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol=subsampling_protocol)
+                self.f_k[self.states_with_samples] = f_k_nonzero
+
+            f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol=solver_protocol)
         
         self.f_k[self.states_with_samples] = f_k_nonzero
         # Recompute all free energies because those from states with zero samples are not correctly computed by Newton-Raphson.
