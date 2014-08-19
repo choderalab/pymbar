@@ -110,3 +110,15 @@ def test_general_expectations():
         u_n = u_kn[:2, :]
         state_list = np.array([[0, 0], [1, 0], [2, 0], [2, 1]],int)
         [A_i, d2A_ij] = mbar.computeGeneralExpectations(A_in, u_n, state_list)
+
+
+def test_2_states():
+    u_kn = np.random.normal(size=(2, 10))
+    N_k = np.array([5, 5])
+    mbar = MBAR(u_kn, N_k)
+
+def test_1_nonempty_state():
+    u_kn = np.random.normal(size=(3, 10))
+    N_k = np.array([0, 10, 0])
+    mbar = MBAR(u_kn, N_k)
+
