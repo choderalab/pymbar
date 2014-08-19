@@ -37,20 +37,20 @@ def test_sample():
         name, test = system_generator()
         print(name)
 
-        x_n, u_kn, N_k = test.sample([5, 6, 7], mode='u_kn')
-        x_n, u_kn, N_k = test.sample([5, 5, 5], mode='u_kn')
-        x_n, u_kn, N_k = test.sample([1, 1, 1], mode='u_kn')
+        x_n, u_kn, N_k, s_n = test.sample([5, 6, 7], mode='u_kn')
+        x_n, u_kn, N_k, s_n = test.sample([5, 5, 5], mode='u_kn')
+        x_n, u_kn, N_k, s_n = test.sample([1, 1, 1], mode='u_kn')
 
         x_kn, u_kln, N_k = test.sample([5, 6, 7], mode='u_kln')
         x_kn, u_kln, N_k = test.sample([5, 5, 5], mode='u_kln')
         x_kn, u_kln, N_k = test.sample([1, 1, 1], mode='u_kln')
 
-def test_mbar_freee_energies():
+def test_mbar_free_energies():
     """Can MBAR calculate correct free energy differences?"""    
     for system_generator in system_generators:
         name, test = system_generator()
         print(name)
-        x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
+        x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
 
         eq(N_k, N_k_output)
 
@@ -69,7 +69,7 @@ def test_mbar_expectation_xkn():
     for system_generator in system_generators:
         name, test = system_generator()
         print(name) 
-        x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
+        x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
 
         eq(N_k, N_k_output)
 
@@ -86,7 +86,7 @@ def test_harmonic_oscillators_mbar_xkn_squared():
     for system_generator in system_generators:
         name, test = system_generator()    
         print(name)        
-        x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
+        x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
 
         eq(N_k, N_k_output)
 
@@ -104,9 +104,21 @@ def test_general_expectations():
     for system_generator in system_generators:
         name, test = system_generator()    
         print(name)        
-        x_kn, u_kn, N_k_output = test.sample(N_k, mode='u_kn')
+        x_kn, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         mbar = MBAR(u_kn, N_k)
         A_in = np.array([x_kn, x_kn ** 2, x_kn ** 3])
         u_n = u_kn[:2, :]
         state_list = np.array([[0, 0], [1, 0], [2, 0], [2, 1]],int)
         [A_i, d2A_ij] = mbar.computeGeneralExpectations(A_in, u_n, state_list)
+
+
+def test_2_states():
+    u_kn = np.random.normal(size=(2, 10))
+    N_k = np.array([5, 5])
+    mbar = MBAR(u_kn, N_k)
+
+def test_1_nonempty_state():
+    u_kn = np.random.normal(size=(3, 10))
+    N_k = np.array([0, 10, 0])
+    mbar = MBAR(u_kn, N_k)
+
