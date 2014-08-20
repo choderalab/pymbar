@@ -416,7 +416,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
     return f_k_nonzero, all_results
 
 
-def subsample_data(u_kn0, N_k0, s_n, subsampling, rescale=True, replace=False):
+def subsample_data(u_kn0, N_k0, s_n, subsampling, rescale=False, replace=False):
     """Return a subsample from dataset.
 
     Parameters
