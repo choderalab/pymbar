@@ -406,11 +406,10 @@ class MBAR:
 
             # check for any numbers below zero.
             if (np.any(d2DeltaF < 0.0)):
-                if(np.any(d2DeltaF) < warning_cutoff):
-                    # Hmm.  Will this print correctly?
-                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
+                if(np.any(d2DeltaF < -warning_cutoff)):
+                    print "A squared uncertainty is negative.  %d/%d entries in d2DeltaF are below cutoff" % (d2DeltaF[d2DeltaF < -warning_cutoff].size, d2DeltaF.size)
                 else:
-                    d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)] = 0.0
+                    d2DeltaF[d2DeltaF < 0.0] = 0.0
 
             # take the square root of the entries of the matrix
             dDeltaf_ij = np.sqrt(d2DeltaF)
@@ -1193,10 +1192,10 @@ class MBAR:
 
             # check for any numbers below zero.
             if (np.any(d2DeltaF < 0.0)):
-                if(np.any(d2DeltaF) < warning_cutoff):
-                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
+                if(np.any(d2DeltaF < -warning_cutoff)):
+                    print "A squared uncertainty is negative.  %d/%d entries in d2DeltaF are below cutoff" % (d2DeltaF[d2DeltaF < -warning_cutoff].size, d2DeltaF.size)
                 else:
-                    d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)] = 0.0
+                    d2DeltaF[d2DeltaF < 0.0] = 0.0
 
             # take the square root of entries of the matrix
             dDeltaf_ij = np.sqrt(d2DeltaF)
@@ -1323,11 +1322,10 @@ class MBAR:
 
         # check for any numbers below zero.
         if (np.any(d2DeltaF < 0.0)):
-            if(np.any(d2DeltaF) < warning_cutoff):
-                # Hmm.  Will this print correctly?
-                print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
+            if(np.any(d2DeltaF < -warning_cutoff)):
+                print "A squared uncertainty is negative.  %d/%d entries in d2DeltaF are below cutoff" % (d2DeltaF[d2DeltaF < -warning_cutoff].size, d2DeltaF.size)
             else:
-                d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)] = 0.0
+                d2DeltaF[d2DeltaF < 0.0] = 0.0
 
         # take the square root of the entries of matrix
         dDelta_f_ij = np.sqrt(d2DeltaF)
