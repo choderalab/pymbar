@@ -19,6 +19,7 @@ __version__ = "$Revision: $ $Date: $"
 #
 # Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
 # Portions of this software are Copyright (c) 2007-2008 Stanford University and Columbia University.
+# Portions of this software are Copyright (c) 2014 University of Virginia
 #
 # This program is free software; you can redistribute it and/or modify it under the terms of
 # the GNU General Public License as published by the Free Software Foundation; either version 2
@@ -57,6 +58,9 @@ __version__ = "$Revision: $ $Date: $"
 
   gcc -O3 -lm -bundle -I/opt/local/Library/Frameworks/Python.framework/Versions/2.4/include/python2.4/ -I/opt/local/var/macports/software/py-numpy/1.0.3_0/opt/local/lib/python2.4/site-packages/numpy/core/include/ _pymbar.c -o _pymbar.so -undefined dynamic_lookup
 
+  For Python 2.7 installed in anaconda
+
+  gcc -O3 -lm -bundle -I${HOME}/anaconda/include/python2.7/ -I${HOME}/anaconda/lib/python2.7/site-packages/numpy/core/include/ _pymbar.c -o _pymbar.so -undefined dynamic_lookup
   * * *
 
   To compile on Linux:
@@ -82,34 +86,33 @@ __version__ = "$Revision: $ $Date: $"
 
 PyObject *_pymbar_computeUnnormalizedLogWeightsCpp(PyObject *self, PyObject *args) {
   
-  int i,j,k,n,K,N_max,nonzero_N;
-  int s0,s1,s2; 
-  npy_intp dim2[2];
+  int i,k,n,K,N,nonzero_N;
+  int s0,s1;
+  npy_intp dim1[1];
   int *nonzero_N_k,*N_k;
-  double *FlogN,*f_k,*u_k,*log_w_k,*log_term;
-  double u_j,max_log_term, term_sum, log_sum; 
+  double *FlogN,*f_k,*log_term,*u_n,*log_w_n;
+  double u_k, max_log_term, term_sum, log_sum;
 
-  PyArrayObject *array_nonzero_N_k, *array_N_k, *array_f_k, *array_u_kln, *array_u_kn, *array_log_w_kn;
+  PyArrayObject *array_nonzero_N_k, *array_N_k, *array_f_k, *array_u_kn, *array_u_n, *array_log_w_n;
 
   if (!PyArg_ParseTuple(args, "iiiOOOOO",
-			&K, &N_max, &nonzero_N, &array_nonzero_N_k, 
+			&K, &N, &nonzero_N, &array_nonzero_N_k,
 			&array_N_k, &array_f_k, 
-			&array_u_kln, &array_u_kn)) {
+			&array_u_kn, &array_u_n)) {
     return NULL;
   }
 
   //-------------------------------------------
-  //Set the dimensions Python array of log_w_ln 
+  //Set the dimensions Python array of log_w_n
   //-------------------------------------------
 
-  dim2[0] = K;
-  dim2[1] = N_max;
+  dim1[0] = N;
 
   //-------------------------------------------
-  //Create Python array of log_w_ln 
+  //Create Python array of log_w_n
   //-------------------------------------------
-  
-  array_log_w_kn = (PyArrayObject *) PyArray_SimpleNew(2, dim2, PyArray_DOUBLE);  
+
+  array_log_w_n = (PyArrayObject *) PyArray_SimpleNew(1, dim1, PyArray_DOUBLE);
 
   //-------------------------------------------
   //Make C arrays from python single-dimension numeric arrays
@@ -118,6 +121,8 @@ PyObject *_pymbar_computeUnnormalizedLogWeightsCpp(PyObject *self, PyObject *arg
   nonzero_N_k  = (int *) array_nonzero_N_k->data;
   N_k          = (int *) array_N_k->data;
   f_k          = (double *) array_f_k->data;
+  u_n          = (double *) array_u_n->data;
+  log_w_n      = (double *) array_log_w_n->data;
 
   //-------------------------------------------
   // Allocate space for helper arrays
@@ -131,38 +136,30 @@ PyObject *_pymbar_computeUnnormalizedLogWeightsCpp(PyObject *self, PyObject *arg
   //-------------------------------------------
 
   for (i=0;i<nonzero_N;i++) {
-    k = nonzero_N_k[i];
-    FlogN[i] = log((double)N_k[k])+f_k[k];
+      k = nonzero_N_k[i];
+      FlogN[i] = log((double)N_k[k])+f_k[k];
   }
 
-  s0 = array_u_kln->strides[0];
-  s1 = array_u_kln->strides[1]; 
-  s2 = array_u_kln->strides[2]; 
-
+  s0 = array_u_kn->strides[0];
+  s1 = array_u_kn->strides[1];
 
   //-------------------------------------------
-  // The workhorse triple loop
+  // The workhorse double loop
   //-------------------------------------------  
 
-  for (k=0;k<K;k++) {
-    //--------------------------------------------------------
-    // Set up the C arrays from the python numarray structures
-    //--------------------------------------------------------  
-    log_w_k = (double *)(array_log_w_kn->data + k*array_log_w_kn->strides[0]);
-    u_k = (double *)(array_u_kn->data + k*array_u_kn->strides[0]);
-    for (n=0;n<N_k[k];n++) {
+  for (n=0;n<N;n++) {
       term_sum = 0;
-      max_log_term = -1e100; // very low number
+      max_log_term = -1e300; // very low number
       //-------------------------------------------
       // Sum over only nonzero terms
       //------------------------------------------- 
       for (i=0;i<nonzero_N;i++) {
-          j = nonzero_N_k[i];
-          u_j = *((double *)(array_u_kln->data + k*s0 + j*s1 + n*s2));  
+          k = nonzero_N_k[i];
+          u_k = *((double *)(array_u_kn->data + k*s0 + n*s1));
           //------------------------------------------------------------------------
-          // Heart of the calculation -- sum_l over log(N_k) + f_k - (u_kln + u_kn)
+          // Heart of the calculation -- sum_k over log(N_k) + f_k - (u_kn + u_n)
           //------------------------------------------------------------------------
-          log_term[i] = FlogN[i] - (u_j - u_k[n]); 
+          log_term[i] = FlogN[i] - (u_k - u_n[n]);
           if (log_term[i] > max_log_term) {max_log_term = log_term[i];}
       }
       //----------------------------------------------
@@ -172,8 +169,7 @@ PyObject *_pymbar_computeUnnormalizedLogWeightsCpp(PyObject *self, PyObject *arg
           term_sum += exp(log_term[i]-max_log_term);
       }
       log_sum = log(term_sum) + max_log_term;
-      log_w_k[n] = -log_sum;
-    }
+      log_w_n[n] = -log_sum;
   }
   
   //-------------------------------------------
@@ -183,12 +179,11 @@ PyObject *_pymbar_computeUnnormalizedLogWeightsCpp(PyObject *self, PyObject *arg
   free(FlogN);
   free(log_term);
 
-
-  return PyArray_Return(array_log_w_kn);
+  return PyArray_Return(array_log_w_n);
 }
 
 static PyMethodDef _pymbar_methods[] = {
-  {"computeUnnormalizedLogWeightsCpp", (PyCFunction)_pymbar_computeUnnormalizedLogWeightsCpp, METH_VARARGS, "Computes unnormalized log weights via compiled C++, computeUnnormalizedLogWeightsCpp(K,u_kn,log_w_kn"},
+  {"computeUnnormalizedLogWeightsCpp", (PyCFunction)_pymbar_computeUnnormalizedLogWeightsCpp, METH_VARARGS, "Computes unnormalized log weights via compiled C++, computeUnnormalizedLogWeightsCpp(K,N,nonzero_N,f_k,u_kn)"},
   {NULL, NULL, 0, NULL}
 };
 

@@ -111,11 +111,11 @@ class HarmonicOscillatorsTestCase(object):
             1D harmonic oscillator positions
         u_kln : np.ndarray, shape=(n_states, n_states, n_samples), dytpe=float, only if mode='u_kln'
            u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
-        N_k : np.ndarray, shape=(n_states), dtype=float
+        N_k : np.ndarray, shape=(n_states), dtype=int32
            N_k[k] is the number of samples generated from state k
 
         """
-        N_k = np.array(N_k, np.float64)
+        N_k = np.array(N_k, np.int32)
         if len(N_k) != self.n_states:
             raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))
 
