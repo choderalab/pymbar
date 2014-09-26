@@ -76,6 +76,8 @@ __license__ = "GPL 2.0"
 #=============================================================================================
 import math
 import numpy
+import numpy as np
+import statsmodels.api as sm
 import numpy.linalg
 from pymbar.utils import ParameterError
 
@@ -777,5 +779,140 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     Neff_max = Neff_t.max()
     t = Neff_t.argmax()
     g = g_t[t]
+
+    return (t, g, Neff_max)
+
+
+def statisticalInefficiency_fft(A_n, mintime=3):
+    """Compute the (cross) statistical inefficiency of (two) timeseries.
+
+    Parameters
+    ----------
+    A_n : np.ndarray, float
+        A_n[n] is nth value of timeseries A.  Length is deduced from vector.
+
+    Returns
+    -------
+    g : np.ndarray,
+        g is the estimated statistical inefficiency (equal to 1 + 2 tau, where tau is the correlation time).
+        We enforce g >= 1.0.
+
+    Notes
+    -----
+    The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
+    The fast method described in Ref [1] is used to compute g.
+
+    References
+    ----------
+    [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
+        histogram analysis method for the analysis of simulated and parallel tempering simulations.
+        JCTC 3(1):26-41, 2007.
+
+    Examples
+    --------
+
+    Compute statistical inefficiency of timeseries data with known correlation time.  
+
+    >>> from pymbar.testsystems import correlated_timeseries_example
+    >>> A_n = correlated_timeseries_example(N=100000, tau=5.0)
+    >>> g = statisticalInefficiency_fft(A_n, fast=True)
+
+    """
+
+    # Create np copies of input arguments.
+    A_n = np.array(A_n)
+
+    # Get the length of the timeseries.
+    N = A_n.size
+
+    C_t = sm.tsa.stattools.acf(A_n, fft=True, unbiased=True, nlags=N)
+    t_grid = np.arange(N).astype('float')
+    g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
+    
+    try:
+        ind = np.where((C_t <= 0) & (t_grid > mintime))[0][0]
+    except IndexError:
+        ind = N
+
+    g = 1.0 + g_t[1:ind].sum()
+    g = max(1.0, g)
+
+    return g #, g_t, C_t
+
+
+def detectEquilibration_fft(A_t):
+    """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
+
+    Parameters
+    ----------
+    A_t : np.ndarray 
+        timeseries
+
+    Returns
+    -------
+    t : int
+        start of equilibrated data
+    g : float
+        statistical inefficiency of equilibrated data
+    Neff_max : float
+        number of uncorrelated samples   
+
+    Examples
+    --------
+
+    Determine start of equilibrated data for a correlated timeseries.
+
+    >>> from pymbar import testsystems
+    >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) # generate a test correlated timeseries
+    >>> [t, g, Neff_max] = detectEquilibration(A_t) # compute indices of uncorrelated timeseries
+
+    Determine start of equilibrated data for a correlated timeseries with a shift.
+
+    >>> from pymbar import testsystems
+    >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
+    >>> B_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
+    >>> C_t = np.concatenate([A_t, B_t])
+    >>> [t, g, Neff_max] = detectEquilibration_fft(C_t) # compute indices of uncorrelated timeseries
+
+    """
+    T = A_t.size
+
+    # Special case if timeseries is constant.
+    if A_t.std() == 0.0:
+        return (0, 1, T)
+
+    start = 1
+    end = T - 1
+    n_grid = min(5, T)
+    
+    while True:
+        time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int'))
+
+        g_t = np.ones(len(time_grid))
+        Neff_t = np.ones(len(time_grid))
+        
+        for k, t in enumerate(time_grid):
+            g_t[k] = statisticalInefficiency_fft(A_t[t:])
+            Neff_t[k] = (T - t + 1) / g_t[k]
+
+        Neff_max = Neff_t.max()
+        k = Neff_t.argmax()
+        t = time_grid[k]
+        g = g_t[k]
+        
+        if (time_grid.max() - time_grid.min() <= n_grid - 1.):
+            break
+        
+        if k == 0:
+            start = time_grid[0]
+            end = time_grid[1]
+        elif k == len(time_grid) - 1:
+            start = time_grid[-2]
+            end = time_grid[-1]
+        else:
+            start = time_grid[k - 1]
+            end = time_grid[k + 1]
+        
+
 
     return (t, g, Neff_max)
