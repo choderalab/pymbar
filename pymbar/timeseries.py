@@ -790,6 +790,11 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     ----------
     A_n : np.ndarray, float
         A_n[n] is nth value of timeseries A.  Length is deduced from vector.
+    mintime : int, optional, default=3
+        minimum amount of correlation function to compute (default: 3)
+        The algorithm terminates after computing the correlation time out to mintime when the
+        correlation function furst goes negative.  Note that this time may need to be increased
+        if there is a strong initial negative peak in the correlation function.
 
     Returns
     -------
