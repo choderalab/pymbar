@@ -112,7 +112,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
         autocorrelation of timeseries A.  
     fast : bool, optional, default=False
         f True, will use faster (but less accurate) method to estimate correlation
-        time, described in Ref. [1] (default: False)
+        time, described in Ref. [1] (default: False).  This is ignored when B_n=None.
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
@@ -128,7 +128,8 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
     Notes
     -----
     The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
-    The fast method described in Ref [1] is used to compute g.
+    The fast method described in Ref [1] is used to compute g.  If B_n is None,
+    use the FFT based approach as implemented in statisticalInefficiency_fft()
 
     References
     ----------
@@ -151,8 +152,8 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
     A_n = numpy.array(A_n)
     if B_n is not None:
         B_n = numpy.array(B_n)
-    else:
-        B_n = numpy.array(A_n)
+    else:  # If we have a single observable input, use the FFT approach.       
+        return statisticalInefficiency_fft(A_n, mintime=mintime)
 
     # Get the length of the timeseries.
     N = A_n.size

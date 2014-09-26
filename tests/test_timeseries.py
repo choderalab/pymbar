@@ -19,8 +19,14 @@ def generate_data(N=10000, K=10):
 def test_statistical_inefficiency_single():
     X, Y, energy = generate_data()
     timeseries.statisticalInefficiency(X[0])
+    timeseries.statisticalInefficiency(X[0], X[0])    
     timeseries.statisticalInefficiency(X[0] ** 2)
+    timeseries.statisticalInefficiency(X[0] ** 2, X[0] ** 2)
     timeseries.statisticalInefficiency(energy[0])
+    timeseries.statisticalInefficiency(energy[0], energy[0])
+    
+    timeseries.statisticalInefficiency(X[0], X[0] ** 2)
+    
     # TODO: Add some checks to test statistical inefficinecies are within normal range
 
 
@@ -41,9 +47,11 @@ def test_statistical_inefficiency_fft():
     timeseries.statisticalInefficiency_fft(X[0] ** 2)
     timeseries.statisticalInefficiency_fft(energy[0])
     
-    g0 = timeseries.statisticalInefficiency(X[0])
-    g = timeseries.statisticalInefficiency(X[0])
-    eq(g0, g)
+    g0 = timeseries.statisticalInefficiency_fft(X[0])
+    g1 = timeseries.statisticalInefficiency(X[0])
+    g2 = timeseries.statisticalInefficiency(X[0], X[0])
+    eq(g0, g1)
+    eq(g0, g2)
 
 
 def test_statistical_inefficiency_fft_gaussian():
@@ -52,8 +60,10 @@ def test_statistical_inefficiency_fft_gaussian():
     for i in range(5):
         x = np.random.normal(size=100000)
         g0 = timeseries.statisticalInefficiency(x, fast=False)
-        g = timeseries.statisticalInefficiency_fft(x)
-        eq(g0, g, decimal=5)
+        g1 = timeseries.statisticalInefficiency(x, x, fast=False)
+        g2 = timeseries.statisticalInefficiency_fft(x)
+        eq(g0, g1, decimal=5)
+        eq(g0, g2, decimal=5)
         
         eq(np.log(g0), np.log(1.0), decimal=1)
 
@@ -61,6 +71,8 @@ def test_statistical_inefficiency_fft_gaussian():
         x = np.random.normal(size=100000)
         x = np.repeat(x, 3)  # e.g. Construct correlated gaussian e.g. [a, b, c] -> [a, a, a, b, b, b, c, c, c]
         g0 = timeseries.statisticalInefficiency(x, fast=False)
-        g = timeseries.statisticalInefficiency_fft(x)
-        eq(g0, g, decimal=5)
+        g1 = timeseries.statisticalInefficiency(x, x, fast=False)
+        g2 = timeseries.statisticalInefficiency_fft(x)
+        eq(g0, g1, decimal=5)
+        eq(g0, g2, decimal=5)
         eq(np.log(g0), np.log(3.0), decimal=1)
