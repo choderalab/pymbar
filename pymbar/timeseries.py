@@ -860,7 +860,14 @@ def detectEquilibration_fft(A_t):
     g : float
         statistical inefficiency of equilibrated data
     Neff_max : float
-        number of uncorrelated samples   
+        number of uncorrelated samples
+        
+    Notes
+    -----
+    Finds the discard region (t) by a binary search on the range of
+    possible lagtime values, with logarithmic spacings.  This will give
+    a local maximum.  The global maximum is not guaranteed, but will
+    likely be found if the N_eff[t] varies smoothly.
 
     Examples
     --------
