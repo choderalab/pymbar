@@ -106,4 +106,3 @@ def save(name, u_kn, N_k, s_n=None):
     f.createCArray("/", "N_k", tables.Int64Atom(), obj=N_k, filters=tables.Filters(complevel=9, complib="zlib"))
     f.createCArray("/", "s_n", tables.Int64Atom(), obj=s_n, filters=tables.Filters(complevel=9, complib="zlib"))
     f.close()
-    print("Done dumping HDF5.")    
