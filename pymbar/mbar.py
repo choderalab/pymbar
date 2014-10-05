@@ -313,6 +313,7 @@ class MBAR:
             print "Recomputing all free energies and log weights for storage"
 
         self.f_k[self.N_k <= 0] = mbar_solvers.self_consistent_update(self.u_kn, self.N_k, self.f_k)[self.N_k <= 0]
+        self.f_k -= self.f_k[0]  # This is necessary because state 0 might have had zero samples, but we still want that state to be the reference with free energy 0.        
         self.Log_W_nk = np.log(mbar_solvers.mbar_W_nk(self.u_kn, self.N_k, self.f_k))
 
 
