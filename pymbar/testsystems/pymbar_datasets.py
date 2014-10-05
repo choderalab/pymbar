@@ -35,13 +35,29 @@ def get_sn(N_k):
     return s_n
 
 def load_from_hdf(filename):
+    """Load an HDF5 file that was created via save().
+    Parameters
+    ----------
+    filename : str
+        filename of HDF5
+    
+    Returns
+    -------
+
+    u_kn : np.ndarray, dtype='float', shape=(n_states, n_samples)
+        Reduced potential energies
+    N_k : np.ndarray, dtype='int', shape=(n_states)
+        Number of samples taken from each state
+    s_n : np.ndarray, optional, default=None, dtype=int, shape=(n_samples)
+        The state of origin of each state.  If none, guess the state origins.
+    
+    """
     import tables
     f = tables.File(filename, 'r')
     u_kn = f.root.u_kn[:]
     N_k = f.root.N_k[:]
     s_n = f.root.s_n[:]
     f.close()
-    #s_n = get_sn(N_k)
     return u_kn, N_k, s_n
 
 def load_gas_data():
