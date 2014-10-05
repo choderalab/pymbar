@@ -821,7 +821,7 @@ def statisticalInefficiency_fft(A_n, mintime=3):
 
     >>> from pymbar.testsystems import correlated_timeseries_example
     >>> A_n = correlated_timeseries_example(N=100000, tau=5.0)
-    >>> g = statisticalInefficiency_fft(A_n, fast=True)
+    >>> g = statisticalInefficiency_fft(A_n)
 
     """
 
