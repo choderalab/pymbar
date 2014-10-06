@@ -49,7 +49,7 @@ def _test(data_generator):
     except IOError as exc:
         raise(SkipTest("Cannot load dataset; skipping test.  Try downloading pymbar-datasets GitHub repository and setting PYMBAR-DATASETS environment variable.  Error was '%s'" % exc))
     except ImportError as exc:
-        raise(SkipTest("Error importing pytables to load dataset; skipping test. Error was '%s'" % exc))
+        raise(SkipTest("Error importing pytables to load external dataset; skipping test. Error was '%s'" % exc))
     print(name)
     mbar = pymbar.MBAR(U, N_k)
     eq(pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8)
@@ -85,7 +85,7 @@ def test_8proteins():
 
 
 def test_subsampling():
-    name, u_kn, N_k, s_n = load_exponentials(5, 4000)
+    name, u_kn, N_k, s_n = load_exponentials(5, 10000)
     mbar = pymbar.MBAR(u_kn, N_k)
     u_kn_sub, N_k_sub = pymbar.mbar_solvers.subsample_data(u_kn, N_k, s_n, 4)
     mbar_sub = pymbar.MBAR(u_kn_sub, N_k_sub)
