@@ -1649,8 +1649,7 @@ class MBAR:
     #=========================================================================
 
     def _pseudoinverse(self, A, tol=1.0e-10):
-        """
-        Compute the Moore-Penrose pseudoinverse.
+        """Compute the Moore-Penrose pseudoinverse, wraps np.linalg.pinv
 
         REQUIRED ARGUMENTS
           A (np KxK matrix) - the square matrix whose pseudoinverse is to be computed
@@ -1662,53 +1661,13 @@ class MBAR:
           tol - the tolerance (relative to largest magnitude singlular value) below which singular values are to not be include in forming pseudoinverse (default: 1.0e-10)
 
         NOTES
-          This implementation is provided because the 'pinv' function of np is broken in the version we were using.
-
-        TODO
-          Can we get rid of this and use np.linalg.pinv instead?
+          In previous versions of pymbar / Numpy, we wrote our own pseudoinverse
+          because of a bug in Numpy.
 
         """
 
-        # DEBUG
-        # TODO: Should we use pinv, or _pseudoinverse?
-        # return np.linalg.pinv(A)
+        return np.linalg.pinv(A, rcond=tol)
 
-        # Get size
-        [M, N] = A.shape
-        if N != M:
-            raise "pseudoinverse can only be computed for square matrices: dimensions were %d x %d" % (
-                M, N)
-
-        # Make sure A contains no nan.
-        if(np.any(np.isnan(A))):
-            print "attempted to compute pseudoinverse of A ="
-            print A
-            raise ParameterError("A contains nan.")
-
-        # DEBUG
-        diagonal_loading = False
-        if diagonal_loading:
-            # Modify matrix by diagonal loading.
-            eigs = linalg.eigvalsh(A)
-            most_negative_eigenvalue = eigs.min()
-            if (most_negative_eigenvalue < 0.0):
-                print "most negative eigenvalue = %e" % most_negative_eigenvalue
-                # Choose loading value.
-                gamma = -most_negative_eigenvalue * 1.05
-                # Modify Theta by diagonal loading
-                A += gamma * np.eye(A.shape[0])
-
-        # Compute SVD of A.
-        [U, S, Vt] = linalg.svd(A)
-
-        # Compute pseudoinverse by taking square root of nonzero singular
-        # values.
-        Ainv = np.matrix(np.zeros([M, M], dtype=np.float64))
-        for k in range(M):
-            if (abs(S[k]) > tol * abs(S[0])):
-                Ainv += (1.0/S[k]) * np.outer(U[:, k], Vt[k, :]).T
-
-        return Ainv
     #=========================================================================
 
     def _zerosamestates(self, A):
@@ -1747,13 +1706,9 @@ class MBAR:
 
         The computational costs of the various 'method' arguments varies:
 
-          'generalized-inverse' currently requires computation of the pseudoinverse of an NxN matrix (where N is the total number of samples)
           'svd' computes the generalized inverse using the singular value decomposition -- this should be efficient yet accurate (faster)
           'svd-ev' is the same as 'svd', but uses the eigenvalue decomposition of W'W to bypass the need to perform an SVD (fastest)
-          'inverse' only requires standard inversion of a KxK matrix (where K is the number of states), but requires all K states to be different
           'approximate' only requires multiplication of KxN and NxK matrices, but is an approximate underestimate of the uncertainty
-          'tan' uses a simplified form that requires two pseudoinversions, but can be unstable
-          'tan-HGH' makes weaker assumptions on 'tan' but can occasionally be unstable
 
         REFERENCE
           See Section II and Appendix D of [1].
@@ -1795,40 +1750,8 @@ class MBAR:
                 'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
                 (firstbad, row_sums[firstbad], np.sum(badrows)))
 
-        # Compute estimate of asymptotic covariance matrix using specified
-        # method.
-        if method == 'generalized-inverse':
-            # Use generalized inverse (Eq. 8 of [1]) -- most general
-            # Theta = W' (I - W N W')^+ W
-
-            # Construct matrices
-            # Diagonal N_k matrix.
-            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
-            W = np.matrix(W, dtype=np.float64)
-            I = np.identity(N, dtype=np.float64)
-
-            # Compute covariance
-            Theta = W.T * self._pseudoinverse(I - W * Ndiag * W.T) * W
-
-        elif method == 'inverse':
-            # Use standard inverse method (Eq. D8 of [1]) -- only applicable if all K states are different
-            # Theta = [(W'W)^-1 - N + 1 1'/N]^-1
-
-            # Construct matrices
-            # Diagonal N_k matrix.
-            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
-            W = np.matrix(W, dtype=np.float64)
-            # matrix of ones, times 1/N
-            O = np.ones([K, K], dtype=np.float64) / float(N)
-
-            # Make sure W is nonsingular.
-            if (abs(linalg.det(W.T * W)) < tolerance):
-                print "Warning: W'W appears to be singular, yet 'inverse' method of uncertainty estimation requires W contain no duplicate states."
-
-            # Compute covariance
-            Theta = ((W.T * W).I - Ndiag + O).I
-
-        elif method == 'approximate':
+        # Compute estimate of asymptotic covariance matrix using specified method.
+        if method == 'approximate':
             # Use fast approximate expression from Kong et al. -- this underestimates the true covariance, but may be a good approximation in some cases and requires no matrix inversions
             # Theta = P'P
 
@@ -1837,49 +1760,6 @@ class MBAR:
 
             # Compute covariance
             Theta = W.T * W
-
-        elif method == 'svd-kab':
-            # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
-            # See Appendix D.1, Eq. D4 in [1].
-
-            # Construct matrices
-            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
-            W = np.matrix(W, dtype=np.float64)
-            I = np.identity(K, dtype=np.float64)
-
-            # Compute SVD of W
-            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
-            Sigma = np.matrix(np.diag(S))
-            V = np.matrix(Vt).T
-
-            # Compute covariance
-            Theta = V * Sigma * np.linalg.pinv(
-                I - Sigma * V.T * Ndiag * V * Sigma, rcond=1E-10) * Sigma * V.T
-
-
-        elif method == 'svd-ew-kab':
-            # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
-            # The eigenvalue decomposition of W'W is used to forego computing the SVD.
-            # See Appendix D.1, Eqs. D4 and D5 of [1].
-
-            # Construct matrices
-            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
-            W = np.matrix(W, dtype=np.float64)
-            I = np.identity(K, dtype=np.float64)
-
-            # Compute singular values and right singular vectors of W without using SVD
-            # Instead, we compute eigenvalues and eigenvectors of W'W.
-            # Note W'W = (U S V')'(U S V') = V S' U' U S V' = V (S'S) V'
-            [S2, V] = linalg.eigh(W.T * W)
-            # Set any slightly negative eigenvalues to zero.
-            S2[np.where(S2 < 0.0)] = 0.0
-            # Form matrix of singular values Sigma, and V.
-            Sigma = np.matrix(np.diag(np.sqrt(S2)))
-            V = np.matrix(V)
-
-            # Compute covariance
-            Theta = V * Sigma * np.linalg.pinv(
-                I - Sigma * V.T * Ndiag * V * Sigma, rcond=1E-10) * Sigma * V.T
 
         elif method == 'svd':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
@@ -1891,7 +1771,7 @@ class MBAR:
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
-            [U, S, Vt] = linalg.svd(W)
+            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.            
             Sigma = np.matrix(np.diag(S))
             V = np.matrix(Vt).T
 
@@ -1922,46 +1802,6 @@ class MBAR:
             # Compute covariance
             Theta = V * Sigma * self._pseudoinverse(
                 I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
-
-        elif method == 'tan-HGH':
-            # Use method suggested by Zhiqiang Tan without further simplification.
-            # TODO: There may be a problem here -- double-check this.
-
-            [N, K] = W.shape
-
-            # Estimate O matrix from W'W.
-            W = np.matrix(W, dtype=np.float64)
-            O = W.T * W
-
-            # Assemble the Lambda matrix.
-            Lambda = np.matrix(np.diag(N_k), dtype=np.float64)
-
-            # Identity matrix.
-            I = np.matrix(np.eye(K), dtype=np.float64)
-
-            # Compute H and G matrices.
-            H = O * Lambda - I
-            G = O - O * Lambda * O
-
-            # Compute pseudoinverse of H
-            Hinv = self._pseudoinverse(H)
-
-            # Compute estimate of asymptotic covariance.
-            Theta = Hinv * G * Hinv.T
-
-        elif method == 'tan':
-            # Use method suggested by Zhiqiang Tan.
-
-            # Estimate O matrix from W'W.
-            W = np.matrix(W, dtype=np.float64)
-            O = W.T * W
-
-            # Assemble the Lambda matrix.
-            Lambda = np.matrix(np.diag(N_k), dtype=np.float64)
-
-            # Compute covariance.
-            Oinv = self._pseudoinverse(O)
-            Theta = self._pseudoinverse(Oinv - Lambda)
 
         else:
             # Raise an exception.
