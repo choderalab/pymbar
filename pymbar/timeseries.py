@@ -136,7 +136,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
 
     if B_n is not None:
         B_n = numpy.array(B_n)
-    else:  # If we have a single observable input, use the FFT approach.       
+    else:
         B_n = numpy.array(A_n)
 
     # Get the length of the timeseries.
