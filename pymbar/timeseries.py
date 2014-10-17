@@ -58,9 +58,8 @@ __license__ = "GPL 2.0"
 import math
 import numpy
 import numpy as np
-import statsmodels.api as sm
 import numpy.linalg
-from pymbar.utils import ParameterError
+from pymbar.utils import ParameterError, _import
 
 #=============================================================================================
 # Issue warning on import.
@@ -809,6 +808,11 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     >>> g = statisticalInefficiency_fft(A_n)
 
     """
+    try:
+        import statsmodels.api as sm
+    except ImportError as err:
+        err.message += "\n You need to install statsmodels to use the FFT based correlation function."
+        raise
 
     # Create np copies of input arguments.
     A_n = np.array(A_n)

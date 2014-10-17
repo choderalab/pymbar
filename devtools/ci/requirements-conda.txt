@@ -4,4 +4,3 @@ scipy
 pip
 nose
 numexpr
-statsmodels

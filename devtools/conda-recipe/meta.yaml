@@ -10,14 +10,12 @@ requirements:
     - numpy
     - scipy
     - setuptools
-    - statsmodels
     - numexpr    
   run:
     - python
     - cython
     - numpy
     - scipy
-    - statsmodels
     - numexpr
 
 about:

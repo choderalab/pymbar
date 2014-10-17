@@ -1,6 +1,12 @@
 from pymbar import timeseries
 import numpy as np
-from pymbar.utils_for_testing import eq
+from pymbar.utils_for_testing import eq, skipif
+
+try:
+    import statsmodels.api as sm
+    HAVE_STATSMODELS = True
+except ImportError as err:
+    HAVE_STATSMODELS = False
 
 
 def generate_data(N=10000, K=10):
@@ -41,6 +47,7 @@ def test_statistical_inefficiency_multiple():
     # TODO: Add some checks to test statistical inefficinecies are within normal range
 
 
+@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
 def test_statistical_inefficiency_fft():
     X, Y, energy = generate_data()
     timeseries.statisticalInefficiency_fft(X[0])
@@ -55,7 +62,7 @@ def test_statistical_inefficiency_fft():
     eq(g0, g2)
     eq(g0, g3)
 
-
+@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
 def test_statistical_inefficiency_fft_gaussian():
     
     # Run multiple times to get things with and without negative "spikes" at C(1)
