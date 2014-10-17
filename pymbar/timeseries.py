@@ -90,7 +90,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     fast : bool, optional, default=False
         f True, will use faster (but less accurate) method to estimate correlation
         time, described in Ref. [1] (default: False).  This is ignored
-        when B_n=None and fft=False.
+        when B_n=None and fft=True.
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
