@@ -59,7 +59,7 @@ import math
 import numpy
 import numpy as np
 import numpy.linalg
-from pymbar.utils import ParameterError, _import
+from pymbar.utils import ParameterError
 
 #=============================================================================================
 # Issue warning on import.
