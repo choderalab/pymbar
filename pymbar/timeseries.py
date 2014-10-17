@@ -109,7 +109,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     Notes
     -----
     The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
-    The fast method described in Ref [1] is used to compute g.  
+    The fast method described in Ref [1] is used to compute g.
 
     References
     ----------
