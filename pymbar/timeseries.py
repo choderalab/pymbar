@@ -798,15 +798,6 @@ def statisticalInefficiency_fft(A_n, mintime=3):
         histogram analysis method for the analysis of simulated and parallel tempering simulations.
         JCTC 3(1):26-41, 2007.
 
-    Examples
-    --------
-
-    Compute statistical inefficiency of timeseries data with known correlation time.  
-
-    >>> from pymbar.testsystems import correlated_timeseries_example
-    >>> A_n = correlated_timeseries_example(N=100000, tau=5.0)
-    >>> g = statisticalInefficiency_fft(A_n)
-
     """
     try:
         import statsmodels.api as sm
@@ -858,23 +849,6 @@ def detectEquilibration_binary_search(A_t):
     possible lagtime values, with logarithmic spacings.  This will give
     a local maximum.  The global maximum is not guaranteed, but will
     likely be found if the N_eff[t] varies smoothly.
-
-    Examples
-    --------
-
-    Determine start of equilibrated data for a correlated timeseries.
-
-    >>> from pymbar import testsystems
-    >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) # generate a test correlated timeseries
-    >>> [t, g, Neff_max] = detectEquilibration(A_t) # compute indices of uncorrelated timeseries
-
-    Determine start of equilibrated data for a correlated timeseries with a shift.
-
-    >>> from pymbar import testsystems
-    >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
-    >>> B_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
-    >>> C_t = np.concatenate([A_t, B_t])
-    >>> [t, g, Neff_max] = detectEquilibration_binary_search(C_t) # compute indices of uncorrelated timeseries
 
     """
     T = A_t.size
