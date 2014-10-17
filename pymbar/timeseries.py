@@ -77,28 +77,29 @@ LongWarning = "Warning on use of the timeseries module: If the inherent timescal
 #=============================================================================================
 
 
-def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
+def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
     ----------
-    u_kln : np.ndarray, float, shape=(K, L, N_max)
-        u_kln[k,l,n] is the reduced potential energy of uncorrelated
-        configuration n sampled from state k, evaluated at state l.  K >= L             
     A_n : np.ndarray, float
         A_n[n] is nth value of timeseries A.  Length is deduced from vector.
-    B_n : np.ndarray, float, optional
+    B_n : np.ndarray, float, optional, default=None
         B_n[n] is nth value of timeseries B.  Length is deduced from vector.
         If supplied, the cross-correlation of timeseries A and B will be estimated instead of the
         autocorrelation of timeseries A.  
     fast : bool, optional, default=False
         f True, will use faster (but less accurate) method to estimate correlation
-        time, described in Ref. [1] (default: False).  This is ignored when B_n=None.
+        time, described in Ref. [1] (default: False).  This is ignored
+        when B_n=None and fft=False.
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
         correlation function furst goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
+    fft : bool, optional, default=False
+        If fft=True and B_n=None, then use the fft based approach, as
+        implemented in statisticalInefficiency_fft().
 
     Returns
     -------
@@ -109,8 +110,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
     Notes
     -----
     The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
-    The fast method described in Ref [1] is used to compute g.  If B_n is None,
-    use the FFT based approach as implemented in statisticalInefficiency_fft()
+    The fast method described in Ref [1] is used to compute g.  
 
     References
     ----------
@@ -131,10 +131,14 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
 
     # Create numpy copies of input arguments.
     A_n = numpy.array(A_n)
+
+    if fft and B_n is None:
+        return statisticalInefficiency_fft(A_n, mintime=mintime)    
+
     if B_n is not None:
         B_n = numpy.array(B_n)
     else:  # If we have a single observable input, use the FFT approach.       
-        return statisticalInefficiency_fft(A_n, mintime=mintime)
+        B_n = numpy.array(A_n)
 
     # Get the length of the timeseries.
     N = A_n.size
@@ -827,7 +831,7 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     return g #, g_t, C_t
 
 
-def detectEquilibration_fft(A_t):
+def detectEquilibration_binary_search(A_t):
     """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
 
     Parameters

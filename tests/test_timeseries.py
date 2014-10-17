@@ -50,8 +50,10 @@ def test_statistical_inefficiency_fft():
     g0 = timeseries.statisticalInefficiency_fft(X[0])
     g1 = timeseries.statisticalInefficiency(X[0])
     g2 = timeseries.statisticalInefficiency(X[0], X[0])
+    g3 = timeseries.statisticalInefficiency(X[0], fft=True)
     eq(g0, g1)
     eq(g0, g2)
+    eq(g0, g3)
 
 
 def test_statistical_inefficiency_fft_gaussian():
@@ -62,8 +64,10 @@ def test_statistical_inefficiency_fft_gaussian():
         g0 = timeseries.statisticalInefficiency(x, fast=False)
         g1 = timeseries.statisticalInefficiency(x, x, fast=False)
         g2 = timeseries.statisticalInefficiency_fft(x)
+        g3 = timeseries.statisticalInefficiency(x, fft=True)
         eq(g0, g1, decimal=5)
         eq(g0, g2, decimal=5)
+        eq(g0, g3, decimal=5)
         
         eq(np.log(g0), np.log(1.0), decimal=1)
 
@@ -73,6 +77,9 @@ def test_statistical_inefficiency_fft_gaussian():
         g0 = timeseries.statisticalInefficiency(x, fast=False)
         g1 = timeseries.statisticalInefficiency(x, x, fast=False)
         g2 = timeseries.statisticalInefficiency_fft(x)
+        g3 = timeseries.statisticalInefficiency(x, fft=True)
         eq(g0, g1, decimal=5)
         eq(g0, g2, decimal=5)
+        eq(g0, g3, decimal=5)
+
         eq(np.log(g0), np.log(3.0), decimal=1)
