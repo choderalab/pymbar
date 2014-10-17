@@ -90,3 +90,14 @@ def test_statistical_inefficiency_fft_gaussian():
         eq(g0, g3, decimal=5)
 
         eq(np.log(g0), np.log(3.0), decimal=1)
+
+
+
+def test_detectEquil():
+    x = np.random.normal(size=10000)
+    (t, g, Neff_max) = timeseries.detectEquilibration(x)
+
+@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
+def test_detectEquil_binary():
+    x = np.random.normal(size=10000)        
+    (t, g, Neff_max) = timeseries.detectEquilibration_binary_search(x)

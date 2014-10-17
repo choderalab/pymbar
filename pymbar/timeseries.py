@@ -874,7 +874,7 @@ def detectEquilibration_binary_search(A_t):
     >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
     >>> B_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
     >>> C_t = np.concatenate([A_t, B_t])
-    >>> [t, g, Neff_max] = detectEquilibration_fft(C_t) # compute indices of uncorrelated timeseries
+    >>> [t, g, Neff_max] = detectEquilibration_binary_search(C_t) # compute indices of uncorrelated timeseries
 
     """
     T = A_t.size
