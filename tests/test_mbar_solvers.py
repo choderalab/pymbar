@@ -85,9 +85,9 @@ def test_8proteins():
 
 
 def test_subsampling():
-    name, u_kn, N_k, s_n = load_exponentials(5, 10000)
+    name, u_kn, N_k, s_n = load_exponentials(5, 20000)
     mbar = pymbar.MBAR(u_kn, N_k)
-    u_kn_sub, N_k_sub = pymbar.mbar_solvers.subsample_data(u_kn, N_k, s_n, 4)
+    u_kn_sub, N_k_sub = pymbar.mbar_solvers.subsample_data(u_kn, N_k, s_n, 2)
     mbar_sub = pymbar.MBAR(u_kn_sub, N_k_sub)
     eq(mbar.f_k, mbar_sub.f_k, decimal=2)
     
