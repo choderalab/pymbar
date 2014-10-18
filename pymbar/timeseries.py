@@ -57,6 +57,7 @@ __license__ = "GPL 2.0"
 #=============================================================================================
 import math
 import numpy
+import numpy as np
 import numpy.linalg
 from pymbar.utils import ParameterError
 
@@ -75,28 +76,29 @@ LongWarning = "Warning on use of the timeseries module: If the inherent timescal
 #=============================================================================================
 
 
-def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
+def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
     ----------
-    u_kln : np.ndarray, float, shape=(K, L, N_max)
-        u_kln[k,l,n] is the reduced potential energy of uncorrelated
-        configuration n sampled from state k, evaluated at state l.  K >= L             
     A_n : np.ndarray, float
         A_n[n] is nth value of timeseries A.  Length is deduced from vector.
-    B_n : np.ndarray, float, optional
+    B_n : np.ndarray, float, optional, default=None
         B_n[n] is nth value of timeseries B.  Length is deduced from vector.
         If supplied, the cross-correlation of timeseries A and B will be estimated instead of the
         autocorrelation of timeseries A.  
     fast : bool, optional, default=False
         f True, will use faster (but less accurate) method to estimate correlation
-        time, described in Ref. [1] (default: False)
+        time, described in Ref. [1] (default: False).  This is ignored
+        when B_n=None and fft=True.
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
         correlation function furst goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
+    fft : bool, optional, default=False
+        If fft=True and B_n=None, then use the fft based approach, as
+        implemented in statisticalInefficiency_fft().
 
     Returns
     -------
@@ -128,6 +130,10 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
 
     # Create numpy copies of input arguments.
     A_n = numpy.array(A_n)
+
+    if fft and B_n is None:
+        return statisticalInefficiency_fft(A_n, mintime=mintime)    
+
     if B_n is not None:
         B_n = numpy.array(B_n)
     else:
@@ -758,5 +764,131 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     Neff_max = Neff_t.max()
     t = Neff_t.argmax()
     g = g_t[t]
+
+    return (t, g, Neff_max)
+
+
+def statisticalInefficiency_fft(A_n, mintime=3):
+    """Compute the (cross) statistical inefficiency of (two) timeseries.
+
+    Parameters
+    ----------
+    A_n : np.ndarray, float
+        A_n[n] is nth value of timeseries A.  Length is deduced from vector.
+    mintime : int, optional, default=3
+        minimum amount of correlation function to compute (default: 3)
+        The algorithm terminates after computing the correlation time out to mintime when the
+        correlation function furst goes negative.  Note that this time may need to be increased
+        if there is a strong initial negative peak in the correlation function.
+
+    Returns
+    -------
+    g : np.ndarray,
+        g is the estimated statistical inefficiency (equal to 1 + 2 tau, where tau is the correlation time).
+        We enforce g >= 1.0.
+
+    Notes
+    -----
+    The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
+    The fast method described in Ref [1] is used to compute g.
+
+    References
+    ----------
+    [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
+        histogram analysis method for the analysis of simulated and parallel tempering simulations.
+        JCTC 3(1):26-41, 2007.
+
+    """
+    try:
+        import statsmodels.api as sm
+    except ImportError as err:
+        err.message += "\n You need to install statsmodels to use the FFT based correlation function."
+        raise
+
+    # Create np copies of input arguments.
+    A_n = np.array(A_n)
+
+    # Get the length of the timeseries.
+    N = A_n.size
+
+    C_t = sm.tsa.stattools.acf(A_n, fft=True, unbiased=True, nlags=N)
+    t_grid = np.arange(N).astype('float')
+    g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
+    
+    try:
+        ind = np.where((C_t <= 0) & (t_grid > mintime))[0][0]
+    except IndexError:
+        ind = N
+
+    g = 1.0 + g_t[1:ind].sum()
+    g = max(1.0, g)
+
+    return g #, g_t, C_t
+
+
+def detectEquilibration_binary_search(A_t):
+    """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
+
+    Parameters
+    ----------
+    A_t : np.ndarray 
+        timeseries
+
+    Returns
+    -------
+    t : int
+        start of equilibrated data
+    g : float
+        statistical inefficiency of equilibrated data
+    Neff_max : float
+        number of uncorrelated samples
+        
+    Notes
+    -----
+    Finds the discard region (t) by a binary search on the range of
+    possible lagtime values, with logarithmic spacings.  This will give
+    a local maximum.  The global maximum is not guaranteed, but will
+    likely be found if the N_eff[t] varies smoothly.
+
+    """
+    T = A_t.size
+
+    # Special case if timeseries is constant.
+    if A_t.std() == 0.0:
+        return (0, 1, T)
+
+    start = 1
+    end = T - 1
+    n_grid = min(5, T)
+    
+    while True:
+        time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int'))
+
+        g_t = np.ones(len(time_grid))
+        Neff_t = np.ones(len(time_grid))
+        
+        for k, t in enumerate(time_grid):
+            g_t[k] = statisticalInefficiency_fft(A_t[t:])
+            Neff_t[k] = (T - t + 1) / g_t[k]
+
+        Neff_max = Neff_t.max()
+        k = Neff_t.argmax()
+        t = time_grid[k]
+        g = g_t[k]
+        
+        if (time_grid.max() - time_grid.min() <= n_grid - 1.):
+            break
+        
+        if k == 0:
+            start = time_grid[0]
+            end = time_grid[1]
+        elif k == len(time_grid) - 1:
+            start = time_grid[-2]
+            end = time_grid[-1]
+        else:
+            start = time_grid[k - 1]
+            end = time_grid[k + 1]
+        
+
 
     return (t, g, Neff_max)

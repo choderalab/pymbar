@@ -10,11 +10,13 @@ requirements:
     - numpy
     - scipy
     - setuptools
+    - numexpr    
   run:
     - python
     - cython
     - numpy
     - scipy
+    - numexpr
 
 about:
   home: https://github.com/choderalab/pymbar
