@@ -56,7 +56,6 @@ __license__ = "GPL 2.0"
 # IMPORTS
 #=============================================================================================
 import math
-import numpy
 import numpy as np
 import numpy.linalg
 from pymbar.utils import ParameterError
@@ -129,15 +128,15 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     """
 
     # Create numpy copies of input arguments.
-    A_n = numpy.array(A_n)
+    A_n = np.array(A_n)
 
     if fft and B_n is None:
         return statisticalInefficiency_fft(A_n, mintime=mintime)    
 
     if B_n is not None:
-        B_n = numpy.array(B_n)
+        B_n = np.array(B_n)
     else:
-        B_n = numpy.array(A_n)
+        B_n = np.array(A_n)
 
     # Get the length of the timeseries.
     N = A_n.size
@@ -154,8 +153,8 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     mu_B = B_n.mean()
 
     # Make temporary copies of fluctuation from mean.
-    dA_n = A_n.astype(numpy.float64) - mu_A
-    dB_n = B_n.astype(numpy.float64) - mu_B
+    dA_n = A_n.astype(np.float64) - mu_A
+    dB_n = B_n.astype(np.float64) - mu_B
 
     # Compute estimator of covariance of (A,B) using estimator that will ensure C(0) = 1.
     sigma2_AB = (dA_n * dB_n).mean()  # standard estimator to ensure C(0) = 1
@@ -173,7 +172,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     while (t < N - 1):
 
         # compute normalized fluctuation correlation function at time t
-        C = numpy.sum(dA_n[0:(N - t)] * dB_n[t:N] + dB_n[0:(N - t)] * dA_n[t:N]) / (2.0 * float(N - t) * sigma2_AB)
+        C = np.sum(dA_n[0:(N - t)] * dB_n[t:N] + dB_n[0:(N - t)] * dA_n[t:N]) / (2.0 * float(N - t) * sigma2_AB)
         # Terminate if the correlation function has crossed zero and we've computed the correlation
         # function at least out to 'mintime'.
         if (C <= 0.0) and (t > mintime):
@@ -250,7 +249,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
     """
 
     # Convert A_kn into a list of arrays if it is not in this form already.
-    if (type(A_kn) == numpy.ndarray):
+    if (type(A_kn) == np.ndarray):
         A_kn_list = list()
         if A_kn.ndim == 1:
             A_kn_list.append(A_kn.copy())
@@ -264,15 +263,15 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
     K = len(A_kn)
 
     # Get the length of each timeseries.
-    N_k = numpy.zeros([K], numpy.int32)
+    N_k = np.zeros([K], np.int32)
     for k in range(K):
         N_k[k] = A_kn[k].size
 
     # Compute average timeseries length.
-    Navg = numpy.array(N_k, numpy.float64).mean()
+    Navg = np.array(N_k, np.float64).mean()
 
     # Determine total number of samples.
-    N = numpy.sum(N_k)
+    N = np.sum(N_k)
 
     # Initialize statistical inefficiency estimate with uncorrelated value.
     g = 1.0
@@ -280,7 +279,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
     # Compute sample mean.
     mu = 0.0
     for k in range(K):
-        mu += numpy.sum(A_kn[k])
+        mu += np.sum(A_kn[k])
     mu /= float(N)
 
     # Construct and store fluctuation timeseries.
@@ -292,7 +291,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
     # Compute sample variance from mean of squared fluctuations, to ensure that C(0) = 1.
     sigma2 = 0.0
     for k in range(K):
-        sigma2 += numpy.sum(dA_kn[k] ** 2)
+        sigma2 += np.sum(dA_kn[k] ** 2)
     sigma2 /= float(N)
 
     # Initialize statistical inefficiency estimate with uncorrelated value.
@@ -316,7 +315,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
                 continue  # skip trajectory if lag time t is greater than its length
             dA_n = dA_kn[k]  # retrieve trajectory
             x = dA_n[0:(N_k[k] - t)] * dA_n[t:N_k[k]]
-            numerator += numpy.sum(x)  # accumulate contribution from trajectory k
+            numerator += np.sum(x)  # accumulate contribution from trajectory k
             denominator += float(x.size)  # count how many overlapping time segments we've included
 
         C = numerator / denominator
@@ -422,9 +421,9 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
     if B_n is None:
         B_n = A_n
 
-    # Create numpy copies of input arguments.
-    A_n = numpy.array(A_n)
-    B_n = numpy.array(B_n)
+    # Create np copies of input arguments.
+    A_n = np.array(A_n)
+    B_n = np.array(B_n)
 
     # Get the length of the timeseries.
     N = A_n.size
@@ -445,8 +444,8 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
     mu_B = B_n.mean()
 
     # Make temporary copies at high precision with means subtracted off.
-    dA_n = A_n.astype(numpy.float64) - mu_A
-    dB_n = B_n.astype(numpy.float64) - mu_B
+    dA_n = A_n.astype(np.float64) - mu_A
+    dB_n = B_n.astype(np.float64) - mu_B
 
     # sigma2_AB = sum((A_n-mu_A) * (B_n-mu_B)) / (float(N)-1.0) # unbiased estimator
     sigma2_AB = (dA_n * dB_n).mean()  # standard estimator to ensure C(0) = 1
@@ -454,13 +453,13 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
         raise ParameterError('Sample covariance sigma_AB^2 = 0 -- cannot compute statistical inefficiency')
 
     # allocate storage for normalized fluctuation correlation function
-    C_n = numpy.zeros([N_max + 1], numpy.float64)
+    C_n = np.zeros([N_max + 1], np.float64)
 
     # Compute normalized correlation funtion.
     t = 0
     for t in range(0, N_max + 1):
         # compute normalized fluctuation correlation function at time t
-        C_n[t] = numpy.sum(dA_n[0:(N - t)] * dB_n[t:N] + dB_n[0:(N - t)] * dA_n[t:N]) / (2.0 * float(N - t) * sigma2_AB)
+        C_n[t] = np.sum(dA_n[0:(N - t)] * dB_n[t:N] + dB_n[0:(N - t)] * dA_n[t:N]) / (2.0 * float(N - t) * sigma2_AB)
 
     # Return the computed correlation function
     return C_n
@@ -536,12 +535,12 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
             raise ParameterError("A_kn and B_kn must contain corresponding timeseries -- lack of correspondence in timeseries lenghts detected.")
 
     # Get the length of each timeseries.
-    N_k = numpy.zeros([K], numpy.int32)
+    N_k = np.zeros([K], np.int32)
     for k in range(K):
         N_k[k] = A_kn[k].size
 
     # Determine total number of samples.
-    N = numpy.sum(N_k)
+    N = np.sum(N_k)
 
     # Set maximum time to compute correlation functon for.
     if (not N_max) or (N_max > max(N_k) - 1):
@@ -551,8 +550,8 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
     mu_A = 0.0
     mu_B = 0.0
     for k in range(K):
-        mu_A += numpy.sum(A_kn[k])
-        mu_B += numpy.sum(B_kn[k])
+        mu_A += np.sum(A_kn[k])
+        mu_B += np.sum(B_kn[k])
     mu_A /= float(N)
     mu_B /= float(N)
 
@@ -568,11 +567,11 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
     # Compute covariance.
     sigma2_AB = 0.0
     for k in range(K):
-        sigma2_AB += numpy.sum(dA_kn[k] * dB_kn[k])
+        sigma2_AB += np.sum(dA_kn[k] * dB_kn[k])
     sigma2_AB /= float(N)
 
     # allocate storage for normalized fluctuation correlation function
-    C_n = numpy.zeros([N_max + 1], numpy.float64)
+    C_n = np.zeros([N_max + 1], np.float64)
 
     # Accumulate the integrated correlation time by computing the normalized correlation time at
     # increasing values of t.  Stop accumulating if the correlation function goes negative, since
@@ -586,7 +585,7 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         for k in range(K):
             if (t >= N_k[k]):
                 continue  # skip this trajectory if t is longer than the timeseries
-            numerator += numpy.sum(dA_kn[k][0:(N_k[k] - t)] * dB_kn[k][t:N_k[k]])
+            numerator += np.sum(dA_kn[k][0:(N_k[k] - t)] * dB_kn[k][t:N_k[k]])
             denominator += float(N_k[k] - t)
         C = numerator / denominator
 
@@ -652,19 +651,19 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
     >>> # Estimate statistical inefficiency from all timeseries data.
     >>> g = statisticalInefficiencyMultiple(A_kt)
     >>> # Count number of uncorrelated samples in each timeseries.
-    >>> N_k = numpy.array([ len(subsampleCorrelatedData(A_t, g=g)) for A_t in A_kt ]) # N_k[k] is the number of uncorrelated samples in timeseries k
+    >>> N_k = np.array([ len(subsampleCorrelatedData(A_t, g=g)) for A_t in A_kt ]) # N_k[k] is the number of uncorrelated samples in timeseries k
     >>> N = N_k.sum() # total number of uncorrelated samples
     >>> # Subsample all trajectories to produce uncorrelated samples
     >>> A_kn = [ A_t[subsampleCorrelatedData(A_t, g=g)] for A_t in A_kt ] # A_kn[k] is uncorrelated subset of trajectory A_kt[t]
     >>> # Concatenate data into one timeseries.
-    >>> A_n = numpy.zeros([N], numpy.float32) # A_n[n] is nth sample in concatenated set of uncorrelated samples
+    >>> A_n = np.zeros([N], np.float32) # A_n[n] is nth sample in concatenated set of uncorrelated samples
     >>> A_n[0:N_k[0]] = A_kn[0]
     >>> for k in range(1,K): A_n[N_k[0:k].sum():N_k[0:k+1].sum()] = A_kn[k]
 
     """
 
-    # Create numpy copy of arrays.
-    A_t = numpy.array(A_t)
+    # Create np copy of arrays.
+    A_t = np.array(A_t)
 
     # Get the length of the timeseries.
     T = A_t.size
@@ -745,7 +744,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     >>> from pymbar import testsystems
     >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
     >>> B_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
-    >>> C_t = numpy.concatenate([A_t, B_t])
+    >>> C_t = np.concatenate([A_t, B_t])
     >>> [t, g, Neff_max] = detectEquilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
 
     """
@@ -755,8 +754,8 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     if A_t.std() == 0.0:
         return (0, 1, T)
 
-    g_t = numpy.ones([T - 1], numpy.float32)
-    Neff_t = numpy.ones([T - 1], numpy.float32)
+    g_t = np.ones([T - 1], np.float32)
+    Neff_t = np.ones([T - 1], np.float32)
     for t in range(0, T - 1, nskip):
         g_t[t] = statisticalInefficiency(A_t[t:T], fast=fast)
         Neff_t[t] = (T - t + 1) / g_t[t]
