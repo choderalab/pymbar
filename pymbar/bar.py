@@ -47,7 +47,7 @@ __license__ = "LGPL 2.1"
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-import numpy as np
+import numpy
 import numpy.linalg
 from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
 from pymbar.exp import EXP
@@ -83,9 +83,9 @@ def BARzero(w_F, w_R, DeltaF):
 
     """
 
-    np.seterr(over='raise')  # raise exceptions to overflows
-    w_F = np.array(w_F, np.float64)
-    w_R = np.array(w_R, np.float64)
+    numpy.seterr(over='raise')  # raise exceptions to overflows
+    w_F = numpy.array(w_F, numpy.float64)
+    w_R = numpy.array(w_R, numpy.float64)
     DeltaF = float(DeltaF)
 
     # Recommended stable implementation of BAR.
@@ -95,7 +95,7 @@ def BARzero(w_F, w_R, DeltaF):
     T_R = float(w_R.size)  # number of reverse work values
 
     # Compute log ratio of forward and reverse counts.
-    M = np.log(T_F / T_R)
+    M = numpy.log(T_F / T_R)
 
     # Compute log numerator.
     # log f(W) = - log [1 + exp((M + W - DeltaF))]
@@ -104,31 +104,31 @@ def BARzero(w_F, w_R, DeltaF):
     # where maxarg = max( (M + W - DeltaF) )
 
     exp_arg_F = (M + w_F - DeltaF)
-    max_arg_F = np.choose(np.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
+    max_arg_F = numpy.choose(numpy.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
     try:
-        log_f_F = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
+        log_f_F = - max_arg_F - numpy.log(numpy.exp(-max_arg_F) + numpy.exp(exp_arg_F - max_arg_F))
     except:
         # give up; if there's overflow, return zero
         print "The input data results in overflow in BAR"
-        return np.nan
-    log_numer = _logsum(log_f_F) - np.log(T_F)
+        return numpy.nan
+    log_numer = _logsum(log_f_F) - numpy.log(T_F)
 
     # Compute log_denominator.
     # log_denom = log < f(-W) exp[-W] >_R
     # NOTE: log [f(-W) exp(-W)] = log f(-W) - W
     exp_arg_R = (M - w_R - DeltaF)
-    max_arg_R = np.choose(np.greater(0.0, exp_arg_R), (0.0, exp_arg_R))
+    max_arg_R = numpy.choose(numpy.greater(0.0, exp_arg_R), (0.0, exp_arg_R))
     try:
-        log_f_R = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R)) - w_R
+        log_f_R = - max_arg_R - numpy.log(numpy.exp(-max_arg_R) + numpy.exp(exp_arg_R - max_arg_R)) - w_R
     except:
         print "The input data results in overflow in BAR"
-        return np.nan
-    log_denom = _logsum(log_f_R) - np.log(T_R)
+        return numpy.nan
+    log_denom = _logsum(log_f_R) - numpy.log(T_R)
 
     # This function must be zeroed to find a root
     fzero = DeltaF - (log_denom - log_numer)
 
-    np.seterr(over='warn')  # return options to standard settings so we don't disturb other functionality.
+    numpy.seterr(over='warn')  # return options to standard settings so we don't disturb other functionality.
     return fzero
 
 
@@ -137,7 +137,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
 
     Parameters
     ----------
-    w_F : np.ndarray
+    w_F : numpy.ndarray
         w_F[t] is the forward work value from snapshot t.
         t = 0...(T_F-1)  Length T_F is deduced from vector.
     w_R : np.ndarray
@@ -212,7 +212,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         FLowerB = BARzero(w_F, w_R, LowerB)
         nfunc = 2
 
-        if (np.isnan(FUpperB) or np.isnan(FLowerB)):
+        if (numpy.isnan(FUpperB) or numpy.isnan(FLowerB)):
             # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
             print "Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty."
             if compute_uncertainty:
@@ -320,25 +320,25 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         T_F = float(w_F.size)  # number of forward work values
         T_R = float(w_R.size)  # number of reverse work values
         # Compute log ratio of forward and reverse counts.
-        M = np.log(T_F / T_R)
+        M = numpy.log(T_F / T_R)
 
         if iterated_solution:
             C = M - DeltaF
         else:
             C = M - DeltaF_initial
 
-        fF = 1 / (1 + np.exp(w_F + C))
-        fR = 1 / (1 + np.exp(w_R - C))
+        fF = 1 / (1 + numpy.exp(w_F + C))
+        fR = 1 / (1 + numpy.exp(w_R - C))
 
-        afF2 = (np.average(fF)) ** 2
-        afR2 = (np.average(fR)) ** 2
+        afF2 = (numpy.average(fF)) ** 2
+        afR2 = (numpy.average(fR)) ** 2
 
-        vfF = np.var(fF) / T_F
-        vfR = np.var(fR) / T_R
+        vfF = numpy.var(fF) / T_F
+        vfR = numpy.var(fR) / T_R
 
         variance = vfF / afF2 + vfR / afR2
 
-        dDeltaF = np.sqrt(variance)
+        dDeltaF = numpy.sqrt(variance)
         if verbose:
             print "DeltaF = %8.3f +- %8.3f" % (DeltaF, dDeltaF)
         return (DeltaF, dDeltaF)
