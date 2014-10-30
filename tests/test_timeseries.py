@@ -109,4 +109,7 @@ def test_detectEquil_constant_trailing():
     x[50:] = 3.0
     # The input data is some MCMC chain where the trailing end of the chain is a constant sequence.
     (t, g, Neff_max) = timeseries.detectEquilibration(x)
-    # We only check that the code doesn't give an exception.  
+    """
+    We only check that the code doesn't give an exception.  The exact value of Neff can either be
+    ~50 if we try to include part of the equilibration samples, or it can be Neff=1 if we find that the
+    whole first half is discarded. 
