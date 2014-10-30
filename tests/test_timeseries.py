@@ -108,6 +108,6 @@ def test_detectEquil_constant_trailing():
     x = np.random.normal(size=100) * 0.01
     x[50:] = 3.0
     # The input data is some MCMC chain where the trailing end of the chain is a constant sequence.
-    # The desired 
+    # The least surprising behavior is to treat the trailing bits as a single effective sample.
     (t, g, Neff_max) = timeseries.detectEquilibration(x)
     assert Neff_max < 60, "Should have approximately Neff = 50, found %d" % (N_eff_max)
