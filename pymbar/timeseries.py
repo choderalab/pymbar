@@ -730,6 +730,12 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     ----
     Consider implementing a binary search for Neff_max.
 
+    Notes
+    -----
+    If your input consists of some period of equilibration followed by
+    a constant sequence, this function treats the trailing constant sequence
+    as having Neff = 1.  
+
     Examples
     --------
 
@@ -752,14 +758,16 @@ def detectEquilibration(A_t, fast=True, nskip=1):
 
     # Special case if timeseries is constant.
     if A_t.std() == 0.0:
-        return (0, 1, T)
+        return (0, 1, 1)  # Changed from Neff=N to Neff=1 after issue #122
 
     g_t = np.ones([T - 1], np.float32)
     Neff_t = np.ones([T - 1], np.float32)
     for t in range(0, T - 1, nskip):
-        g_t[t] = statisticalInefficiency(A_t[t:T], fast=fast)
+        try:
+            g_t[t] = statisticalInefficiency(A_t[t:T], fast=fast)
+        except ParameterError:  # Fix for issue https://github.com/choderalab/pymbar/issues/122
+            g_t[t] = (T - t + 1)
         Neff_t[t] = (T - t + 1) / g_t[t]
-
     Neff_max = Neff_t.max()
     t = Neff_t.argmax()
     g = g_t[t]
