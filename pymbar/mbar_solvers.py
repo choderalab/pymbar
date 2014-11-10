@@ -105,7 +105,7 @@ def validate_inputs(u_kn, N_k, f_k):
     return u_kn, N_k, f_k
 
 
-def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
+def self_consistent_update(u_kn, N_k, f_k):
     """Return an improved guess for the dimensionless free energies
 
     Parameters
@@ -116,11 +116,6 @@ def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
         The number of samples in each state
     f_k : np.ndarray, shape=(n_states), dtype='float'
         The reduced free energies of each state
-    states_with_samples : np.ndarray, dtype='bool', optional, default=None
-        An array indicating which states contain samples.  If None, will
-        be recalculated by using N_k.  Skipping recalculation may be faster.
-        Entering a garbage value for states_with_samples WILL lead to 
-        nonsensical results.  
 
     Returns
     -------
@@ -134,11 +129,12 @@ def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
 
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
     
-    if states_with_samples is None:
-        states_with_samples = (N_k > 0)
+    states_with_samples = (N_k > 0)
 
     # Only the states with samples can contribute to the denominator term.
     log_denominator_n = logsumexp(f_k[states_with_samples] - u_kn[states_with_samples].T, b=N_k[states_with_samples], axis=1)
+    
+    # All states can contribute to the numerator term.
     return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)
 
 
