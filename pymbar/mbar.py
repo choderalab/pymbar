@@ -293,10 +293,7 @@ class MBAR:
         if self.verbose:
             print "Recomputing all free energies and log weights for storage"
 
-        # First calculate the log denominator, but excluding the unsampled states because they don't contribute. 
-        log_denominator_n = mbar_solvers.logsumexp(self.f_k[self.states_with_samples] - self.u_kn[self.states_with_samples].T, b=self.N_k[self.states_with_samples], axis=1)
-        # Then calculate the free energies as a logsumexp using pre-calculated denominator terms and energies from ONLY the unsampled states.
-        self.f_k[self.N_k <= 0] = -1. * mbar_solvers.logsumexp(-log_denominator_n - self.u_kn[self.N_k <= 0], axis=1)
+        self.f_k = mbar_solvers.self_consistent_update(self.u_kn, self.N_k, self.f_k)
         self.f_k -= self.f_k[0]  # This is necessary because state 0 might have had zero samples, but we still want that state to be the reference with free energy 0.        
         
         self.Log_W_nk = np.log(mbar_solvers.mbar_W_nk(self.u_kn, self.N_k, self.f_k))
