@@ -10,8 +10,11 @@ try:  # numexpr used in logsumexp when available.
 except ImportError:
     HAVE_NUMEXPR = False
 
-# This is the default protocol (ordered list of minimization algorithms / NLE solvers) for solving the MBAR equations.
-DEFAULT_SOLVER_PROTOCOL = [dict(method="L-BFGS-B"), dict(method="hybr")]
+# Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
+# Note: we use tuples instead of lists to avoid accidental mutability.
+DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
+DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
+
 
 
 def logsumexp(a, axis=None, b=None, use_numexpr=True):
@@ -295,7 +298,7 @@ def precondition_u_kn(u_kn, N_k, f_k):
     Upon subtraction of x_n, the MBAR objective function changes by an
     additive constant, but its derivatives remain unchanged.  We choose
     x_n such that the current objective function value is zero, which
-    should give maximal precision in the objective function.
+    should give maximum precision in the objective function.
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
     u_kn = u_kn - u_kn.min(0)

@@ -44,6 +44,9 @@ import numpy.linalg as linalg
 from pymbar import mbar_solvers
 from pymbar.utils import _logsum, kln_to_kn, kn_to_n, ParameterError
 
+DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
+DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
+
 #=========================================================================
 # MBAR class definition
 #=========================================================================
@@ -67,7 +70,7 @@ class MBAR:
     """
     #=========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=[dict(method="hybr")], initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=[dict(method="L-BFGS-B")], **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=mbar_solvers.DEFAULT_SOLVER_PROTOCOL, initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=DEFAULT_SUBSAMPLING_PROTOCOL, **kwargs):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -278,7 +281,7 @@ class MBAR:
         else:
             if subsampling is not None and self.x_kindices is not None:
                 s_n = np.unique(self.x_kindices, return_inverse=True)[1]
-                u_kn, N_k = mbar_solvers.subsample_data(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=subsampling, rescale=True)
+                u_kn, N_k = mbar_solvers.subsample_data(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=subsampling, rescale=False)
                 f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol=subsampling_protocol)
                 self.f_k[self.states_with_samples] = f_k_nonzero
             else:
