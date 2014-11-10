@@ -126,9 +126,15 @@ def self_consistent_update(u_kn, N_k, f_k):
     -----
     Equation C3 in MBAR JCP paper.
     """
-    u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
 
-    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+    u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
+    
+    states_with_samples = (N_k > 0)
+
+    # Only the states with samples can contribute to the denominator term.
+    log_denominator_n = logsumexp(f_k[states_with_samples] - u_kn[states_with_samples].T, b=N_k[states_with_samples], axis=1)
+    
+    # All states can contribute to the numerator term.
     return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)
 
 
