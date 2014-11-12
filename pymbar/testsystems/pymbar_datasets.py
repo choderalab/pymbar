@@ -70,7 +70,14 @@ def load_8proteins_data():
     u_kn, N_k, s_n = load_from_hdf(os.path.join(root_dir, name, "%s.h5" % name))
     return name, u_kn, N_k, s_n
 
-def save(name, u_kn, N_k, s_n=None):
+def load_k69_data():
+    name = "k69"
+    u_kn, N_k, s_n = load_from_hdf(os.path.join(root_dir, name, "%s.h5" % name))
+    return name, u_kn, N_k, s_n
+
+
+
+def save(name, u_kn, N_k, s_n=None, least_significant_digit=None):
     """Create an HDF5 dump of an existing MBAR job for later use / testing.
     
     Parameters
@@ -83,6 +90,8 @@ def save(name, u_kn, N_k, s_n=None):
         Number of samples taken from each state
     s_n : np.ndarray, optional, default=None, dtype=int, shape=(n_samples)
         The state of origin of each state.  If none, guess the state origins.
+    least_significant_digit : int, optional, default=None
+        If not None, perform lossy compression using tables.Filter(least_significant_digit=least_significant_digit)
 
     Notes
     -----
@@ -102,7 +111,7 @@ def save(name, u_kn, N_k, s_n=None):
 
     hdf_filename = os.path.join("./", "%s.h5" % name)
     f = tables.File(hdf_filename, 'a')
-    f.createCArray("/", "u_kn", tables.Float64Atom(), obj=u_kn, filters=tables.Filters(complevel=9, complib="zlib"))
+    f.createCArray("/", "u_kn", tables.Float64Atom(), obj=u_kn, filters=tables.Filters(complevel=9, complib="zlib", least_significant_digit=least_significant_digit))
     f.createCArray("/", "N_k", tables.Int64Atom(), obj=N_k, filters=tables.Filters(complevel=9, complib="zlib"))
     f.createCArray("/", "s_n", tables.Int64Atom(), obj=s_n, filters=tables.Filters(complevel=9, complib="zlib"))
     f.close()

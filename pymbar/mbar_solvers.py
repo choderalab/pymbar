@@ -10,8 +10,11 @@ try:  # numexpr used in logsumexp when available.
 except ImportError:
     HAVE_NUMEXPR = False
 
-# This is the default protocol (ordered list of minimization algorithms / NLE solvers) for solving the MBAR equations.
-DEFAULT_SOLVER_PROTOCOL = [dict(method="L-BFGS-B"), dict(method="hybr")]
+# Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
+# Note: we use tuples instead of lists to avoid accidental mutability.
+DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
+DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
+
 
 
 def logsumexp(a, axis=None, b=None, use_numexpr=True):
@@ -295,7 +298,7 @@ def precondition_u_kn(u_kn, N_k, f_k):
     Upon subtraction of x_n, the MBAR objective function changes by an
     additive constant, but its derivatives remain unchanged.  We choose
     x_n such that the current objective function value is zero, which
-    should give maximal precision in the objective function.
+    should give maximum precision in the objective function.
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
     u_kn = u_kn - u_kn.min(0)
@@ -352,15 +355,13 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
 
     # Create objective functions / nonlinear equations to send to scipy.optimize, fixing f_0 = 0
     grad = lambda x: mbar_gradient(u_kn_nonzero, N_k_nonzero, pad(x))[1:]  # Objective function gradient
-    grad_and_obj = lambda x: unpad_second_arg(*mbar_objective_and_gradient(u_kn_nonzero, N_k_nonzero, pad(x)))  # Objective function gradient
+    grad_and_obj = lambda x: unpad_second_arg(*mbar_objective_and_gradient(u_kn_nonzero, N_k_nonzero, pad(x)))  # Objective function gradient and objective function
     hess = lambda x: mbar_hessian(u_kn_nonzero, N_k_nonzero, pad(x))[1:][:, 1:]  # Hessian of objective function
-    eqns = grad
-    jac = hess
 
     if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
         results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
     else:
-        results = scipy.optimize.root(eqns, f_k_nonzero[1:], jac=jac, method=method, tol=tol, options=options)
+        results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
 
     f_k_nonzero = pad(results["x"])
     return f_k_nonzero, results
@@ -378,12 +379,9 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
         The number of samples in each state for the nonempty states
     f_k_nonzero : np.ndarray, shape=(n_states), dtype='float'
         The reduced free energies for the nonempty states
-    solver_protocol: list(dict()), optional, default=None
+    solver_protocol: tuple(dict()), optional, default=None
         Optional list of dictionaries of steps in solver protocol.
-        If None, the default protocol of 
-        [dict(method="L-BFGS-B"), dict(method="hybr")]
-        will be used.  This achieves optimal precision and convergence in
-        the minimium amount of time.
+        If None, a default protocol will be used.
 
     Returns
     -------
@@ -479,3 +477,61 @@ def subsample_data(u_kn0, N_k0, s_n, subsampling, rescale=False, replace=False):
         start += num
 
     return u_kn, N_k
+
+
+def solve_mbar_with_subsampling(u_kn, N_k, f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=None):
+    """Solve for free energies of states with samples, then calculate for
+    empty states.  Optionally uses subsampling as a hot-start to speed up
+    calculations.
+
+    Parameters
+    ----------
+    u_kn : np.ndarray, shape=(n_states, n_samples), dtype='float'
+        The reduced potential energies, i.e. -log unnormalized probabilities
+    N_k : np.ndarray, shape=(n_states), dtype='int'
+        The number of samples in each state
+    f_k : np.ndarray, shape=(n_states), dtype='float'
+        The reduced free energies of each state
+    solver_protocol: tuple(dict()), optional, default=None
+        Sequence of dictionaries of steps in solver protocol for final
+        stage of refinement.
+    subsampling_protocol: tuple(dict()), optional, default=None
+        Sequence of dictionaries of steps in solver protocol for first
+        stage of refinement with subsampled dataset.
+    subsampling : int
+        By what factor do we subsample the dataset for getting a first
+        pass solution to MBAR.
+    x_kindices : np.ndarray, optional, shape=(N_samples), dtype='int'
+        The stage of origin for each sample.  This is required to use
+        subsampling to use a fast guess as way to hot start and accelerate
+        MBAR.
+
+    Returns
+    -------
+    f_k : np.ndarray, shape=(n_states), dtype='float'
+        The free energies of states
+    
+    
+    """
+    states_with_samples = np.where(N_k > 0)[0]
+
+    if len(states_with_samples) == 1:
+        f_k_nonzero = np.array([0.0])
+    else:
+        if subsampling is not None and x_kindices is not None and subsampling > 1:
+            s_n = np.unique(x_kindices, return_inverse=True)[1]
+            u_kn_subsampled, N_k_subsampled = subsample_data(u_kn[states_with_samples], N_k[states_with_samples], s_n, subsampling=subsampling)
+            f_k_nonzero, all_results = solve_mbar(u_kn_subsampled, N_k_subsampled, f_k[states_with_samples], solver_protocol=subsampling_protocol)
+        else:
+            f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples], solver_protocol=subsampling_protocol)
+
+        f_k[states_with_samples] = f_k_nonzero
+        f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples], solver_protocol=solver_protocol)
+    
+    f_k[states_with_samples] = f_k_nonzero
+
+    # Update all free energies because those from states with zero samples are not correctly computed by Newton-Raphson.
+    f_k = self_consistent_update(u_kn, N_k, f_k)
+    f_k -= f_k[0]  # This is necessary because state 0 might have had zero samples, but we still want that state to be the reference with free energy 0.
+
+    return f_k

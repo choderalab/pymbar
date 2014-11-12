@@ -44,6 +44,9 @@ import numpy.linalg as linalg
 from pymbar import mbar_solvers
 from pymbar.utils import _logsum, kln_to_kn, kn_to_n, ParameterError
 
+DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
+DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
+
 #=========================================================================
 # MBAR class definition
 #=========================================================================
@@ -67,7 +70,7 @@ class MBAR:
     """
     #=========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=[dict(method="hybr")], initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=[dict(method="L-BFGS-B")], **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=DEFAULT_SOLVER_PROTOCOL, initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=DEFAULT_SUBSAMPLING_PROTOCOL, **kwargs):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -258,7 +261,8 @@ class MBAR:
                 print "f_k = "
                 print self.f_k
         
-        self.solve_mbar(solver_protocol, subsampling_protocol, subsampling)
+        self.f_k = mbar_solvers.solve_mbar_with_subsampling(self.u_kn, self.N_k, self.f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=self.x_kindices)
+        self.Log_W_nk = np.log(mbar_solvers.mbar_W_nk(self.u_kn, self.N_k, self.f_k))
         
         # Print final dimensionless free energies.
         if self.verbose:
@@ -269,34 +273,6 @@ class MBAR:
         if self.verbose:
             print "MBAR initialization complete."
         return
-
-    def solve_mbar(self, solver_protocol, subsampling_protocol, subsampling):
-        """Solve for free energies of states with samples, then calculate for empty states."""
-                
-        if len(self.states_with_samples) == 1:
-            f_k_nonzero = np.array([0.0])
-        else:
-            if subsampling is not None and self.x_kindices is not None:
-                s_n = np.unique(self.x_kindices, return_inverse=True)[1]
-                u_kn, N_k = mbar_solvers.subsample_data(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=subsampling, rescale=True)
-                f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol=subsampling_protocol)
-                self.f_k[self.states_with_samples] = f_k_nonzero
-            else:
-                f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol=subsampling_protocol)
-                self.f_k[self.states_with_samples] = f_k_nonzero
-
-            f_k_nonzero, all_results = mbar_solvers.solve_mbar(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], self.f_k[self.states_with_samples], solver_protocol=solver_protocol)
-        
-        self.f_k[self.states_with_samples] = f_k_nonzero
-        # Recompute all free energies because those from states with zero samples are not correctly computed by Newton-Raphson.
-        # and store the log weights
-        if self.verbose:
-            print "Recomputing all free energies and log weights for storage"
-
-        self.f_k = mbar_solvers.self_consistent_update(self.u_kn, self.N_k, self.f_k)
-        self.f_k -= self.f_k[0]  # This is necessary because state 0 might have had zero samples, but we still want that state to be the reference with free energy 0.        
-        
-        self.Log_W_nk = np.log(mbar_solvers.mbar_W_nk(self.u_kn, self.N_k, self.f_k))
 
 
     #=========================================================================
