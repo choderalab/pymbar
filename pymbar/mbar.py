@@ -281,7 +281,7 @@ class MBAR:
         else:
             if subsampling is not None and self.x_kindices is not None:
                 s_n = np.unique(self.x_kindices, return_inverse=True)[1]
-                u_kn, N_k = mbar_solvers.subsample_data(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=subsampling, rescale=False)
+                u_kn, N_k = mbar_solvers.subsample_data(self.u_kn[self.states_with_samples], self.N_k[self.states_with_samples], s_n, subsampling=subsampling)
                 f_k_nonzero, all_results = mbar_solvers.solve_mbar(u_kn, N_k, self.f_k[self.states_with_samples], solver_protocol=subsampling_protocol)
                 self.f_k[self.states_with_samples] = f_k_nonzero
             else:
