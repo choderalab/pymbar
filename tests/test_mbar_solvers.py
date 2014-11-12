@@ -83,6 +83,10 @@ def test_8proteins():
     data_generator = pymbar.testsystems.pymbar_datasets.load_8proteins_data
     _test(data_generator)
 
+def test_k69():
+    data_generator = pymbar.testsystems.pymbar_datasets.load_k69_data
+    _test(data_generator)
+
 
 def test_subsampling():
     name, u_kn, N_k, s_n = load_exponentials(5, 20000)
