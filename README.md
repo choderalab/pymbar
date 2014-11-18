@@ -26,10 +26,10 @@ If you don't have `conda` installed but do have `pip`, you can install it with:
 pip install conda
 ```
 
-Installation
+Alternatives
 ------------
 
-There are several ways to install pymbar.
+There are several other ways to install pymbar.
 
 You can grab the latest version from the [Python Package Index (PyPI)](https://pypi.python.org/pypi/pymbar) with `easy_install`:
 ```tcsh
@@ -44,17 +44,17 @@ Or, if you download the [GitHub version](http://github.com/choderalab/pymbar), y
 
 To install to your default Python site-packages location:
 ```tcsh
-# python setup.py install
+python setup.py install
 ```
 Or to install to a different location (e.g. a local Python package repository):
 ```tcsh
-# python setup.py install --prefix=/path/to/my/site-packages/
+python setup.py install --prefix=/path/to/my/site-packages/
 ```
 The C++ helper code will automatically be built in both cases, if possible.
 
 To build pymbar in situ, without installing to site-packages, run
 ```tcsh
-# python setup.py build
+python setup.py build
 ```
 and add the directory containing this file to your PYTHONPATH environment variable.
 ```tcsh
