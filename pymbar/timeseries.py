@@ -27,7 +27,7 @@ This module provides various tools that allow one to examine the correlation fun
 integrated autocorrelation times in correlated timeseries data, compute statistical inefficiencies,
 and automatically extract uncorrelated samples for data analysis.
 
-REFERENCES
+Please reference the following if you use this code in your research:
 
 [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
 J. Chem. Phys. 129:124105, 2008
@@ -74,12 +74,10 @@ __license__ = "GPL 2.0"
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-
 import math
 import numpy
 import numpy.linalg
-import sys
-from pymbar.utils import _logsum, ParameterError
+from pymbar.utils import ParameterError
 
 #=============================================================================================
 # Issue warning on import.
@@ -97,37 +95,47 @@ LongWarning = "Warning on use of the timeseries module: If the inherent timescal
 
 
 def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
-    """
-    Compute the (cross) statistical inefficiency of (two) timeseries.
+    """Compute the (cross) statistical inefficiency of (two) timeseries.
 
-    REQUIRED ARGUMENTS  
-      A_n (numpy array) - A_n[n] is nth value of timeseries A.  Length is deduced from vector.
+    Parameters
+    ----------
+    u_kln : np.ndarray, float, shape=(K, L, N_max)
+        u_kln[k,l,n] is the reduced potential energy of uncorrelated
+        configuration n sampled from state k, evaluated at state l.  K >= L             
+    A_n : np.ndarray, float
+        A_n[n] is nth value of timeseries A.  Length is deduced from vector.
+    B_n : np.ndarray, float, optional
+        B_n[n] is nth value of timeseries B.  Length is deduced from vector.
+        If supplied, the cross-correlation of timeseries A and B will be estimated instead of the
+        autocorrelation of timeseries A.  
+    fast : bool, optional, default=False
+        f True, will use faster (but less accurate) method to estimate correlation
+        time, described in Ref. [1] (default: False)
+    mintime : int, optional, default=3
+        minimum amount of correlation function to compute (default: 3)
+        The algorithm terminates after computing the correlation time out to mintime when the
+        correlation function furst goes negative.  Note that this time may need to be increased
+        if there is a strong initial negative peak in the correlation function.
 
-    OPTIONAL ARGUMENTS
-      B_n (numpy array) - B_n[n] is nth value of timeseries B.  Length is deduced from vector.
-         If supplied, the cross-correlation of timeseries A and B will be estimated instead of the
-         autocorrelation of timeseries A.  
-      fast (boolean) - if True, will use faster (but less accurate) method to estimate correlation
-         time, described in Ref. [1] (default: False)
-      mintime (int) - minimum amount of correlation function to compute (default: 3)
-         The algorithm terminates after computing the correlation time out to mintime when the
-         correlation function furst goes negative.  Note that this time may need to be increased
-         if there is a strong initial negative peak in the correlation function.
+    Returns
+    -------
+    g : np.ndarray,
+        g is the estimated statistical inefficiency (equal to 1 + 2 tau, where tau is the correlation time).
+        We enforce g >= 1.0.
 
-    RETURNS
-      g is the estimated statistical inefficiency (equal to 1 + 2 tau, where tau is the correlation time).
-         We enforce g >= 1.0.
+    Notes
+    -----
+    The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
+    The fast method described in Ref [1] is used to compute g.
 
-    NOTES 
-      The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
-      The fast method described in Ref [1] is used to compute g.
+    References
+    ----------
+    [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
+        histogram analysis method for the analysis of simulated and parallel tempering simulations.
+        JCTC 3(1):26-41, 2007.
 
-    REFERENCES  
-      [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
-      histogram analysis method for the analysis of simulated and parallel tempering simulations.
-      JCTC 3(1):26-41, 2007.
-
-    EXAMPLES
+    Examples
+    --------
 
     Compute statistical inefficiency of timeseries data with known correlation time.  
 
@@ -204,31 +212,41 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3):
 
 
 def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_function=False):
-    """
-    Estimate the statistical inefficiency from multiple stationary timeseries (of potentially differing lengths).
+    """Estimate the statistical inefficiency from multiple stationary timeseries (of potentially differing lengths).
 
-    REQUIRED ARGUMENTS  
-      A_kn (Python list of numpy arrays) - A_kn[k] is the kth timeseries, and A_kn[k][n] is nth value of timeseries k.  Length is deduced from arrays.
+    Parameters
+    ----------
+    A_kn : list of np.ndarrays
+        A_kn[k] is the kth timeseries, and A_kn[k][n] is nth value of timeseries k.  Length is deduced from arrays.
 
-    OPTIONAL ARGUMENTS  
-      fast can be set to True to give a less accurate but very quick estimate (default False)
-      return_correlation_function - if True, will also return estimates of normalized fluctuation correlation function that were computed (default: False)
+    fast : bool, optional, default=False
+        f True, will use faster (but less accurate) method to estimate correlation
+        time, described in Ref. [1] (default: False)
+    return_correlation_function : bool, optional, default=False
+        if True, will also return estimates of normalized fluctuation correlation function that were computed (default: False)
 
-    RETURNS
-      g is the statistical inefficiency (equal to 1 + 2 tau, where tau is the integrated autocorrelation time).
-      Ct (list of tuples) - Ct[n] = (t, C) with time t and normalized correlation function estimate C is returned as well if return_correlation_function is set to True
+    Returns
+    -------
+    g : np.ndarray,
+        g is the estimated statistical inefficiency (equal to 1 + 2 tau, where tau is the correlation time).
+        We enforce g >= 1.0.
+    Ct : list (of tuples)
+        Ct[n] = (t, C) with time t and normalized correlation function estimate C is returned as well if return_correlation_function is set to True
 
-    NOTES 
-      The autocorrelation of the timeseries is used to compute the statistical inefficiency.
-      The normalized fluctuation autocorrelation function is computed by averaging the unnormalized raw correlation functions.
-      The fast method described in Ref [1] is used to compute g.
+    Notes
+    -----
+    The autocorrelation of the timeseries is used to compute the statistical inefficiency.
+    The normalized fluctuation autocorrelation function is computed by averaging the unnormalized raw correlation functions.
+    The fast method described in Ref [1] is used to compute g.
 
-    REFERENCES  
-      [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
-      histogram analysis method for the analysis of simulated and parallel tempering simulations.
-      JCTC 3(1):26-41, 2007.
+    References
+    ----------
+    [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
+        histogram analysis method for the analysis of simulated and parallel tempering simulations.
+        JCTC 3(1):26-41, 2007.
 
-    EXAMPLES
+    Examples
+    --------
 
     Estimate statistical efficiency from multiple timeseries of different lengths.
 
@@ -352,10 +370,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
 
 
 def integratedAutocorrelationTime(A_n, B_n=None, fast=False, mintime=3):
-    """
-    Estimate the integrated autocorrelation time.
-
-    """
+    """Estimate the integrated autocorrelation time."""
 
     g = statisticalInefficiency(A_n, B_n, fast, mintime)
     tau = (g - 1.0) / 2.0
@@ -364,10 +379,7 @@ def integratedAutocorrelationTime(A_n, B_n=None, fast=False, mintime=3):
 
 
 def integratedAutocorrelationTimeMultiple(A_kn, fast=False):
-    """
-    Estimate the integrated autocorrelation time from multiple timeseries.
-
-    """
+    """Estimate the integrated autocorrelation time from multiple timeseries."""
 
     g = statisticalInefficiencyMultiple(A_kn, fast, False)
     tau = (g - 1.0) / 2.0
@@ -376,34 +388,40 @@ def integratedAutocorrelationTimeMultiple(A_kn, fast=False):
 
 
 def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
-    """
-    Compute the normalized fluctuation (cross) correlation function of (two) stationary timeseries.
+    """Compute the normalized fluctuation (cross) correlation function of (two) stationary timeseries.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
 
     This may be useful in diagnosing odd time-correlations in timeseries data.
 
-    REQUIRED ARGUMENTS  
-      A_n[n] is nth value of timeseries A.  Length is deduced from vector.
-      B_n[n] is nth value of timeseries B.  Length is deduced from vector.
+    Parameters
+    ----------
+    A_n : np.ndarray
+        A_n[n] is nth value of timeseries A.  Length is deduced from vector.
+    B_n : np.ndarray
+        B_n[n] is nth value of timeseries B.  Length is deduced from vector.
+    N_max : int, default=None
+        if specified, will only compute correlation function out to time lag of N_max
 
-    OPTIONAL ARGUMENTS
-      N_max - if specified, will only compute correlation function out to time lag of N_max
+    Returns
+    -------
+    C_n : np.ndarray
+        C_n[n] is the normalized fluctuation auto- or cross-correlation function for timeseries A(t) and B(t).
 
-    RETURNS
-      C_n[n] is the normalized fluctuation auto- or cross-correlation function for timeseries A(t) and B(t).
+    Notes
+    -----
+    The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
+    This procedure may be slow.
+    The statistical error in C_n[n] will grow with increasing n.  No effort is made here to estimate the uncertainty.
 
-    NOTES 
-      The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
-      This procedure may be slow.
-      The statistical error in C_n[n] will grow with increasing n.  No effort is made here to estimate the uncertainty.
+    References
+    ----------
+    [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
+    histogram analysis method for the analysis of simulated and parallel tempering simulations.
+    JCTC 3(1):26-41, 2007.
 
-    REFERENCES  
-      [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
-      histogram analysis method for the analysis of simulated and parallel tempering simulations.
-      JCTC 3(1):26-41, 2007.
-
-    EXAMPLES
+    Examples
+    --------
 
     Estimate normalized fluctuation correlation function.
 
@@ -463,34 +481,39 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
 
 
 def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None):
-    """
-    Compute the normalized fluctuation (cross) correlation function of (two) timeseries from multiple timeseries samples.
+    """Compute the normalized fluctuation (cross) correlation function of (two) timeseries from multiple timeseries samples.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
-
     This may be useful in diagnosing odd time-correlations in timeseries data.
 
-    REQUIRED ARGUMENTS  
-      A_kn (Python list of numpy arrays) - A_kn[k] is the kth timeseries, and A_kn[k][n] is nth value of timeseries k.  Length is deduced from arrays.
-      B_kn (Python list of numpy arrays) - B_kn[k] is the kth timeseries, and B_kn[k][n] is nth value of timeseries k.  B_kn[k] must have same length as A_kn[k]
+    Parameters
+    ----------
+    A_kn : Python list of numpy arrays
+        A_kn[k] is the kth timeseries, and A_kn[k][n] is nth value of timeseries k.  Length is deduced from arrays.
+    B_kn : Python list of numpy arrays
+        B_kn[k] is the kth timeseries, and B_kn[k][n] is nth value of timeseries k.  B_kn[k] must have same length as A_kn[k]
+    N_max : int, optional, default=None
+        if specified, will only compute correlation function out to time lag of N_max
 
-    OPTIONAL ARGUMENTS
-      N_max - if specified, will only compute correlation function out to time lag of N_max
+    Returns
+    -------
+    C_n[n] : np.ndarray
+        The normalized fluctuation auto- or cross-correlation function for timeseries A(t) and B(t).
 
-    RETURNS
-      C_n[n] is the normalized fluctuation auto- or cross-correlation function for timeseries A(t) and B(t).
+    Notes
+    -----
+    The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
+    This procedure may be slow.
+    The statistical error in C_n[n] will grow with increasing n.  No effort is made here to estimate the uncertainty.
 
-    NOTES
-      The same timeseries can be used for both A_n and B_n to get the autocorrelation statistical inefficiency.
-      This procedure may be slow.
-      The statistical error in C_n[n] will grow with increasing n.  No effort is made here to estimate the uncertainty.
+    References
+    ----------
+    [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
+    histogram analysis method for the analysis of simulated and parallel tempering simulations.
+    JCTC 3(1):26-41, 2007.
 
-    REFERENCES  
-      [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
-      histogram analysis method for the analysis of simulated and parallel tempering simulations.
-      JCTC 3(1):26-41, 2007.
-
-    EXAMPLES
+    Examples
+    --------
 
     Estimate a portion of the normalized fluctuation autocorrelation function from multiple timeseries of different length.
 
@@ -594,27 +617,36 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
 def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose=False):
     """Determine the indices of an uncorrelated subsample of the data.
 
-    REQUIRED ARGUMENTS  
-      A_t (T array) - A_t[t] is the t-th value of timeseries A(t).  Length is deduced from vector.
-
-    OPTIONAL ARGUMENTS
-      g (float) - if provided, the statistical inefficiency g is used to subsample the timeseries -- otherwise it will be computed (default: None)
-      fast (logical) - fast can be set to True to give a less accurate but very quick estimate (default: False)
-      conservative (logical) - if set to True, uniformly-spaced indices are chosen with interval ceil(g), where
+    Parameters
+    ----------
+    A_t : np.ndarray
+        A_t[t] is the t-th value of timeseries A(t).  Length is deduced from vector.
+    g : float, optional
+        if provided, the statistical inefficiency g is used to subsample the timeseries -- otherwise it will be computed (default: None)
+    fast : bool, optional, default=False
+        fast can be set to True to give a less accurate but very quick estimate (default: False)
+    conservative : bool, optional, default=False
+        if set to True, uniformly-spaced indices are chosen with interval ceil(g), where
         g is the statistical inefficiency.  Otherwise, indices are chosen non-uniformly with interval of
         approximately g in order to end up with approximately T/g total indices
-      verbose (logical) - if True, some output is printed
+    verbose : bool, optional, default=False
+        if True, some output is printed
 
-    RETURNS  
-      indices (list of int) - the indices of an uncorrelated subsample of the data
+    Returns
+    -------
+    indices : list of int
+        the indices of an uncorrelated subsample of the data
 
-    NOTES
-      The statistical inefficiency is computed with the function computeStatisticalInefficiency().
+    Notes
+    -----
+    The statistical inefficiency is computed with the function computeStatisticalInefficiency().
 
-    TODO
-      Instead of using regular stride, use irregular stride so more data can be fit in when g is non-integral.
+    ToDo
+    ----
+    Instead of using regular stride, use irregular stride so more data can be fit in when g is non-integral.
 
-    EXAMPLES
+    Examples
+    --------
 
     Subsample a correlated timeseries to extract an effectively uncorrelated dataset.
 
@@ -660,7 +692,6 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
 
     if conservative:
         # Round g up to determine the stride we can use to pick out regularly-spaced uncorrelated samples.
-        import math
         stride = int(math.ceil(g))
         if verbose:
             print "conservative subsampling: using stride of %d" % stride
@@ -669,7 +700,6 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
         indices = range(0, T, stride)
     else:
         # Choose indices as floor(n*g), with n = 0,1,2,..., until we run out of data.
-        import math
         indices = []
         n = 0
         while int(round(n * g)) < T:
@@ -692,28 +722,30 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
 
 
 def detectEquilibration(A_t, fast=True, nskip=1):
-    """
-    Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
+    """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
 
-    ARGUMENTS
+    Parameters
+    ----------
+    A_t : np.ndarray 
+        timeseries
+    nskip : int, optional, default=1
+        number of samples to sparsify data by in order to speed equilibration detection
 
-    A_t (numpy.array) - timeseries
+    Returns
+    -------
+    t : int
+        start of equilibrated data
+    g : float
+        statistical inefficiency of equilibrated data
+    Neff_max : float
+        number of uncorrelated samples   
 
-    OPTIONAL ARGUMENTS
-
-    nskip (int) - number of samples to sparsify data by in order to speed equilibration detection
-
-    RETURNS
-
-    t (int) - start of equilibrated data
-    g (float) - statistical inefficiency of equilibrated data
-    Neff_max (float) - number of uncorrelated samples   
-
-    TODO
-
+    ToDo
+    ----
     Consider implementing a binary search for Neff_max.
 
-    EXAMPLE
+    Examples
+    --------
 
     Determine start of equilibrated data for a correlated timeseries.
 

@@ -31,10 +31,19 @@ __license__ = "LGPL"
 __maintainer__ = "Michael R. Shirts and John D. Chodera"
 __email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
 
-from pymbar import timeseries, testsystems, confidenceintervals, version
+from pymbar import timeseries, testsystems, confidenceintervals
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exp import EXP, EXPGauss
 
+try:
+    from pymbar import version
+except:
+    # Fill in information manually.
+    # TODO: See if we can at least get the git revision info in here.
+    version = 'dev'
+    full_version = 'dev'
+    git_revision = 'dev'
+    isrelease = False
 
 __all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']

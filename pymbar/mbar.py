@@ -425,7 +425,7 @@ class MBAR:
                     # Hmm.  Will this print correctly?
                     print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)]
                 else:
-                    d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)] = 0.0
+                    d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
 
             # take the square root of the matrix
             dDeltaf_ij = numpy.sqrt(d2DeltaF)
@@ -843,7 +843,6 @@ class MBAR:
 
         # Make A_kn all positive so we can operate logarithmically for
         # robustness
-        A_i = numpy.zeros([K], numpy.float64)
         A_min = numpy.min(A_kn)
         A_kn = A_kn - (A_min - 1)
 
@@ -892,7 +891,7 @@ class MBAR:
             returns.append(dA)
 
         if (return_theta):
-            returns.append(theta)
+            returns.append(Theta_ij)
 
         # Return expectations and uncertainties.
         return returns
@@ -993,7 +992,7 @@ class MBAR:
                 if(numpy.any(d2DeltaF) < warning_cutoff):
                     print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)]
                 else:
-                    d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)] = 0.0
+                    d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
 
             # take the square root of the matrix
             dDeltaf_ij = numpy.sqrt(d2DeltaF)
@@ -1126,7 +1125,7 @@ class MBAR:
                 # Hmm.  Will this print correctly?
                 print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)]
             else:
-                d2DeltaF[(numpy.any(d2DeltaF) < warning_cutoff)] = 0.0
+                d2DeltaF[d2DeltaF < warning_cutoff] = 0.0
 
         # take the square root of the matrix
         dDelta_f_ij = numpy.sqrt(d2DeltaF)
@@ -1211,16 +1210,26 @@ class MBAR:
         Examples
         --------
 
+        >>> # Generate some test data
         >>> from pymbar import testsystems
         >>> [x_kn, u_kln, N_k] = testsystems.HarmonicOscillatorsTestCase().sample()
+        >>> # Initialize MBAR on data.
         >>> mbar = MBAR(u_kln, N_k)
+        >>> # Select the potential we want to compute the PMF for (here, condition 0).
         >>> u_kn = u_kln[:, 0, :]
-        >>> xmin = x_kn.min()
-        >>> xmax = x_kn.max()
-        >>> nbins = 10
-        >>> dx = (xmax - xmin) * 1.00001 / float(nbins)
-        >>> bin_kn = numpy.array((x_kn - xmin) / dx, numpy.int32)
+        >>> # Sort into nbins equally-populated bins
+        >>> nbins = 10 # number of equally-populated bins to use
+        >>> import numpy as np
+        >>> N_tot = N_k.sum()
+        >>> x_n_sorted = np.sort(x_kn[mbar.indices]) # unroll to n-indices
+        >>> bins = np.append(x_n_sorted[0::(N_tot/nbins)], x_n_sorted.max()+0.1)
+        >>> bin_widths = bins[1:] - bins[0:-1]
+        >>> bin_kn = np.zeros(x_kn.shape, np.int32)
+        >>> for k in range(bin_kn.shape[0]): bin_kn[k,:] = np.digitize(x_kn[k,:], bins) - 1
+        >>> # Compute PMF for these unequally-sized bins.
         >>> [f_i, df_i] = mbar.computePMF(u_kn, bin_kn, nbins)
+        >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
+        >>> f_i_corrected = f_i - np.log(bin_widths)
 
         """
 
@@ -1476,11 +1485,9 @@ class MBAR:
         if (include_nonzero):
             f_k = self.f_k
             K = self.L
-            N_k = self.N_k
         else:
             f_k = self.f_k[self.nonzero_N_k_indices]
             K = self.K_nonzero
-            N_k = self.N_nonzero
 
         # array of either weights or normalized log weights
         Warray_nk = numpy.zeros([self.N, K], dtype=numpy.float64)
