@@ -66,7 +66,7 @@ export PYTHONPATH="/path/to/pymbar:$PYTHONPTH"
 Usage
 -----
 
-In Python 2.4 or later, you can view the docstrings with `help()`:
+In Python 2.6 or later, you can view the docstrings with `help()`:
 ```python
 >>> from pymbar import MBAR
 >>> help(MBAR)
@@ -107,7 +107,7 @@ Prerequisites
 
 The pymbar module requires the following:
 
-* Python 2.4 or later: http://www.python.org/
+* Python 2.6 or later: http://www.python.org/
 * the NumPy package: http://numpy.scipy.org/
 * the SciPy package: http://www.scipy.org/
 * Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
