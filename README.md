@@ -1,11 +1,12 @@
 [![Build Status](https://travis-ci.org/choderalab/pymbar.png)](https://travis-ci.org/choderalab/pymbar)
 [![PyPI Version](https://badge.fury.io/py/pymbar.png)](https://pypi.python.org/pypi/pymbar)
 [![Downloads](https://pypip.in/d/pymbar/badge.png)](https://pypi.python.org/pypi/pymbar)
+[![Binstar Badge](https://binstar.org/omnia/pymbar/badges/installer/conda.svg)](https://conda.binstar.org/omnia)
 
 pymbar
 ======
 
-Python implementation of the multistate Bennett acceptance ratio (MBAR) method for estimating expectations and free energy differences.  See our [Docs](http://pymbar.readthedocs.org/en/latest/).
+Python implementation of the multistate Bennett acceptance ratio (MBAR) method for estimating expectations and free energy differences
 
 Authors
 -------
@@ -13,33 +14,22 @@ Authors
 * Michael R. Shirts <michael.shirts@virginia.edu>
 * Kyle A. Beauchamp <beauchak@mskcc.org>
 
-Manifest
---------
+Quickstart
+----------
 
-This archive contains the following files:
+The easiest way to install `pymbar` is via [conda](http://conda.pydata.org), a binary package installer that comes with the [Anaconda Scientific Python distribution](https://store.continuum.io/cshop/anaconda/):
+```tcsh
+conda install -c https://conda.binstar.org/omnia pymbar
+```
+If you don't have `conda` installed but do have `pip`, you can install it with:
+```tcsh
+pip install conda
+```
 
-* `README.md` - this file
-* `GPL` - a copy of the GNU General Public License version 2
-* `pymbar/` - Python MBAR package
-* `examples/` - examples of applications of MBAR to various types of experiments
-
-Prerequisites
--------------
-
-The pymbar module requires the following:
-
-* Python 2.4 or later: http://www.python.org/
-* The `Python.h` header file (either installed via the Python installer, but a separate `python-dev` package on distributions like Ubunti)
-* the NumPy package: http://numpy.scipy.org/
-* the SciPy package: http://www.scipy.org/
-* Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
-
-Many of these packages are now standard in scientific Python installations or bundles, such as [Enthought Canopy](https://www.enthought.com/products/canopy/) or [continuum.io Anaconda](http://continuum.io/).
-
-Installation
+Alternatives
 ------------
 
-There are several ways to install pymbar.
+There are several other ways to install pymbar.
 
 You can grab the latest version from the [Python Package Index (PyPI)](https://pypi.python.org/pypi/pymbar) with `easy_install`:
 ```tcsh
@@ -47,42 +37,24 @@ easy_install pymbar
 ```
 or using `pip install`:
 ```tcsh
-pip install pymbar==2.1.0-beta
+pip install pymbar
 ```
 
-The bleeding-edge development version can be installed using [conda](http://conda.pydata.org) via
-```tcsh
-conda install -c https://conda.binstar.org/omnia pymbar-dev
-```
-
-If you see an error like
-```
-gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -I/usr/lib/python2.7/dist-packages/numpy/core/include -I/usr/lib/python2.7/dist-packages/numpy/core/include/numpy/ -I/usr/include/python2.7 -c pymbar/_pymbar.c -o build/temp.linux-x86_64-2.7/pymbar/_pymbar.o -std=c99 -O2 -shared -msse2 -msse3
-
-pymbar/_pymbar.c:80:20: fatal error: Python.h: No such file or directory
-
-#include "Python.h"
-```
-and you are using a Linux distro like Ubuntu, you may need to also install the `python-dev` package:
-```
-sudo apt-get install python-dev
-```
-
-If you download the [GitHub version](http://github.com/choderalab/pymbar), you can use the provided `setup.py` to install.
+Or, if you download the [GitHub version](http://github.com/choderalab/pymbar), you can use the provided `setup.py` to install.
 
 To install to your default Python site-packages location:
 ```tcsh
-# python setup.py install
+python setup.py install
 ```
 Or to install to a different location (e.g. a local Python package repository):
 ```tcsh
-# python setup.py install --prefix=/path/to/my/site-packages/
+python setup.py install --prefix=/path/to/my/site-packages/
 ```
 The C++ helper code will automatically be built in both cases, if possible.
 
 To build pymbar in situ, without installing to site-packages, run
 ```tcsh
-# python setup.py build
+python setup.py build
 ```
 and add the directory containing this file to your PYTHONPATH environment variable.
 ```tcsh
@@ -91,11 +63,10 @@ setenv PYTHONPATH "/path/to/pymbar:$PYTHONPATH"
 # For bash
 export PYTHONPATH="/path/to/pymbar:$PYTHONPTH"
 ```
-
 Usage
 -----
 
-In Python 2.4 or later, you can view the docstrings with `help()`:
+In Python 2.6 or later, you can view the docstrings with `help()`:
 ```python
 >>> from pymbar import MBAR
 >>> help(MBAR)
@@ -120,6 +91,28 @@ Examples
 --------
 
 Several examples of applications of `pymbar` to various types of simulation data can be found in [pymbar-examples](http://github.com/choderalab/pymbar-examples/).
+
+Manifest
+--------
+
+This archive contains the following files:
+
+* `README.md` - this file
+* `GPL` - a copy of the GNU General Public License version 2
+* `pymbar/` - Python MBAR package
+* `examples/` - examples of applications of MBAR to various types of experiments
+
+Prerequisites
+-------------
+
+The pymbar module requires the following:
+
+* Python 2.6 or later: http://www.python.org/
+* the NumPy package: http://numpy.scipy.org/
+* the SciPy package: http://www.scipy.org/
+* Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
+
+Many of these packages are now standard in scientific Python installations or bundles, such as [Enthought Canopy](https://www.enthought.com/products/canopy/) or [continuum.io Anaconda](http://continuum.io/).
 
 Optimizations and improvements
 ------------------------------
@@ -151,16 +144,16 @@ References
 * Please cite the original MBAR paper:
 
   Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states. J. Chem. Phys. 129:124105 (2008).  [DOI](http://dx.doi.org/10.1063/1.2978177)
-  
+
 * Some timeseries algorithms can be found in the following reference:
 
   Chodera JD, Swope WC, Pitera JW, Seok C, and Dill KA. Use of the weighted histogram analysis method for the analysis of simulated and parallel tempering simulations. J. Chem. Theor. Comput. 3(1):26-41 (2007).  [DOI](http://dx.doi.org/10.1021/ct0502864)
 
-  
+
 Copyright notice
 ----------------
 
-Copyright (c) 2006-2012 The Regents of the University of California.  All Rights Reserved.  Portions of this software are Copyright (c) 2007-2008 Stanford University and Columbia University, (c) 2008-2013 University of Virginia, and (c) 2013 Memorial Sloan-Kettering Cancer Center.
+Copyright (c) 2006-2012 The Regents of the University of California.  All Rights Reserved.  Portions of this software are Copyright (c) 2007-2008 Stanford University and Columbia University, (c) 2008-2014 University of Virginia, and (c) 2014 Memorial Sloan-Kettering Cancer Center.
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
@@ -172,8 +165,8 @@ Thanks
 ------
 
 We would especially like to thank a large number of people for helping us identify issues
-and ways to improve `pymbar`, including Tommy Knotts, David Mobley, Himanshu Paliwal, 
-Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian Roitberg, 
-Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin, 
-Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Dave Caplan, Sam Moors, 
+and ways to improve `pymbar`, including Tommy Knotts, David Mobley, Himanshu Paliwal,
+Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian Roitberg,
+Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin,
+Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Dave Caplan, Sam Moors,
 Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, Andrew Jewett, and Antonia Mey.
