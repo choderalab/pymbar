@@ -101,3 +101,16 @@ def test_detectEquil():
 def test_detectEquil_binary():
     x = np.random.normal(size=10000)        
     (t, g, Neff_max) = timeseries.detectEquilibration_binary_search(x)
+
+
+def test_detectEquil_constant_trailing():
+    # This explicitly tests issue #122, see https://github.com/choderalab/pymbar/issues/122
+    x = np.random.normal(size=100) * 0.01
+    x[50:] = 3.0
+    # The input data is some MCMC chain where the trailing end of the chain is a constant sequence.
+    (t, g, Neff_max) = timeseries.detectEquilibration(x)
+    """
+    We only check that the code doesn't give an exception.  The exact value of Neff can either be
+    ~50 if we try to include part of the equilibration samples, or it can be Neff=1 if we find that the
+    whole first half is discarded. 
+    """

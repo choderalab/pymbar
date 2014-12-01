@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pymbar
-from pymbar.testsystems.pymbar_datasets import load_gas_data, load_8proteins_data
+from pymbar.testsystems.pymbar_datasets import load_gas_data, load_8proteins_data, load_k69_data
 import time
 
 def load_oscillators(n_states, n_samples):
@@ -23,11 +23,12 @@ def load_exponentials(n_states, n_samples):
 
 
 solver_protocol = None
-mbar_gens = {"new":lambda u_kn, N_k: pymbar.MBAR(u_kn, N_k), "old":lambda u_kn, N_k: pymbar.old_mbar.MBAR(u_kn, N_k)}
 mbar_gens = {"new":lambda u_kn, N_k, x_kindices: pymbar.MBAR(u_kn, N_k, x_kindices=x_kindices)}
+#mbar_gens = {"old":lambda u_kn, N_k, x_kindices: pymbar.old_mbar.MBAR(u_kn, N_k)}
+#mbar_gens = {"new":lambda u_kn, N_k, x_kindices: pymbar.MBAR(u_kn, N_k, x_kindices=x_kindices), "old":lambda u_kn, N_k, x_kindices: pymbar.old_mbar.MBAR(u_kn, N_k)}
 systems = [lambda : load_exponentials(25, 100), lambda : load_exponentials(100, 100), lambda : load_exponentials(250, 250),
 lambda : load_oscillators(25, 100), lambda : load_oscillators(100, 100), lambda : load_oscillators(250, 250),
-load_gas_data, load_8proteins_data]
+load_gas_data, load_8proteins_data, load_k69_data]
 
 timedata = []
 for version, mbar_gen in mbar_gens.items():

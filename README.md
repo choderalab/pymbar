@@ -5,7 +5,7 @@
 pymbar
 ======
 
-Python implementation of the multistate Bennett acceptance ratio (MBAR) method for estimating expectations and free energy differences
+Python implementation of the multistate Bennett acceptance ratio (MBAR) method for estimating expectations and free energy differences.  See our [Docs](http://pymbar.readthedocs.org/en/latest/).
 
 Authors
 -------
