@@ -34,7 +34,7 @@ class HarmonicOscillatorsTestCase(object):
     Test sampling in different output modes.
 
     >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
-    >>> [x_n, u_kn, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> [x_n, u_kn, N_k, s_n] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
 
     """
 
@@ -106,6 +106,8 @@ class HarmonicOscillatorsTestCase(object):
            u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
         N_k : np.ndarray, shape=(n_states), dtype=float
            N_k[k] is the number of samples generated from state k
+        s_n : np.ndarray, shape=(n_samples), dtype='int'
+            s_n is the state of origin of x_n
 
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
             1D harmonic oscillator positions
@@ -119,14 +121,13 @@ class HarmonicOscillatorsTestCase(object):
         if len(N_k) != self.n_states:
             raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))
 
-        states = ["state %d" % k for k in range(self.n_states)]
-
         N_max = N_k.max()  # maximum number of samples per state
         N_tot = N_k.sum()  # total number of samples
 
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
         x_n = np.zeros([N_tot], np.float64)
+        s_n = np.zeros([N_tot], np.int)
         u_kn = np.zeros([self.n_states, N_tot], np.float64)
         index = 0
         for k, N in enumerate(N_k):
@@ -135,6 +136,7 @@ class HarmonicOscillatorsTestCase(object):
             x = np.random.normal(loc=x0, scale=sigma, size=N)
             x_kn[k, 0:N] = x
             x_n[index:(index + N)] = x
+            s_n[index:(index + N)] = k
             for l in range(self.n_states):
                 u = self.beta * 0.5 * self.K_k[l] * (x - self.O_k[l]) ** 2.0
                 u_kln[k, l, 0:N] = u
@@ -142,7 +144,7 @@ class HarmonicOscillatorsTestCase(object):
             index += N
 
         if (mode == 'u_kn'):
-            return x_n, u_kn, N_k
+            return x_n, u_kn, N_k, s_n
         elif (mode == 'u_kln'):
             return x_kn, u_kln, N_k
         else:
