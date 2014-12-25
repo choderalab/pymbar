@@ -43,7 +43,6 @@ import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
 from pymbar.utils import _logsum, kln_to_kn, kn_to_n, ParameterError
-import pdb
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
@@ -413,12 +412,10 @@ class MBAR:
         return returns
 
     #=========================================================================
-    def computeGeneralExpectations(self, A_n, u_ln, state_map, 
-                                   compute_uncertainty=True,
-                                   compute_covariance=False,
-                                   uncertainty_method=None, 
-                                   warning_cutoff=1.0e-10,
-                                   return_theta=False):
+    def computeExpectationsInner(self, A_n, u_ln, state_map,
+                                 uncertainty_method=None,
+                                 warning_cutoff=1.0e-10,
+                                 return_theta=False):
         """Compute the expectations of multiple observables of phase space functions in multiple states.
 
         Compute the expectations of multiple observables of phase
@@ -467,8 +464,8 @@ class MBAR:
         A_i : np.ndarray, float, shape = (I)
             A_i[i] is the estimate for the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
 
-        d2A_ik : np.ndarray, float, shape = (I, J)
-            d2A_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
+        d2A_ij : np.ndarray, float, shape = (I, J)
+            Ca_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
             (* not the square root of anything, the full covariance matrix *)
 
         Situations this will be used for : 
@@ -490,7 +487,7 @@ class MBAR:
         >>> A_n = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[:2,:]
         >>> state_map = np.array([[0,0],[1,0],[2,0],[2,1]],int)
-        >>> [A_i, d2A_ij] = mbar.computeGeneralExpectations(A_n, u_n, state_map)
+        >>> [A_i, d2A_ij] = mbar.computeExpectationsInner(A_n, u_n, state_map)
 
         """
 
@@ -533,16 +530,15 @@ class MBAR:
         else:
             A_list = np.zeros(0,dtype=int)
 
-        if A_n.dtype != 'bool': # in this case, we can't take log(A W_nk) = log A + log_W_nk, so no positivizing
-            for i in A_list:
-                A_min[i] = np.min(A_n[i, :]) #find the minimum
-                A_n[i, :] = A_n[i,:] - (A_min[i] - 1)  #all values now positive so that we can work in logarithmic scale
+        for i in A_list:
+            A_min[i] = np.min(A_n[i, :]) #find the minimum
+            A_n[i, :] = A_n[i,:] - (A_min[i] - 1)  #all values now positive so that we can work in logarithmic scale
 
         # Augment W_nk, N_k, and c_k for q_A(x) for the observables, with one
         # row for the specified state and I rows for the observable at that
         # state.
         # log weight matrix
-        msize = K + NL + S # augmented size; all of the states needed to calculate 
+        msize = K + NL + S # augmented size; all of the states needed to calculate
                            # the observables, and the observables themselves.
         Log_W_nk = np.zeros([N, msize], np.float64) # log weight matrix
         N_k = np.zeros([msize], np.int32)  # counts
@@ -556,7 +552,6 @@ class MBAR:
 
         # Compute row of W_nk matrix for the extra states corresponding to u_ln 
         # that the state list specifies
-
         for l in L_list:
             la = K+l  #l, augmented
             Log_W_nk[:, la] = self._computeUnnormalizedLogWeights(u_ln[l,:]) 
@@ -567,13 +562,9 @@ class MBAR:
         # their normalizing constants c_k
         for s in range(S):
             sa = K+NL+s  # augmented s
-            l = state_map[0,s]
+            l = K + state_map[0,s]
             i = state_map[1,s]
-            if A_n.dtype == 'bool':
-                Log_W_nk[A_n[i, :], sa] = Log_W_nk[A_n[i, :], K+l]    # \sum A_n * w_n
-            else:
-                Log_W_nk[:, sa] = np.log(A_n[i, :]) + Log_W_nk[:, K+l]
-
+            Log_W_nk[:, sa] = np.log(A_n[i, :]) + Log_W_nk[:, l]
             f_k[sa] = -_logsum(Log_W_nk[:, sa])
             Log_W_nk[:, sa] += f_k[sa]    # normalize this row
 
@@ -581,56 +572,6 @@ class MBAR:
         A_i = np.zeros([S], np.float64)
         for s in range(S):
             A_i[s] = np.exp(-f_k[K + NL + s])
-
-        if compute_covariance or compute_uncertainty or return_theta:
-            # Compute augmented asymptotic covariance matrix.
-            W_nk = np.exp(Log_W_nk)
-            Theta_ij = self._computeAsymptoticCovarianceMatrix(
-                W_nk, N_k, method=uncertainty_method)
-
-        if compute_covariance or compute_uncertainty:
-            # Note: these variances will be the same whether or not we 
-            # subtract a different constant from each A_i
-            # we can acually use the constant 1 for the free energies.
-            # for efficency, output theta in block form
-            #          K*K   K*S  K*NL
-            # Theta =  K*S   S*S  NL*S
-            #          K*NL  NL*S NL*NL
-
-            # first the observables (S of them), then the free energies (also S of them)
-            if S>0:
-                si = K+NL+state_map[1,:]
-            else:
-                si = np.zeros(0,dtype=int)
-            li = K+state_list
-            i = np.concatenate((si,li))
-            Theta = Theta_ij[np.ix_(i, i)]
-
-            # Covariance of normalization constants is d^2(ln A - ln a, ln B - ln b) = (Theta(c_A,c_B)-Theta(c_A,c_b)-Theta(c_B,c_a) + Theta(c_a,c_b))
-            # Covariance of the exponentials (i.e. the observables) is d^2(A/a,B/b) A*B*d^2(ln A-ln a, ln B-ln b)
-            # Covariance of the differences of observables is cov(A-B) = Cov(A,A)+Cov(B,B)-2Cov(A,B)
-            # Covariance of the differences of observables is cov(A_i-A_j) = Cov(A_i,A_i)+Cov(A_j,A_j)-2Cov(A_i,A_j)
-            # we fill in the end of the matrix with ones to include the contribution from the free energy
-
-            if S > 0:
-                Adiag = np.zeros([2*S,2*S],dtype=np.float64)
-                diag = np.append(np.array(A_i),np.ones(S))
-                np.fill_diagonal(Adiag,diag)
-                covA_ij = Adiag*Theta*Adiag
-            else:
-                covA_ij = Theta
-
-            if compute_uncertainty:
-                # uncertanities are the diagonal terms
-                ddelta = self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff)
-                # expectations of the observables at these states
-                if S > 0:
-                    returns['observables uncertainty'] = np.sqrt(covA_ij[0:S,0:S].diagonal())
-                    returns['free energy uncertainty'] = ddelta[S:2*S,S:2*S]
-                else:
-                    returns['free energy uncertainty'] = ddelta
-            if compute_covariance:
-                returns['covariance'] = covA_ij
 
         # Now that covariances are computed, add the constants back to A_i that
         # were required to enforce positivity
@@ -645,37 +586,87 @@ class MBAR:
         if S > 0:
             returns['observables'] = A_i
 
-        # free energies at these new states
-        returns['free energies'] =  f_k[state_list]
-
-        # Finally, just in case we can't figure out the free energies in case we are missing something
         if return_theta:
-            returns['theta'] = Theta
+            Theta_ij = self._computeAsymptoticCovarianceMatrix(
+                np.exp(Log_W_nk), N_k, method=uncertainty_method)
+
+            # Note: these variances will be the same whether or not we 
+            # subtract a different constant from each A_i
+            # for efficency, output theta in block form
+            #          K*K   K*S  K*NL
+            # Theta =  K*S   S*S  NL*S
+            #          K*NL  NL*S NL*NL
+
+            # first the observables (S of them), then the free energies (also S of them)
+            if S>0:
+                si = K+NL+np.arange(S)
+            else:
+                si = np.zeros(0,dtype=int)
+            li = K+state_list
+            i = np.concatenate((si,li))
+            Theta = Theta_ij[np.ix_(i, i)]
+            returns['Theta'] = Theta
+            if S > 0:
+                # we need to return the minimum A as well
+                returns['Amin'] = (A_min[state_map[1,np.arange(S)]] - 1)
+
+        # free energies at these new states
+        returns['free energies'] =  f_k[K+state_list]
 
         # Return expectations and uncertainties.
         return returns
 
-    #=========================================================================
+        # For reference
+        # Covariance of normalization constants is cov(ln A - ln a, ln B - ln b) = (Theta(c_A,c_B)-Theta(c_A,c_b)-Theta(c_B,c_a) + Theta(c_a,c_b))
+        # Covariance of the differences of observables is cov(A-B)
+        #   = Cov(A,A)+Cov(B,B)-2Cov(A,B) =   A^2 cov(ln A - ln a, ln A - ln a)
+        #                                  +  B^2 cov(ln B - ln b, ln B - ln b)
+        #                                  +  2AB cov(ln A - ln a, ln B - ln b)
+        #                                 =   A^2 (Theta(c_A,c_A) + Theta(c_a,c_a) - 2Theta(c_A,c_a))
+        #                                  +  B^2 (Theta(c_B,c_B) + Theta(c_b,c_b) - 2Theta(c_B,c_b))
+        #                                  +  2AB (Theta(c_A,c_B) + Theta(c_a,c_b) - Theta(c_A,c_b) - Theta(c_B,c_a))
+        #
+        # Covariance in two observables = Cov(A,B)
+        #                               = cov(exp(ln c_A - ln c_a),exp(ln c_B - ln c_b))
+        #                               = AB cov(ln c_A - ln c_a, ln c_B - ln c_b)
+        #                               = AB ((Theta(c_A,c_B) + Theta(c_a,c_b) - Theta(c_A,c_b) - Theta(c_B,c_a))
+        #
+        # Covariance of the differences of observables and a free energy (a could be b, or some other value)
+        # is cov(A - ln c_b).
+        #
+        #   = Cov(exp(ln c_A - ln c_a), exp(ln c_A - ln c_a)) + Cov(c_b,c_b) - 2Cov(exp(ln c_A - ln c_a), c_b)
+        #   = A^2 cov(ln c_A - ln c_a, ln c_A - ln c_a) + Cov(c_b,c_b) - 2A cov(ln c_A - ln c_a, ln c_b)
+        #   =  A^2 ((Theta(c_A,c_A) + Theta(c_a,c_a) - 2Theta(c_A,c_a)) + Theta(c_b,c_b)
+        #     - 2A Theta(c_A,c_b) + 2A Theta(c_a, c_b)
+        #
+        #   if A is sampled at the same free energy as the difference, then this will become:
+        #   =  A^2 ((Theta(c_A,c_A) + Theta(c_a,c_a) - 2Theta(c_A,c_a)) + Theta(c_a,c_a)
+        #     - 2A Theta(c_A,c_a) + 2A Theta(c_a, c_a)
+        #   =  A^2 (Theta(c_A,c_A) + (A^2+2A+1)Theta(c_a,c_a) -(2A^2+2A)Theta(c_A,c_a)
+        #
 
-    def computeCovarianceOfSums(self, d_ij, K, a):
+    #=========================================================================
+    def computeCovianceOfSums(self, d_ij, K, a):
 
         """
         Inputs: d_ij: a covariance matrix
-        K: The number of states in each free energy 'chunk', has to be constant
+        K: The number of states in each 'chunk', has to be constant
         
-        outputs: KxK covariance matrix for the sums or differences \sum a_i df_i
+        outputs: KxK variance matrix for the sums or differences \sum a_i df_i
         
         We wish to calculate the variance of a weighted sum of free energy differences.
         for example var(\sum a_i df_i). 
         
         We explicitly lay out the calculations for four variables (where each variable 
-        is a logarithm of a partion function, then generalize.)
+        is a logarithm of a partion function), then generalize.
         
-        The uncertainty in the sum over two weighted variables is var(a1(f_i1 - f_j1) + a2(f_i2 - f_j2)) =
+        The uncertainty in the sum of two weighted differences is var(a1(f_i1 - f_j1) + a2(f_i2 - f_j2)) =
         a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + 2 a1 a2 cov(f_i1 - f_j1, f_i2 - f_j2)
         
         cov(f_i1 - f_j1, f_i2 - f_j2) = cov(f_i1,f_i2) - cov(f_i1,f_j2) - cov(f_j1,f_i2) + cov(f_j1,f_j2)
+
         call:
+
         f_i1 = a
         f_j1 = b
         f_i2 = c
@@ -711,12 +702,12 @@ class MBAR:
             for j in range(K):
                 for k in range(n):
                     d2[i,j] +=  a[k]**2 * var_ij[i+k*K,j+k*K]
-                    for l in range(0,k):
+                    for l in range(n):
                         d2[i,j] +=  a[k] * a[l] * (-var_ij[i+k*K,i+l*K] + var_ij[i+k*K,j+l*K] + var_ij[j+k*K,i+l*K] - var_ij[j+k*K,j+l*K])
+
         return np.sqrt(d2)
 
     #=========================================================================
-
     def computeExpectations(self, A_n, u_kn=None, output='averages', state_dependent=False,
                             compute_uncertainty=True, uncertainty_method=None,
                             warning_cutoff=1.0e-10):
@@ -790,7 +781,7 @@ class MBAR:
                 if u_kn != None:
                     if len(np.shape(u_kn)) == 3:
                         u_kn = kln_to_kn(u_kn, N_k=self.N_k)
-                    if len(np.shape(u_kn)) == 2:
+                    elif len(np.shape(u_kn)) == 2:
                         u_kn = kn_to_n(u_kn, N_k=self.N_k)
         else:
             if dims==3:
@@ -824,19 +815,28 @@ class MBAR:
                 state_map[0,k] = k
                 state_map[1,k] = 0
 
-        inner_results = self.computeGeneralExpectations(A_n,u_kn,state_map,
-                                                         compute_covariance=compute_uncertainty,
-                                                         compute_uncertainty=compute_uncertainty,
-                                                         uncertainty_method=uncertainty_method,
-                                                         warning_cutoff=warning_cutoff)
+        inner_results = self.computeExpectationsInner(A_n,u_kn,state_map,
+                                                      return_theta=compute_uncertainty,
+                                                      uncertainty_method=uncertainty_method,
+                                                      warning_cutoff=warning_cutoff)
         returns = []
+
+        if compute_uncertainty:
+            # we want the theta matrix for the exponentials of the
+            # observables, which means we need to make the
+            # transformation.
+            Adiag = np.zeros([2*K,2*K],dtype=np.float64)
+            diag = np.ones(2*K,dtype=np.float64)
+            diag[0:K] = diag[K:2*K] = inner_results['observables']-inner_results['Amin']
+            np.fill_diagonal(Adiag,diag)
+            Theta = Adiag*inner_results['Theta']*Adiag
+            covA_ij = Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K]
 
         if output == 'averages':
             # Return expectations and uncertainties.
             returns.append(inner_results['observables'])
-
             if compute_uncertainty:
-                returns.append(np.sqrt(inner_results['observables uncertainty']))
+                returns.append(np.sqrt(covA_ij[0:K,0:K].diagonal()))
                                
         if output == 'differences':
             A_im = np.matrix(inner_results['observables'])
@@ -844,7 +844,7 @@ class MBAR:
 
             returns.append(np.array(A_ij))
             if compute_uncertainty:
-                returns.append(self._ErrorOfDifferences(inner_results['covariance'],warning_cutoff=warning_cutoff))
+                returns.append(self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff))
 
         return returns
 
@@ -878,6 +878,8 @@ class MBAR:
 
         A_i : np.ndarray, float, shape=(I)
             A_i[i] is the estimate for the expectation of A_i(x) at the state specified by u_kn
+        dA_i : np.ndarray, float, shape = (I)
+            dA_i[i] is the uncertainty in the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:] 
         d2A_ij : np.ndarray, float, shape=(I, I)
             d2A_ij[i,j] is the COVARIANCE in the estimates of A_i[i] and A_i[j]: we can't actually take a square root
 
@@ -910,20 +912,27 @@ class MBAR:
         state_map = np.zeros([2,I],int)
         state_map[1,:] = np.arange(I)  # same (first) state for all variables.
 
-        inner_results = self.computeGeneralExpectations(A_in,u_n,state_map,
-                                                         compute_uncertainty=(compute_uncertainty or compute_covariance),
-                                                         uncertainty_method=uncertainty_method,
-                                                         warning_cutoff=warning_cutoff)
+        inner_results = self.computeExpectationsInner(A_in,u_n,state_map,
+                                                      return_theta=(compute_uncertainty or compute_covariance),
+                                                      uncertainty_method=uncertainty_method,
+                                                      warning_cutoff=warning_cutoff)
         returns = []
         returns.append(inner_results['observables'])
 
+        if compute_uncertainty or compute_covariance:
+            Adiag = np.zeros([2*I,2*I],dtype=np.float64)
+            diag = np.ones(2*K,dtype=np.float64)
+            diag[0:I] = diag[I:2*I] = inner_results['observables']-inner_results['Amin']
+            np.fill_diagonal(Adiag,diag)
+            Theta = Adiag*inner_results['Theta']*Adiag
+
         if compute_uncertainty:
-            # uncertainties in the N observables.
-            returns.append(inner_results['observables uncertainty'])
-                               
+            covA_ij = Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I]
+            returns.append(np.sqrt(covA_ij[0:I,0:I].diagonal()))
+
         if compute_covariance:
             # compute estimate of statistical covariance of the observables
-            returns.append(inner_results['covariance'][0:K,0:K])
+            returns.append(inner_results['Theta'][0:I,0:I])
             
         # Return expectations, uncertainties, covariances, theta
         return returns
@@ -977,10 +986,10 @@ class MBAR:
 
         state_list = np.arange(L)   # need to get it into the correct shape
         A_in = np.array([0])
-        inner_results = self.computeGeneralExpectations(A_in, u_ln, state_list,
-                                                         compute_covariance=compute_uncertainty,
-                                                         uncertainty_method=uncertainty_method,
-                                                         warning_cutoff=warning_cutoff)
+        inner_results = self.computeExpectationsInner(A_in, u_ln, state_list,
+                                                      return_theta=compute_uncertainty,
+                                                      uncertainty_method=uncertainty_method,
+                                                      warning_cutoff=warning_cutoff)
 
         returns = []
         f_k = np.matrix(inner_results['free energies'])
@@ -988,14 +997,14 @@ class MBAR:
         returns.append(Deltaf_ij)
 
         if (compute_uncertainty):
-            returns.append(self._ErrorOfDifferences(inner_results['covariance'],warning_cutoff=warning_cutoff))
+            returns.append(self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff))
 
         # Return matrix of free energy differences and uncertainties.
         return returns
 
     #=====================================================================
 
-    def computeEntropyAndEnthalpy(self, u_kn = None, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10):
+    def computeEntropyAndEnthalpy(self, u_kn=None, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10):
         """Decompose free energy differences into enthalpy and entropy differences.
 
         Compute the decomposition of the free energy difference between
@@ -1050,31 +1059,54 @@ class MBAR:
             state_map[0,k] = k
             state_map[1,k] = k
     
-        inner_results = self.computeGeneralExpectations(A_in, u_kn, state_map,
-                                                         compute_uncertainty=True,
-                                                         compute_covariance=True,
-                                                         uncertainty_method=uncertainty_method,
-                                                         warning_cutoff=warning_cutoff)
-        cov = inner_results['covariance']
+        inner_results = self.computeExpectationsInner(A_in, u_kn, state_map,
+                                                      return_theta=True,
+                                                      uncertainty_method=uncertainty_method,
+                                                      warning_cutoff=warning_cutoff)
+
+        # construct the covariance matrix of exp(ln c_Ua - ln c_a) - ln c_ca
+
+        Theta = np.zeros([3*K,3*K],dtype=np.float64)
+        Theta[0:2*K,0:2*K] = inner_results['Theta']
+        Theta[2*K:3*K,:] = Theta[K:2*K,:]
+        Theta[:,2*K:3*K] = Theta[:,K:2*K]
+        diag = np.ones(3*K,dtype=np.float64)
+        diag[0:K] = diag[K:2*K] = inner_results['observables']-inner_results['Amin']
+        Adiag = np.matrix(np.zeros([3*K,3*K],dtype=np.float64))
+        np.fill_diagonal(Adiag,diag)
+        Theta = Adiag*Theta*Adiag
+
         # Compute reduced free energy difference.
         f_k = np.matrix(inner_results['free energies'])
         Delta_f_ij = f_k - f_k.transpose()
         # compute uncertainty matrix in free energies:
-        covf = cov[K:2*K,K:2*K]
-        dDelta_f_ij = self._ErrorOfDifferences(cov[K:2*K,K:2*K],warning_cutoff=warning_cutoff)
+        covf = Theta[2*K:3*K,2*K:3*K]
+        dDelta_f_ij = self._ErrorOfDifferences(covf,warning_cutoff=warning_cutoff)
 
         # Compute reduced enthalpy difference.
         u_k = np.matrix(inner_results['observables'])
         Delta_u_ij = u_k - u_k.transpose()
         # compute uncertainty matrix in energies:
-        dDelta_u_ij = self._ErrorOfDifferences(cov[0:K,0:K],warning_cutoff=warning_cutoff)
+        covu = Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K]
+        dDelta_u_ij = self._ErrorOfDifferences(covu,warning_cutoff=warning_cutoff)
 
         # Compute reduced entropy difference
         s_k = u_k - f_k
         Delta_s_ij = s_k - s_k.transpose()
         # compute uncertainty matrix in entropies
-        # cov(A-B) = cov(A,A) + cov(B,B) - 2* cov(A,B)
-        covs = self.computeCovarianceOfSums(inner_results['covariance'],K,np.array([1,-1]))
+        #s_i = u_i - f_i
+        #cov(s_i) =   cov(u_i - f_i)
+        #         =   cov(exp(ln C_a - ln c_a) + ln c_a)
+        #         =   cov(exp(ln C_a - ln c_a), exp(ln C_a - ln c_a)) + cov(ln c_a, ln c_a)
+        #           + cov(exp(ln C_a - ln c_a), ln c_a) + cov(ln c_a, exp(ln C_a - ln c_a))
+        #         = cov(u,u) + cov(f,f)
+        #             + A cov(ln C_a - ln c_a, ln c_a) + A cov(ln c_a, ln C_a - ln c_a)
+        #         = cov(u,u) + cov(f,f)
+        #             + A cov(ln C_a, ln c_a) - A cov(ln c_a, ln c_a) + A cov(ln c_a, ln C_a) - A cov(ln c_a, ln c_a)
+        #         = cov(u,u) + cov(f,f) + A cov(ln C_a,ln c_a) + A cov(ln c_a, ln C_a) - 2A cov(ln_ca,ln_ca)
+        #
+        covs = covu + covf + Theta[0:K,2*K:3*K] + Theta[2*K:3*K,0:K] - Theta[K:2*K,2*K:3*K] - Theta[2*K:3*K,K:2*K]
+        # note: not clear that Theta[K:2*K,2*K:3*K] and Theta[K:2*K,2*K:3*K] are symmetric?
         dDelta_s_ij = self._ErrorOfDifferences(covs,warning_cutoff=warning_cutoff)
 
         # Return expectations and uncertainties.
@@ -1161,18 +1193,16 @@ class MBAR:
         # u_n.
         log_w_n = self._computeUnnormalizedLogWeights(u_n)
 
-        if len(np.shape(u_n)) == 2:
-            u_n = kn_to_n(u_n, N_k = self.N_k)
-
-        if len(np.shape(bin_n)) == 2:
-            bin_n = kn_to_n(bin_n, N_k = self.N_k)
-
         # Compute the free energies for these states.
         f_i = np.zeros([nbins], np.float64)
         df_i = np.zeros([nbins], np.float64)
         for i in range(nbins):
             # Get linear n-indices of samples that fall in this bin.
             indices = np.where(bin_n == i)
+
+            # Sanity check.
+            if (len(indices) == 0):
+                raise "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
 
             # Compute dimensionless free energy of occupying state i.
             f_i[i] = - _logsum(log_w_n[indices])
@@ -1369,7 +1399,7 @@ class MBAR:
         returns the statistical error matrix of A_i - A_j
         """
 
-        diag = cov.diagonal()
+        diag = np.matrix(cov.diagonal())
         d2 = diag + diag.transpose() - 2 * cov
         
         # check for any numbers below zero.
