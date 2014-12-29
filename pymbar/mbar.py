@@ -465,7 +465,7 @@ class MBAR:
             A_i[i] is the estimate for the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
 
         d2A_ij : np.ndarray, float, shape = (I, J)
-            Ca_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
+             Ca_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
             (* not the square root of anything, the full covariance matrix *)
 
         Situations this will be used for : 
@@ -476,6 +476,9 @@ class MBAR:
             For example, the set of energies at state k consist in energy function of state
             1 evaluated at state 1, energies of state 2 evaluated at
             state 2, and so forth.
+            * computing only free energies at new states.
+            * Would require additional work to work with potentials of mean force, because we need to ignore the
+              functions that are zero when integrating.
 
         Examples
         --------
@@ -555,7 +558,7 @@ class MBAR:
         for l in L_list:
             la = K+l  #l, augmented
             Log_W_nk[:, la] = self._computeUnnormalizedLogWeights(u_ln[l,:]) 
-            f_k[la] = -_logsum(Log_W_nk[:, la])                                                   
+            f_k[la] = -_logsum(Log_W_nk[:, la])
             Log_W_nk[:, la] += f_k[la]
 
         # Compute the remaining rows/columns of W_nk, and calculate
@@ -649,7 +652,8 @@ class MBAR:
     def computeCovianceOfSums(self, d_ij, K, a):
 
         """
-        Inputs: d_ij: a covariance matrix
+        Inputs: d_ij: a matrix of standard deviations of the quantities f_i - f_j
+
         K: The number of states in each 'chunk', has to be constant
         
         outputs: KxK variance matrix for the sums or differences \sum a_i df_i
@@ -695,6 +699,7 @@ class MBAR:
         same process applies with the sum, with the single var tems and the pair terms
         """
 
+        # todo: vectorize this.
         var_ij = np.square(d_ij)
         d2 = np.zeros([K,K],float)
         n = len(a)
@@ -1047,6 +1052,10 @@ class MBAR:
         """
         if verbose:
             print "Computing average energy and entropy by MBAR."
+
+        dims = len(np.shape(u_kn))
+        if dims==3:
+            u_kn = kln_to_kn(u_kn, N_k=self.N_k)
 
         if u_kn == None:
             u_kn = self.u_kn
