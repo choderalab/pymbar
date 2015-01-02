@@ -470,7 +470,7 @@ def subsample_data(u_kn0, N_k0, s_n, subsampling, rescale=False, replace=False):
     for k in range(n_states):
         if N_k[k] <= 0:
             continue
-        samples = np.random.choice(np.where(s_n == k)[0], size=N_k[k], replace=replace)
+        samples = np.random.choice(np.where(s_n == k)[0], size=(N_k[k].astype(int)), replace=replace)
         u_k = standardize(u_kn0[:, samples]) * sigma_k[k][:, np.newaxis] + mu_k[k][:, np.newaxis]
         num = N_k[k]
         u_kn[:, start:start + num] = u_k
