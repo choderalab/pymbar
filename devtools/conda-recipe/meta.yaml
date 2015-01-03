@@ -10,11 +10,22 @@ requirements:
     - numpy
     - scipy
     - setuptools
+    - numexpr    
   run:
     - python
     - cython
     - numpy
     - scipy
+    - numexpr
+
+test:
+  requires:
+    - nose
+    - setuptools    
+  imports:
+    - pymbar
+  commands:
+    - nosetests pymbar --with-doctest --doctest-tests -v
 
 about:
   home: https://github.com/choderalab/pymbar

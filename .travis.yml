@@ -1,28 +1,24 @@
 language: c
 
+#branches:
+#  only:
+#    - master  # Need to build the nk branch for current pymbar.
+
 install:
-  - source tools/ci/install.sh
+  - source devtools/ci/install.sh
   - export PYTHONUNBUFFERED=true
 
 script:
-  - export CC="gcc -std=c89"
-  - source deactivate
-  - conda install --yes conda-build
-  - conda build tools/conda-recipe
-  - source activate $python
-  - conda install $HOME/miniconda/conda-bld/linux-64/pymbar-dev-*
-  - conda list -e
-  - nosetests -vv
+  # this builds the binary, unpacks it, and runs the tests
+  - conda build devtools/conda-recipe
 
 env:
   matrix:
-    - python=2.7  CONDA_PY=27
-#    - python=3.3  CONDA_PY=33
+    - CONDA_PY=2.7
 
   global:
     # encrypted BINSTAR_TOKEN for push of dev package to binstar
     - secure: "lu3EsyPF+woAABbZyctdFUPfTkAUOyC7k7LsDmWBMrV6ctpvYkomDFS65NAElXDOnmPzxMpn4+f0V2+tNqD4sM/9erDfM2MkJH+tRznNkAAZFoxbxeZCmzV4zSzNvAKlopasHSXt2mbhzbDnhrIToAssQZMHp13pNlBMEq86hKc="
 
 after_success:
-  - echo "after_success"
-  - source tools/ci/after_sucess.sh
+  - source devtools/ci/after_sucess.sh

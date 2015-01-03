@@ -6,13 +6,39 @@
 pymbar
 ======
 
-Python implementation of the multistate Bennett acceptance ratio (MBAR) method for estimating expectations and free energy differences
+Python implementation of the multistate Bennett acceptance ratio (MBAR) method for estimating expectations and free energy differences.  See our [Docs](http://pymbar.readthedocs.org/en/latest/).
 
 Authors
 -------
 * John D. Chodera <choderaj@mskcc.org>
 * Michael R. Shirts <michael.shirts@virginia.edu>
 * Kyle A. Beauchamp <beauchak@mskcc.org>
+
+
+Manifest
+--------
+
+This archive contains the following files:
+
+* `README.md` - this file
+* `LICENSE` - a copy of the GNU General Public License version 2 covering this code
+* `pymbar/` - Python MBAR package
+* `examples/` - examples of applications of MBAR to various types of calculations
+  See the README.md in that folder for more information
+* `tests/` - unit tests for the functionality
+* `docs/` - sphinx documetation
+* `devtools/` - travis CI and conda configuration files
+
+Prerequisites
+-------------
+
+The pymbar module requires the following:
+
+* Python 2.4 or later: http://www.python.org/
+* The `Python.h` header file (either installed via the Python installer, but a separate `python-dev` package on distributions like Ubunti)
+* the NumPy package: http://numpy.scipy.org/
+* the SciPy package: http://www.scipy.org/
+* Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
 
 Quickstart
 ----------
@@ -61,8 +87,9 @@ and add the directory containing this file to your PYTHONPATH environment variab
 # For tcsh
 setenv PYTHONPATH "/path/to/pymbar:$PYTHONPATH"
 # For bash
-export PYTHONPATH="/path/to/pymbar:$PYTHONPTH"
+export PYTHONPATH="/path/to/pymbar:$PYTHONPATH"
 ```
+
 Usage
 -----
 
@@ -92,27 +119,6 @@ Examples
 
 Several examples of applications of `pymbar` to various types of simulation data can be found in [pymbar-examples](http://github.com/choderalab/pymbar-examples/).
 
-Manifest
---------
-
-This archive contains the following files:
-
-* `README.md` - this file
-* `GPL` - a copy of the GNU General Public License version 2
-* `pymbar/` - Python MBAR package
-* `examples/` - examples of applications of MBAR to various types of experiments
-
-Prerequisites
--------------
-
-The pymbar module requires the following:
-
-* Python 2.6 or later: http://www.python.org/
-* the NumPy package: http://numpy.scipy.org/
-* the SciPy package: http://www.scipy.org/
-* Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
-
-Many of these packages are now standard in scientific Python installations or bundles, such as [Enthought Canopy](https://www.enthought.com/products/canopy/) or [continuum.io Anaconda](http://continuum.io/).
 
 Optimizations and improvements
 ------------------------------

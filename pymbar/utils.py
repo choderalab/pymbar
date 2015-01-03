@@ -37,6 +37,85 @@ import numpy as np
 class TypeCastPerformanceWarning(RuntimeWarning):
     pass
 
+def kln_to_kn(kln, N_k = None, cleanup = False):
+
+    """ Convert KxKxN_max array to KxN max array
+
+    if self.N is not initialized, it will be here.
+
+    Parameters
+    ----------
+    u_kln : np.ndarray, float, shape=(KxLxN_max)
+    N_k (optional) : np.array
+        the N_k matrix from the previous formatting form
+    cleanup (optional) : bool
+        optional command to clean up, since u_kln can get very large
+
+    Outputs
+    -------
+    u_kn: np.ndarray, float, shape=(LxN)
+    """
+
+    #print "warning: KxLxN_max arrays deprecated; convering into new preferred KxN shape"
+
+    # rewrite into kn shape
+    [K, L, N_max] = np.shape(kln)
+
+    if N_k == None:
+        # We assume that all N_k are N_max.
+        # Not really an easier way to do this without being given the answer.
+        N_k = N_max * np.ones([L], dtype=np.int32)
+    N = np.sum(N_k)
+
+    kn = np.zeros([L, N], dtype=np.float64)
+    i = 0
+    for k in range(K):  # loop through the old K; some might be zero
+        for ik in range(N_k[k]):
+            kn[:, i] = kln[k, :, ik]
+            i += 1
+    if cleanup:
+        del(kln)  # very big, let's explicitly delete
+
+    return kn
+
+def kn_to_n(kn, N_k = None, cleanup = False):
+
+    """ Convert KxN_max array to N array
+
+    Parameters
+    ----------
+    u_kn: np.ndarray, float, shape=(KxN_max)
+    N_k (optional) : np.array
+        the N_k matrix from the previous formatting form
+    cleanup (optional) : bool
+        optional command to clean up, since u_kln can get very large
+
+    Outputs
+    -------
+    u_n: np.ndarray, float, shape=(N)
+    """
+
+    #print "warning: KxN arrays deprecated; convering into new preferred N shape"
+    # rewrite into kn shape
+
+    # rewrite into kn shape
+    [K, N_max] = np.shape(kn)
+
+    if N_k == None:
+        # We assume that all N_k are N_max.
+        # Not really an easier way to do this without being given the answer.
+        N_k = N_max*np.ones([K], dtype=np.int32)
+    N = np.sum(N_k)
+
+    n = np.zeros([N], dtype=np.float64)
+    i = 0
+    for k in range(K):  # loop through the old K; some might be zero
+        for ik in range(N_k[k]):
+            n[i] = kn[k, ik]
+            i += 1
+    if cleanup:
+        del(kn)  # very big, let's explicitly delete
+    return n
 
 def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=None,
                 warn_on_cast=True, add_newaxis_on_deficient_ndim=False):

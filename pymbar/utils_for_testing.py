@@ -67,11 +67,6 @@ def get_fn(name):
     name : str
         Name of the file to load (with respect to the reference/ folder).
 
-    Examples
-    --------
-    >>> import mdtraj as md
-    >>> t = md.load(get_fn('2EQQ.pdb'))
-    >>> eq(t.n_frames, 20)    # this runs the assert, using the eq() func.
     """
 
     fn = resource_filename('mdtraj', os.path.join('testing/reference', name))
