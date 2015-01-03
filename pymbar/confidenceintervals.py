@@ -25,6 +25,141 @@ import scipy
 import scipy.special
 import scipy.stats
 
+def OrderReplicates(replicates, K):
+
+    ''' Inputs: An array of replicates, and the size of the data.
+
+        Outputs: a Nxdims arrary of the data in the replicates, normalized by the standard deviation
+
+    '''
+
+    dims = np.shape(replicates[0]['destimated'])
+
+    sigma = replicates[0]['destimated']
+    zerosigma = (sigma == 0)
+    sigmacorr = zerosigma  # we need to avoid errors with zero standard errors.  We will ignore them later.
+    sigma += sigmacorr
+
+    yi = []
+    for (replicate_index, replicate) in enumerate(replicates):
+        yi.append(replicate['error']/sigma)
+    yiarray = np.asarray(yi)
+    sortedyi = np.zeros(np.shape(yiarray))
+    if len(dims) == 0:
+        sortedyi[:] = np.sort(yiarray)
+    elif len(dims) == 1:
+        for i in range(K):
+            sortedyi[:,i] = np.sort(yiarray[:,i])
+    elif len(dims) == 2:
+        for i in range(K):
+            for j in range(K):
+                sortedyi[:,i,j] = np.sort(yiarray[:,i,j])
+
+    # remove the correction so we have zero sigmas again
+    sigma -= sigmacorr
+    return sortedyi
+
+def AndersonDarling(replicates, K):
+
+    # inputs:
+    #      replicates: list of replicates
+    #      K: number of replicates
+    # outputs: Anderson-Darling statistics.
+    # http://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test
+    #
+    # Since both sigma and mu are known (mu exactly, sigma as an estimate from mbar),
+    # we can apply the case 1 test.
+    #
+    # Because sigma is not precise, we should accept a higher threshold than the 1%
+    # threshold listed below to throw an error:
+    #
+    # 15%  1.610
+    # 10%  1.933
+    # 5%   2.492
+    # 2.5% 3.070
+    # 1%   3.857
+    #
+    # So we choose something like 4.5.  Note that for lower numbers of
+    # samples, it's more likely.  2000 samples for each of the
+    # harmonic_oscillators_distributions.py seems to give good
+    # results.
+    #
+    # for now, the standard deviation we use is the one from the
+    # _first_ replicate.
+
+    sortedyi = OrderReplicates(replicates, K)
+    zerosigma = (replicates[0]['destimated'] == 0) # ignore the ones with zero values of the std
+
+    N = len(replicates)
+    dims = np.shape(replicates[0]['destimated'])
+    sum = np.zeros(dims)
+    for i in range(N):
+        cdfi = scipy.stats.norm.cdf(sortedyi[i])
+        sum += (2*i-1)*np.log(cdfi) + (2*(N-i)+1)*np.log(1-cdfi)
+    A2 = -N - sum/N
+    A2[zerosigma] = 0
+    return A2
+
+def QQPlot(replicates, K, title='Generic Q-Q plot', filename = 'qq.pdf'):
+
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    sortedyi = OrderReplicates(replicates, K)
+    N = len(replicates)
+    dim = len(np.shape(replicates[0]['error']))
+    xvals = scipy.stats.norm.ppf((np.arange(0,N)+0.5)/N)  # inverse pdf
+
+    if dim == 0:
+        nplots = 1
+    elif dim == 1:
+        nplots = K
+    elif dim == 2:
+        nplots = K*K
+
+    yy = np.zeros([N,nplots])
+
+    labelij = dict()
+    if dim == 0:
+        yy[:,0] = sortedyi[:]
+    elif dim == 1:
+        nplots = K
+        for i in range(K):
+            yy[:,i] = sortedyi[:,i]
+    elif dim == 2:
+        nplots = K*(K-1)
+        k = 0
+        for i in range(K):
+            for j in range(K):
+                if i!=j:
+                    yy[:,k] = sortedyi[:,i,j]
+                    labelij[k] = [i,j]
+                    k+=1
+
+    sq = (nplots)**0.5
+    labelsize = 30.0/sq
+    matplotlib.rc('axes', facecolor = '#E3E4FA')
+    matplotlib.rc('axes', edgecolor = 'white')
+    matplotlib.rc('xtick', labelsize = labelsize)
+    matplotlib.rc('ytick', labelsize = labelsize)
+    h = int(sq)
+    w = h + 1 + 1*(sq-h>0.5)
+    fig = plt.figure(figsize = (8,6))
+    for i in range(nplots):
+        ax = plt.subplot(h, w, i+1)
+        ms = 75.0/len(yy[:,i])
+        ax.plot(xvals, yy[:,i], color='r', ms=ms, marker='o', mec='r')
+        ax.plot(xvals, xvals, color='b', ls = '-')
+        plt.xlim(xvals.min(), xvals.max())
+        if dim==1:
+            ax.annotate(r'State $\mathrm{%d}$' % (i), xy=(0.5, 0.9), xycoords=('axes fraction', 'axes fraction'), xytext=(0, -2), size=labelsize, textcoords='offset points', va='top', ha='center', color='#151B54', bbox = dict(fc='w', ec='none', alpha=0.5))
+        if dim==2:
+            ax.annotate(r'State $\mathrm{%d-%d}$' % (labelij[i][0], labelij[i][1]), xy=(0.5, 0.9), xycoords=('axes fraction', 'axes fraction'), xytext=(0, -2), size=labelsize, textcoords='offset points', va='top', ha='center', color='#151B54', bbox = dict(fc='w', ec='none', alpha=0.5))
+    plt.suptitle(title, fontsize=20)
+    plt.savefig(filename)
+    plt.close(fig)
+
+    return
 
 def generateConfidenceIntervals(replicates, K):
     # inputs:

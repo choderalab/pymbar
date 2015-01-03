@@ -19,9 +19,13 @@ Manifest
 This archive contains the following files:
 
 * `README.md` - this file
-* `GPL` - a copy of the GNU General Public License version 2
+* `LICENSE` - a copy of the GNU General Public License version 2 covering this code
 * `pymbar/` - Python MBAR package
-* `examples/` - examples of applications of MBAR to various types of experiments
+* `examples/` - examples of applications of MBAR to various types of calculations
+  See the README.md in that folder for more information
+* `tests/` - unit tests for the functionality
+* `docs/` - sphinx documetation
+* `devtools/` - travis CI and conda configuration files
 
 Prerequisites
 -------------

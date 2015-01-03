@@ -24,7 +24,7 @@
 #=============================================================================================
 import sys
 import numpy
-
+import pdb
 from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR
 
 #=============================================================================================
@@ -75,7 +75,7 @@ def GetAnalytical(beta,K,O,observables):
 
 K_k = numpy.array([25, 16, 9, 4, 1, 1]) # spring constants for each state
 O_k = numpy.array([0, 1, 2, 3, 4, 5]) # offsets for spring constants
-N_k = 100*numpy.array([1000, 1000, 1000, 1000, 0, 1000]) # number of samples from each state (can be zero for some states)
+N_k = 10*numpy.array([1000, 1000, 1000, 1000, 0, 1000]) # number of samples from each state (can be zero for some states)
 Nk_ne_zero = (N_k!=0)
 beta = 1.0 # inverse temperature for all simulations
 K_extra = numpy.array([20, 12, 6, 2, 1]) 
@@ -147,6 +147,8 @@ Delta_f_ij_error = Delta_f_ij_estimated - Delta_f_ij_analytical
 
 print "Error in free energies is:"
 print Delta_f_ij_error
+print "Uncertainty in free energies is:"
+print dDelta_f_ij_estimated
 
 print "Standard deviations away is:"
 # mathematical manipulation to avoid dividing by zero errors; we don't care
@@ -230,7 +232,9 @@ print "======================================"
 
 A_kn_all = dict()
 A_k_estimated_all = dict()
+A_kl_estimated_all = dict()
 N = numpy.sum(N_k)
+
 for observe in observables:
   print "============================================"
   print "      Testing observable %s" % (observe)
@@ -255,6 +259,7 @@ for observe in observables:
       for nk in range(0,N_k[k]):
         A_kn[:,n] = U_kln[k,:,nk]
         n += 1
+  
   # observable for estimation is the position
   elif observe == 'position':
     state_dependent = False
@@ -269,7 +274,7 @@ for observe in observables:
     for k in range(0,K):
       A_kn[k,0:N_k[k]] = x_kn[k,0:N_k[k]]**2
 
-  (A_k_estimated, dA_k_estimated) = mbar.computeExpectations(A_kn,useGeneral = True, state_dependent = state_dependent)
+  (A_k_estimated, dA_k_estimated) = mbar.computeExpectations(A_kn, state_dependent = state_dependent)
 
   # need to additionally transform to get the square root
   if observe == 'RMS displacement':
@@ -296,9 +301,13 @@ for observe in observables:
       if observe == 'RMS displacement':
         As_k_estimated[k] = numpy.sqrt(As_k_estimated[k])    
         dAs_k_estimated[k] = dAs_k_estimated[k]/(2*As_k_estimated[k])
-    
+
   A_k_error = A_k_estimated - A_k_analytical[observe]
   As_k_error = As_k_estimated - A_k_analytical[observe]
+
+  print "------------------------------"
+  print "Now testing 'averages' mode"
+  print "------------------------------"
 
   print "Analytical estimator of %s is" % (observe)
   print A_k_analytical[observe]
@@ -317,9 +326,34 @@ for observe in observables:
   stdevs = numpy.abs(As_k_error[Nk_ne_zero]/dAs_k_estimated[Nk_ne_zero])
   print stdevs
 
+  (A_kl_estimated, dA_kl_estimated) = mbar.computeExpectations(A_kn, state_dependent = state_dependent, output = 'differences')
+
+  print "------------------------------"
+  print "Now testing 'differences' mode"
+  print "------------------------------"
+
+  if 'RMS displacement' != observe: # can't test this, because we're actually computing the expectation of
+                                    # the mean square displacement, and so the differences are <a_i^2> - <a_j^2>,
+                                    # not sqrt<a_i>^2 - sqrt<a_j>^2
+    A_kl_analytical = numpy.matrix(A_k_analytical[observe]) - numpy.matrix(A_k_analytical[observe]).transpose()
+    A_kl_error = A_kl_estimated - A_kl_analytical
+    
+    print "Analytical estimator of differences of %s is" % (observe)
+    print A_kl_analytical
+    
+    print "MBAR estimator of the differences of %s is" % (observe)
+    print A_kl_estimated
+    
+    print "MBAR estimators differ by X standard deviations"
+    stdevs = numpy.abs(A_kl_error/(dA_kl_estimated+numpy.identity(K)))
+    for k in range(K):
+      stdevs[k,k] = 0;
+    print stdevs
+
   # save up the A_k for use in computeMultipleExpectations
   A_kn_all[observe] = A_kn
   A_k_estimated_all[observe] = A_k_estimated
+  A_kl_estimated_all[observe] = A_kl_estimated
 
 print "============================================="
 print "      Testing computeMultipleExpectations"
@@ -332,17 +366,19 @@ A_ikn = numpy.zeros([len(observables_single), K, N_k.max()], numpy.float64)
 for i,observe in enumerate(observables_single):
   A_ikn[i,:,:] = A_kn_all[observe]
 for i in range(K):
-  [A_i,d2A_ij] = mbar.computeMultipleExpectations(A_ikn, u_kln[:,i,:])
+  [A_i,dA_ij,Ca_ij] = mbar.computeMultipleExpectations(A_ikn, u_kln[:,i,:], compute_covariance=True)
   print "Averages for state %d" % (i)
   print A_i
+  print "Uncertainties for state %d" % (i)
+  print dA_ij
   print "Correlation matrix between observables for state %d" % (i)
-  print d2A_ij
+  print Ca_ij
 
 print "============================================"
 print "      Testing computeEntropyAndEnthalpy"
 print "============================================"
 
-(Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij) = mbar.computeEntropyAndEnthalpy(verbose = True)
+(Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij) = mbar.computeEntropyAndEnthalpy(u_kn = u_kln, verbose = True)
 print "Free energies"
 print Delta_f_ij
 print dDelta_f_ij
@@ -421,35 +457,39 @@ for l in range(L):
 print stdevs
 
 print "============================================"
-print "      Testing computePerturbedExpectation   "
+print "      Testing computeExpectation (new states)  "
 print "============================================"
 
 nth = 3
-# test the nth "extra" state, O_extra[nth] & K_extra[nth]
+# test the nth "extra" states, O_extra[nth] & K_extra[nth]
 for observe in observables:
   print "============================================"
   print "      Testing observable %s" % (observe)
   print "============================================"
 
   if observe == 'RMS displacement':
-    A_kn = numpy.zeros([K,N_max], dtype = numpy.float64);
+    state_dependent = True
+    A_kn = numpy.zeros([K,1,N_max], dtype = numpy.float64);
     for k in range(0,K):
-      A_kn[k,0:N_k[k]] = (x_kn[k,0:N_k[k]] - O_extra[nth])**2 # observable is the squared displacement
+      A_kn[k,0,0:N_k[k]] = (x_kn[k,0:N_k[k]] - O_extra[nth])**2 # observable is the squared displacement
 
   # observable is the potential energy, a 3D array since the potential energy is a function of 
   # thermodynamic state
   elif observe == 'potential energy':
-    A_kn = unew_kln[:,nth,:]/beta
+    state_dependent = True
+    A_kn = unew_kln[:,[nth],:]/beta
 
   # position and position^2 can use the same observables  
   # observable for estimation is the position
   elif observe == 'position': 
+    state_dependent = False
     A_kn = A_kn_all['position']
 
   elif observe == 'position^2': 
+    state_dependent = False
     A_kn = A_kn_all['position^2']
 
-  (A_k_estimated, dA_k_estimated) = mbar.computePerturbedExpectation(unew_kln[:,nth,:],A_kn)
+  A_k_estimated, dA_k_estimated = mbar.computeExpectations(A_kn,unew_kln[:,[nth],:],state_dependent=state_dependent)
 
   # need to additionally transform to get the square root
   if observe == 'RMS displacement':
@@ -632,7 +672,6 @@ for i in range(nbins):
 # Compute PMF.                                
 print "Computing PMF ..." 
 [f_i, df_i] = mbar.computePMF(u_kn, bin_kn, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)  
-
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy                                        
 print "2D PMF:"
 print "%d counts out of %d counts not in any bin" % (bin_counts[0],numbrellas*nsamples)
