@@ -18,6 +18,15 @@ requirements:
     - scipy
     - numexpr
 
+test:
+  requires:
+    - nose
+    - setuptools    
+  imports:
+    - pymbar
+  commands:
+    - nosetests pymbar -v --with-doctest
+
 about:
   home: https://github.com/choderalab/pymbar
   license: GNU Lesser General Public License v2 or later (LGPLv2+)
