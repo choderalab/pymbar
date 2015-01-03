@@ -319,7 +319,7 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> [x_kn, u_kn, N_k] = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> (x_kn, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> O_ij = mbar.computeOverlap()
         """
