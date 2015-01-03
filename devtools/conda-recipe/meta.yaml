@@ -25,7 +25,7 @@ test:
   imports:
     - pymbar
   commands:
-    - nosetests pymbar -v --with-doctest
+    - nosetests pymbar --with-doctest --doctest-tests -v
 
 about:
   home: https://github.com/choderalab/pymbar
