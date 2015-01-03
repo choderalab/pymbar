@@ -649,7 +649,7 @@ class MBAR:
         #
 
     #=========================================================================
-    def computeCovianceOfSums(self, d_ij, K, a):
+    def computeCovarianceOfSums(self, d_ij, K, a):
 
         """
         Inputs: d_ij: a matrix of standard deviations of the quantities f_i - f_j
@@ -835,7 +835,7 @@ class MBAR:
             diag[0:K] = diag[K:2*K] = inner_results['observables']-inner_results['Amin']
             np.fill_diagonal(Adiag,diag)
             Theta = Adiag*inner_results['Theta']*Adiag
-            covA_ij = Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K]
+            covA_ij = np.array(Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K])
 
         if output == 'averages':
             # Return expectations and uncertainties.
@@ -932,7 +932,7 @@ class MBAR:
             Theta = Adiag*inner_results['Theta']*Adiag
 
         if compute_uncertainty:
-            covA_ij = Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I]
+            covA_ij = np.array(Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I])
             returns.append(np.sqrt(covA_ij[0:I,0:I].diagonal()))
 
         if compute_covariance:
@@ -998,7 +998,7 @@ class MBAR:
 
         returns = []
         f_k = np.matrix(inner_results['free energies'])
-        Deltaf_ij = f_k - f_k.transpose()
+        Deltaf_ij = np.array(f_k - f_k.transpose())
         returns.append(Deltaf_ij)
 
         if (compute_uncertainty):
@@ -1087,21 +1087,21 @@ class MBAR:
 
         # Compute reduced free energy difference.
         f_k = np.matrix(inner_results['free energies'])
-        Delta_f_ij = f_k - f_k.transpose()
+        Delta_f_ij = np.array(f_k - f_k.transpose())
         # compute uncertainty matrix in free energies:
         covf = Theta[2*K:3*K,2*K:3*K]
         dDelta_f_ij = self._ErrorOfDifferences(covf,warning_cutoff=warning_cutoff)
 
         # Compute reduced enthalpy difference.
         u_k = np.matrix(inner_results['observables'])
-        Delta_u_ij = u_k - u_k.transpose()
+        Delta_u_ij = np.array(u_k - u_k.transpose())
         # compute uncertainty matrix in energies:
         covu = Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K]
         dDelta_u_ij = self._ErrorOfDifferences(covu,warning_cutoff=warning_cutoff)
 
         # Compute reduced entropy difference
         s_k = u_k - f_k
-        Delta_s_ij = s_k - s_k.transpose()
+        Delta_s_ij = np.array(s_k - s_k.transpose())
         # compute uncertainty matrix in entropies
         #s_i = u_i - f_i
         #cov(s_i) =   cov(u_i - f_i)
@@ -1139,9 +1139,11 @@ class MBAR:
         uncertainties : string, optional
             Method for reporting uncertainties (default: 'from-lowest')
             'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
-            'from-reference' - same as from lowest, but from a user specified point
+            'from-specified' - same as from lowest, but from a user specified point
             'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
+         pmf_reference : int, optional
+            the reference state that is zeroed when uncertainty = 'from-specified'
 
         Returns
         -------
@@ -1232,7 +1234,7 @@ class MBAR:
         Theta_ij = self._computeAsymptoticCovarianceMatrix(W_nk, N_k)
 
         if (uncertainties == 'from-lowest') or (uncertainties == 'from-specified'):
-            # Report uncertainties in free energy difference from lowest point
+            # Report uncertainties in free energy difference from a given point
             # on PMF.
 
             if (uncertainties == 'from-lowest'):
@@ -1241,7 +1243,7 @@ class MBAR:
             elif (uncertainties == 'from-specified'):
                 if pmf_reference == None:
                     raise ParameterError(
-                        "no reference state specified for PMF using uncertainties = from-reference")
+                        "no reference state specified for PMF using uncertainties = from-specified")
                 else:
                     j = pmf_reference
             # Compute uncertainties with respect to difference in free energy
@@ -1417,7 +1419,7 @@ class MBAR:
                 print "A squared uncertainty is negative.  d2 = %e" % d2[(np.any(d2) < warning_cutoff)]
             else:
                 d2[(np.any(d2) < warning_cutoff)] = 0.0
-        return np.sqrt(d2)
+        return np.sqrt(np.array(d2))
 
     def _pseudoinverse(self, A, tol=1.0e-10):
         """Compute the Moore-Penrose pseudoinverse, wraps np.linalg.pinv

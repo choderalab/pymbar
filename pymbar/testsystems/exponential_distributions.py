@@ -57,8 +57,11 @@ class ExponentialTestCase(object):
 
         self.n_states = len(rates)
         self.rates = rates
-
         self.beta = beta
+
+    def analytical_free_energies(self):
+        """Return the FE: -log(Z)"""
+        return np.log(self.rates)
 
     def analytical_means(self):
         return self.rates ** -1.
@@ -69,9 +72,20 @@ class ExponentialTestCase(object):
     def analytical_standard_deviations(self):
         return np.sqrt(self.rates ** -2.)
 
-    def analytical_free_energies(self):
-        """Return the FE: -log(Z)"""
-        return np.log(self.rates)
+    def analytical_observable(self, observable = 'position'):
+
+        if observable == 'position':
+            return self.analytical_means()
+        if observable == 'position^2':
+            return 2.0*self.analytical_variances()
+        if observable == 'RMS displacement':
+            #<X^2> - <X>^2 = 2L^2-L^2 = L^2
+            return self.analytical_variances()
+        if observable == 'potential energy':
+            return np.ones(len(self.rates))
+
+    def analytical_entropies(self):
+        return self.analytical_observable(observable = 'potential energy') - self.analytical_free_energies()
 
     def analytical_x_squared(self):
         return self.analytical_variances() + self.analytical_means() ** 2.
@@ -117,7 +131,6 @@ class ExponentialTestCase(object):
 
         N_max = N_k.max()  # maximum number of samples per state
         N_tot = N_k.sum()  # total number of samples
-
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
         x_n = np.zeros([N_tot], np.float64)

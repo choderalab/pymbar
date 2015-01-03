@@ -60,11 +60,13 @@ class HarmonicOscillatorsTestCase(object):
         f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]
 
         """
+        self.beta = beta
         self.O_k = np.array(O_k, np.float64)
         self.n_states = len(self.O_k)
         self.K_k = np.array(K_k, np.float64)
 
-        self.beta = beta
+        if len(self.K_k) != self.n_states:
+            raise ValueError('Lengths of K_k=%d and O_k=%d should be equal' % (len(self.O_k),len(self.K_k)))
 
     def analytical_means(self):
         return self.O_k
@@ -75,16 +77,27 @@ class HarmonicOscillatorsTestCase(object):
     def analytical_standard_deviations(self):
         return (self.beta * self.K_k) ** -0.5
 
+    def analytical_observable(self, observable = 'position'):
+
+        if observable == 'position':
+            return self.analytical_means()
+        if observable == 'potential energy':
+            return (0.5/self.beta)*np.ones(self.n_states)
+        if observable == 'position^2':
+            return 1.0/(self.beta*self.K_k) + np.square(self.O_k)
+        if observable == 'RMS displacement':
+            return self.analytical_standard_deviations()
+
     def analytical_free_energies(self, subtract_component=0):
         fe = -0.5 * np.log(2 * np.pi / (self.beta * self.K_k))
         if subtract_component is not None:
             fe -= fe[subtract_component]
         return fe
 
-    def analytical_x_squared(self):
-        return self.analytical_variances() + self.analytical_means() ** 2.
+    def analytical_entropies(self, subtract_component = 0):
+        return self.analytical_observable(observable = 'potential energy') - self.analytical_free_energies(subtract_component)
 
-    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kln'):
+    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kn'):
         """Draw samples from the distribution.
 
         Parameters
