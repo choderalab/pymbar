@@ -1,8 +1,8 @@
 language: c
 
-branches:
-  only:
-    - master
+#branches:
+#  only:
+#    - master  # Need to build the nk branch for current pymbar.
 
 install:
   - source devtools/ci/install.sh
