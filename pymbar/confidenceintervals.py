@@ -20,7 +20,7 @@
 # License along with pymbar. If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 
-import numpy
+import numpy as np
 import scipy
 import scipy.special
 import scipy.stats
@@ -199,13 +199,13 @@ def generateConfidenceIntervals(replicates, K):
     min_alpha = 0.1
     max_alpha = 4.0
     nalpha = 40
-    alpha_values = numpy.linspace(min_alpha, max_alpha, num=nalpha)
-    Pobs = numpy.zeros([nalpha], dtype=numpy.float64)
-    dPobs = numpy.zeros([nalpha], dtype=numpy.float64)
-    Plow = numpy.zeros([nalpha], dtype=numpy.float64)
-    Phigh = numpy.zeros([nalpha], dtype=numpy.float64)
+    alpha_values = np.linspace(min_alpha, max_alpha, num=nalpha)
+    Pobs = np.zeros([nalpha], dtype=np.float64)
+    dPobs = np.zeros([nalpha], dtype=np.float64)
+    Plow = np.zeros([nalpha], dtype=np.float64)
+    Phigh = np.zeros([nalpha], dtype=np.float64)
     nreplicates = len(replicates)
-    dim = len(numpy.shape(replicates[0]['estimated']))
+    dim = len(np.shape(replicates[0]['estimated']))
     for alpha_index in range(0, nalpha):
         # Get alpha value.
         alpha = alpha_values[alpha_index]
@@ -218,7 +218,7 @@ def generateConfidenceIntervals(replicates, K):
             # Compute fraction of free energy differences where error <= alpha sigma
             # We only count differences where the analytical difference is larger than a cutoff, so that the results will not be limited by machine precision.
             if (dim == 0):
-                if numpy.isnan(replicate['error']) or numpy.isnan(replicate['destimated']):
+                if np.isnan(replicate['error']) or np.isnan(replicate['destimated']):
                     print "replicate %d" % replicate_index
                     print "error"
                     print replicate['error']
@@ -233,7 +233,7 @@ def generateConfidenceIntervals(replicates, K):
 
             elif (dim == 1):
                 for i in range(0, K):
-                    if numpy.isnan(replicate['error'][i]) or numpy.isnan(replicate['destimated'][i]):
+                    if np.isnan(replicate['error'][i]) or np.isnan(replicate['destimated'][i]):
                         print "replicate %d" % replicate_index
                         print "error"
                         print replicate['error']
@@ -249,7 +249,7 @@ def generateConfidenceIntervals(replicates, K):
             elif (dim == 2):
                 for i in range(0, K):
                     for j in range(0, i):
-                        if numpy.isnan(replicate['error'][i, j]) or numpy.isnan(replicate['destimated'][i, j]):
+                        if np.isnan(replicate['error'][i, j]) or np.isnan(replicate['destimated'][i, j]):
                             print "replicate %d" % replicate_index
                             print "ij_error"
                             print replicate['error']
@@ -265,29 +265,29 @@ def generateConfidenceIntervals(replicates, K):
         Pobs[alpha_index] = a / (a + b)
         Plow[alpha_index] = scipy.stats.beta.ppf(0.025, a, b)
         Phigh[alpha_index] = scipy.stats.beta.ppf(0.975, a, b)
-        dPobs[alpha_index] = numpy.sqrt(a * b / ((a + b) ** 2 * (a + b + 1)))
+        dPobs[alpha_index] = np.sqrt(a * b / ((a + b) ** 2 * (a + b + 1)))
 
     # Write error as a function of sigma.
     print "Error vs. alpha"
     print "%5s %10s %10s %16s %17s" % ('alpha', 'cheby', 'obs', 'obs err', 'normal')
-    Pnorm = scipy.special.erf(alpha_values / numpy.sqrt(2.))
+    Pnorm = scipy.special.erf(alpha_values / np.sqrt(2.))
     for alpha_index in range(0, nalpha):
         alpha = alpha_values[alpha_index]
         print "%5.1f %10.6f %10.6f (%10.6f,%10.6f) %10.6f" % (alpha, 1. - 1. / alpha ** 2, Pobs[alpha_index], Plow[alpha_index], Phigh[alpha_index], Pnorm[alpha_index])
 
     # compute bias, average, etc - do it by replicate, not by bias
     if dim == 0:
-        vals = numpy.zeros([nreplicates], dtype=numpy.float64)
-        vals_error = numpy.zeros([nreplicates], dtype=numpy.float64)
-        vals_std = numpy.zeros([nreplicates], dtype=numpy.float64)
+        vals = np.zeros([nreplicates], dtype=np.float64)
+        vals_error = np.zeros([nreplicates], dtype=np.float64)
+        vals_std = np.zeros([nreplicates], dtype=np.float64)
     elif dim == 1:
-        vals = numpy.zeros([nreplicates, K], dtype=numpy.float64)
-        vals_error = numpy.zeros([nreplicates, K], dtype=numpy.float64)
-        vals_std = numpy.zeros([nreplicates, K], dtype=numpy.float64)
+        vals = np.zeros([nreplicates, K], dtype=np.float64)
+        vals_error = np.zeros([nreplicates, K], dtype=np.float64)
+        vals_std = np.zeros([nreplicates, K], dtype=np.float64)
     elif dim == 2:
-        vals = numpy.zeros([nreplicates, K, K], dtype=numpy.float64)
-        vals_error = numpy.zeros([nreplicates, K, K], dtype=numpy.float64)
-        vals_std = numpy.zeros([nreplicates, K, K], dtype=numpy.float64)
+        vals = np.zeros([nreplicates, K, K], dtype=np.float64)
+        vals_error = np.zeros([nreplicates, K, K], dtype=np.float64)
+        vals_std = np.zeros([nreplicates, K, K], dtype=np.float64)
 
     rindex = 0
     for replicate in replicates:
@@ -308,14 +308,14 @@ def generateConfidenceIntervals(replicates, K):
                     vals_std[rindex,:,:] = replicate['destimated']
         rindex += 1
 
-    aveval = numpy.average(vals, axis=0)
-    standarddev = numpy.std(vals, axis=0)
-    bias = numpy.average(vals_error, axis=0)
-    aveerr = numpy.average(vals_error, axis=0)
+    aveval = np.average(vals, axis=0)
+    standarddev = np.std(vals, axis=0)
+    bias = np.average(vals_error, axis=0)
+    aveerr = np.average(vals_error, axis=0)
     d2 = vals_error ** 2
-    rms_error = (numpy.average(d2, axis=0)) ** (1.0 / 2.0)
+    rms_error = (np.average(d2, axis=0)) ** (1.0 / 2.0)
     d2 = vals_std ** 2
-    ave_std = (numpy.average(d2, axis=0)) ** (1.0 / 2.0)
+    ave_std = (np.average(d2, axis=0)) ** (1.0 / 2.0)
 
     # for now, just print out the data at the end for each
     print ""
