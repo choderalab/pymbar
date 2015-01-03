@@ -12,7 +12,7 @@ class HarmonicOscillatorsTestCase(object):
     Generate energy samples with default parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase()
-    >>> [x_kn, u_kln, N_k] = testcase.sample()
+    >>> [x_kn, u_kln, N_k, s_n] = testcase.sample()
 
     Retrieve analytical properties.
 
@@ -20,21 +20,21 @@ class HarmonicOscillatorsTestCase(object):
     >>> analytical_variances = testcase.analytical_variances()
     >>> analytical_standard_deviations = testcase.analytical_standard_deviations()
     >>> analytical_free_energies = testcase.analytical_free_energies()
-    >>> analytical_x_squared = testcase.analytical_x_squared()
+    >>> analytical_x_squared = testcase.analytical_observable('position^2')
 
     Generate energy samples with default parameters in one line.
 
-    >>> [x_kn, u_kln, N_k] = HarmonicOscillatorsTestCase().sample()
+    >>> (x_kn, u_kln, N_k, s_n) = HarmonicOscillatorsTestCase().sample()
 
     Generate energy samples with specified parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase(O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
-    >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50])
+    >>> (x_kn, u_kln, N_k, s_n) = testcase.sample(N_k=[10, 20, 30, 40, 50])
 
     Test sampling in different output modes.
 
-    >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
-    >>> [x_n, u_kn, N_k, s_n] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> (x_kn, u_kln, N_k) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
+    >>> (x_n, u_kn, N_k, s_n) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
 
     """
 
