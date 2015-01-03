@@ -1,13 +1,17 @@
-sudo apt-get install -qq -y g++ gfortran csh
-sudo apt-get install -qq -y g++-multilib gcc-multilib
-wget http://repo.continuum.io/miniconda/Miniconda-3.0.5-Linux-x86_64.sh
-bash Miniconda-3.0.5-Linux-x86_64.sh -b
+MINICONDA=Miniconda-latest-Linux-x86_64.sh
+MINICONDA_MD5=$(curl -s http://repo.continuum.io/miniconda/ | grep -A3 $MINICONDA | sed -n '4p' | sed -n 's/ *<td>\(.*\)<\/td> */\1/p')
+wget http://repo.continuum.io/miniconda/$MINICONDA
+if [[ $MINICONDA_MD5 != $(md5sum $MINICONDA | cut -d ' ' -f 1) ]]; then
+    echo "Miniconda MD5 mismatch"
+    exit 1
+fi
+bash $MINICONDA -b
 PIP_ARGS="-U"
 
+sudo ln -s /usr/bin/g++ /usr/bin/g++44
 export PATH=$HOME/miniconda/bin:$PATH
 
 conda update --yes conda
 conda config --add channels http://conda.binstar.org/omnia
-conda create --yes -n ${python} python=${python} --file devtools/ci/requirements-conda.txt
-source activate $python
-$HOME/miniconda/envs/${python}/bin/pip install $PIP_ARGS nose-exclude
+conda install --yes conda-build
+
