@@ -290,8 +290,8 @@ class MBAR:
 
         return np.exp(self.Log_W_nk)
 
-     #=========================================================================
-     def computeEffectiveSampleNumber(self, verbose = False):
+    #=========================================================================
+    def computeEffectiveSampleNumber(self, verbose = False):
         """
         Compute the effective sample number of each state;
         essentially, an estimate of how many samples are contributing to the average
@@ -323,6 +323,9 @@ class MBAR:
         # effective # of samples contributing to averages carried out at state i 
         #                        =  (\sum_{n=1}^N w_in)^2 / \sum_{n=1}^N w_in^2
         #                        =  (\sum_{n=1}^N w_in^2)^-1
+        #
+        # the effective sample number is most useful to diagnose when there are only a few samples
+        # contributing to the averages.
 
         Examples
         --------
@@ -333,10 +336,10 @@ class MBAR:
         >>> N_eff = mbar.computeEffectiveSampleNumber()
         """
 
-        N_eff = numpy.zeros(self.K)
+        N_eff = np.zeros(self.K)
         for k in range(self.K):
-            w = numpy.exp(self.Log_W_nk[:,k])
-            N_eff[k] = 1/numpy.sum(w**2)
+            w = np.exp(self.Log_W_nk[:,k])
+            N_eff[k] = 1/np.sum(w**2)
 
             if verbose:
                 print "Effective number of sample in state %d is %10.3f" % (k,N_eff[k])
