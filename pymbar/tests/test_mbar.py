@@ -187,9 +187,22 @@ def test_mbar_computeEntropyAndEnthalpy():
         z = convert_to_differences(s_ij,ds_ij,sa)
         eq(z / z_scale_factor, np.zeros(np.shape(z)), decimal=0)
 
-def test_mbar_computeOverlap():
+def test_mbar_computeEffectiveSampleNumber():
+    """ testing computeEffectiveSampleNumber """
 
-    """ testing computeOverlap """
+    for system_generator in system_generators:
+        name, test = system_generator()
+        x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+        eq(N_k, N_k_output)
+        mbar = MBAR(u_kn, N_k)
+        
+        # one mathematical effective sample numbers should be between N_k and sum_k N_k
+        N_eff = mbar.computeEffectiveSampleNumber()
+        sumN = np.sum(N_k)
+        for k in range(len(N_eff)):
+            eq(np.bool(N_eff[k] > N_k[k] and N_eff[k] < sumN),True)
+        
+def test_mbar_computeOverlap():
 
     # tests with identical states, which gives analytical results.
 
