@@ -685,39 +685,6 @@ for i in range(1,nbins):
      stdevs = numpy.abs(error)/df_i[i]
    print '%8d %6.2f %6.2f %8d %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_centers[i,1] , bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs)
 
-"""
-print "============================================"
-print "      Testing computePMF_states              "
-print "============================================"
-
-# Generate a map between full bin index and occupied bin index.                                                             
-full_indexmap = dict()                                                                                                      
-packed_index = 0                                                                                                            
-packed_bin_kn = bin_kn.copy()                                                                                               
-for full_index in range(nbins):                                                                                             
-  if (bin_counts[full_index] > 0):                                                                                          
-    full_indexmap[packed_index] = full_index                                                                                
-    packed_bin_kn[(bin_kn == full_index)] = packed_index                                                                    
-    packed_index += 1                                                                                                       
-                                                                 
-npackedbins = packed_index                                                                                                  
-                                                                                                                              
-# Count bin occupation                 
-packed_bin_counts = numpy.zeros([npackedbins], int)                                                                             
-for i in range(npackedbins):                                                                                                
-  packed_bin_counts[i] = (packed_bin_kn == i).sum()                                                                         
-
-# Not sure what's going on here.
-[f_i, df_i] = mbar.computePMF_states(u_kn, bin_kn, nbins, uncertainties = 'from-normalization')
-
-# Show free energy and uncertainty of each occupied bin relative to lowest free energy                                        
-print "2D PMF"
-print ""
-print "%8s %6s %6s %8s %10s %10s" % ('bin', 'x', 'y', 'N', 'f', 'df')
-for i in range(nbins):
-   print '%8d %6.1f %6.1f %8d %10.3f %10.3f' % (i,  bin_centers[i,0], bin_centers[i,1], bin_counts[i], f_i[i], df_i[i], pmf_analytical[i])
-"""
-
 #=============================================================================================
 # TERMINATE
 #=============================================================================================
