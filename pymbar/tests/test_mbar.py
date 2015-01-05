@@ -199,8 +199,8 @@ def test_mbar_computeEffectiveSampleNumber():
         # one mathematical effective sample numbers should be between N_k and sum_k N_k
         N_eff = mbar.computeEffectiveSampleNumber()
         sumN = np.sum(N_k)
-        for k in range(len(N_eff)):
-            eq(np.bool(N_eff[k] > N_k[k] and N_eff[k] < sumN),True)
+        assert all(N_eff > N_k)
+        assert all(N_eff < sumN)
         
 def test_mbar_computeOverlap():
 
