@@ -274,6 +274,20 @@ class MBAR:
             print "MBAR initialization complete."
         return
 
+    @property
+    def W_nk(self):
+        """Retrieve the weight matrix W_nk from the MBAR algorithm.
+
+        Necessary because they are stored internally as log weights.
+
+        Returns
+        -------
+        weights : np.ndarray, float, shape=(N, K)
+            NxK matrix of weights in the MBAR covariance and averaging formulas
+
+        """        
+        return np.exp(self.Log_W_nk)
+
 
     #=========================================================================
     def getWeights(self):
@@ -288,7 +302,7 @@ class MBAR:
 
         """
 
-        return np.exp(self.Log_W_nk)
+        return self.W_nk
 
     #=========================================================================
     def computeEffectiveSampleNumber(self, verbose = False):
@@ -340,7 +354,6 @@ class MBAR:
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:,k])
             N_eff[k] = 1/np.sum(w**2)
-
             if verbose:
                 print "Effective number of sample in state %d is %10.3f" % (k,N_eff[k])
                 print "Efficiency for state %d is %d/%d = %10.4f" % (k,N_eff[k],len(w),N_eff[k]/len(w))
