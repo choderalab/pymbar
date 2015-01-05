@@ -531,6 +531,41 @@ print "Overlap scalar output"
 print O
 
 print "============================================"
+print "    Testing computeEffectiveSampleNumber    "
+print "============================================"
+
+N_eff = mbar.computeEffectiveSampleNumber(verbose = True)
+print "Effective Sample number"
+print N_eff
+print "Compare stanadrd estimate of <x> with the MBAR estimate of <x>"
+print "We should have that with MBAR, err_MBAR = sqrt(N_k/N_eff)*err_standard,"
+print "so standard (scaled) results should be very close to MBAR results."
+print "No standard estimate exists for states that are not sampled."
+A_kn = x_kn
+(val_mbar, err_mbar) = mbar.computeExpectations(A_kn)
+err_standard = numpy.zeros([K],dtype = numpy.float64)
+err_scaled = numpy.zeros([K],dtype = numpy.float64)
+
+for k in range(K):
+  if N_k[k] != 0:
+    # use position
+    err_standard[k] = numpy.std(A_kn[k,0:N_k[k]])/numpy.sqrt(N_k[k]-1)
+    err_scaled[k] = numpy.std(A_kn[k,0:N_k[k]])/numpy.sqrt(N_eff[k]-1)
+
+print "                    ",
+for k in range(K):
+  print "       %d   " %(k),
+print ""
+print "MBAR             :",
+print err_mbar
+print "standard         :",
+print err_standard
+print "sqrt N_k/N_eff   :",
+print numpy.sqrt(N_k/N_eff)
+print "Standard (scaled):",
+print err_standard * numpy.sqrt(N_k/N_eff)
+
+print "============================================"
 print "      Testing computePMF   "
 print "============================================"
 

@@ -291,6 +291,63 @@ class MBAR:
         return np.exp(self.Log_W_nk)
 
     #=========================================================================
+    def computeEffectiveSampleNumber(self, verbose = False):
+        """
+        Compute the effective sample number of each state;
+        essentially, an estimate of how many samples are contributing to the average
+        at given state.  See pymbar/examples for a demonstration.
+
+        It also counts the efficiency of the sampling, which is simply the ratio
+        of the effective number of samples at a given state to the total number
+        of samples collected.
+        
+        Returns
+        -------
+        N_eff : np.ndarray, float, shape=(K)
+                estimated number of states contributing to estimates at each 
+                state i. An estimate to how many samples collected just at state 
+                i would result in similar statistical efficiency as the MBAR 
+                simulation. Valid for both sampled states (in which the weight 
+                will be greater than N_k[i], and unsampled states.
+
+        Parameters
+        ----------
+        verbose : print out information about the effective number of samples
+
+        Notes
+        -----
+
+        # using Kish (1965) formula (Kish, Leslie (1965). Survey Sampling. New York: Wiley)
+        # As the weights become more concentrated in fewer observations, the effective sample size shrinks.
+        # from http://healthcare-economist.com/2013/08/22/effective-sample-size/
+        # effective # of samples contributing to averages carried out at state i 
+        #                        =  (\sum_{n=1}^N w_in)^2 / \sum_{n=1}^N w_in^2
+        #                        =  (\sum_{n=1}^N w_in^2)^-1
+        #
+        # the effective sample number is most useful to diagnose when there are only a few samples
+        # contributing to the averages.
+
+        Examples
+        --------
+        
+        >>> from pymbar import testsystems
+        >>> [x_kn, u_kln, N_k, s_n] = testsystems.HarmonicOscillatorsTestCase().sample()
+        >>> mbar = MBAR(u_kln, N_k)
+        >>> N_eff = mbar.computeEffectiveSampleNumber()
+        """
+
+        N_eff = np.zeros(self.K)
+        for k in range(self.K):
+            w = np.exp(self.Log_W_nk[:,k])
+            N_eff[k] = 1/np.sum(w**2)
+
+            if verbose:
+                print "Effective number of sample in state %d is %10.3f" % (k,N_eff[k])
+                print "Efficiency for state %d is %d/%d = %10.4f" % (k,N_eff[k],len(w),N_eff[k]/len(w))
+
+        return N_eff
+
+    #=========================================================================
     def computeOverlap(self, output='scalar'):
         """Compute estimate of overlap matrix between the states.
 
