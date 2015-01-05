@@ -71,7 +71,7 @@ def test_mbar_free_energies():
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
 
-        fe, fe_sigma = mbar.getFreeEnergyDifferences()
+        fe, fe_sigma, Theta_ij = mbar.getFreeEnergyDifferences()
         fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
 
         fe0 = test.analytical_free_energies()
@@ -153,7 +153,7 @@ def test_mbar_computeMultipleExpectations():
         A[0,:] = x_n
         A[1,:] = x_n**2
         state = 1
-        mu, sigma = mbar.computeMultipleExpectations(A,u_kn[state,:])
+        mu, sigma, covariances = mbar.computeMultipleExpectations(A,u_kn[state,:])
         mu0 = test.analytical_observable(observable = 'position')[state]
         mu1 = test.analytical_observable(observable = 'position^2')[state]
         z = (mu0 - mu[0]) / sigma[0]
@@ -214,33 +214,28 @@ def test_mbar_computeOverlap():
     x_n, u_kn, N_k_output, s_n = test.sample(even_N_k, mode='u_kn')
     mbar = MBAR(u_kn, even_N_k)
 
-    O = mbar.computeOverlap(output='matrix')
-    test = np.matrix((1.0/d)*np.ones([d,d]))
-    eq(O, test, decimal=precision)
+    overlap_scalar, eigenval, O = mbar.computeOverlap()
 
-    O = mbar.computeOverlap(output='eigenvalues')
-    test = np.zeros(d)
-    test[0] = 1.0
-    eq(O, test, decimal=precision)
+    reference_matrix = np.matrix((1.0/d)*np.ones([d,d]))
+    reference_eigenvalues = np.zeros(d)
+    reference_eigenvalues[0] = 1.0
+    reference_scalar = np.float64(1.0)
 
-    O = mbar.computeOverlap(output='scalar')
-    test = np.float64(1.0)
-    eq(O, test, decimal=precision)
+    eq(O, reference_matrix, decimal=precision)
+    eq(eigenval, reference_eigenvalues, decimal=precision)
+    eq(overlap_scalar, reference_scalar, decimal=precision)
 
     # test of more straightforward examples
     for system_generator in system_generators:
         name, test = system_generator()
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         mbar = MBAR(u_kn, N_k)
-        O = mbar.computeOverlap(output='matrix')
+        overlap_scalar, eigenval, O = mbar.computeOverlap()
 
         # rows of matrix should sum to one
         sumrows = np.array(np.sum(O,axis=1))
         eq(sumrows, np.ones(np.shape(sumrows)), decimal=precision)
-
-        # first eigenvalue should be 1
-        O = mbar.computeOverlap(output='eigenvalues')
-        eq(O[0], np.float64(1.0), decimal=precision)
+        eq(eigenval[0], np.float64(1.0), decimal=precision)
 
 def test_mbar_getWeights():
 

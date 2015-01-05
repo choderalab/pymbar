@@ -140,7 +140,7 @@ print "============================================="
 print "      Testing getFreeEnergyDifferences       "
 print "============================================="
 
-(Delta_f_ij_estimated, dDelta_f_ij_estimated) = mbar.getFreeEnergyDifferences()
+(Delta_f_ij_estimated, dDelta_f_ij_estimated, _Theta_ij) = mbar.getFreeEnergyDifferences()
 
 # Compute error from analytical free energy differences.
 Delta_f_ij_error = Delta_f_ij_estimated - Delta_f_ij_analytical
@@ -512,7 +512,8 @@ print "============================================"
 print "      Testing computeOverlap   "
 print "============================================"
 
-O_ij = mbar.computeOverlap(output='matrix')                
+O, O_i, O_ij = mbar.computeOverlap()
+
 print "Overlap matrix output"
 print O_ij
 
@@ -522,11 +523,11 @@ for k in range(K):
     print "looks like it is."
   else:
     print "but it's not."
-O_i = mbar.computeOverlap(output='eigenvalues')                
+
 print "Overlap eigenvalue output"
 print O_i
 
-O = mbar.computeOverlap(output='scalar')                
+
 print "Overlap scalar output"
 print O
 

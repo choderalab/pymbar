@@ -272,7 +272,7 @@ class MBAR:
 
         if self.verbose:
             print "MBAR initialization complete."
-        return
+
 
     @property
     def W_nk(self):
@@ -361,20 +361,18 @@ class MBAR:
         return N_eff
 
     #=========================================================================
-    def computeOverlap(self, output='scalar'):
+    def computeOverlap(self):
         """Compute estimate of overlap matrix between the states.
 
         Returns
         -------
+        overlap_scalar : np.ndarray, float, shape=(K, K)
+            One minus the largest nontrival eigenvalue
+        eigenval : np.ndarray, float, shape=(K)
+            The sorted (descending) eigenvalues of the overlap matrix.
         O : np.ndarray, float, shape=(K, K)
             estimated state overlap matrix: O[i,j] is an estimate
             of the probability of observing a sample from state i in state j
-
-        Parameters
-        ----------
-        output : string, optional
-            One of 'scalar', 'matrix', 'eigenvalues', 'all', specifying
-        what measure of overlap to return
 
         Notes
         -----
@@ -400,14 +398,8 @@ class MBAR:
         # sort in descending order
         eigenval = np.sort(eigenval)[::-1]
         overlap_scalar = 1 - eigenval[1]
-        if (output == 'scalar'):
-            return overlap_scalar
-        elif (output == 'eigenvalues'):
-            return eigenval
-        elif (output == 'matrix'):
-            return O
-        elif (output == 'all'):
-            return overlap_scalar, eigenval, O
+
+        return overlap_scalar, eigenval, O
 
     #=========================================================================
     def getFreeEnergyDifferences(self, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
@@ -430,11 +422,15 @@ class MBAR:
 
         Returns
         -------
-        Deltaf_ij :L np.ndarray, float, shape=(K, K)
+        Deltaf_ij : np.ndarray, float, shape=(K, K)
             Deltaf_ij[i,j] is the estimated free energy difference
-        dDeltaf_ij :L np.ndarray, float, shape=(K, K)
+        dDeltaf_ij : np.ndarray, float, shape=(K, K)
+            If compute_uncertainty==True, 
             dDeltaf_ij[i,j] is the estimated statistical uncertainty 
-            (one standard deviation) in Deltaf_ij[i,j]
+            (one standard deviation) in Deltaf_ij[i,j].  Otherwise None.
+        Theta_ij : np.ndarray, float, shape=(K, K)
+            The theta_matrix if return_theta==True, otherwise None.
+            
 
         Notes
         -----
@@ -453,19 +449,19 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> [Deltaf_ij, dDeltaf_ij] = mbar.getFreeEnergyDifferences()
+        >>> Deltaf_ij, dDeltaf_ij, Theta_ij = mbar.getFreeEnergyDifferences()
 
         """
-
+        Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
+        
         # Compute free energy differences.
         f_i = np.matrix(self.f_k)
         Deltaf_ij = f_i - f_i.transpose()
 
         # zero out numerical error for thermodynamically identical states
         self._zerosamestates(Deltaf_ij)
-
-        returns = []
-        returns.append(np.array(Deltaf_ij))
+        
+        Deltaf_ij = np.array(Deltaf_ij)  # Convert from np.matrix to np.array
 
         if compute_uncertainty or return_theta:
             # Compute asymptotic covariance matrix.
@@ -473,13 +469,13 @@ class MBAR:
                 np.exp(self.Log_W_nk), self.N_k, method=uncertainty_method)
 
         if compute_uncertainty:
-            dDeltaf_ij = self._ErrorOfDifferences(Theta_ij,warning_cutoff=warning_cutoff)
+            dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
             # zero out numerical error for thermodynamically identical states
             self._zerosamestates(dDeltaf_ij)
             # Return matrix of free energy differences and uncertainties.
-            returns.append(np.array(dDeltaf_ij))
+            dDeltaf_ij = np.array(dDeltaf_ij)
 
-        return returns
+        return Deltaf_ij, dDeltaf_ij, Theta_ij
 
     #=========================================================================
     def computeExpectationsInner(self, A_n, u_ln, state_map,
@@ -827,6 +823,7 @@ class MBAR:
             dA_i  (K np float64 array) - dA_i[i] is uncertainty estimate (one standard deviation) for A_i[i]
             or
             dA_ij (K np float64 array) - dA_ij[i,j] is uncertainty estimate (one standard deviation) for the difference in A beteen i and j
+            or None, if compute_uncertainty is False.
 
         References
         ----------
@@ -894,7 +891,8 @@ class MBAR:
                                                       return_theta=compute_uncertainty,
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
-        returns = []
+
+        mu, sigma = None, None
 
         if compute_uncertainty:
             # we want the theta matrix for the exponentials of the
@@ -908,20 +906,19 @@ class MBAR:
             covA_ij = np.array(Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K])
 
         if output == 'averages':
-            # Return expectations and uncertainties.
-            returns.append(inner_results['observables'])
+            mu = inner_results['observables']
             if compute_uncertainty:
-                returns.append(np.sqrt(covA_ij[0:K,0:K].diagonal()))
+                sigma = np.sqrt(covA_ij[0:K,0:K].diagonal())
                                
         if output == 'differences':
             A_im = np.matrix(inner_results['observables'])
             A_ij = A_im - A_im.transpose()
 
-            returns.append(np.array(A_ij))
+            mu = np.array(A_ij)
             if compute_uncertainty:
-                returns.append(self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff))
+                sigma = self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff)
 
-        return returns
+        return mu, sigma
 
     #=========================================================================
     def computeMultipleExpectations(self, A_in, u_n, compute_uncertainty=True, compute_covariance=False,
@@ -941,12 +938,15 @@ class MBAR:
             A_in[i,n] = A_i(x_n), the value of phase observable i for configuration n at state of interest
         u_n : np.ndarray, float, shape=(N)
             u_n[n] is the reduced potential of configuration n at the state of interest
+        compute_uncertainty : bool, optional, default=True
+            If True, calculate the uncertainty
+        compute_covariance : bool, optional, default=False
+            If True, calculate the covariance
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        return_covariance: Whether to return the covariance of the I observables.    
 
         Returns
         -------
@@ -955,8 +955,10 @@ class MBAR:
             A_i[i] is the estimate for the expectation of A_i(x) at the state specified by u_kn
         dA_i : np.ndarray, float, shape = (I)
             dA_i[i] is the uncertainty in the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:] 
+            or None if compute_uncertainty is False
         d2A_ij : np.ndarray, float, shape=(I, I)
             d2A_ij[i,j] is the COVARIANCE in the estimates of A_i[i] and A_i[j]: we can't actually take a square root
+            or None if compute_covariance is False
 
         Examples
         --------
@@ -966,7 +968,7 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_in = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[0,:]
-        >>> [A_i, d2A_ij] = mbar.computeMultipleExpectations(A_in, u_kn)
+        >>> (A_i, dA_i, d2A_ij) = mbar.computeMultipleExpectations(A_in, u_kn)
 
         """
 
@@ -991,8 +993,9 @@ class MBAR:
                                                       return_theta=(compute_uncertainty or compute_covariance),
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
-        returns = []
-        returns.append(inner_results['observables'])
+        
+        expectations, uncertainties, covariances = None, None, None
+        expectations = inner_results['observables']
 
         if compute_uncertainty or compute_covariance:
             Adiag = np.zeros([2*I,2*I],dtype=np.float64)
@@ -1003,14 +1006,14 @@ class MBAR:
 
         if compute_uncertainty:
             covA_ij = np.array(Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I])
-            returns.append(np.sqrt(covA_ij[0:I,0:I].diagonal()))
+            uncertainties = np.sqrt(covA_ij[0:I,0:I].diagonal())
 
         if compute_covariance:
             # compute estimate of statistical covariance of the observables
-            returns.append(inner_results['Theta'][0:I,0:I])
+            covariances = inner_results['Theta'][0:I,0:I]
             
-        # Return expectations, uncertainties, covariances, theta
-        return returns
+        return expectations, uncertainties, covariances
+
 
     #=========================================================================
     def computePerturbedFreeEnergies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10):
@@ -1023,7 +1026,7 @@ class MBAR:
         u_ln : np.ndarray, float, shape=(L, Nmax)
             u_ln[l,n] is the reduced potential energy of uncorrelated
             configuration n evaluated at new state k.  Can be completely indepednent of the original number of states.
-        compute_uncertainty : bool, optional
+        compute_uncertainty : bool, optional, default=True
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
@@ -1037,13 +1040,14 @@ class MBAR:
             Deltaf_ij[i,j] = f_j - f_i, the dimensionless free energy difference between new states i and j
         dDeltaf_ij : np.ndarray, float, shape=(L, L)
             dDeltaf_ij[i,j] is the estimated statistical uncertainty in Deltaf_ij[i,j]
+            or None if compute_uncertainty is False
 
         Examples
         --------
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> [Deltaf_ij, dDeltaf_ij] = mbar.computePerturbedFreeEnergies(u_kn)
+        >>> Deltaf_ij, dDeltaf_ij = mbar.computePerturbedFreeEnergies(u_kn)
         """
 
         # Convert to np matrix.
@@ -1066,16 +1070,16 @@ class MBAR:
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
 
-        returns = []
+        Deltaf_ij, dDeltaf_ij = None, None
+        
         f_k = np.matrix(inner_results['free energies'])
         Deltaf_ij = np.array(f_k - f_k.transpose())
-        returns.append(Deltaf_ij)
 
         if (compute_uncertainty):
-            returns.append(self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff))
+            dDeltaf_ij = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
 
         # Return matrix of free energy differences and uncertainties.
-        return returns
+        return Deltaf_ij, dDeltaf_ij
 
     #=====================================================================
 
@@ -1369,7 +1373,6 @@ class MBAR:
         else:
             raise "Uncertainty method '%s' not recognized." % uncertainties
 
-        return
 
     #=========================================================================
     # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
