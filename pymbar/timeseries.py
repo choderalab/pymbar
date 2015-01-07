@@ -671,16 +671,16 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
     # Compute the statistical inefficiency for the timeseries.
     if not g:
         if verbose:
-            print "Computing statistical inefficiency..."
+            print("Computing statistical inefficiency...")
         g = statisticalInefficiency(A_t, A_t, fast=fast)
         if verbose:
-            print "g = %f" % g
+            print("g = %f" % g)
 
     if conservative:
         # Round g up to determine the stride we can use to pick out regularly-spaced uncorrelated samples.
         stride = int(math.ceil(g))
         if verbose:
-            print "conservative subsampling: using stride of %d" % stride
+            print("conservative subsampling: using stride of %d" % stride)
 
         # Assemble list of indices of uncorrelated snapshots.
         indices = range(0, T, stride)
@@ -695,13 +695,13 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
                 indices.append(t)
             n += 1
         if verbose:
-            print "standard subsampling: using average stride of %f" % g
+            print("standard subsampling: using average stride of %f" % g)
 
     # Number of samples in subsampled timeseries.
     N = len(indices)
 
     if verbose:
-        print "The resulting subsampled set has %d samples (original timeseries had %d)." % (N, T)
+        print("The resulting subsampled set has %d samples (original timeseries had %d)." % (N, T))
 
     # Return the list of indices of uncorrelated snapshots.
     return indices

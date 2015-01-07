@@ -109,7 +109,7 @@ def BARzero(w_F, w_R, DeltaF):
         log_f_F = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
     except:
         # give up; if there's overflow, return zero
-        print "The input data results in overflow in BAR"
+        print("The input data results in overflow in BAR")
         return np.nan
     log_numer = _logsum(log_f_F) - np.log(T_F)
 
@@ -121,7 +121,7 @@ def BARzero(w_F, w_R, DeltaF):
     try:
         log_f_R = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R)) - w_R
     except:
-        print "The input data results in overflow in BAR"
+        print("The input data results in overflow in BAR")
         return np.nan
     log_denom = _logsum(log_f_R) - np.log(T_R)
 
@@ -214,7 +214,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
 
         if (np.isnan(FUpperB) or np.isnan(FLowerB)):
             # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
-            print "Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty."
+            print("Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty.")
             if compute_uncertainty:
                 return [0.0, 0.0]
             else:
@@ -224,7 +224,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
             # There may be a better way to do this, and the above bracket should rarely fail.
             if verbose:
-                print 'Initial brackets did not actually bracket, widening them'
+                print('Initial brackets did not actually bracket, widening them')
             FAve = (UpperB + LowerB) / 2
             UpperB = UpperB - max(abs(UpperB - FAve), 0.1)
             LowerB = LowerB + max(abs(LowerB - FAve), 0.1)
@@ -251,7 +251,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
             if FNew == 0:
                 # Convergence is achieved.
                 if verbose:
-                    print "Convergence achieved."
+                    print("Convergence achieved.")
                 relative_change = 10 ^ (-15)
                 break
 
@@ -269,7 +269,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         if (DeltaF == 0.0):
             # The free energy difference appears to be zero -- return.
             if verbose:
-                print "The free energy difference appears to be zero."
+                print("The free energy difference appears to be zero.")
             if compute_uncertainty:
                 return [0.0, 0.0]
             else:
@@ -278,12 +278,12 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         if iterated_solution:
             relative_change = abs((DeltaF - DeltaF_old) / DeltaF)
             if verbose:
-                print "relative_change = %12.3f" % relative_change
+                print("relative_change = %12.3f" % relative_change)
 
             if ((iteration > 0) and (relative_change < relative_tolerance)):
                 # Convergence is achieved.
                 if verbose:
-                    print "Convergence achieved."
+                    print("Convergence achieved.")
                 break
 
         if method == 'false-position' or method == 'bisection':
@@ -300,13 +300,13 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
                 raise BoundsError(message)
 
         if verbose:
-            print "iteration %5d : DeltaF = %16.3f" % (iteration, DeltaF)
+            print("iteration %5d : DeltaF = %16.3f" % (iteration, DeltaF))
 
     # Report convergence, or warn user if not achieved.
     if iterated_solution:
         if iteration < maximum_iterations:
             if verbose:
-                print 'Converged to tolerance of %e in %d iterations (%d function evaluations)' % (relative_change, iteration, nfunc)
+                print('Converged to tolerance of %e in %d iterations (%d function evaluations)' % (relative_change, iteration, nfunc))
         else:
             message = 'WARNING: Did not converge to within specified tolerance. max_delta = %f, TOLERANCE = %f, MAX_ITS = %d' % (relative_change, relative_tolerance, maximum_iterations)
             raise ConvergenceError(message)
@@ -340,11 +340,11 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
 
         dDeltaF = np.sqrt(variance)
         if verbose:
-            print "DeltaF = %8.3f +- %8.3f" % (DeltaF, dDeltaF)
+            print("DeltaF = %8.3f +- %8.3f" % (DeltaF, dDeltaF))
         return (DeltaF, dDeltaF)
     else:
         if verbose:
-            print "DeltaF = %8.3f" % (DeltaF)
+            print("DeltaF = %8.3f" % (DeltaF))
         return DeltaF
 
 #=============================================================================================

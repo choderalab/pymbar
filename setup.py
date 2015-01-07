@@ -11,6 +11,7 @@ import numpy
 import glob
 import os
 import subprocess
+import six
 
 ##########################
 VERSION = "2.1.0"
@@ -107,7 +108,7 @@ def buildKeywordDictionary():
     setupKeywords["zip_safe"]          = False
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
     setupKeywords["data_files"]        = []
-    setupKeywords["ext_modules"]       = [CMBAR]
+    setupKeywords["ext_modules"]       = x = [CMBAR] if six.PY2 else []
     # setupKeywords["test_suite"]        = "tests" # requires we migrate to setuptools
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
     setupKeywords["description"]       = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method."
@@ -122,7 +123,7 @@ def buildKeywordDictionary():
     outputString=""
     firstTab     = 40
     secondTab    = 60
-    for key in sorted( setupKeywords.iterkeys() ):
+    for key in sorted(setupKeywords.keys()):
          value         = setupKeywords[key]
          outputString += key.rjust(firstTab) + str( value ).rjust(secondTab) + "\n"
     
