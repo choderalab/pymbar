@@ -34,10 +34,13 @@ Prerequisites
 
 The pymbar module requires the following:
 
-* Python 2.4 or later: http://www.python.org/
-* The `Python.h` header file (either installed via the Python installer, but a separate `python-dev` package on distributions like Ubunti)
+* Python 2.7 or later: http://www.python.org/
 * the NumPy package: http://numpy.scipy.org/
 * the SciPy package: http://www.scipy.org/
+* NumExpr
+* six
+* cython
+* nose
 * Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
 
 Quickstart
