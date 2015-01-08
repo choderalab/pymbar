@@ -17,7 +17,7 @@ The easiest way to install `pymbar` is via [conda](http://conda.pydata.org), a b
 conda install -c https://conda.binstar.org/omnia pymbar
 ```
 
-Besides conda, you can also install `pymbar` using `pip` (`pip install pymbar`) or directly from the source directory `python setup.py install`.  
+Besides conda, you can also install `pymbar` using `pip` (`pip install pymbar`) or directly from the source directory (`python setup.py install`).
 
 
 Usage and Examples
