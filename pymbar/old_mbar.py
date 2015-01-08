@@ -158,7 +158,7 @@ class MBAR:
         """
 
         if method == 'Newton-Raphson':
-            print "Warning: Newton-Raphson is deprecated.  Switching to method 'adaptive' which uses the most quickly converging between Newton-Raphson and self-consistent iteration."
+            print("Warning: Newton-Raphson is deprecated.  Switching to method 'adaptive' which uses the most quickly converging between Newton-Raphson and self-consistent iteration.")
             method = 'adaptive'
         # Determine whether embedded C++ helper code is available
         self.use_embedded_helper_code = False
@@ -172,12 +172,12 @@ class MBAR:
                 # if we have succeeded, use it
                 self.use_embedded_helper_code = True
                 if verbose:
-                    print "Using embedded C++ helper code."
+                    print("Using embedded C++ helper code.")
             except ImportError:
                 # import failed
                 self.use_embedded_helper_code = False
                 if verbose:
-                    print "Could not import working embedded C++ helper code -- using pure Python version instead."
+                    print("Could not import working embedded C++ helper code -- using pure Python version instead.")
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
@@ -195,7 +195,7 @@ class MBAR:
         [K, N] = np.shape(u_kn)
 
         if verbose:
-            print "K (total states) = %d, total samples = %d" % (K, N)
+            print("K (total states) = %d, total samples = %d" % (K, N))
 
         if np.sum(N_k) != N:
             raise ParameterError(
@@ -234,17 +234,17 @@ class MBAR:
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
                         self.samestates.append([l, k])
-                        print ''
-                        print 'Warning: states %d and %d have the same energies on the dataset.' % (l, k)
-                        print 'They are therefore likely to to be the same thermodynamic state.  This can occasionally cause'
-                        print 'numerical problems with computing the covariance of their energy difference, which must be'
-                        print 'identically zero in any case. Consider combining them into a single state.'
-                        print ''
+                        print('')
+                        print('Warning: states %d and %d have the same energies on the dataset.' % (l, k))
+                        print('They are therefore likely to to be the same thermodynamic state.  This can occasionally cause')
+                        print('numerical problems with computing the covariance of their energy difference, which must be')
+                        print('identically zero in any case. Consider combining them into a single state.')
+                        print('')
 
         # Print number of samples from each state.
         if self.verbose:
-            print "N_k = "
-            print N_k
+            print("N_k = ")
+            print(N_k)
 
         # Determine list of k indices for which N_k != 0
         self.states_with_samples = np.where(self.N_k != 0)[0]
@@ -253,7 +253,7 @@ class MBAR:
         # Number of states with samples.
         self.K_nonzero = self.states_with_samples.size
         if verbose:
-            print "There are %d states with samples." % self.K_nonzero
+            print("There are %d states with samples." % self.K_nonzero)
 
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
@@ -264,7 +264,7 @@ class MBAR:
         # specified, start with that.
         if initial_f_k != None:
             if self.verbose:
-                print "Initializing f_k with provided initial guess."
+                print("Initializing f_k with provided initial guess.")
             # Cast to np array.
             initial_f_k = np.array(initial_f_k, dtype=np.float64)
             # Check shape
@@ -274,7 +274,7 @@ class MBAR:
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
             if self.verbose:
-                print self.f_k
+                print(self.f_k)
             # Shift all free energies such that f_0 = 0.
             self.f_k[:] = self.f_k[:] - self.f_k[0]
         else:
@@ -282,9 +282,9 @@ class MBAR:
             self._initializeFreeEnergies(verbose, method=initialize)
 
             if self.verbose:
-                print "Initial dimensionless free energies with method %s" % (initialize)
-                print "f_k = "
-                print self.f_k
+                print("Initial dimensionless free energies with method %s" % (initialize))
+                print("f_k = ")
+                print(self.f_k)
 
         # Solve nonlinear equations for free energies of states with samples.
         if (maximum_iterations > 0):
@@ -303,7 +303,7 @@ class MBAR:
         # Recompute all free energies because those from states with zero samples are not correctly computed by Newton-Raphson.
         # and store the log weights
         if verbose:
-            print "Recomputing all free energies and log weights for storage"
+            print("Recomputing all free energies and log weights for storage")
 
         # Note: need to recalculate only if max iterations is set to zero.
         (self.Log_W_nk, self.f_k) = self._computeWeights(
@@ -311,12 +311,12 @@ class MBAR:
 
         # Print final dimensionless free energies.
         if self.verbose:
-            print "Final dimensionless free energies"
-            print "f_k = "
-            print self.f_k
+            print("Final dimensionless free energies")
+            print("f_k = ")
+            print(self.f_k)
 
         if self.verbose:
-            print "MBAR initialization complete."
+            print("MBAR initialization complete.")
         return
 
     #=========================================================================
@@ -411,7 +411,7 @@ class MBAR:
             if (np.any(d2DeltaF < 0.0)):
                 if(np.any(d2DeltaF) < warning_cutoff):
                     # Hmm.  Will this print correctly?
-                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
+                    print("A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)])
                 else:
                     d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)] = 0.0
 
@@ -665,7 +665,7 @@ class MBAR:
         K = self.K
 
         if dims == 3:
-            print "expecting dim=1 or dim=2"
+            print("expecting dim=1 or dim=2")
             return None
 
         if (useGeneral):
@@ -1197,7 +1197,7 @@ class MBAR:
             # check for any numbers below zero.
             if (np.any(d2DeltaF < 0.0)):
                 if(np.any(d2DeltaF) < warning_cutoff):
-                    print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
+                    print("A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)])
                 else:
                     d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)] = 0.0
 
@@ -1257,7 +1257,7 @@ class MBAR:
         """
 
         if verbose:
-            print "Computing average energy and entropy by MBAR."
+            print("Computing average energy and entropy by MBAR.")
 
         # Retrieve N and K for convenience.
         N = self.N
@@ -1328,7 +1328,7 @@ class MBAR:
         if (np.any(d2DeltaF < 0.0)):
             if(np.any(d2DeltaF) < warning_cutoff):
                 # Hmm.  Will this print correctly?
-                print "A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)]
+                print("A squared uncertainty is negative.  d2DeltaF = %e" % d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)])
             else:
                 d2DeltaF[(np.any(d2DeltaF) < warning_cutoff)] = 0.0
 
@@ -1615,12 +1615,12 @@ class MBAR:
         f_i -= f_i.min()
 
         if self.verbose:
-            print "bins f_i = "
-            print f_i
+            print("bins f_i = ")
+            print(f_i)
 
         # Compute uncertainties by forming matrix of W_nk.
         if self.verbose:
-            print "Forming W_nk matrix..."
+            print("Forming W_nk matrix...")
         N_k = np.zeros([self.K + nbins], np.int32)
         N_k[0:K] = self.N_k
         W_nk = np.zeros([self.N, self.K + nbins], np.float64)
@@ -1630,7 +1630,7 @@ class MBAR:
             indices = np.where(bin_n[self.indices] == i)[0]
 
             if self.verbose:
-                print "bin %5d count = %10d" % (i, len(indices))
+                print("bin %5d count = %10d" % (i, len(indices)))
 
             # Compute normalized weights for this state.
             W_nk[indices, K + i] = np.exp(
@@ -1760,8 +1760,8 @@ class MBAR:
 
         # Make sure A contains no nan.
         if(np.any(np.isnan(A))):
-            print "attempted to compute pseudoinverse of A ="
-            print A
+            print("attempted to compute pseudoinverse of A =")
+            print(A)
             raise ParameterError("A contains nan.")
 
         # DEBUG
@@ -1771,7 +1771,7 @@ class MBAR:
             eigs = linalg.eigvalsh(A)
             most_negative_eigenvalue = eigs.min()
             if (most_negative_eigenvalue < 0.0):
-                print "most negative eigenvalue = %e" % most_negative_eigenvalue
+                print("most negative eigenvalue = %e" % most_negative_eigenvalue)
                 # Choose loading value.
                 gamma = -most_negative_eigenvalue * 1.05
                 # Modify Theta by diagonal loading
@@ -1903,7 +1903,7 @@ class MBAR:
 
             # Make sure W is nonsingular.
             if (abs(linalg.det(W.T * W)) < tolerance):
-                print "Warning: W'W appears to be singular, yet 'inverse' method of uncertainty estimation requires W contain no duplicate states."
+                print("Warning: W'W appears to be singular, yet 'inverse' method of uncertainty estimation requires W contain no duplicate states.")
 
             # Compute covariance
             Theta = ((W.T * W).I - Ndiag + O).I
@@ -2022,18 +2022,18 @@ class MBAR:
         if (method == 'zeros'):
             # Use zeros for initial free energies.
             if verbose:
-                print "Initializing free energies to zero."
+                print("Initializing free energies to zero.")
             self.f_k[:] = 0.0
         elif (method == 'mean-reduced-potential'):
             # Compute initial guess at free energies from the mean reduced
             # potential from each state
             if verbose:
-                print "Initializing free energies with mean reduced potential for each state."
+                print("Initializing free energies with mean reduced potential for each state.")
             means = np.zeros([self.K], float)
             for k in self.states_with_samples:
                 means[k] = self.u_kn[k, 0:self.N_k[k]].mean()
             if (np.max(np.abs(means)) < 0.000001):
-                print "Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir."
+                print("Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir.")
             self.f_k = means
         elif (method == 'BAR'):
             # For now, make a simple list of those states with samples.
@@ -2183,9 +2183,9 @@ class MBAR:
 
         # write out current estimate
         if verbose:
-            print "current f_k for states with samples ="
-            print f_k
-            print "relative max_delta = %e" % max_delta
+            print("current f_k for states with samples =")
+            print(f_k)
+            print("relative max_delta = %e" % max_delta)
 
         # Check convergence criteria.
         # Terminate when max((f - fold) / f) < relative_tolerance for all
@@ -2197,18 +2197,18 @@ class MBAR:
             # Report convergence, or warn user if convergence was not achieved.
             if np.all(self.f_k == 0.0):
                 # all f_k appear to be zero
-                print 'WARNING: All f_k appear to be zero.'
+                print('WARNING: All f_k appear to be zero.')
             elif (max_delta < relative_tolerance):
                 # Convergence achieved.
                 if verbose:
-                    print 'Converged to tolerance of %e in %d iterations.' % (max_delta, iteration + 1)
+                    print('Converged to tolerance of %e in %d iterations.' % (max_delta, iteration + 1))
             elif (print_warning):
                 # Warn that convergence was not achieved.
                 # many times, self-consistent iteration is used in conjunction with another program.  In that case,
                 # we don't really need to warn about anything, since we are not
                 # running it to convergence.
-                print 'WARNING: Did not converge to within specified tolerance.'
-                print 'max_delta = %e, TOLERANCE = %e, MAX_ITS = %d, iterations completed = %d' % (max_delta, relative_tolerance, maximum_iterations, iteration)
+                print('WARNING: Did not converge to within specified tolerance.')
+                print('max_delta = %e, TOLERANCE = %e, MAX_ITS = %d, iterations completed = %d' % (max_delta, relative_tolerance, maximum_iterations, iteration))
 
         return yesIam
 
@@ -2233,11 +2233,11 @@ class MBAR:
         # specified tolerance, or maximum allowed number of iterations has been
         # exceeded.
         if verbose:
-            print "MBAR: Computing dimensionless free energies by iteration.  This may take from seconds to minutes, depending on the quantity of data..."
+            print("MBAR: Computing dimensionless free energies by iteration.  This may take from seconds to minutes, depending on the quantity of data...")
         for iteration in range(0, maximum_iterations):
 
             if verbose:
-                print 'Self-consistent iteration %d' % iteration
+                print('Self-consistent iteration %d' % iteration)
 
             # compute the free energies by self consistent iteration (which
             # also involves calculating the weights)
@@ -2324,7 +2324,7 @@ class MBAR:
         """
 
         if verbose:
-            print "Determining dimensionless free energies by Newton-Raphson iteration."
+            print("Determining dimensionless free energies by Newton-Raphson iteration.")
 
         # keep track of Newton-Raphson and self-consistent iterations
         nr_iter = 0
@@ -2398,22 +2398,22 @@ class MBAR:
             # compute since we are doing the Hessian anyway.
 
             if verbose:
-                print "self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr)
+                print("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
             # decide which directon to go depending on size of gradient norm
             if (gnorm_sci < gnorm_nr or sci_iter < 2):
                 sci_iter += 1
                 self.log_weight_denom = log_weight_denom.copy()
                 if verbose:
                     if sci_iter < 2:
-                        print "Choosing self-consistent iteration on iteration %d" % iteration
+                        print("Choosing self-consistent iteration on iteration %d" % iteration)
                     else:
-                        print "Choosing self-consistent iteration for lower gradient on iteration %d" % iteration
+                        print("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
 
                 f_k_new = f_k_sci.copy()
             else:
                 nr_iter += 1
                 if verbose:
-                    print "Newton-Raphson used on iteration %d" % iteration
+                    print("Newton-Raphson used on iteration %d" % iteration)
 
             # get rid of big matrices that are not used.
             del(log_weight_denom, NW, W_nk)
@@ -2423,7 +2423,7 @@ class MBAR:
             self.f_k[self.states_with_samples] = f_k
             if (self._amIdoneIterating(f_k_new, relative_tolerance, iteration, maximum_iterations, print_warning, verbose)):
                 if verbose:
-                    print 'Of %d iterations, %d were Newton-Raphson iterations and %d were self-consistent iterations' % (iteration + 1, nr_iter, sci_iter)
+                    print('Of %d iterations, %d were Newton-Raphson iterations and %d were self-consistent iterations' % (iteration + 1, nr_iter, sci_iter))
                 break
 
         return

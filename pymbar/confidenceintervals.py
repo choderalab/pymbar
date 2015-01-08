@@ -178,21 +178,21 @@ def generateConfidenceIntervals(replicates, K):
     # If the error is normal, we should have
     #   P(error < alpha sigma) = erf(alpha / sqrt(2))
 
-    print "The uncertainty estimates are tested in this section."
-    print "If the error is normally distributed, the actual error will be less than a"
-    print "multiplier 'alpha' times the computed uncertainty 'sigma' a fraction of"
-    print "time given by:"
-    print "P(error < alpha sigma) = erf(alpha / sqrt(2))"
-    print "For example, the true error should be less than 1.0 * sigma"
-    print "(one standard deviation) a total of 68% of the time, and"
-    print "less than 2.0 * sigma (two standard deviations) 95% of the time."
-    print "The observed fraction of the time that error < alpha sigma, and its"
-    print "uncertainty, is given as 'obs' (with uncertainty 'obs err') below."
-    print "This should be compared to the column labeled 'normal'."
-    print "A weak lower bound that holds regardless of how the error is distributed is given"
-    print "by Chebyshev's inequality, and is listed as 'cheby' below."
-    print "Uncertainty estimates are tested for both free energy differences and expectations."
-    print ""
+    print("The uncertainty estimates are tested in this section.")
+    print("If the error is normally distributed, the actual error will be less than a")
+    print("multiplier 'alpha' times the computed uncertainty 'sigma' a fraction of")
+    print("time given by:")
+    print("P(error < alpha sigma) = erf(alpha / sqrt(2))")
+    print("For example, the true error should be less than 1.0 * sigma")
+    print("(one standard deviation) a total of 68% of the time, and")
+    print("less than 2.0 * sigma (two standard deviations) 95% of the time.")
+    print("The observed fraction of the time that error < alpha sigma, and its")
+    print("uncertainty, is given as 'obs' (with uncertainty 'obs err') below.")
+    print("This should be compared to the column labeled 'normal'.")
+    print("A weak lower bound that holds regardless of how the error is distributed is given")
+    print("by Chebyshev's inequality, and is listed as 'cheby' below.")
+    print("Uncertainty estimates are tested for both free energy differences and expectations.")
+    print("")
 
     # error bounds
 
@@ -219,11 +219,11 @@ def generateConfidenceIntervals(replicates, K):
             # We only count differences where the analytical difference is larger than a cutoff, so that the results will not be limited by machine precision.
             if (dim == 0):
                 if np.isnan(replicate['error']) or np.isnan(replicate['destimated']):
-                    print "replicate %d" % replicate_index
-                    print "error"
-                    print replicate['error']
-                    print "destimated"
-                    print replicate['destimated']
+                    print("replicate %d" % replicate_index)
+                    print("error")
+                    print(replicate['error'])
+                    print("destimated")
+                    print(replicate['destimated'])
                     raise "isnan"
                 else:
                     if abs(replicate['error']) <= alpha * replicate['destimated']:
@@ -234,11 +234,11 @@ def generateConfidenceIntervals(replicates, K):
             elif (dim == 1):
                 for i in range(0, K):
                     if np.isnan(replicate['error'][i]) or np.isnan(replicate['destimated'][i]):
-                        print "replicate %d" % replicate_index
-                        print "error"
-                        print replicate['error']
-                        print "destimated"
-                        print replicate['destimated']
+                        print("replicate %d" % replicate_index)
+                        print("error")
+                        print(replicate['error'])
+                        print("destimated")
+                        print(replicate['destimated'])
                         raise "isnan"
                     else:
                         if abs(replicate['error'][i]) <= alpha * replicate['destimated'][i]:
@@ -250,11 +250,11 @@ def generateConfidenceIntervals(replicates, K):
                 for i in range(0, K):
                     for j in range(0, i):
                         if np.isnan(replicate['error'][i, j]) or np.isnan(replicate['destimated'][i, j]):
-                            print "replicate %d" % replicate_index
-                            print "ij_error"
-                            print replicate['error']
-                            print "ij_estimated"
-                            print replicate['destimated']
+                            print("replicate %d" % replicate_index)
+                            print("ij_error")
+                            print(replicate['error'])
+                            print("ij_estimated")
+                            print(replicate['destimated'])
                             raise "isnan"
                         else:
                             if abs(replicate['error'][i, j]) <= alpha * replicate['destimated'][i, j]:
@@ -268,12 +268,12 @@ def generateConfidenceIntervals(replicates, K):
         dPobs[alpha_index] = np.sqrt(a * b / ((a + b) ** 2 * (a + b + 1)))
 
     # Write error as a function of sigma.
-    print "Error vs. alpha"
-    print "%5s %10s %10s %16s %17s" % ('alpha', 'cheby', 'obs', 'obs err', 'normal')
+    print("Error vs. alpha")
+    print("%5s %10s %10s %16s %17s" % ('alpha', 'cheby', 'obs', 'obs err', 'normal'))
     Pnorm = scipy.special.erf(alpha_values / np.sqrt(2.))
     for alpha_index in range(0, nalpha):
         alpha = alpha_values[alpha_index]
-        print "%5.1f %10.6f %10.6f (%10.6f,%10.6f) %10.6f" % (alpha, 1. - 1. / alpha ** 2, Pobs[alpha_index], Plow[alpha_index], Phigh[alpha_index], Pnorm[alpha_index])
+        print("%5.1f %10.6f %10.6f (%10.6f,%10.6f) %10.6f" % (alpha, 1. - 1. / alpha ** 2, Pobs[alpha_index], Plow[alpha_index], Phigh[alpha_index], Pnorm[alpha_index]))
 
     # compute bias, average, etc - do it by replicate, not by bias
     if dim == 0:
@@ -318,9 +318,9 @@ def generateConfidenceIntervals(replicates, K):
     ave_std = (np.average(d2, axis=0)) ** (1.0 / 2.0)
 
     # for now, just print out the data at the end for each
-    print ""
-    print "     i      average    bias      rms_error     stddev  ave_analyt_std"
-    print "---------------------------------------------------------------------"
+    print("")
+    print("     i      average    bias      rms_error     stddev  ave_analyt_std")
+    print("---------------------------------------------------------------------")
     if dim == 0:
         pave = aveval
         pbias = bias
@@ -334,7 +334,7 @@ def generateConfidenceIntervals(replicates, K):
             prms = rms_error[i]
             pstdev = standarddev[i]
             pavestd = ave_std[i]
-            print "%7d %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (i, pave, pbias, prms, pstdev, pavestd)
+            print("%7d %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (i, pave, pbias, prms, pstdev, pavestd))
     elif dim == 2:
         for i in range(0, K):
             pave = aveval[0, i]
@@ -342,8 +342,8 @@ def generateConfidenceIntervals(replicates, K):
             prms = rms_error[0, i]
             pstdev = standarddev[0, i]
             pavestd = ave_std[0, i]
-            print "%7d %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (i, pave, pbias, prms, pstdev, pavestd)
+            print("%7d %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (i, pave, pbias, prms, pstdev, pavestd))
 
-    print "Totals: %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (pave, pbias, prms, pstdev, pavestd)
+    print("Totals: %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (pave, pbias, prms, pstdev, pavestd))
 
     return alpha_values, Pobs, Plow, Phigh, dPobs, Pnorm

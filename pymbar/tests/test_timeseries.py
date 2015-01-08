@@ -1,6 +1,7 @@
 from pymbar import timeseries
 import numpy as np
 from pymbar.utils_for_testing import eq, skipif
+from six.moves import xrange
 
 try:
     import statsmodels.api as sm

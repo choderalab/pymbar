@@ -1,3 +1,4 @@
+from __future__ import division  # Ensure same division behavior in py2 and py3
 import numpy as np
 import math
 import scipy.optimize
@@ -415,7 +416,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
         all_results.append(results)
     
     if verbose:
-        print("Final gradient norm: %.3g" % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero)))
+        print(("Final gradient norm: %.3g" % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero))))
 
     return f_k_nonzero, all_results
 
@@ -452,7 +453,7 @@ def subsample_data(u_kn0, N_k0, s_n, subsampling, rescale=False, replace=False):
     subsampling to solve MBAR on a smaller dataset as an initial guess.
     """    
     n_states = len(N_k0)
-    N_k = N_k0 / subsampling
+    N_k = N_k0 // subsampling
     N_k[(N_k == 0) & (N_k0 > 0)] = 1
 
     u_kn = np.zeros((n_states, N_k.sum()))

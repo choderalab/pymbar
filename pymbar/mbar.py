@@ -151,7 +151,7 @@ class MBAR:
 
         """
         for key, val in kwargs.items():
-            print("Warning: parameter %s=%s is unrecognized and unused." % (key, val))
+            print(("Warning: parameter %s=%s is unrecognized and unused." % (key, val)))
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
@@ -169,7 +169,7 @@ class MBAR:
         K, N = np.shape(u_kn)
 
         if verbose:
-            print "K (total states) = %d, total samples = %d" % (K, N)
+            print("K (total states) = %d, total samples = %d" % (K, N))
 
         if np.sum(N_k) != N:
             raise ParameterError(
@@ -209,17 +209,17 @@ class MBAR:
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
                         self.samestates.append([l, k])
-                        print ''
-                        print 'Warning: states %d and %d have the same energies on the dataset.' % (l, k)
-                        print 'They are therefore likely to to be the same thermodynamic state.  This can occasionally cause'
-                        print 'numerical problems with computing the covariance of their energy difference, which must be'
-                        print 'identically zero in any case. Consider combining them into a single state.'
-                        print ''
+                        print('')
+                        print('Warning: states %d and %d have the same energies on the dataset.' % (l, k))
+                        print('They are therefore likely to to be the same thermodynamic state.  This can occasionally cause')
+                        print('numerical problems with computing the covariance of their energy difference, which must be')
+                        print('identically zero in any case. Consider combining them into a single state.')
+                        print('')
 
         # Print number of samples from each state.
         if self.verbose:
-            print "N_k = "
-            print N_k
+            print("N_k = ")
+            print(N_k)
 
         # Determine list of k indices for which N_k != 0
         self.states_with_samples = np.where(self.N_k != 0)[0]
@@ -228,7 +228,7 @@ class MBAR:
         # Number of states with samples.
         self.K_nonzero = self.states_with_samples.size
         if verbose:
-            print "There are %d states with samples." % self.K_nonzero
+            print("There are %d states with samples." % self.K_nonzero)
 
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
@@ -239,7 +239,7 @@ class MBAR:
         # specified, start with that.
         if initial_f_k != None:
             if self.verbose:
-                print "Initializing f_k with provided initial guess."
+                print("Initializing f_k with provided initial guess.")
             # Cast to np array.
             initial_f_k = np.array(initial_f_k, dtype=np.float64)
             # Check shape
@@ -249,7 +249,7 @@ class MBAR:
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
             if self.verbose:
-                print self.f_k
+                print(self.f_k)
             # Shift all free energies such that f_0 = 0.
             self.f_k[:] = self.f_k[:] - self.f_k[0]
         else:
@@ -257,21 +257,21 @@ class MBAR:
             self._initializeFreeEnergies(verbose, method=initialize)
 
             if self.verbose:
-                print "Initial dimensionless free energies with method %s" % (initialize)
-                print "f_k = "
-                print self.f_k
+                print("Initial dimensionless free energies with method %s" % (initialize))
+                print("f_k = ")
+                print(self.f_k)
         
         self.f_k = mbar_solvers.solve_mbar_with_subsampling(self.u_kn, self.N_k, self.f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=self.x_kindices)
         self.Log_W_nk = np.log(mbar_solvers.mbar_W_nk(self.u_kn, self.N_k, self.f_k))
         
         # Print final dimensionless free energies.
         if self.verbose:
-            print "Final dimensionless free energies"
-            print "f_k = "
-            print self.f_k
+            print("Final dimensionless free energies")
+            print("f_k = ")
+            print(self.f_k)
 
         if self.verbose:
-            print "MBAR initialization complete."
+            print("MBAR initialization complete.")
 
 
     @property
@@ -356,8 +356,8 @@ class MBAR:
             w = np.exp(self.Log_W_nk[:,k])
             N_eff[k] = 1/np.sum(w**2)
             if verbose:
-                print "Effective number of sample in state %d is %10.3f" % (k,N_eff[k])
-                print "Efficiency for state %d is %d/%d = %10.4f" % (k,N_eff[k],len(w),N_eff[k]/len(w))
+                print("Effective number of sample in state %d is %10.3f" % (k,N_eff[k]))
+                print("Efficiency for state %d is %d/%d = %10.4f" % (k,N_eff[k],len(w),N_eff[k]/len(w)))
 
         return N_eff
 
@@ -846,7 +846,7 @@ class MBAR:
         dims = len(np.shape(A_n))
 
         if dims > 2:
-            print "expecting dim=2 (state_dependent=True) or dim=1 for (state_dependent=False) observables"
+            print("expecting dim=2 (state_dependent=True) or dim=1 for (state_dependent=False) observables")
 
         if not state_dependent:
             if dims==2:
@@ -1126,7 +1126,7 @@ class MBAR:
 
         """
         if verbose:
-            print "Computing average energy and entropy by MBAR."
+            print("Computing average energy and entropy by MBAR.")
 
         dims = len(np.shape(u_kn))
         if dims==3:
@@ -1393,7 +1393,7 @@ class MBAR:
         # check for any numbers below zero.
         if (np.any(d2 < 0.0)):
             if (np.any(d2) < warning_cutoff):
-                print "A squared uncertainty is negative.  d2 = %e" % d2[(np.any(d2) < warning_cutoff)]
+                print("A squared uncertainty is negative.  d2 = %e" % d2[(np.any(d2) < warning_cutoff)])
             else:
                 d2[(np.any(d2) < warning_cutoff)] = 0.0
         return np.sqrt(np.array(d2))
@@ -1575,18 +1575,18 @@ class MBAR:
         if (method == 'zeros'):
             # Use zeros for initial free energies.
             if verbose:
-                print "Initializing free energies to zero."
+                print("Initializing free energies to zero.")
             self.f_k[:] = 0.0
         elif (method == 'mean-reduced-potential'):
             # Compute initial guess at free energies from the mean reduced
             # potential from each state
             if verbose:
-                print "Initializing free energies with mean reduced potential for each state."
+                print("Initializing free energies with mean reduced potential for each state.")
             means = np.zeros([self.K], float)
             for k in self.states_with_samples:
                 means[k] = self.u_kn[k, 0:self.N_k[k]].mean()
             if (np.max(np.abs(means)) < 0.000001):
-                print "Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir."
+                print("Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir.")
             self.f_k = means
         elif (method == 'BAR'):
             # For now, make a simple list of those states with samples.

@@ -192,6 +192,6 @@ def skip(reason):
         @functools.wraps(test)
         def inner(*args, **kwargs):
             raise SkipTest
-            print "After f(*args)"
+            print("After f(*args)")
         return inner
     return wrap

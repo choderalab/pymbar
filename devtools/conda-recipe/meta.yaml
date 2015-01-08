@@ -10,13 +10,15 @@ requirements:
     - numpy
     - scipy
     - setuptools
-    - numexpr    
+    - numexpr   
+    - six 
   run:
     - python
     - cython
     - numpy
     - scipy
     - numexpr
+    - six
 
 test:
   requires:

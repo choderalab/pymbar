@@ -135,8 +135,8 @@ def test_mbar_computeExpectations_potential():
         mbar = MBAR(u_kn, N_k)
         mu, sigma = mbar.computeExpectations(u_kn, state_dependent = True)
         mu0 = test.analytical_observable(observable = 'potential energy')
-        print mu
-        print mu0
+        print(mu)
+        print(mu0)
         z = (mu0 - mu) / sigma
         eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
@@ -262,7 +262,7 @@ def test_mbar_computePerturbedFreeEnergeies():
         fe, fe_sigma = mbar.computePerturbedFreeEnergies(u_kn[2:,:numN])
         fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
 
-        print fe, fe_sigma
+        print(fe, fe_sigma)
         fe0 = test.analytical_free_energies()[2:]
         fe0 = fe0[1:] - fe0[0]
 

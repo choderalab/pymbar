@@ -24,7 +24,7 @@
 # imports
 ##############################################################################
 
-import itertools
+from six.moves import zip_longest
 import warnings
 
 import numpy as np
@@ -203,7 +203,7 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
         sentenel = object()
         error = ValueError(("%s must be shape %s. You supplied  "
                             "%s" % (name, str(shape).replace('None', 'Any'), val.shape)))
-        for a, b in itertools.izip_longest(val.shape, shape, fillvalue=sentenel):
+        for a, b in zip_longest(val.shape, shape, fillvalue=sentenel):
             if a is sentenel or b is sentenel:
                 # if the sentenel was reached, it means that the ndim didn't
                 # match or something. this really shouldn't happen
@@ -245,7 +245,7 @@ def _logsum(a_n):
     Example
     -------
     >>> a_n = np.array([0.0, 1.0, 1.2], np.float64)
-    >>> print '%.3e' % _logsum(a_n)
+    >>> print('%.3e' % _logsum(a_n))
     1.951e+00
     """
 
