@@ -9,8 +9,8 @@ pymbar
 Python implementation of the multistate Bennett acceptance ratio (MBAR) method for estimating expectations and free energy differences.  See our [Docs](http://pymbar.readthedocs.org/en/latest/).
 
 
-Quickstart
-----------
+Installation
+------------
 
 The easiest way to install `pymbar` is via [conda](http://conda.pydata.org), a binary package installer that comes with the [Anaconda Scientific Python distribution](https://store.continuum.io/cshop/anaconda/):
 ```tcsh
@@ -20,8 +20,8 @@ conda install -c https://conda.binstar.org/omnia pymbar
 Besides conda, you can also install `pymbar` using `pip` (`pip install pymbar`) or directly from the source directory (`python setup.py install`).
 
 
-Usage and Examples
-------------------
+Usage
+-----
 
 Basic usage involves importing pymbar, loading data, and constructing an MBAR object from the reduced potential of simulation or experimental data:
 
@@ -77,7 +77,6 @@ This archive contains the following files:
 * `pymbar/` - Python MBAR package
 * `examples/` - examples of applications of MBAR to various types of calculations
   See the README.md in that folder for more information
-* `tests/` - unit tests for the functionality
 * `docs/` - sphinx documetation
 * `devtools/` - travis CI and conda configuration files
 
