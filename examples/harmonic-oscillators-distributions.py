@@ -132,7 +132,7 @@ for replicate_index in range(0,nreplicates):
 
   # Initialize the MBAR class, determining the free energies.
   mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10,verbose=False) # use fast Newton-Raphson solver
-  (Deltaf_ij_estimated, dDeltaf_ij_estimated) = mbar.getFreeEnergyDifferences()
+  (Deltaf_ij_estimated, dDeltaf_ij_estimated, _theta) = mbar.getFreeEnergyDifferences()
   
   # Compute error from analytical free energy differences.
   Deltaf_ij_error = Deltaf_ij_estimated - Deltaf_ij_analytical
