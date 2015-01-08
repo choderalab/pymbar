@@ -1,6 +1,0 @@
-cython
-numpy
-scipy
-pip
-nose
-numexpr
