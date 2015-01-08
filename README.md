@@ -52,9 +52,9 @@ Prerequisites
 To install and run pymbar requires the following:
 
 * Python 2.7 or later: http://www.python.org/
-* the NumPy package: http://numpy.scipy.org/
-* the SciPy package: http://www.scipy.org/
-* NumExpr
+* NumPy: http://numpy.scipy.org/
+* SciPy: http://www.scipy.org/
+* NumExpr: https://github.com/pydata/numexpr
 * six
 * nose
 * Some optional graphing functionality in the tests requires the matplotlib library: http://matplotlib.sourceforge.net/
