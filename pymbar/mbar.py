@@ -313,12 +313,13 @@ class MBAR:
 
         It also counts the efficiency of the sampling, which is simply the ratio
         of the effective number of samples at a given state to the total number
-        of samples collected.
+        of samples collected.  This is printed in verbose output, but is not 
+        returned for now.
         
         Returns
         -------
         N_eff : np.ndarray, float, shape=(K)
-                estimated number of states contributing to estimates at each 
+                estimated number of samples contributing to estimates at each 
                 state i. An estimate to how many samples collected just at state 
                 i would result in similar statistical efficiency as the MBAR 
                 simulation. Valid for both sampled states (in which the weight 
