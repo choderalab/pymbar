@@ -6,7 +6,6 @@ package:
 requirements:
   build:
     - python
-    - cython
     - numpy
     - scipy
     - setuptools
@@ -14,7 +13,6 @@ requirements:
     - six 
   run:
     - python
-    - cython
     - numpy
     - scipy
     - numexpr
