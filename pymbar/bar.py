@@ -49,8 +49,7 @@ __license__ = "LGPL 2.1"
 #=============================================================================================
 import numpy as np
 import numpy.linalg
-from pymbar.utils import ParameterError, ConvergenceError, BoundsError
-from pymbar.mbar_solvers import logsumexp
+from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
 from pymbar.exp import EXP
 
 

@@ -46,7 +46,7 @@ __license__ = "LGPL 2.1"
 # IMPORTS
 #=============================================================================================
 import numpy as np
-from pymbar.mbar_solvers import logsumexp
+from pymbar.utils import logsumexp
 
 #=============================================================================================
 # One-sided exponential averaging (EXP).
