@@ -70,7 +70,7 @@ def kln_to_kn(kln, N_k = None, cleanup = False):
     if N_k == None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
-        N_k = N_max * np.ones([L], dtype=np.int32)
+        N_k = N_max * np.ones([L], dtype=np.int64)
     N = np.sum(N_k)
 
     kn = np.zeros([L, N], dtype=np.float64)
@@ -110,7 +110,7 @@ def kn_to_n(kn, N_k = None, cleanup = False):
     if N_k == None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
-        N_k = N_max*np.ones([K], dtype=np.int32)
+        N_k = N_max*np.ones([K], dtype=np.int64)
     N = np.sum(N_k)
 
     n = np.zeros([N], dtype=np.float64)
