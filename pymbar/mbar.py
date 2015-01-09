@@ -42,8 +42,7 @@ import math
 import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
-from pymbar.utils import kln_to_kn, kn_to_n, ParameterError
-logsumexp = mbar_solvers.logsumexp
+from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, logsumexp
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
