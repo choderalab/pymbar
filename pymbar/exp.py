@@ -46,7 +46,7 @@ __license__ = "LGPL 2.1"
 # IMPORTS
 #=============================================================================================
 import numpy as np
-from pymbar.utils import _logsum
+from pymbar.mbar_solvers import logsumexp
 
 #=============================================================================================
 # One-sided exponential averaging (EXP).
@@ -96,7 +96,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     T = float(np.size(w_F))  # number of work measurements
 
     # Estimate free energy difference by exponential averaging using DeltaF = - log < exp(-w_F) >
-    DeltaF = - (_logsum(- w_F) - np.log(T))
+    DeltaF = - (logsumexp(- w_F) - np.log(T))
 
     if compute_uncertainty:
         # Compute x_i = np.exp(-w_F_i - max_arg)

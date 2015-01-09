@@ -2,81 +2,12 @@ from __future__ import division  # Ensure same division behavior in py2 and py3
 import numpy as np
 import math
 import scipy.optimize
-from pymbar.utils import ensure_type
-
-
-try:  # numexpr used in logsumexp when available.
-    import numexpr
-    HAVE_NUMEXPR = True
-except ImportError:
-    HAVE_NUMEXPR = False
+from pymbar.utils import ensure_type, logsumexp
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
 DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
 DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
-
-
-
-def logsumexp(a, axis=None, b=None, use_numexpr=True):
-    """Compute the log of the sum of exponentials of input elements.
-
-    Parameters
-    ----------
-    a : array_like
-        Input array.
-    axis : None or int, optional, default=None
-        Axis or axes over which the sum is taken. By default `axis` is None,
-        and all elements are summed.
-    b : array-like, optional
-        Scaling factor for exp(`a`) must be of the same shape as `a` or
-        broadcastable to `a`.
-    use_numexpr : bool, optional, default=True
-        If True, use the numexpr library to speed up the calculation, which
-        can give a 2-4X speedup when working with large arrays.
-
-    Returns
-    -------
-    res : ndarray
-        The result, ``log(sum(exp(a)))`` calculated in a numerically
-        more stable way. If `b` is given then ``log(sum(b*exp(a)))``
-        is returned.
-
-    See Also
-    --------
-    numpy.logaddexp, numpy.logaddexp2, scipy.misc.logsumexp
-
-    Notes
-    -----
-    This is based on scipy.misc.logsumexp but with optional numexpr
-    support for improved performance.
-    """
-
-    a = np.asarray(a)
-
-    a_max = np.amax(a, axis=axis, keepdims=True)
-
-    if a_max.ndim > 0:
-        a_max[~np.isfinite(a_max)] = 0
-    elif not np.isfinite(a_max):
-        a_max = 0
-
-    if b is not None:
-        b = np.asarray(b)
-        if use_numexpr and HAVE_NUMEXPR:
-            out = np.log(numexpr.evaluate("b * exp(a - a_max)").sum(axis))
-        else:
-            out = np.log(np.sum(b * np.exp(a - a_max), axis=axis))
-    else:
-        if use_numexpr and HAVE_NUMEXPR:
-            out = np.log(numexpr.evaluate("exp(a - a_max)").sum(axis))
-        else:
-            out = np.log(np.sum(np.exp(a - a_max), axis=axis))
-
-    a_max = np.squeeze(a_max, axis=axis)
-    out += a_max
-
-    return out
 
 
 def validate_inputs(u_kn, N_k, f_k):

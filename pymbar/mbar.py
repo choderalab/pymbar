@@ -42,7 +42,8 @@ import math
 import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
-from pymbar.utils import _logsum, kln_to_kn, kn_to_n, ParameterError
+from pymbar.utils import kln_to_kn, kn_to_n, ParameterError
+logsumexp = mbar_solvers.logsumexp
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
@@ -155,7 +156,7 @@ class MBAR:
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
-        self.N_k = np.array(N_k, dtype=np.int32)
+        self.N_k = np.array(N_k, dtype=np.int64)
         self.N = np.sum(self.N_k)
 
         # Get dimensions of reduced potential energy matrix, and convert to KxN form if needed.
@@ -184,7 +185,7 @@ class MBAR:
         if x_kindices is not None:
             self.x_kindices = x_kindices
         else:
-            self.x_kindices = np.arange(N, dtype=np.int32)
+            self.x_kindices = np.arange(N, dtype=np.int64)
             Nsum = 0
             for k in range(K):
                 self.x_kindices[Nsum:Nsum+N_k[k]] = k
@@ -223,7 +224,7 @@ class MBAR:
 
         # Determine list of k indices for which N_k != 0
         self.states_with_samples = np.where(self.N_k != 0)[0]
-        self.states_with_samples = self.states_with_samples.astype(np.int32)
+        self.states_with_samples = self.states_with_samples.astype(np.int64)
 
         # Number of states with samples.
         self.K_nonzero = self.states_with_samples.size
@@ -611,7 +612,7 @@ class MBAR:
         msize = K + NL + S # augmented size; all of the states needed to calculate
                            # the observables, and the observables themselves.
         Log_W_nk = np.zeros([N, msize], np.float64) # log weight matrix
-        N_k = np.zeros([msize], np.int32)  # counts
+        N_k = np.zeros([msize], np.int64)  # counts
         f_k = np.zeros([msize], np.float64)  # free energies
 
         # <A> = A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
@@ -625,7 +626,7 @@ class MBAR:
         for l in L_list:
             la = K+l  #l, augmented
             Log_W_nk[:, la] = self._computeUnnormalizedLogWeights(u_ln[l,:]) 
-            f_k[la] = -_logsum(Log_W_nk[:, la])
+            f_k[la] = -logsumexp(Log_W_nk[:, la])
             Log_W_nk[:, la] += f_k[la]
 
         # Compute the remaining rows/columns of W_nk, and calculate
@@ -635,7 +636,7 @@ class MBAR:
             l = K + state_map[0,s]
             i = state_map[1,s]
             Log_W_nk[:, sa] = np.log(A_n[i, :]) + Log_W_nk[:, l]
-            f_k[sa] = -_logsum(Log_W_nk[:, sa])
+            f_k[sa] = -logsumexp(Log_W_nk[:, sa])
             Log_W_nk[:, sa] += f_k[sa]    # normalize this row
 
         # Compute estimates of A_i[s]
@@ -1252,7 +1253,7 @@ class MBAR:
         >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
         >>> bins = np.append(x_n_sorted[0::(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
-        >>> bin_n = np.zeros(x_n.shape, np.int32)
+        >>> bin_n = np.zeros(x_n.shape, np.int64)
         >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
         >>> [f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins)
@@ -1291,10 +1292,10 @@ class MBAR:
                 raise "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
 
             # Compute dimensionless free energy of occupying state i.
-            f_i[i] = - _logsum(log_w_n[indices])
+            f_i[i] = - logsumexp(log_w_n[indices])
 
         # Compute uncertainties by forming matrix of W_nk.
-        N_k = np.zeros([self.K + nbins], np.int32)
+        N_k = np.zeros([self.K + nbins], np.int64)
         N_k[0:K] = self.N_k
         W_nk = np.zeros([self.N, self.K + nbins], np.float64)
         W_nk[:, 0:K] = np.exp(self.Log_W_nk)
@@ -1351,7 +1352,7 @@ class MBAR:
             # Determine uncertainties from normalization that \sum_i p_i = 1.
 
             # Compute bin probabilities p_i
-            p_i = np.exp(-f_i - _logsum(-f_i))
+            p_i = np.exp(-f_i - logsumexp(-f_i))
 
             # todo -- eliminate triple loop over nbins!
             # Compute uncertainties in bin probabilities.
@@ -1442,7 +1443,7 @@ class MBAR:
         REQUIRED ARGUMENTS
           W (np.array of np.float of dimension [N,K]) - matrix of normalized weights (see Eq. 9 of [1]) - W[n,k] is the weight of snapshot n (n = 1..N) in state k
                                           Note that sum(W(:,k)) = 1 for any k = 1..K, and sum(N_k(:) .* W(n,:)) = 1 for any n.
-          N_k (np.array of np.int32 of dimension [K]) - N_k[k] is the number of samples from state K
+          N_k (np.array of np.int64 of dimension [K]) - N_k[k] is the number of samples from state K
 
         RETURN VALUES
           Theta (KxK np float64 array) - asymptotic covariance matrix (see Eq. 8 of [1])
@@ -1642,4 +1643,4 @@ class MBAR:
         REFERENCE
           'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
         """
-        return -1. * mbar_solvers.logsumexp(self.f_k + u_n[:, np.newaxis] - self.u_kn.T, b=self.N_k, axis=1)
+        return -1. * logsumexp(self.f_k + u_n[:, np.newaxis] - self.u_kn.T, b=self.N_k, axis=1)
