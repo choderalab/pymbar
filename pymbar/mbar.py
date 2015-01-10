@@ -1436,33 +1436,36 @@ class MBAR:
 
     #=========================================================================
     def _computeAsymptoticCovarianceMatrix(self, W, N_k, method=None):
-        """
-        Compute estimate of the asymptotic covariance matrix.
+        """Compute estimate of the asymptotic covariance matrix.
 
-        REQUIRED ARGUMENTS
-          W (np.array of np.float of dimension [N,K]) - matrix of normalized weights (see Eq. 9 of [1]) - W[n,k] is the weight of snapshot n (n = 1..N) in state k
-                                          Note that sum(W(:,k)) = 1 for any k = 1..K, and sum(N_k(:) .* W(n,:)) = 1 for any n.
-          N_k (np.array of np.int64 of dimension [K]) - N_k[k] is the number of samples from state K
+        Parameters
+        ----------
+        W : np.ndarray, shape=(N, K), dtype='float'
+            The normalized weight matrix for snapshots and states.
+            W[n, k] is the weight of snapshot n in state k.
+        N_k : np.ndarray, shape=(K), dtype='int'
+            N_k[k] is the number of samples from state k.
+        method : string, optional, default=None
+            Method used to compute the asymptotic covariance matrix.
+            Must be either "approximate", "svd", or "svd-ew".  If None,
+            defaults to "svd-ew".
 
-        RETURN VALUES
-          Theta (KxK np float64 array) - asymptotic covariance matrix (see Eq. 8 of [1])
+        Returns
+        -------
+        Theta: np.ndarray, shape=(K, K), dtype='float'
+            Asymptotic covariance matrix
 
-        OPTIONAL ARGUMENTS
-          method (string) - if not None, specified method is used to compute asymptotic covariance method:
-                            method must be one of ['generalized-inverse', 'svd', 'svd-ew', 'inverse', 'tan-HGH', 'tan', 'approximate']
-                            If None is specified, 'svd-ew' is used.
-
-        NOTES
-
+        Notes
+        -----
         The computational costs of the various 'method' arguments varies:
-
           'svd' computes the generalized inverse using the singular value decomposition -- this should be efficient yet accurate (faster)
-          'svd-ev' is the same as 'svd', but uses the eigenvalue decomposition of W'W to bypass the need to perform an SVD (fastest)
-          'approximate' only requires multiplication of KxN and NxK matrices, but is an approximate underestimate of the uncertainty
-
-        REFERENCE
-          See Section II and Appendix D of [1].
-
+          'svd-ew' is the same as 'svd', but uses the eigenvalue decomposition of W'W to bypass the need to perform an SVD (fastest)
+          'approximate' only requires multiplication of KxN and NxK matrices, but is an approximate underestimate of the uncertainty.
+        
+        svd and svd-ew are described in appendix D of Shirts, 2007 JCP, while 
+        "approximate" in Section 4 of Kong, 2003. J. R. Statist. Soc. B.
+        
+        We currently recommend 'svd-ew'.
         """
 
         # Set 'svd-ew' as default if uncertainty method specified as None.
