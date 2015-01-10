@@ -26,8 +26,14 @@
 
 from six.moves import zip_longest
 import warnings
-
 import numpy as np
+
+try:  # numexpr used in logsumexp when available.
+    import numexpr
+    HAVE_NUMEXPR = True
+except ImportError:
+    HAVE_NUMEXPR = False
+
 
 ##############################################################################
 # functions / classes
@@ -64,7 +70,7 @@ def kln_to_kn(kln, N_k = None, cleanup = False):
     if N_k == None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
-        N_k = N_max * np.ones([L], dtype=np.int32)
+        N_k = N_max * np.ones([L], dtype=np.int64)
     N = np.sum(N_k)
 
     kn = np.zeros([L, N], dtype=np.float64)
@@ -104,7 +110,7 @@ def kn_to_n(kn, N_k = None, cleanup = False):
     if N_k == None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
-        N_k = N_max*np.ones([K], dtype=np.int32)
+        N_k = N_max*np.ones([K], dtype=np.int64)
     N = np.sum(N_k)
 
     n = np.zeros([N], dtype=np.float64)
@@ -220,6 +226,7 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
 
 def _logsum(a_n):
     """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.
+    NOTE: this function has been deprecated in favor of logsumexp.
 
     Parameters
     ----------
@@ -241,7 +248,6 @@ def _logsum(a_n):
     _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
 
 
-
     Example
     -------
     >>> a_n = np.array([0.0, 1.0, 1.2], np.float64)
@@ -259,6 +265,66 @@ def _logsum(a_n):
     log_sum = np.log(np.sum(terms)) + max_log_term
 
     return log_sum
+
+def logsumexp(a, axis=None, b=None, use_numexpr=True):
+    """Compute the log of the sum of exponentials of input elements.
+
+    Parameters
+    ----------
+    a : array_like
+        Input array.
+    axis : None or int, optional, default=None
+        Axis or axes over which the sum is taken. By default `axis` is None,
+        and all elements are summed.
+    b : array-like, optional
+        Scaling factor for exp(`a`) must be of the same shape as `a` or
+        broadcastable to `a`.
+    use_numexpr : bool, optional, default=True
+        If True, use the numexpr library to speed up the calculation, which
+        can give a 2-4X speedup when working with large arrays.
+
+    Returns
+    -------
+    res : ndarray
+        The result, ``log(sum(exp(a)))`` calculated in a numerically
+        more stable way. If `b` is given then ``log(sum(b*exp(a)))``
+        is returned.
+
+    See Also
+    --------
+    numpy.logaddexp, numpy.logaddexp2, scipy.misc.logsumexp
+
+    Notes
+    -----
+    This is based on scipy.misc.logsumexp but with optional numexpr
+    support for improved performance.
+    """
+
+    a = np.asarray(a)
+
+    a_max = np.amax(a, axis=axis, keepdims=True)
+
+    if a_max.ndim > 0:
+        a_max[~np.isfinite(a_max)] = 0
+    elif not np.isfinite(a_max):
+        a_max = 0
+
+    if b is not None:
+        b = np.asarray(b)
+        if use_numexpr and HAVE_NUMEXPR:
+            out = np.log(numexpr.evaluate("b * exp(a - a_max)").sum(axis))
+        else:
+            out = np.log(np.sum(b * np.exp(a - a_max), axis=axis))
+    else:
+        if use_numexpr and HAVE_NUMEXPR:
+            out = np.log(numexpr.evaluate("exp(a - a_max)").sum(axis))
+        else:
+            out = np.log(np.sum(np.exp(a - a_max), axis=axis))
+
+    a_max = np.squeeze(a_max, axis=axis)
+    out += a_max
+
+    return out
 
 #=============================================================================================
 # Exception classes

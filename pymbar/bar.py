@@ -49,7 +49,7 @@ __license__ = "LGPL 2.1"
 #=============================================================================================
 import numpy as np
 import numpy.linalg
-from pymbar.utils import _logsum, ParameterError, ConvergenceError, BoundsError
+from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
 from pymbar.exp import EXP
 
 
@@ -111,7 +111,7 @@ def BARzero(w_F, w_R, DeltaF):
         # give up; if there's overflow, return zero
         print("The input data results in overflow in BAR")
         return np.nan
-    log_numer = _logsum(log_f_F) - np.log(T_F)
+    log_numer = logsumexp(log_f_F) - np.log(T_F)
 
     # Compute log_denominator.
     # log_denom = log < f(-W) exp[-W] >_R
@@ -123,7 +123,7 @@ def BARzero(w_F, w_R, DeltaF):
     except:
         print("The input data results in overflow in BAR")
         return np.nan
-    log_denom = _logsum(log_f_R) - np.log(T_R)
+    log_denom = logsumexp(log_f_R) - np.log(T_R)
 
     # This function must be zeroed to find a root
     fzero = DeltaF - (log_denom - log_numer)
