@@ -848,7 +848,7 @@ class MBAR:
         dims = len(np.shape(A_n))
 
         if dims > 2:
-            print "expecting dim=2 (state_dependent=True) or dim=1 for (state_dependent=False) observables"
+            print("Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.")
 
         if not state_dependent:
             if dims==2:
