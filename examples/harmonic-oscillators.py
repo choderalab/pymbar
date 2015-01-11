@@ -618,7 +618,6 @@ def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100
       val = gridscale*((i/dp[d]) % nperdim[d] + xrange[d][0])
       center.append(val)
     center = numpy.array(center)
-    print i, center
     xu_i[i,:] = center
     mu2 = numpy.dot(center,center)
     f_k_analytical[i] = numpy.log((ndim*numpy.pi/ksum)**(3/2) *numpy.exp(-kprod*mu2/(2*ksum)))
