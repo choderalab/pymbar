@@ -1,0 +1,326 @@
+Reading data/prod0_dihed.xvg...
+Reading data/prod0_energies.xvg...
+Reading data/prod1_dihed.xvg...
+Reading data/prod1_energies.xvg...
+Reading data/prod2_dihed.xvg...
+Reading data/prod2_energies.xvg...
+Reading data/prod3_dihed.xvg...
+Reading data/prod3_energies.xvg...
+Reading data/prod4_dihed.xvg...
+Reading data/prod4_energies.xvg...
+Reading data/prod5_dihed.xvg...
+Reading data/prod5_energies.xvg...
+Reading data/prod6_dihed.xvg...
+Reading data/prod6_energies.xvg...
+Reading data/prod7_dihed.xvg...
+Reading data/prod7_energies.xvg...
+Reading data/prod8_dihed.xvg...
+Reading data/prod8_energies.xvg...
+Reading data/prod9_dihed.xvg...
+Reading data/prod9_energies.xvg...
+Reading data/prod10_dihed.xvg...
+Reading data/prod10_energies.xvg...
+Reading data/prod11_dihed.xvg...
+Reading data/prod11_energies.xvg...
+Reading data/prod12_dihed.xvg...
+Reading data/prod12_energies.xvg...
+Reading data/prod13_dihed.xvg...
+Reading data/prod13_energies.xvg...
+Reading data/prod14_dihed.xvg...
+Reading data/prod14_energies.xvg...
+Reading data/prod15_dihed.xvg...
+Reading data/prod15_energies.xvg...
+Reading data/prod16_dihed.xvg...
+Reading data/prod16_energies.xvg...
+Reading data/prod17_dihed.xvg...
+Reading data/prod17_energies.xvg...
+Reading data/prod18_dihed.xvg...
+Reading data/prod18_energies.xvg...
+Reading data/prod19_dihed.xvg...
+Reading data/prod19_energies.xvg...
+Reading data/prod20_dihed.xvg...
+Reading data/prod20_energies.xvg...
+Reading data/prod21_dihed.xvg...
+Reading data/prod21_energies.xvg...
+Reading data/prod22_dihed.xvg...
+Reading data/prod22_energies.xvg...
+Reading data/prod23_dihed.xvg...
+Reading data/prod23_energies.xvg...
+Reading data/prod24_dihed.xvg...
+Reading data/prod24_energies.xvg...
+Reading data/prod25_dihed.xvg...
+Reading data/prod25_energies.xvg...
+Binning data...
+Evaluating reduced potential energies...
+Running MBAR...
+Using embedded C++ helper code.
+K = 26, L = 26, N_max = 501, total samples = 13026
+N_k = 
+[501 501 501 501 501 501 501 501 501 501 501 501 501 501 501 501 501 501
+ 501 501 501 501 501 501 501 501]
+Initializing free energies to zero.
+Initial dimensionless free energies
+f_k = 
+[ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.
+  0.  0.  0.  0.  0.  0.  0.  0.]
+MBAR: Computing dimensionless free energies by iteration.  This may take from seconds to minutes, depending on the quantity of data...
+Self-consistent iteration 0
+current f_k =
+[ 0.          0.72948015  1.04564407  1.16928846  1.05984055  0.60285613
+ -0.18675615  0.04440987  0.37309931  0.31392459  0.61436374  0.70942455
+  1.02257732  0.76832201  0.39881945 -0.10969257  0.22908635  0.38790313
+  0.66814187  0.6360709   0.68626272  0.51045438 -0.01648384  0.27303463
+  0.74596742  0.73545253]
+relative max_delta = 1.000000e+00
+Determining dimensionless free energies by Newton-Raphson iteration.
+There are 26 states with samples.
+Newton-Raphson iteration 0
+current f_k for states with samples =
+  0.0000 
+  1.2753 
+  1.9527 
+  2.1309 
+  1.7779 
+  1.0417 
+  0.0904 
+  0.1183 
+  0.5666 
+  0.7753 
+  1.4439 
+  1.8918 
+  2.2544 
+  1.8366 
+  1.1545 
+  0.4240 
+  0.7127 
+  1.0238 
+  1.3743 
+  1.4096 
+  1.3266 
+  0.8136 
+ -0.0015 
+  0.4288 
+  1.7115 
+  1.4996 
+relative max_delta = 5.463987e-01
+Newton-Raphson iteration 1
+current f_k for states with samples =
+  0.0000 
+  6.0281 
+ 10.0100 
+ 10.6897 
+  8.2306 
+  5.1257 
+  2.7095 
+  0.8719 
+  2.4328 
+  5.0648 
+  8.9896 
+ 12.6819 
+ 13.4863 
+ 11.5789 
+  8.0575 
+  5.2033 
+  5.0553 
+  6.7483 
+  7.7406 
+  8.3995 
+  7.0676 
+  3.4754 
+  0.1332 
+  1.8013 
+ 10.5875 
+  8.4075 
+relative max_delta = 8.328412e-01
+Newton-Raphson iteration 2
+current f_k for states with samples =
+  0.0000 
+  5.7201 
+ 10.5090 
+ 11.1982 
+  9.0380 
+  6.3224 
+  3.7821 
+  1.8112 
+  3.5219 
+  6.2135 
+ 10.1540 
+ 14.2268 
+ 15.0143 
+ 12.9881 
+  9.0127 
+  5.5395 
+  5.4154 
+  7.0920 
+  8.1148 
+  8.8199 
+  7.1962 
+  3.3073 
+  0.1385 
+  1.6964 
+ 12.1862 
+  8.8247 
+relative max_delta = 1.064743e-01
+Newton-Raphson iteration 3
+current f_k for states with samples =
+  0.0000 
+  5.7199 
+ 10.5655 
+ 11.2567 
+  9.1074 
+  6.3861 
+  3.8575 
+  1.8878 
+  3.6009 
+  6.2934 
+ 10.2348 
+ 14.3059 
+ 15.0941 
+ 13.0671 
+  9.0595 
+  5.5471 
+  5.4242 
+  7.1017 
+  8.1250 
+  8.8312 
+  7.1944 
+  3.3051 
+  0.1380 
+  1.6963 
+ 12.2536 
+  8.8355 
+relative max_delta = 5.353433e-03
+Newton-Raphson iteration 4
+current f_k for states with samples =
+  0.0000 
+  5.7199 
+ 10.5657 
+ 11.2569 
+  9.1076 
+  6.3863 
+  3.8577 
+  1.8880 
+  3.6011 
+  6.2936 
+ 10.2350 
+ 14.3061 
+ 15.0943 
+ 13.0673 
+  9.0597 
+  5.5472 
+  5.4243 
+  7.1017 
+  8.1250 
+  8.8312 
+  7.1944 
+  3.3051 
+  0.1380 
+  1.6963 
+ 12.2538 
+  8.8355 
+relative max_delta = 1.405763e-05
+Newton-Raphson iteration 5
+current f_k for states with samples =
+  0.0000 
+  5.7199 
+ 10.5657 
+ 11.2569 
+  9.1076 
+  6.3863 
+  3.8577 
+  1.8880 
+  3.6011 
+  6.2936 
+ 10.2350 
+ 14.3061 
+ 15.0943 
+ 13.0673 
+  9.0597 
+  5.5472 
+  5.4243 
+  7.1017 
+  8.1250 
+  8.8312 
+  7.1944 
+  3.3051 
+  0.1380 
+  1.6963 
+ 12.2538 
+  8.8355 
+relative max_delta = 1.691464e-10
+Converged to tolerance of 1.691464e-10 in 6 Newton-Raphson iterations.
+Recomputing all free energies...
+current f_k for all states =
+  0.0000 
+  5.7199 
+ 10.5657 
+ 11.2569 
+  9.1076 
+  6.3863 
+  3.8577 
+  1.8880 
+  3.6011 
+  6.2936 
+ 10.2350 
+ 14.3061 
+ 15.0943 
+ 13.0673 
+  9.0597 
+  5.5472 
+  5.4243 
+  7.1017 
+  8.1250 
+  8.8312 
+  7.1944 
+  3.3051 
+  0.1380 
+  1.6963 
+ 12.2538 
+  8.8355 
+Final dimensionless free energies
+f_k = 
+[  0.           5.71992746  10.56570796  11.25693075   9.10755866
+   6.38627336   3.85771732   1.88801655   3.60106218   6.29362888
+  10.2349652   14.30612735  15.09427232  13.06729436   9.05968522
+   5.54715649   5.42427132   7.10169029   8.12504363   8.8312139
+   7.19444995   3.30513572   0.1379724    1.69628058  12.25380187
+   8.8354856 ]
+Computing normalized weights...
+PMF (in units of kT)
+     bin        f       df
+  -175.0    0.915    0.075
+  -165.0    3.210    0.117
+  -155.0    6.028    0.146
+  -145.0    8.887    0.199
+  -135.0   11.325    0.206
+  -125.0   12.244    0.238
+  -115.0   11.681    0.244
+  -105.0    9.427    0.246
+   -95.0    6.601    0.249
+   -85.0    4.057    0.253
+   -75.0    2.565    0.258
+   -65.0    2.109    0.271
+   -55.0    2.681    0.272
+   -45.0    3.864    0.276
+   -35.0    5.783    0.282
+   -25.0    8.272    0.284
+   -15.0   11.209    0.284
+    -5.0   14.053    0.286
+     5.0   15.204    0.281
+    15.0   13.696    0.274
+    25.0   11.432    0.275
+    35.0    8.877    0.271
+    45.0    6.589    0.263
+    55.0    5.434    0.258
+    65.0    5.428    0.249
+    75.0    6.290    0.241
+    85.0    7.343    0.235
+    95.0    8.344    0.228
+   105.0    8.778    0.214
+   115.0    9.104    0.195
+   125.0    8.634    0.184
+   135.0    7.365    0.174
+   145.0    5.176    0.152
+   155.0    2.649    0.122
+   165.0    0.695    0.080
+   175.0    0.000    0.000
