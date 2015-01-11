@@ -24,7 +24,6 @@
 #=============================================================================================
 import sys
 import numpy
-import pdb
 from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR
 
 #=============================================================================================
@@ -133,7 +132,7 @@ print "======================================"
 print "Estimating relative free energies from simulation (this may take a while)..."
 
 # Initialize the MBAR class, determining the free energies.
-mbar = MBAR(u_kln, N_k, method = 'adaptive',relative_tolerance=1.0e-10,verbose=True)
+mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10, verbose=True)
 # Get matrix of dimensionless free energy differences and uncertainty estimate.
 
 print "============================================="
@@ -571,100 +570,188 @@ print "      Testing computePMF   "
 print "============================================"
 
 # For 2-D, The equilibrium distribution is given analytically by
-#   p(x;beta,K) = sqrt[(beta K) / (2 pi)] exp[-beta K [(x-mu)'(x-mu)] / 2]
+#   p(x;beta,K) = sqrt[(beta K) / (2 pi)] exp[-beta K [(x-mu)^2] / 2]
 #
 # The dimensionless free energy is therefore
-#   f(beta,K) = - (2/2) * ln[ (2 pi) / (beta K) ]
+#   f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]
 #  
 # In this problem, we are investigating the sum of two Gaussians, once
 # centered at 0, and others centered at grid points.  
 #
-#   V(x;K) = (K0/2) * [(x-x_0)'(x-x_0)]
+#   V(x;K) = (K0/2) * [(x-x_0)^2]
 #
-# For 2-D, The equilibrium distribution is given analytically by
-#   p(x;beta,K) = 1/N exp[-beta (K0 [(x)'(x)] / 2  + KU [(x-mu)'(x-mu)] / 2)]
+# For 1-D, The equilibrium distribution is given analytically by
+#   p(x;beta,K) = 1/N exp[-beta (K0 [x^2] / 2  + KU [(x-mu)^2] / 2)]
 #   Where N is the normalization constant.
 #
 # The dimensionless free energy is the integral of this, and can be computed as:
 #   f(beta,K)           = - ln [ (2*numpy.pi/(Ko+Ku))^(d/2) exp[ -Ku*Ko mu' mu / 2(Ko +Ku)]
 #   f(beta,K) - fzero   = -Ku*Ko / 2(Ko+Ku)  = 1/(1/(Ku/2) + 1/(K0/2))
-# for computing harmonic samples                                                                                      
 
-K0 = 20.0 # spring constant of base potential
-x0 = numpy.array([0, 0], numpy.float64) # center of base potential
-Ku = 100.0  # spring constant for umbrella sampling
-gridscale = 0.2
-xcenters = gridscale*numpy.array(range(-3,4), numpy.float64) # locations of x centers of umbrellas
-ycenters = xcenters # locations of y centers of umbrellas         
-ndim = 2 
-nsamples = 1000 # number of samples per umbrella
-# Extents for PMF reconstruction.
-nbinsperdim = 15 # number of bins per dimension 
+def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100.0, gridscale=0.2, xrange = [[-3,3]]):
 
-numbrellas = xcenters.size * ycenters.size
-print "There are a total of %d umbrellas." % numbrellas
+  x0 = numpy.zeros([ndim], numpy.float64) # center of base potential
+  numbrellas = 1
+  nperdim = numpy.zeros([ndim],int)
+  for d in range(ndim):
+    nperdim[d] = xrange[d][1] - xrange[d][0] + 1
+    numbrellas *= nperdim[d]
 
-# Enumerate umbrella centers, and compute the analytical free energy of that umbrella                                         
-print "Constructing umbrellas..."
-ksum = (Ku+K0)/beta
-kprod = (Ku*K0)/(beta*beta)
-f_k_analytical = numpy.zeros(numbrellas, numpy.float64);
-xu_i = numpy.zeros([numbrellas, ndim], numpy.float64) # xu_i[i,:] is the center of umbrella i                                             
-umbrella_index = 0
-for x in xcenters:
-  for y in ycenters:
-      xu_i[umbrella_index,:] = [x,y]
-      mu2 = x*x+y*y
-      f_k_analytical[umbrella_index] = numpy.log((2*numpy.pi/ksum)**(3/2) *numpy.exp(-kprod*mu2/(2*ksum)))
-      if (x == 0 and y == 0):  # assumes that we have one state that is at the zero.
-         umbrella_zero = umbrella_index
-      umbrella_index += 1
-f_k_analytical -= f_k_analytical[umbrella_zero]
+  print "There are a total of %d umbrellas." % numbrellas
 
-print "Generating %d samples for each of %d umbrellas..." % (nsamples, numbrellas)
-x_in = numpy.zeros([numbrellas, nsamples, ndim], numpy.float64)
-for umbrella_index in range(numbrellas):
-  for dim in range(ndim):
-    # Compute mu and sigma for this dimension for sampling from V0(x) + Vu(x).                                              
-    # Product of Gaussians: N(x ; a, A) N(x ; b, B) = N(a ; b , A+B) x N(x ; c, C) where                                    
-    # C = 1/(1/A + 1/B)                                                                                                     
-    # c = C(a/A+b/B)                                                                                                        
-    # A = 1/K0, B = 1/Ku                                                                                                    
-    sigma = 1.0 / (K0 + Ku)
-    mu = sigma * (x0[dim]*K0 + xu_i[umbrella_index,dim]*Ku)
-      # Generate normal deviates for this dimension.                                                                          
-    x_in[umbrella_index,:,dim] = numpy.random.normal(mu, numpy.sqrt(sigma), [nsamples])
+  # Enumerate umbrella centers, and compute the analytical free energy of that umbrella
+  print "Constructing umbrellas..."
+  ksum = (Ku+K0)/beta
+  kprod = (Ku*K0)/(beta*beta)
+  f_k_analytical = numpy.zeros(numbrellas, numpy.float64);
+  xu_i = numpy.zeros([numbrellas, ndim], numpy.float64) # xu_i[i,:] is the center of umbrella i
 
-u_kln = numpy.zeros([numbrellas, numbrellas, nsamples], numpy.float64)
-x0r = numpy.repeat(numpy.array(x0,ndmin=2),nsamples,axis=0) # nsamples x ndim matrix of repeated umbrella center coordinates for x0   
-for k in range(numbrellas):
-  # Compute reduced potential due to V0.                                                                                  
-  u0 = beta*(K0/2)*numpy.sum((x_in[k,:,:] - x0r)**2, axis=1)
-  for l in range(numbrellas):
-    xu = xu_i[l,:] # umbrella center for umbrella l                                                                       
-    xur = numpy.repeat(numpy.array(xu,ndmin=2), nsamples, axis=0) # ndim x nsamples matrix of repeated umbrella center coordinates for xu
-    uu = beta*(Ku/2)*numpy.sum((x_in[k,:,:] - xur)**2, axis=1) # reduced potential due to umbrella l                            
-    u_kln[k,l,:] = u0 + uu
+  dp = numpy.zeros(ndim,int)
+  dp[0] = 1
+  for d in range(1,ndim):
+    dp[d] = nperdim[d]*dp[d-1]
 
-  u_kn = numpy.zeros([numbrellas, nsamples], numpy.float64)  # Store unperturbed potential                                                
+  umbrella_zero = 0
+  for i in range(numbrellas):
+    center = []
+    for d in range(ndim):
+      val = gridscale*((i/dp[d]) % nperdim[d] + xrange[d][0])
+      center.append(val)
+    center = numpy.array(center)
+    print i, center
+    xu_i[i,:] = center
+    mu2 = numpy.dot(center,center)
+    f_k_analytical[i] = numpy.log((ndim*numpy.pi/ksum)**(3/2) *numpy.exp(-kprod*mu2/(2*ksum)))
+    if numpy.all(center==0.0):  # assumes that we have one state that is at the zero.
+      umbrella_zero = i
+    i += 1
+    f_k_analytical -= f_k_analytical[umbrella_zero]
+
+  print "Generating %d samples for each of %d umbrellas..." % (nsamples, numbrellas)
+  x_n = numpy.zeros([numbrellas * nsamples, ndim], numpy.float64)
+
+  for i in range(numbrellas):
+    for dim in range(ndim):
+      # Compute mu and sigma for this dimension for sampling from V0(x) + Vu(x).        
+      # Product of Gaussians: N(x ; a, A) N(x ; b, B) = N(a ; b , A+B) x N(x ; c, C) where
+      # C = 1/(1/A + 1/B)
+      # c = C(a/A+b/B)
+      # A = 1/K0, B = 1/Ku
+      sigma = 1.0 / (K0 + Ku)
+      mu = sigma * (x0[dim]*K0 + xu_i[i,dim]*Ku)
+      # Generate normal deviates for this dimension.
+      x_n[i*nsamples:(i+1)*nsamples,dim] = numpy.random.normal(mu, numpy.sqrt(sigma), [nsamples])
+
+  u_kn = numpy.zeros([numbrellas, nsamples*numbrellas], numpy.float64)
+  # Compute reduced potential due to V0.
+  u_n = beta*(K0/2)*numpy.sum((x_n[:,:] - x0)**2, axis=1)
   for k in range(numbrellas):
-    # Compute reduced potential due to V0.                                                                                    
-    u0 = beta*(K0/2)*numpy.sum((x_in[k,:,:] - x0r)**2, axis=1)
-    u_kn[k,:] = u0
+    uu = beta*(Ku/2)*numpy.sum((x_n[:,:] - xu_i[k,:])**2, axis=1) # reduced potential due to umbrella k
+    u_kn[k,:] = u_n + uu
 
-print "Solving for free energies of state ..." 
+  return u_kn, u_n, x_n, f_k_analytical
+
+nbinsperdim = 15
+gridscale = 0.2 
+nsamples = 1000
+ndim = 1
+K0 = 20.0
+Ku = 100.0
+print "============================================"
+print "      Test 1: 1D PMF   "
+print "============================================"
+
+xrange = [[-3,3]]
+ndim = 1
+
+u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(K0 = K0, Ku = Ku, ndim=ndim, nbinsperdim = nbinsperdim, nsamples = nsamples, gridscale = gridscale, xrange=xrange)
+numbrellas = (numpy.shape(u_kn))[0]
 N_k = nsamples*numpy.ones([numbrellas], int)
-mbar = MBAR(u_kln, N_k, method='adaptive')
+print "Solving for free energies of state ..." 
+mbar = MBAR(u_kn, N_k)
+
+# Histogram bins are indexed using the scheme:                                           
+# index = 1 + numpy.floor((x[0] - xmin)/dx) + nbins*numpy.floor((x[1] - xmin)/dy)
+# index = 0 is reserved for samples outside of the allowed domain
+xmin = gridscale*(numpy.min(xrange[0][0])-1/2.0)
+xmax = gridscale*(numpy.max(xrange[0][1])+1/2.0)
+dx = (xmax-xmin)/nbinsperdim
+nbins = 1 + nbinsperdim**ndim
+bin_centers = numpy.zeros([nbins,ndim],numpy.float64)
+
+ibin = 1;
+pmf_analytical = numpy.zeros([nbins],numpy.float64)
+minmu2 = 1000000;
+zeroindex = 0;
+# construct the bins and the pmf
+for i in range(nbinsperdim):
+  xbin = xmin + dx * (i + 0.5)
+  bin_centers[ibin,0] = xbin
+  mu2 = xbin*xbin
+  if (mu2 < minmu2):
+    minmu2 = mu2;
+    zeroindex = ibin
+  pmf_analytical[ibin] = K0*mu2/2.0 
+  ibin += 1
+fzero = pmf_analytical[zeroindex]
+pmf_analytical -= fzero
+pmf_analytical[0] = 0
+
+bin_n = numpy.zeros([numbrellas*nsamples], int)
+# Determine indices of those within bounds.
+within_bounds = (x_n[:,0] >= xmin) & (x_n[:,0] < xmax)
+# Determine states for these.
+bin_n[within_bounds] = 1 + numpy.floor((x_n[within_bounds,0]-xmin)/dx)
+# Determine indices of bins that are not empty.
+bin_counts = numpy.zeros([nbins], int)
+for i in range(nbins):                                                                                                      
+  bin_counts[i] = (bin_n == i).sum()
+
+# Compute PMF.                                
+print "Computing PMF ..." 
+[f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)  
+# Show free energy and uncertainty of each occupied bin relative to lowest free energy 
+
+print "1D PMF:"
+print "%d counts out of %d counts not in any bin" % (bin_counts[0],numbrellas*nsamples)
+print "%8s %6s %8s %10s %10s %10s %10s %8s" % ('bin', 'x', 'N', 'f', 'true','error','df','sigmas')
+for i in range(1,nbins):
+   if (i == zeroindex):
+     stdevs = 0 
+     df_i[0] = 0
+   else:  
+     error = pmf_analytical[i]-f_i[i]
+     stdevs = numpy.abs(error)/df_i[i]
+   print '%8d %6.2f %8d %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs)
+
+print "============================================"
+print "      Test 2: 2D PMF   "
+print "============================================"
+
+xrange = [[-3,3],[-3,3]]
+ndim = 2
+nsamples = 300
+u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(K0 = K0, Ku = Ku, ndim=ndim, nbinsperdim = nbinsperdim, nsamples = nsamples, gridscale = gridscale, xrange=xrange)
+numbrellas = (numpy.shape(u_kn))[0]
+N_k = nsamples*numpy.ones([numbrellas], int)
+print "Solving for free energies of state ..." 
+mbar = MBAR(u_kn, N_k)
+
+# The dimensionless free energy is the integral of this, and can be computed as:
+#   f(beta,K)           = - ln [ (2*numpy.pi/(Ko+Ku))^(d/2) exp[ -Ku*Ko mu' mu / 2(Ko +Ku)]
+#   f(beta,K) - fzero   = -Ku*Ko / 2(Ko+Ku)  = 1/(1/(Ku/2) + 1/(K0/2))
+# for computing harmonic samples                                                                                      
 
 #Can compare the free energies computed with MBAR if desired with f_k_analytical
 
 # Histogram bins are indexed using the scheme:                                                                              
 # index = 1 + numpy.floor((x[0] - xmin)/dx) + nbins*numpy.floor((x[1] - xmin)/dy)        
 # index = 0 is reserved for samples outside of the allowed domain                                                           
-xmin = numpy.min(xcenters)-gridscale/2.0
-ymin = numpy.min(ycenters)-gridscale/2.0
-xmax = numpy.max(xcenters)+gridscale/2.0
-ymax = numpy.max(ycenters)+gridscale/2.0
+
+xmin = gridscale*(numpy.min(xrange[0][0])-1/2.0)
+xmax = gridscale*(numpy.max(xrange[0][1])+1/2.0)
+ymin = gridscale*(numpy.min(xrange[1][0])-1/2.0)
+ymax = gridscale*(numpy.max(xrange[1][1])+1/2.0)
 dx = (xmax-xmin)/nbinsperdim
 dy = (ymax-ymin)/nbinsperdim
 nbins = 1 + nbinsperdim**ndim
@@ -692,31 +779,30 @@ fzero = pmf_analytical[zeroindex]
 pmf_analytical -= fzero
 pmf_analytical[0] = 0
 
-unbinned = 0
-bin_kn = numpy.zeros([numbrellas, nsamples], int)
-for i in range(numbrellas):
-  # Determine indices of those within bounds.                                                                               
-  within_bounds = (x_in[i,:,0] >= xmin) & (x_in[i,:,0] < xmax) & (x_in[i,:,1] >= ymin) & (x_in[i,:,1] < ymax)
-  # Determine states for these.
-  bin_kn[i,within_bounds] = 1 + numpy.floor((x_in[i,within_bounds,0]-xmin)/dx) + nbinsperdim*numpy.floor((x_in[i,within_bounds,1]-ymin)/dy)
+bin_n = numpy.zeros([numbrellas * nsamples], int)
+# Determine indices of those within bounds.
+within_bounds = (x_n[:,0] >= xmin) & (x_n[:,0] < xmax) & (x_n[:,1] >= ymin) & (x_n[:,1] < ymax)
+# Determine states for these.
+bin_n[within_bounds] = 1 + numpy.floor((x_n[within_bounds,0]-xmin)/dx) + nbinsperdim*numpy.floor((x_n[within_bounds,1]-ymin)/dy)
 
 # Determine indices of bins that are not empty.
 bin_counts = numpy.zeros([nbins], int)
 for i in range(nbins):                                                                                                      
-  bin_counts[i] = (bin_kn == i).sum() 
+  bin_counts[i] = (bin_n == i).sum() 
 
 # Compute PMF.                                
 print "Computing PMF ..." 
-[f_i, df_i] = mbar.computePMF(u_kn, bin_kn, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)  
-# Show free energy and uncertainty of each occupied bin relative to lowest free energy                                        
+[f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)  
+# Show free energy and uncertainty of each occupied bin relative to lowest free energy  
 print "2D PMF:"
+
 print "%d counts out of %d counts not in any bin" % (bin_counts[0],numbrellas*nsamples)
 print "%8s %6s %6s %8s %10s %10s %10s %10s %8s" % ('bin', 'x', 'y', 'N', 'f', 'true','error','df','sigmas')
 for i in range(1,nbins):
    if (i == zeroindex):
      stdevs = 0 
      df_i[0] = 0
-   else:  
+   else:
      error = pmf_analytical[i]-f_i[i]
      stdevs = numpy.abs(error)/df_i[i]
    print '%8d %6.2f %6.2f %8d %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_centers[i,1] , bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs)
