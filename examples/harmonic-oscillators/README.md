@@ -1,10 +1,9 @@
-pymbar/examples
+pymbar/examples/harmonic-oscillators
 ======
 
 This folder contains two examples illustrating application of MBAR to
 a set of harmonic oscillators, for which free energy differences and
-expectations can be computed analytically. More examples can be found
-in [pymbar-examples](http://github.com/choderalab/pymbar-examples/).
+expectations can be computed analytically. 
 
 * `README.md` - this file
 * `harmonic-oscilllators.py` - a file  
