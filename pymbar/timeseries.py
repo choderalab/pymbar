@@ -874,7 +874,6 @@ def detectEquilibration_binary_search(A_t, bs_nodes=10):
     
     while True:
         time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int'))
-        n_grid = min(bs_nodes, time_grid.size)
         
         g_t = np.ones(time_grid.size)
         Neff_t = np.ones(time_grid.size)
