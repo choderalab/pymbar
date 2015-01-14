@@ -108,4 +108,4 @@ and ways to improve `pymbar`, including Tommy Knotts, David Mobley, Himanshu Pal
 Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian Roitberg,
 Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin,
 Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Dave Caplan, Sam Moors,
-Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, Andrew Jewett, and Antonia Mey.
+Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, Andrew Jewett, Stefano Martiniani, and Antonia Mey.
