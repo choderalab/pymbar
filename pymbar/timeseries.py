@@ -833,13 +833,16 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     return g #, g_t, C_t
 
 
-def detectEquilibration_binary_search(A_t):
+def detectEquilibration_binary_search(A_t, bs_nodes=10):
     """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
 
     Parameters
     ----------
     A_t : np.ndarray 
         timeseries
+    
+    bs_nodes : int > 4
+        number of geometrically distributed binary search nodes
 
     Returns
     -------
@@ -858,6 +861,7 @@ def detectEquilibration_binary_search(A_t):
     likely be found if the N_eff[t] varies smoothly.
 
     """
+    assert bs_nodes > 4, "Number of nodes for binary search must be > 4"
     T = A_t.size
 
     # Special case if timeseries is constant.
@@ -866,15 +870,16 @@ def detectEquilibration_binary_search(A_t):
 
     start = 1
     end = T - 1
-    n_grid = min(5, T)
+    n_grid = min(bs_nodes, T)
     
     while True:
         time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int'))
-
-        g_t = np.ones(len(time_grid))
-        Neff_t = np.ones(len(time_grid))
+        n_grid = min(bs_nodes, time_grid.size)
         
-        for k, t in enumerate(time_grid):
+        g_t = np.ones(time_grid.size)
+        Neff_t = np.ones(time_grid.size)
+        
+        for k, t in enumerate(time_grid[:-1]):
             g_t[k] = statisticalInefficiency_fft(A_t[t:])
             Neff_t[k] = (T - t + 1) / g_t[k]
 
@@ -883,19 +888,17 @@ def detectEquilibration_binary_search(A_t):
         t = time_grid[k]
         g = g_t[k]
         
-        if (time_grid.max() - time_grid.min() <= n_grid - 1.):
+        if (end - start < 4):
             break
         
         if k == 0:
             start = time_grid[0]
             end = time_grid[1]
-        elif k == len(time_grid) - 1:
+        elif k == time_grid.size - 1:
             start = time_grid[-2]
             end = time_grid[-1]
         else:
             start = time_grid[k - 1]
             end = time_grid[k + 1]
         
-
-
     return (t, g, Neff_max)
