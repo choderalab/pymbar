@@ -10,7 +10,7 @@ requirements:
     - scipy
     - setuptools
     - numexpr   
-    - six 
+    - six
   run:
     - python
     - numpy
@@ -21,7 +21,8 @@ requirements:
 test:
   requires:
     - nose
-    - setuptools    
+    - setuptools
+    - statsmodels    
   imports:
     - pymbar
   commands:
