@@ -1,5 +1,7 @@
 from pymbar import timeseries
+from pymbar import testsystems
 import numpy as np
+from scipy import stats
 from pymbar.utils_for_testing import eq, skipif
 from six.moves import xrange
 
@@ -102,6 +104,29 @@ def test_detectEquil():
 def test_detectEquil_binary():
     x = np.random.normal(size=10000)        
     (t, g, Neff_max) = timeseries.detectEquilibration_binary_search(x)
+    
+@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
+def test_compare_detectEquil(show_hist=False):
+    """
+    compare detectEquilibration implementations (with and without binary search + fft)
+    """
+    t_res = []
+    N=100
+    for _ in xrange(100):
+        A_t = testsystems.correlated_timeseries_example(N=N, tau=5.0) + 2.0
+        B_t = testsystems.correlated_timeseries_example(N=N, tau=5.0) + 1.0
+        C_t = testsystems.correlated_timeseries_example(N=N*2, tau=5.0)
+        D_t = np.concatenate([A_t, B_t, C_t, np.zeros(20)]) #concatenate and add flat region to one end (common in MC data)         
+        bs_de = timeseries.detectEquilibration_binary_search(D_t, bs_nodes=10)
+        std_de = timeseries.detectEquilibration(D_t, fast=False, nskip=1)
+        t_res.append(bs_de[0]-std_de[0])
+    t_res_mode = float(stats.mode(t_res)[0][0])
+    eq(t_res_mode,0.,decimal=1)
+    if show_hist:
+        import matplotlib.pyplot as plt
+        plt.hist(t_res)
+        plt.show()
+
 
 
 def test_detectEquil_constant_trailing():

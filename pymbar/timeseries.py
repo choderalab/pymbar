@@ -873,14 +873,14 @@ def detectEquilibration_binary_search(A_t, bs_nodes=10):
     n_grid = min(bs_nodes, T)
     
     while True:
-        time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int'))
-        
+        time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int')) 
         g_t = np.ones(time_grid.size)
         Neff_t = np.ones(time_grid.size)
         
-        for k, t in enumerate(time_grid[:-1]):
-            g_t[k] = statisticalInefficiency_fft(A_t[t:])
-            Neff_t[k] = (T - t + 1) / g_t[k]
+        for k, t in enumerate(time_grid):
+            if t < T-1:
+                g_t[k] = statisticalInefficiency_fft(A_t[t:])
+                Neff_t[k] = (T - t + 1) / g_t[k]
 
         Neff_max = Neff_t.max()
         k = Neff_t.argmax()
