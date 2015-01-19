@@ -1,6 +1,6 @@
 package:
   name: pymbar-dev
-  version: !!str 3.0.0
+  version: !!str 3.0.0.dev0
 
 
 requirements:
