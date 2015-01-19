@@ -53,7 +53,12 @@ def load_from_hdf(filename):
     
     """
     import tables
-    f = tables.File(filename, 'r')
+    try:
+        f = tables.File(filename, 'r')
+    except IOError as e:
+        print("Cannot load %s.  Please download pymbar-datasets and export PYMBAR_DATASETS to point to its location." % filename)
+        raise(e)
+
     u_kn = f.root.u_kn[:]
     N_k = f.root.N_k[:]
     s_n = f.root.s_n[:]
