@@ -180,7 +180,7 @@ def mbar_hessian(u_kn, N_k, f_k):
 
 
 def mbar_log_W_nk(u_kn, N_k, f_k):
-    """Calculate the weight matrix.
+    """Calculate the log weight matrix.
 
     Parameters
     ----------
