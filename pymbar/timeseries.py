@@ -822,6 +822,10 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     t_grid = np.arange(N).astype('float')
     g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
     
+    #make function memory safe by clearing np.fft cache
+    np.fft.fftpack._fft_cache.clear()
+    np.fft.fftpack._real_fft_cache.clear()
+    
     try:
         ind = np.where((C_t <= 0) & (t_grid > mintime))[0][0]
     except IndexError:
