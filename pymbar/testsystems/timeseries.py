@@ -52,15 +52,14 @@ def correlated_timeseries_example(N=10000, tau=5.0, seed=None):
     """
 
     # Set random number generator into a known state for reproducibility.
-    if seed is not None:
-        np.random.seed(seed)
+    random = np.random.RandomState(seed)
 
     # Compute correlation coefficient rho, 0 <= rho < 1.
     rho = np.exp(-1.0 / tau)
     sigma = np.sqrt(1.0 - rho * rho)
 
     # Generate uncorrelated Gaussian variates.
-    e_n = np.random.randn(N)
+    e_n = random.randn(N)
 
     # Generate correlated signal from uncorrelated Gaussian variates using correlation coefficient.
     # NOTE: This will be slow.

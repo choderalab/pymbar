@@ -89,9 +89,7 @@ def gaussian_work_example(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, 
         DeltaF = mu_F - sigma_F ** 2 / 2.0
 
     # Set random number generator into a known state for reproducibility.
-    if seed is not None:
-        state = np.random.get_state()
-        np.random.seed(seed)
+    random = np.random.RandomState(seed)
 
     # Determine mean and variance of reverse work distribution by Crooks
     # fluctuation theorem (CFT).
@@ -99,11 +97,7 @@ def gaussian_work_example(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, 
     sigma_R = sigma_F * np.exp(mu_F - sigma_F ** 2 / 2.0 - DeltaF)
 
     # Draw samples from forward and reverse distributions.
-    w_F = np.random.randn(N_F) * sigma_F + mu_F
-    w_R = np.random.randn(N_R) * sigma_R + mu_R
-
-    # Restore random number generator state.
-    if seed is not None:
-        np.random.set_state(state)
+    w_F = random.randn(N_F) * sigma_F + mu_F
+    w_R = random.randn(N_R) * sigma_R + mu_R
 
     return [w_F, w_R]

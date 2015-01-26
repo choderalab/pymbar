@@ -1,8 +1,8 @@
 language: c
 
-#branches:
-#  only:
-#    - master  # Need to build the nk branch for current pymbar.
+branches:
+  only:
+    - master
 
 install:
   - source devtools/ci/install.sh
@@ -15,6 +15,7 @@ script:
 env:
   matrix:
     - CONDA_PY=2.7
+    - CONDA_PY=3.3
     - CONDA_PY=3.4    
 
   global:

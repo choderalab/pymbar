@@ -14,7 +14,7 @@ import subprocess
 import six
 
 ##########################
-VERSION = "2.1.0"
+VERSION = "3.0.0.dev0"
 ISRELEASED = False
 __version__ = VERSION
 ##########################
@@ -97,7 +97,7 @@ def buildKeywordDictionary():
     from distutils.core import Extension
     setupKeywords = {}
     setupKeywords["name"]              = "pymbar"
-    setupKeywords["version"]           = "2.1.0-beta"
+    setupKeywords["version"]           = VERSION
     setupKeywords["author"]            = "Michael R. Shirts and John D. Chodera"
     setupKeywords["author_email"]      = "michael.shirts@virginia.edu, choderaj@mskcc.org"
     setupKeywords["license"]           = "GPL 2.0"
