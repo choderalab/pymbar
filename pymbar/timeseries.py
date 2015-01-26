@@ -775,7 +775,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     return (t, g, Neff_max)
 
 
-def statisticalInefficiency_fft(A_n, mintime=3):
+def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
@@ -787,7 +787,10 @@ def statisticalInefficiency_fft(A_n, mintime=3):
         The algorithm terminates after computing the correlation time out to mintime when the
         correlation function furst goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
-
+    memsafe: bool, optional, default=True
+        clear np.fft cache to avoid a fast increase in memory consumption when this function
+        is called on many arrays of different sizes. If this function is used several times on
+        arrays of comparable size then one might benefit from setting this option to False.
     Returns
     -------
     g : np.ndarray,
@@ -823,8 +826,10 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
     
     #make function memory safe by clearing np.fft cache
-    np.fft.fftpack._fft_cache.clear()
-    np.fft.fftpack._real_fft_cache.clear()
+    #this assumes that statsmodels uses np.fft
+    if memsafe:
+        np.fft.fftpack._fft_cache.clear()
+        np.fft.fftpack._real_fft_cache.clear()
     
     try:
         ind = np.where((C_t <= 0) & (t_grid > mintime))[0][0]
