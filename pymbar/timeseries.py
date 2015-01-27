@@ -775,7 +775,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     return (t, g, Neff_max)
 
 
-def statisticalInefficiency_fft(A_n, mintime=3, memsafe=False):
+def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
