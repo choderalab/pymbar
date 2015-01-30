@@ -787,7 +787,7 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
         The algorithm terminates after computing the correlation time out to mintime when the
         correlation function furst goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
-    memsafe: bool, optional, default=False
+    memsafe: bool, optional, default=True
         If this function is used several times on arrays of comparable size then one might benefit 
         from setting this option to False. If set to True then clear np.fft cache to avoid a fast 
         increase in memory consumption when this function is called on many arrays of different sizes.
