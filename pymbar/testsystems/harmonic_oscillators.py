@@ -164,3 +164,13 @@ class HarmonicOscillatorsTestCase(object):
             raise Exception("Unknown mode '%s'" % mode)
 
         return
+
+    @classmethod
+    def evenly_spaced_oscillators(obj, n_states, n_samples, lower_O_k=1.0, upper_O_k=5.0, lower_k_k=1.0, upper_k_k=3.0):
+        name = "%dx%d oscillators" % (n_states, n_samples)
+        O_k = np.linspace(lower_O_k, upper_O_k, n_states)
+        k_k = np.linspace(lower_k_k, upper_k_k, n_states)
+        N_k = (np.ones(n_states) * n_samples).astype('int')
+        testsystem = obj(O_k, k_k)
+        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
+        return name, testsystem, x_n, u_kn, N_k_output, s_n

@@ -156,3 +156,12 @@ class ExponentialTestCase(object):
             raise Exception("Unknown mode '%s'" % mode)
 
         return
+    
+    @classmethod
+    def evenly_spaced_exponentials(obj, n_states, n_samples, lower_rate=1.0, upper_rate=3.0):
+        name = "%dx%d exponentials" % (n_states, n_samples)
+        rates = np.linspace(lower_rate, upper_rate, n_states)
+        N_k = (np.ones(n_states) * n_samples).astype('int')
+        testsystem = obj(rates)
+        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
+        return name, testsystem, x_n, u_kn, N_k_output, s_n
