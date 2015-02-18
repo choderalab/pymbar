@@ -166,7 +166,7 @@ class HarmonicOscillatorsTestCase(object):
         return
 
     @classmethod
-    def evenly_spaced_oscillators(obj, n_states, n_samples_per_state, lower_O_k=1.0, upper_O_k=5.0, lower_k_k=1.0, upper_k_k=3.0):
+    def evenly_spaced_oscillators(cls, n_states, n_samples_per_state, lower_O_k=1.0, upper_O_k=5.0, lower_k_k=1.0, upper_k_k=3.0):
         """Generate samples from evenly spaced harmonic oscillators.
 
         Parameters
@@ -206,7 +206,7 @@ class HarmonicOscillatorsTestCase(object):
         k_k = np.linspace(lower_k_k, upper_k_k, n_states)
         N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
 
-        testsystem = obj(O_k, k_k)
+        testsystem = cls(O_k, k_k)
         x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
 
         return name, testsystem, x_n, u_kn, N_k_output, s_n

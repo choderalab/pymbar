@@ -158,7 +158,7 @@ class ExponentialTestCase(object):
         return
     
     @classmethod
-    def evenly_spaced_exponentials(obj, n_states, n_samples_per_state, lower_rate=1.0, upper_rate=3.0):
+    def evenly_spaced_exponentials(cls, n_states, n_samples_per_state, lower_rate=1.0, upper_rate=3.0):
         """Generate samples from evenly spaced exponential distributions.
 
         Parameters
@@ -198,7 +198,7 @@ class ExponentialTestCase(object):
         rates = np.linspace(lower_rate, upper_rate, n_states)
         N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
 
-        testsystem = obj(rates)
+        testsystem = cls(rates)
         x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
 
         return name, testsystem, x_n, u_kn, N_k_output, s_n
