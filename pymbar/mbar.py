@@ -620,7 +620,7 @@ class MBAR:
         N_k[0:K] = self.N_k
         f_k[0:K] = self.f_k
 
-        # Pre-calculate some quantities outside the for loops
+        # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
         states_with_samples = (self.N_k > 0)
         log_denominator_n = logsumexp(self.f_k[states_with_samples] - self.u_kn[states_with_samples].T, b=self.N_k[states_with_samples], axis=1)
         # Compute row of W_nk matrix for the extra states corresponding to u_ln 
