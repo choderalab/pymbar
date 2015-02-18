@@ -156,3 +156,49 @@ class ExponentialTestCase(object):
             raise Exception("Unknown mode '%s'" % mode)
 
         return
+    
+    @classmethod
+    def evenly_spaced_exponentials(cls, n_states, n_samples_per_state, lower_rate=1.0, upper_rate=3.0):
+        """Generate samples from evenly spaced exponential distributions.
+
+        Parameters
+        ----------
+        n_states : np.ndarray, int
+            number of states
+        n_samples_per_state : np.ndarray, int
+            number of samples per state.  The total number of samples
+            n_samples will be equal to n_states * n_samples_per_state
+        lower_O_k : float, optional, default=1.0
+            Lower bound of O_k values
+        upper_O_k : float, optional, default=5.0
+            Upper bound of O_k values
+        lower_k_k : float, optional, default=1.0
+            Lower bound of O_k values
+        upper_k_k : float, optional, default=3.0
+            Upper bound of k_k values
+
+        Returns
+        -------
+        name: str
+            Name of testsystem
+        testsystem : TestSystem
+            The testsystem object
+        x_n : np.ndarray, shape=(n_samples)
+            Coordinates of the samples
+        u_kn : np.ndarray, shape=(n_states, n_samples)
+            Reduced potential energies
+        N_k : np.ndarray, shape=(n_states)
+            Number of samples drawn from each state
+        s_n : np.ndarray, shape=(n_samples)
+            State of origin of each sample
+        """
+                
+        name = "%dx%d exponentials" % (n_states, n_samples_per_state)
+
+        rates = np.linspace(lower_rate, upper_rate, n_states)
+        N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
+
+        testsystem = cls(rates)
+        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
+
+        return name, testsystem, x_n, u_kn, N_k_output, s_n

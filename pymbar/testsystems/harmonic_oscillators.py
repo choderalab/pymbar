@@ -164,3 +164,49 @@ class HarmonicOscillatorsTestCase(object):
             raise Exception("Unknown mode '%s'" % mode)
 
         return
+
+    @classmethod
+    def evenly_spaced_oscillators(cls, n_states, n_samples_per_state, lower_O_k=1.0, upper_O_k=5.0, lower_k_k=1.0, upper_k_k=3.0):
+        """Generate samples from evenly spaced harmonic oscillators.
+
+        Parameters
+        ----------
+        n_states : np.ndarray, int
+            number of states
+        n_samples_per_state : np.ndarray, int
+            number of samples per state.  The total number of samples
+            n_samples will be equal to n_states * n_samples_per_state
+        lower_O_k : float, optional, default=1.0
+            Lower bound of O_k values
+        upper_O_k : float, optional, default=5.0
+            Upper bound of O_k values
+        lower_k_k : float, optional, default=1.0
+            Lower bound of O_k values
+        upper_k_k : float, optional, default=3.0
+            Upper bound of k_k values
+
+        Returns
+        -------
+        name: str
+            Name of testsystem
+        testsystem : TestSystem
+            The testsystem object
+        x_n : np.ndarray, shape=(n_samples)
+            Coordinates of the samples
+        u_kn : np.ndarray, shape=(n_states, n_samples)
+            Reduced potential energies
+        N_k : np.ndarray, shape=(n_states)
+            Number of samples drawn from each state
+        s_n : np.ndarray, shape=(n_samples)
+            State of origin of each sample
+        """
+        name = "%dx%d oscillators" % (n_states, n_samples_per_state)
+
+        O_k = np.linspace(lower_O_k, upper_O_k, n_states)
+        k_k = np.linspace(lower_k_k, upper_k_k, n_states)
+        N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
+
+        testsystem = cls(O_k, k_k)
+        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
+
+        return name, testsystem, x_n, u_kn, N_k_output, s_n
