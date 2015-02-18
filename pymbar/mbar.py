@@ -629,8 +629,7 @@ class MBAR:
             la = K+l  #l, augmented
             # Calculate log normalizing constants and log weights via Eqns 13, 14
             log_C_a = -logsumexp(-u_ln[l] - log_denominator_n)
-            Q = log_C_a - u_ln[l] - log_denominator_n
-            Log_W_nk[:, la] = Q
+            Log_W_nk[:, la] = log_C_a - u_ln[l] - log_denominator_n
             f_k[la] = log_C_a
 
         # Compute the remaining rows/columns of W_nk, and calculate
