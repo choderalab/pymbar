@@ -93,7 +93,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
-        correlation function furst goes negative.  Note that this time may need to be increased
+        correlation function first goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
     fft : bool, optional, default=False
         If fft=True and B_n=None, then use the fft based approach, as
@@ -785,7 +785,7 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
-        correlation function furst goes negative.  Note that this time may need to be increased
+        correlation function first goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
     memsafe: bool, optional, default=True
         If this function is used several times on arrays of comparable size then one might benefit 
