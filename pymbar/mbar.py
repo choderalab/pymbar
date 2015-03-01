@@ -262,7 +262,7 @@ class MBAR:
                 print(self.f_k)
         
         self.f_k = mbar_solvers.solve_mbar_with_subsampling(self.u_kn, self.N_k, self.f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=self.x_kindices)
-        self.Log_W_nk = np.log(mbar_solvers.mbar_W_nk(self.u_kn, self.N_k, self.f_k))
+        self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
         
         # Print final dimensionless free energies.
         if self.verbose:
@@ -620,13 +620,17 @@ class MBAR:
         N_k[0:K] = self.N_k
         f_k[0:K] = self.f_k
 
+        # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
+        states_with_samples = (self.N_k > 0)
+        log_denominator_n = logsumexp(self.f_k[states_with_samples] - self.u_kn[states_with_samples].T, b=self.N_k[states_with_samples], axis=1)
         # Compute row of W_nk matrix for the extra states corresponding to u_ln 
         # that the state list specifies
         for l in L_list:
             la = K+l  #l, augmented
-            Log_W_nk[:, la] = self._computeUnnormalizedLogWeights(u_ln[l,:]) 
-            f_k[la] = -logsumexp(Log_W_nk[:, la])
-            Log_W_nk[:, la] += f_k[la]
+            # Calculate log normalizing constants and log weights via Eqns 13, 14
+            log_C_a = -logsumexp(-u_ln[l] - log_denominator_n)
+            Log_W_nk[:, la] = log_C_a - u_ln[l] - log_denominator_n
+            f_k[la] = log_C_a
 
         # Compute the remaining rows/columns of W_nk, and calculate
         # their normalizing constants c_k

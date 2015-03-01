@@ -179,6 +179,33 @@ def mbar_hessian(u_kn, N_k, f_k):
     return -1.0 * H
 
 
+def mbar_log_W_nk(u_kn, N_k, f_k):
+    """Calculate the log weight matrix.
+
+    Parameters
+    ----------
+    u_kn : np.ndarray, shape=(n_states, n_samples), dtype='float'
+        The reduced potential energies, i.e. -log unnormalized probabilities
+    N_k : np.ndarray, shape=(n_states), dtype='int'
+        The number of samples in each state
+    f_k : np.ndarray, shape=(n_states), dtype='float'
+        The reduced free energies of each state
+
+    Returns
+    -------
+    logW_nk : np.ndarray, dtype='float', shape=(n_samples, n_states)
+        The normalized log weights.
+
+    Notes
+    -----
+    Equation (9) in JCP MBAR paper.
+    """
+    u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
+
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+    logW = f_k - u_kn.T - log_denominator_n[:, np.newaxis]
+    return logW
+
 def mbar_W_nk(u_kn, N_k, f_k):
     """Calculate the weight matrix.
 
@@ -200,11 +227,7 @@ def mbar_W_nk(u_kn, N_k, f_k):
     -----
     Equation (9) in JCP MBAR paper.
     """
-    u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-
-    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-    W = np.exp(f_k - u_kn.T - log_denominator_n[:, np.newaxis])
-    return W
+    return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
 
 
 def precondition_u_kn(u_kn, N_k, f_k):
@@ -291,6 +314,8 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     hess = lambda x: mbar_hessian(u_kn_nonzero, N_k_nonzero, pad(x))[1:][:, 1:]  # Hessian of objective function
 
     if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
+        if method in ["L-BFGS-B", "CG"]:
+            hess = None  # To suppress warning from passing a hessian function.
         results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
     else:
         results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)

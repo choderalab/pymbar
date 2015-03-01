@@ -1,6 +1,6 @@
 package:
-  name: pymbar
-  version: !!str dev
+  name: pymbar-dev
+  version: !!str 3.0.0.dev0
 
 
 requirements:
@@ -10,7 +10,7 @@ requirements:
     - scipy
     - setuptools
     - numexpr   
-    - six 
+    - six
   run:
     - python
     - numpy
@@ -21,7 +21,8 @@ requirements:
 test:
   requires:
     - nose
-    - setuptools    
+    - setuptools
+    - statsmodels    
   imports:
     - pymbar
   commands:

@@ -93,7 +93,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
-        correlation function furst goes negative.  Note that this time may need to be increased
+        correlation function first goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
     fft : bool, optional, default=False
         If fft=True and B_n=None, then use the fft based approach, as
@@ -775,7 +775,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     return (t, g, Neff_max)
 
 
-def statisticalInefficiency_fft(A_n, mintime=3):
+def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
@@ -785,9 +785,12 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
-        correlation function furst goes negative.  Note that this time may need to be increased
+        correlation function first goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
-
+    memsafe: bool, optional, default=True
+        If this function is used several times on arrays of comparable size then one might benefit 
+        from setting this option to False. If set to True then clear np.fft cache to avoid a fast 
+        increase in memory consumption when this function is called on many arrays of different sizes.
     Returns
     -------
     g : np.ndarray,
@@ -822,6 +825,12 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     t_grid = np.arange(N).astype('float')
     g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
     
+    #make function memory safe by clearing np.fft cache
+    #this assumes that statsmodels uses np.fft
+    if memsafe:
+        np.fft.fftpack._fft_cache.clear()
+        np.fft.fftpack._real_fft_cache.clear()
+    
     try:
         ind = np.where((C_t <= 0) & (t_grid > mintime))[0][0]
     except IndexError:
@@ -833,13 +842,16 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     return g #, g_t, C_t
 
 
-def detectEquilibration_binary_search(A_t):
+def detectEquilibration_binary_search(A_t, bs_nodes=10):
     """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
 
     Parameters
     ----------
     A_t : np.ndarray 
         timeseries
+    
+    bs_nodes : int > 4
+        number of geometrically distributed binary search nodes
 
     Returns
     -------
@@ -858,6 +870,7 @@ def detectEquilibration_binary_search(A_t):
     likely be found if the N_eff[t] varies smoothly.
 
     """
+    assert bs_nodes > 4, "Number of nodes for binary search must be > 4"
     T = A_t.size
 
     # Special case if timeseries is constant.
@@ -866,36 +879,34 @@ def detectEquilibration_binary_search(A_t):
 
     start = 1
     end = T - 1
-    n_grid = min(5, T)
+    n_grid = min(bs_nodes, T)
     
     while True:
-        time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int'))
-
-        g_t = np.ones(len(time_grid))
-        Neff_t = np.ones(len(time_grid))
+        time_grid = np.unique((10 ** np.linspace(np.log10(start), np.log10(end), n_grid)).round().astype('int')) 
+        g_t = np.ones(time_grid.size)
+        Neff_t = np.ones(time_grid.size)
         
         for k, t in enumerate(time_grid):
-            g_t[k] = statisticalInefficiency_fft(A_t[t:])
-            Neff_t[k] = (T - t + 1) / g_t[k]
+            if t < T-1:
+                g_t[k] = statisticalInefficiency_fft(A_t[t:], memsafe=True)
+                Neff_t[k] = (T - t + 1) / g_t[k]
 
         Neff_max = Neff_t.max()
         k = Neff_t.argmax()
         t = time_grid[k]
         g = g_t[k]
         
-        if (time_grid.max() - time_grid.min() <= n_grid - 1.):
+        if (end - start < 4):
             break
         
         if k == 0:
             start = time_grid[0]
             end = time_grid[1]
-        elif k == len(time_grid) - 1:
+        elif k == time_grid.size - 1:
             start = time_grid[-2]
             end = time_grid[-1]
         else:
             start = time_grid[k - 1]
             end = time_grid[k + 1]
         
-
-
     return (t, g, Neff_max)

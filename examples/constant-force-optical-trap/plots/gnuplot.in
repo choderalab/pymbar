@@ -1,0 +1,7 @@
+
+set term postscript color solid
+set output "plots/pmf-comparison-15.eps"
+set title "20R55_4T - 14.41 pN"
+set xlabel "extension (nm)"
+set ylabel "potential of mean force (kT)"
+plot "output//pmf-expected-15.out" u 1:2:3 with yerrorbars t "MBAR optimal estimate", "output//pmf-observed-15.out" u 1:2:3 with yerrorbars t "observed from single experiment"
