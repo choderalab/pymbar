@@ -105,7 +105,7 @@ class HarmonicOscillatorsTestCase(object):
 
         N_k : np.ndarray, int
             number of samples per state
-        mode : str, optional, default='u_kln'
+        mode : str, optional, default='u_kn'
             If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
             If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
 
