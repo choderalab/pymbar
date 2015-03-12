@@ -236,7 +236,7 @@ def estimatewithMBAR(u_kln, N_k, reltol, regular_estimate=False):
       print "\nEstimating the free energy change with MBAR..."
    MBAR = pymbar.mbar.MBAR(u_kln, N_k, verbose = P.verbose, method = 'adaptive', relative_tolerance = reltol, initialize = P.init_with)
    # Get matrix of dimensionless free energy differences and uncertainty estimate.
-   (Deltaf_ij, dDeltaf_ij) = MBAR.getFreeEnergyDifferences(uncertainty_method='svd-ew')
+   (Deltaf_ij, dDeltaf_ij, theta_ij) = MBAR.getFreeEnergyDifferences(uncertainty_method='svd-ew')
    if P.verbose: 
       print "Matrix of free energy differences\nDeltaf_ij:\n%s\ndDeltaf_ij:\n%s" % (Deltaf_ij, dDeltaf_ij)
    if regular_estimate:
