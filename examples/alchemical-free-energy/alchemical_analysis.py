@@ -846,7 +846,11 @@ def plotdFvsLambda():
 
       lines = tuple()
       ## lv_names2 = [r'$Coulomb$', r'$vdWaals$'] ## for the paper
-      lv_names2 = [r'$%s$' % string_i.capitalize() for string_i in P.lv_names]
+      lv_names2 = []
+      for j in range(n_components):
+         y = ave_dhdl[:,j]
+         if not (y == 0).all():
+            lv_names2.append(r'$%s$' % P.lv_names[j].capitalize())
 
       for j in range(n_components):
          y = ave_dhdl[:,j]
