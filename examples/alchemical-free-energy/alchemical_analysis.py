@@ -488,21 +488,31 @@ def estimatePairs():
 def totalEnergies():
 
    # Count up the charging states.
-   numcharging = 0
-   for lv_n in ['coul', 'fep']:
+   startcoul = 0
+   endcoul = 0
+   startvdw = 0
+   endvdw = 0
+   for lv_n in ['vdw','coul','fep']:
       if lv_n in P.lv_names:
          ndx_char = P.lv_names.index(lv_n)
          lv_char = lv[:, ndx_char]
          if not (lv_char == lv_char[0]).all():
-            numcharging = (lv_char != 1).sum()
-            break
-   if numcharging == K:
-      numcharging = K-1
-   
-   # Split the total energies into segments; initialize lists to store them.
+            if lv_n == 'vdw':
+                endvdw = (lv_char != 1).sum()
+            if lv_n == 'coul':
+                endcoul = (lv_char != 1).sum()
+
+   # Figure out if coulomb section comes before or after vdw section
+   if endcoul > endvdw:
+      startcoul = endvdw
+      startvdw = 0
+   else:
+      startcoul = 0
+      startvdw = endcoul
+
    segments      = ['Coulomb'  , 'vdWaals'  , 'TOTAL']
-   segmentstarts = [0          , numcharging, 0      ]
-   segmentends   = [numcharging, K-1        , K-1    ]
+   segmentstarts = [startcoul  , startvdw   , 0      ]
+   segmentends   = [endcoul    , endvdw     , K-1    ]
    dFs  = []
    ddFs = []
    
@@ -522,7 +532,7 @@ def totalEnergies():
                dF[name] += df_allk[k][name]
    
             if segment == 'Coulomb':
-               jlist = [ndx_char] if numcharging>0 else []
+               jlist = [ndx_char] if endcoul>0 else []
             elif segment == 'vdWaals':
                jlist = []
             elif segment == 'TOTAL':
@@ -836,7 +846,11 @@ def plotdFvsLambda():
 
       lines = tuple()
       ## lv_names2 = [r'$Coulomb$', r'$vdWaals$'] ## for the paper
-      lv_names2 = [r'$%s$' % string_i.capitalize() for string_i in P.lv_names]
+      lv_names2 = []
+      for j in range(n_components):
+         y = ave_dhdl[:,j]
+         if not (y == 0).all():
+            lv_names2.append(r'$%s$' % P.lv_names[j].capitalize())
 
       for j in range(n_components):
          y = ave_dhdl[:,j]
