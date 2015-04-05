@@ -498,9 +498,14 @@ def totalEnergies():
             break
    if numcharging == K:
       numcharging = K-1
+      
+   segments      = ['Coulomb'  , 'vdWaals'  , 'TOTAL']
+   if P.lv_names==('vdw', 'coul') or P.lv_names==('vdw', 'fep'):
+      segments   = ['vdWaals',   'Coulomb'  , 'TOTAL']
+      numcharging -= (lv_char > 0).sum()
+      ndx_char = 0
    
    # Split the total energies into segments; initialize lists to store them.
-   segments      = ['Coulomb'  , 'vdWaals'  , 'TOTAL']
    segmentstarts = [0          , numcharging, 0      ]
    segmentends   = [numcharging, K-1        , K-1    ]
    dFs  = []
@@ -521,13 +526,8 @@ def totalEnergies():
             for k in range(segstart, segend):
                dF[name] += df_allk[k][name]
    
-            if segment == 'Coulomb':
-               jlist = [ndx_char] if numcharging>0 else []
-            elif segment == 'vdWaals':
-               jlist = []
-            elif segment == 'TOTAL':
-               jlist = range(n_components)
-   
+            jlist = [[ndx_char] if numcharging>0 else [], [], range(n_components)][i]
+               
             for j in jlist:
                lj = lchange[:,j]
                if not (lj == False).all(): # handle the all-zero lv column
