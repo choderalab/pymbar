@@ -317,5 +317,5 @@ for n in range(3):
 
 plt.xlim([chi_min,chi_max])
 plt.legend(['Top Hat'] + names,loc=1,prop={'size':12})
-plt.show()
+plt.savefig('pmf_compare.pdf')
 
