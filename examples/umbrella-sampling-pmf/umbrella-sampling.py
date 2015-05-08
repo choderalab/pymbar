@@ -295,7 +295,7 @@ pmf_bins_vfep = pmf(bin_center_i)
 import matplotlib.pyplot as plt
 plt.plot(bin_center_i,f_i,'ro')
 
-names = ["Sum of KL divergence", "KL divergence", "vFEP"]
+names = ["KL divergence", "Sum of KL divergence", "vFEP"]
 pmf_plot = [pmf_plot_kl,pmf_plot_sumkl,pmf_plot_vfep]
 pmf_bins = [pmf_bins_kl,pmf_bins_sumkl,pmf_bins_vfep]
 strings = ['k-','b-','g-']
