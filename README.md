@@ -43,7 +43,7 @@ or compute expectations of given observables A(x) for all states:
 >>> (A_k_estimated, dA_k_estimated) = mbar.computeExpectations(x_k)
 ```
 See the help for these individual methods for more information on exact usage; in Python or IPython, you can view the docstrings with `help()`.  
-Additional examples can be found in [pymbar-examples](http://github.com/choderalab/pymbar-examples/).
+Additional examples can be found in [pymbar-examples](http://github.com/choderalab/pymbar-examples/).  Note that the example for free energy calculations found in pymbar-examples/alchemical-free-energy has moved to https://github.com/MobleyLab/alchemical-analysis
 
 
 Prerequisites
