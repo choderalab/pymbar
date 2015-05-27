@@ -252,7 +252,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
                 # Convergence is achieved.
                 if verbose:
                     print("Convergence achieved.")
-                relative_change = 10 ^ (-15)
+                relative_change = 10 ** (-15)
                 break
 
         if method == 'bisection':
