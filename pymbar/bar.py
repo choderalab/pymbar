@@ -52,10 +52,18 @@ import numpy.linalg
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
 from pymbar.exp import EXP
 
-
-
 def BARzero(w_F, w_R, DeltaF):
-    """Bennett acceptance ratio function to be zeroed to solve for BAR.
+    """A function that when zeroed is equivalent to the solution of
+    the Bennett acceptance ratio.
+
+    from http://journals.aps.org/prl/pdf/10.1103/PhysRevLett.91.140601
+    D_F = M + w_F - Delta F
+    D_R = M + w_R - Delta F
+
+    we want:
+    \sum_N_F (1+exp(D_F))^-1 = \sum N_R N_R <(1+exp(-D_R))^-1>
+    ln \sum N_F (1+exp(D_F))^-1>_F = \ln \sum N_R exp((1+exp(-D_R))^(-1)>_R
+    ln \sum N_F (1+exp(D_F))^-1>_F - \ln \sum N_R exp((1+exp(-D_R))^(-1)>_R = 0
 
     Parameters
     ----------
@@ -97,36 +105,44 @@ def BARzero(w_F, w_R, DeltaF):
     # Compute log ratio of forward and reverse counts.
     M = np.log(T_F / T_R)
 
-    # Compute log numerator.
+    # Compute log numerator. We have to watch out for overflows.  We
+    # do this by making sure that 1+exp(x) doesn't overflow, choosing
+    # to always exponentiate a negative number.
+
     # log f(W) = - log [1 + exp((M + W - DeltaF))]
     #          = - log ( exp[+maxarg] [exp[-maxarg] + exp[(M + W - DeltaF) - maxarg]] )
-    #          = - maxarg - log[exp[-maxarg] + (T_F/T_R) exp[(M + W - DeltaF) - maxarg]]
-    # where maxarg = max( (M + W - DeltaF) )
+    #          = - maxarg - log(exp[-maxarg] + exp[(M + W - DeltaF) - maxarg])
+    # where maxarg = max((M + W - DeltaF), 0)
 
     exp_arg_F = (M + w_F - DeltaF)
-    max_arg_F = np.choose(np.greater(0.0, exp_arg_F), (0.0, exp_arg_F))
+    # use boolean logic to zero out the ones that are less than 0, but not if greater than zero.
+    max_arg_F = np.choose(np.less(0.0, exp_arg_F), (0.0, exp_arg_F))
     try:
         log_f_F = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
     except:
         # give up; if there's overflow, return zero
         print("The input data results in overflow in BAR")
         return np.nan
-    log_numer = logsumexp(log_f_F) - np.log(T_F)
+    log_numer = logsumexp(log_f_F)
 
     # Compute log_denominator.
-    # log_denom = log < f(-W) exp[-W] >_R
-    # NOTE: log [f(-W) exp(-W)] = log f(-W) - W
-    exp_arg_R = (M - w_R - DeltaF)
-    max_arg_R = np.choose(np.greater(0.0, exp_arg_R), (0.0, exp_arg_R))
+    # log f(R) = - log [1 + exp(-(M + W - DeltaF))]
+    #          = - log ( exp[+maxarg] [exp[-maxarg] + exp[(M + W - DeltaF) - maxarg]] )
+    #          = - maxarg - log[exp[-maxarg] + (T_F/T_R) exp[(M + W - DeltaF) - maxarg]]
+    # where maxarg = max( -(M + W - DeltaF), 0)
+
+    exp_arg_R = -(M - w_R - DeltaF)
+    # use boolean logic to zero out the ones that are less than 0, but not if greater than zero.
+    max_arg_R = np.choose(np.less(0.0, exp_arg_R), (0.0, exp_arg_R))
     try:
-        log_f_R = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R)) - w_R
+        log_f_R = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
     except:
         print("The input data results in overflow in BAR")
         return np.nan
-    log_denom = logsumexp(log_f_R) - np.log(T_R)
+    log_denom = logsumexp(log_f_R)
 
     # This function must be zeroed to find a root
-    fzero = DeltaF - (log_denom - log_numer)
+    fzero = log_numer - log_denom
 
     np.seterr(over='warn')  # return options to standard settings so we don't disturb other functionality.
     return fzero
@@ -196,6 +212,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
 
     # if computing nonoptimized, one step value, we set the max-iterations
     # to 1, and the method to 'self-consistent-iteration'
+
     if not iterated_solution:
         maximum_iterations = 1
         method = 'self-consistent-iteration'
