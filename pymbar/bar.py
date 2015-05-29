@@ -344,16 +344,32 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         else:
             C = M - DeltaF_initial
 
-        fF = 1 / (1 + np.exp(w_F + C))
-        fR = 1 / (1 + np.exp(w_R - C))
+        #fF = 1 / (1 + np.exp(w_F + C)), but we need to handle overflows
+        exp_arg_F = (w_F + C)
+        # use boolean logic to zero out the ones that are less than 0, but not if greater than zero.
+        max_arg_F = np.choose(np.less(0.0, exp_arg_F), (0.0, exp_arg_F))
+        log_fF = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
+        sum_fF = np.exp(logsumexp(log_fF))
 
-        afF2 = (np.average(fF)) ** 2
-        afR2 = (np.average(fR)) ** 2
+        #fF = 1 / (1 + np.exp(w_F - C)), but we need to handle overflows
+        exp_arg_R = (w_R - C)
+        # use boolean logic to zero out the ones that are less than 0, but not if greater than zero.
+        max_arg_R = np.choose(np.less(0.0, exp_arg_R), (0.0, exp_arg_R))
+        log_fR = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
+        sum_fR = np.exp(logsumexp(log_fR))
 
-        vfF = np.var(fF) / T_F
-        vfR = np.var(fR) / T_R
+        # compute averages of f_f
+        afF2 = (sum_fF/T_F) ** 2
+        afR2 = (sum_fR/T_R) ** 2
 
-        variance = vfF / afF2 + vfR / afR2
+        #var(x) = <x^2> - <x>^2
+        vfF = np.exp(logsumexp(2*log_fF))/T_F - afF2
+        vfR = np.exp(logsumexp(2*log_fR))/T_R - afR2
+
+        # an alternate formula for the variance that works for guesses
+        # for the free energy that don't satisfy the BAR equation.
+
+        variance = (vfF/T_F) / afF2 + (vfR/T_R) / afR2
 
         dDeltaF = np.sqrt(variance)
         if verbose:
