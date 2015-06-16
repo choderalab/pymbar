@@ -1,7 +1,10 @@
 import os
 import numpy as np
 from pymbar.utils import ensure_type
-
+from os import environ
+from os.path import join
+from os.path import exists
+from os.path import expanduser
 
 def get_data_home(data_home=None):
     """Return the path of the pymbar data dir.
