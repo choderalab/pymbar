@@ -1,11 +1,33 @@
 import os
 import numpy as np
 from pymbar.utils import ensure_type
+from os import environ
+from os.path import join
+from os.path import exists
+from os.path import expanduser
+from os import makedirs
 
-try:
-    root_dir = os.environ["PYMBAR_DATASETS"]
-except KeyError:
-    root_dir = os.environ["HOME"]
+def get_data_home(data_home=None):
+    """Return the path of the pymbar data dir.
+
+    This folder is used by some large dataset loaders to avoid
+    downloading the data several times.
+
+    By default the data dir is set to a folder named 'pymbar_data'
+    in the user home folder.
+
+    Alternatively, it can be set by the 'PYMBAR_DATA' environment
+    variable or programmatically by giving an explicit folder path. The
+    '~' symbol is expanded to the user home folder.
+
+    If the folder does not already exist, it is automatically created.
+    """
+    if data_home is None:
+        data_home = environ.get('PYMBAR_DATA', join('~', 'pymbar_data'))
+    data_home = expanduser(data_home)
+    if not exists(data_home):
+        makedirs(data_home)
+    return data_home
 
 def get_sn(N_k):
     """Assuming the usual ordering of samples and states, guess the
@@ -67,17 +89,17 @@ def load_from_hdf(filename):
 
 def load_gas_data():
     name = "gas-properties"
-    u_kn, N_k, s_n = load_from_hdf(os.path.join(root_dir, name, "%s.h5" % name))
+    u_kn, N_k, s_n = load_from_hdf(os.path.join(get_data_home(), name, "%s.h5" % name))
     return name, u_kn, N_k, s_n
 
 def load_8proteins_data():
     name = "8proteins"
-    u_kn, N_k, s_n = load_from_hdf(os.path.join(root_dir, name, "%s.h5" % name))
+    u_kn, N_k, s_n = load_from_hdf(os.path.join(get_data_home(), name, "%s.h5" % name))
     return name, u_kn, N_k, s_n
 
 def load_k69_data():
     name = "k69"
-    u_kn, N_k, s_n = load_from_hdf(os.path.join(root_dir, name, "%s.h5" % name))
+    u_kn, N_k, s_n = load_from_hdf(os.path.join(get_data_home(), name, "%s.h5" % name))
     return name, u_kn, N_k, s_n
 
 
