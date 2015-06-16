@@ -5,6 +5,7 @@ from os import environ
 from os.path import join
 from os.path import exists
 from os.path import expanduser
+from os import makedirs
 
 def get_data_home(data_home=None):
     """Return the path of the pymbar data dir.
