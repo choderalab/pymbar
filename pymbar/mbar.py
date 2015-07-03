@@ -1141,7 +1141,7 @@ class MBAR:
 
         # Retrieve N and K for convenience.
         [K,N] = np.shape(u_kn)
-        A_in = u_kn
+        A_in = u_kn.copy()
         state_map = np.zeros([2,K],int)
         for k in range(K):    
             state_map[0,k] = k
