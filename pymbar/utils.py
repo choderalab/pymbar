@@ -67,7 +67,7 @@ def kln_to_kn(kln, N_k = None, cleanup = False):
     # rewrite into kn shape
     [K, L, N_max] = np.shape(kln)
 
-    if N_k == None:
+    if N_k is None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
         N_k = N_max * np.ones([L], dtype=np.int64)
@@ -107,7 +107,7 @@ def kn_to_n(kn, N_k = None, cleanup = False):
     # rewrite into kn shape
     [K, N_max] = np.shape(kn)
 
-    if N_k == None:
+    if N_k is None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
         N_k = N_max*np.ones([K], dtype=np.int64)
