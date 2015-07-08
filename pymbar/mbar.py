@@ -869,7 +869,7 @@ class MBAR:
                     elif len(np.shape(u_kn)) == 2:
                         u_kn = kn_to_n(u_kn, N_k=self.N_k)
 
-        if u_kn == None:
+        if u_kn is None:
             u_kn = self.u_kn
 
         # Retrieve N and K for convenience.
@@ -1136,7 +1136,7 @@ class MBAR:
         if dims==3:
             u_kn = kln_to_kn(u_kn, N_k=self.N_k)
 
-        if u_kn == None:
+        if u_kn is None:
             u_kn = self.u_kn
 
         # Retrieve N and K for convenience.
