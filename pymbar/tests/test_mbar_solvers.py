@@ -87,7 +87,6 @@ def test_protocols():
     warnings.filterwarnings('ignore', '.*does not use the jacobian.*')
     warnings.filterwarnings('ignore', '.*does not use Hessian.*')
     from pymbar.tests.test_mbar import z_scale_factor # Importing the hacky fix to asert that free energies are moderatley correct
-    '''Test each of the solver and subsampling protocols and compare them to analytical'''
     name, u_kn, N_k, s_n, test = load_oscillators(50, 1000, provide_test=True)
     fa = test.analytical_free_energies()
     fa = fa[1:] - fa[0]
@@ -96,8 +95,9 @@ def test_protocols():
     solver_protocols = ['hybr', 'lm'] #scipy.optimize.root methods. Omitting methods which do not use the Jacobian
     for subsampling_protocol in subsampling_protocols:
         for solver_protocol in solver_protocols:
-            print("Subsample: {0!s} -- Solver: {1!s}".format(subsampling_protocol, solver_protocol))
+            #print("Subsample: {0!s} -- Solver: {1!s}".format(subsampling_protocol, solver_protocol))
             mbar = pymbar.MBAR(u_kn, N_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
+            mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
             fe, fe_sigma, Theta_ij = mbar.getFreeEnergyDifferences()
             fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
             z = (fe - fa) / fe_sigma
