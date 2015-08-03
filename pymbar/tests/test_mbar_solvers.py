@@ -95,8 +95,9 @@ def test_protocols():
     solver_protocols = ['hybr', 'lm'] #scipy.optimize.root methods. Omitting methods which do not use the Jacobian
     for subsampling_protocol in subsampling_protocols:
         for solver_protocol in solver_protocols:
-            #print("Subsample: {0!s} -- Solver: {1!s}".format(subsampling_protocol, solver_protocol))
+            #Solve MBAR with zeros for initial weights
             mbar = pymbar.MBAR(u_kn, N_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
+            #Solve MBAR with the correct f_k used for the inital weights 
             mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
             fe, fe_sigma, Theta_ij = mbar.getFreeEnergyDifferences()
             fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
