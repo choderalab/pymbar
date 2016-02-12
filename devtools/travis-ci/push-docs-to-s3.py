@@ -2,14 +2,14 @@ import os
 import pip
 import tempfile
 import subprocess
-import thermopyl.version
+import pymbar.version
 
 
-BUCKET_NAME = 'thermopyl.org'
-if not thermopyl.version.release:
+BUCKET_NAME = 'pymbar.org'
+if not pymbar.version.release:
     PREFIX = 'latest'
 else:
-    PREFIX = thermopyl.version.short_version
+    PREFIX = pymbar.version.short_version
 
 if not any(d.project_name == 's3cmd' for d in pip.get_installed_distributions()):
     raise ImportError('The s3cmd pacakge is required. try $ pip install s3cmd')
@@ -37,4 +37,3 @@ secret_key = {AWS_SECRET_ACCESS_KEY}
             config=f.name,
             bucket=BUCKET_NAME)
     return_val = subprocess.call(cmd.split())
-
