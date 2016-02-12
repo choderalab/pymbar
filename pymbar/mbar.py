@@ -237,7 +237,7 @@ class MBAR:
 
         # If an initial guess of the relative dimensionless free energies is
         # specified, start with that.
-        if initial_f_k != None:
+        if initial_f_k is not None:
             if self.verbose:
                 print("Initializing f_k with provided initial guess.")
             # Cast to np array.
@@ -855,7 +855,7 @@ class MBAR:
         if not state_dependent:
             if dims==2:
                 A_n = kn_to_n(A_n, N_k=self.N_k)
-                if u_kn != None:
+                if u_kn is not None:
                     if len(np.shape(u_kn)) == 3:
                         u_kn = kln_to_kn(u_kn, N_k=self.N_k)
                     elif len(np.shape(u_kn)) == 2:
@@ -863,13 +863,13 @@ class MBAR:
         else:
             if dims==3:
                 A_n = kln_to_kn(A_n, N_k=self.N_k)
-                if u_kn != None:
+                if u_kn is not None:
                     if len(np.shape(u_kn)) == 3:
                         u_kn = kln_to_kn(u_kn, N_k=self.N_k)
                     elif len(np.shape(u_kn)) == 2:
                         u_kn = kn_to_n(u_kn, N_k=self.N_k)
 
-        if u_kn == None:
+        if u_kn is None:
             u_kn = self.u_kn
 
         # Retrieve N and K for convenience.
@@ -1136,12 +1136,12 @@ class MBAR:
         if dims==3:
             u_kn = kln_to_kn(u_kn, N_k=self.N_k)
 
-        if u_kn == None:
+        if u_kn is None:
             u_kn = self.u_kn
 
         # Retrieve N and K for convenience.
         [K,N] = np.shape(u_kn)
-        A_in = u_kn
+        A_in = u_kn.copy()
         state_map = np.zeros([2,K],int)
         for k in range(K):    
             state_map[0,k] = k

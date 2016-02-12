@@ -2,6 +2,8 @@ package:
   name: pymbar-dev
   version: !!str 3.0.0.dev0
 
+source:
+  path: ../../
 
 requirements:
   build:
