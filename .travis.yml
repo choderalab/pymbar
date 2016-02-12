@@ -1,26 +1,41 @@
 language: c
-
-branches:
-  only:
-    - master
+sudo: false
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+      - g++
+      - gfortran
+      - valgrind
+      - csh
+      - g++-multilib
+      - gcc-multilib
 
 install:
-  - source devtools/ci/install.sh
+  - source devtools/travis-ci/install.sh
   - export PYTHONUNBUFFERED=true
+  - export CC=gcc
+  - export CXX=g++
 
 script:
-  # this builds the binary, unpacks it, and runs the tests
+  - conda config --add channels ${ORGNAME}
   - conda build devtools/conda-recipe
-
+  - source activate _test
+  - conda install --yes --quiet pip nose nose-timer
+  - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer && cd ..
 env:
   matrix:
-    - CONDA_PY=2.7
-    - CONDA_PY=3.3
-    - CONDA_PY=3.4    
+    - python=2.7  CONDA_PY=27
+    - python=3.4  CONDA_PY=34
+    - python=3.5  CONDA_PY=35
 
   global:
+    - ORGNAME="omnia"
+    - PACKAGENAME="pymbar"
     # encrypted BINSTAR_TOKEN for push of dev package to binstar
     - secure: "lu3EsyPF+woAABbZyctdFUPfTkAUOyC7k7LsDmWBMrV6ctpvYkomDFS65NAElXDOnmPzxMpn4+f0V2+tNqD4sM/9erDfM2MkJH+tRznNkAAZFoxbxeZCmzV4zSzNvAKlopasHSXt2mbhzbDnhrIToAssQZMHp13pNlBMEq86hKc="
 
 after_success:
-  - source devtools/ci/after_sucess.sh
+  - echo "after_success"
+  - ./devtools/travis-ci/after_success.sh
