@@ -87,11 +87,12 @@ def test_protocols():
     warnings.filterwarnings('ignore', '.*does not use the jacobian.*')
     warnings.filterwarnings('ignore', '.*does not use Hessian.*')
     from pymbar.tests.test_mbar import z_scale_factor # Importing the hacky fix to asert that free energies are moderatley correct
-    name, u_kn, N_k, s_n, test = load_oscillators(50, 1000, provide_test=True)
+    name, u_kn, N_k, s_n, test = load_oscillators(50, 100, provide_test=True)
     fa = test.analytical_free_energies()
     fa = fa[1:] - fa[0]
 
-    subsampling_protocols = ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"] #scipy.optimize.minimize methods
+    #scipy.optimize.minimize methods, same ones that are checked for in mbar_solvers.py
+    subsampling_protocols = ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"] 
     solver_protocols = ['hybr', 'lm'] #scipy.optimize.root methods. Omitting methods which do not use the Jacobian
     for subsampling_protocol in subsampling_protocols:
         for solver_protocol in solver_protocols:
