@@ -327,14 +327,12 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     #If there were runtime warnings, show the messages
     if len(w) > 0:
         for warn_msg in w:
-            warnings.showwarning(warn_msg.message, warn_msg.category, warn_msg.filename, warn_msg.lineno, warn_msg.file, warn_msg.line) 
+            warnings.showwarning(warn_msg.message, warn_msg.category, warn_msg.filename, warn_msg.lineno, warn_msg.file, "") 
         #Ensure MBAR solved correctly
         W_nk_check = mbar_W_nk(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
         check_w_normalized(W_nk_check, N_k_nonzero)
-        msg = "MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results."
-        #Minimize the amount of output from our warning.
-        #                    msg,           Type, filename, linenumber, file, line 
-        warnings.showwarning(msg, RuntimeWarning,       '',         '', None,   '')
+        print "MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results."
+       
             
     return f_k_nonzero, results
 
