@@ -331,7 +331,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
         #Ensure MBAR solved correctly
         W_nk_check = mbar_W_nk(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
         check_w_normalized(W_nk_check, N_k_nonzero)
-        print "MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results."
+        print("MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results.")
        
             
     return f_k_nonzero, results
