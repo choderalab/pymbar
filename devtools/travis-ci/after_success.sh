@@ -16,13 +16,20 @@ fi
 
 # Deploy to binstar
 conda install --yes anaconda-client jinja2
-binstar -t $BINSTAR_TOKEN upload --force -u ${ORGNAME} -p ${PACKAGENAME}-dev $HOME/miniconda/conda-bld/*/${PACKAGENAME}-dev-*.tar.bz2
+pushd .
+cd $HOME/miniconda/conda-bld
+FILES=*/${PACKAGENAME}-dev-*.tar.bz2
+for filename in $FILES; do
+    anaconda -t $BINSTAR_TOKEN remove --force ${ORGNAME}/${PACKAGENAME}-dev/${filename}
+    anaconda -t $BINSTAR_TOKEN upload --force -u ${ORGNAME} -p ${PACKAGENAME}-dev ${filename}
+done
+popd
 
 if [ $PUSH_DOCS_TO_S3 = true ]; then
    # Create the docs and push them to S3
    # -----------------------------------
     conda install --yes pip
-    conda config --add channels http://conda.binstar.org/omnia
+    conda config --add channels $ORGNAME
     conda install --yes `conda build devtools/conda-recipe --output`
     pip install numpydoc s3cmd msmb_theme
     conda install --yes `cat docs/requirements.txt | xargs`

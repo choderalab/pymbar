@@ -1,15 +1,24 @@
+#!/usr/bin/env python
+
+"""
+Must have the vollowing environment variables defined:
+* BUCKET_NAME : AWS bucket name
+* PREFIX : 'latest' or other version number
+
+"""
+
 import os
 import pip
 import tempfile
 import subprocess
-import pymbar.version
+import thermopyl.version
 
 
-BUCKET_NAME = 'pymbar.org'
-if not pymbar.version.release:
+BUCKET_NAME = 'thermopyl.org'
+if not thermopyl.version.release:
     PREFIX = 'latest'
 else:
-    PREFIX = pymbar.version.short_version
+    PREFIX = thermopyl.version.short_version
 
 if not any(d.project_name == 's3cmd' for d in pip.get_installed_distributions()):
     raise ImportError('The s3cmd pacakge is required. try $ pip install s3cmd')
