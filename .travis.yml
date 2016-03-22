@@ -26,7 +26,7 @@ env:
     - ORGNAME="omnia"
     - PACKAGENAME="pymbar"
     # encrypted BINSTAR_TOKEN for push of dev package to binstar
-    - secure: "lu3EsyPF+woAABbZyctdFUPfTkAUOyC7k7LsDmWBMrV6ctpvYkomDFS65NAElXDOnmPzxMpn4+f0V2+tNqD4sM/9erDfM2MkJH+tRznNkAAZFoxbxeZCmzV4zSzNvAKlopasHSXt2mbhzbDnhrIToAssQZMHp13pNlBMEq86hKc="
+    - secure: "TCAT3UIHKGb2yndGXrjLILFZggGjVL//apC48YQTQqqHDj+PNFnmYw6GeVfiGLKYMG74aiTgOPxVUjsY73CdXCp/u76cscq4h5htIo3ed1gcsmfK1MTZxKx7xrdTJa3Qedc8QbpPhV9RhagoCEFNQj1TWyeDKQPv8nFcufZsELo="
 
 after_success:
   - echo "after_success"
