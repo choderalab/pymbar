@@ -1004,7 +1004,7 @@ class MBAR:
 
         if compute_uncertainty or compute_covariance:
             Adiag = np.zeros([2*I,2*I],dtype=np.float64)
-            diag = np.ones(2*K,dtype=np.float64)
+            diag = np.ones(2*I,dtype=np.float64)
             diag[0:I] = diag[I:2*I] = inner_results['observables']-inner_results['Amin']
             np.fill_diagonal(Adiag,diag)
             Theta = Adiag*inner_results['Theta']*Adiag
