@@ -2,7 +2,8 @@ from __future__ import division  # Ensure same division behavior in py2 and py3
 import numpy as np
 import math
 import scipy.optimize
-from pymbar.utils import ensure_type, logsumexp
+from pymbar.utils import ensure_type, logsumexp, check_w_normalized
+import warnings
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
@@ -313,14 +314,26 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     grad_and_obj = lambda x: unpad_second_arg(*mbar_objective_and_gradient(u_kn_nonzero, N_k_nonzero, pad(x)))  # Objective function gradient and objective function
     hess = lambda x: mbar_hessian(u_kn_nonzero, N_k_nonzero, pad(x))[1:][:, 1:]  # Hessian of objective function
 
-    if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
-        if method in ["L-BFGS-B", "CG"]:
-            hess = None  # To suppress warning from passing a hessian function.
-        results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
-    else:
-        results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
+    with warnings.catch_warnings(record=True) as w:
+        if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
+            if method in ["L-BFGS-B", "CG"]:
+                hess = None  # To suppress warning from passing a hessian function.
+            results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
+        else:
+            results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
 
     f_k_nonzero = pad(results["x"])
+
+    #If there were runtime warnings, show the messages
+    if len(w) > 0:
+        for warn_msg in w:
+            warnings.showwarning(warn_msg.message, warn_msg.category, warn_msg.filename, warn_msg.lineno, warn_msg.file, "") 
+        #Ensure MBAR solved correctly
+        W_nk_check = mbar_W_nk(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
+        check_w_normalized(W_nk_check, N_k_nonzero)
+        print("MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results.")
+       
+            
     return f_k_nonzero, results
 
 

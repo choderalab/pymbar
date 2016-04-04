@@ -326,6 +326,47 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     return out
 
+def check_w_normalized(W, N_k, tolerance = 1.0e-4):
+    """Check the weight matrix W is properly normalized. The sum over N should be 1, and the sum over k by N_k should aslo be 1
+
+    Parameters
+    ----------
+    W : np.ndarray, shape=(N, K), dtype='float'
+        The normalized weight matrix for snapshots and states.
+        W[n, k] is the weight of snapshot n in state k.
+    N_k : np.ndarray, shape=(K), dtype='int'
+        N_k[k] is the number of samples from state k.
+    tolerance : float, optional, default=1.0e-4
+        Tolerance for checking equality of sums
+
+    Returns
+    -------
+    None : NoneType
+        Returns a None object if test passes, otherwise raises a ParameterError with appropriate message if W is not normalized within tolerance.
+    """
+
+    [N, K] = W.shape
+
+    column_sums = np.sum(W, axis=0)
+    badcolumns = (np.abs(column_sums - 1) > tolerance)
+    if np.any(badcolumns):
+        which_badcolumns = np.arange(K)[badcolumns]
+        firstbad = which_badcolumns[0]
+        raise ParameterError(
+            'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
+            (firstbad, column_sums[firstbad], np.sum(badcolumns)))
+
+    row_sums = np.sum(W * N_k, axis=1)
+    badrows = (np.abs(row_sums - 1) > tolerance)
+    if np.any(badrows):
+        which_badrows = np.arange(N)[badrows]
+        firstbad = which_badrows[0]
+        raise ParameterError(
+            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
+            (firstbad, row_sums[firstbad], np.sum(badrows)))
+
+    return
+
 #=============================================================================================
 # Exception classes
 #=============================================================================================

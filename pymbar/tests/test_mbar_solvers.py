@@ -5,22 +5,28 @@ import scipy.misc
 from nose import SkipTest
 
 
-def load_oscillators(n_states, n_samples):
+def load_oscillators(n_states, n_samples, provide_test=False):
     name = "%dx%d oscillators" % (n_states, n_samples)
     O_k = np.linspace(1, 5, n_states)
     k_k = np.linspace(1, 3, n_states)
     N_k = (np.ones(n_states) * n_samples).astype('int')
     test = pymbar.testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(O_k, k_k)
     x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
-    return name, u_kn, N_k_output, s_n
+    returns = [name, u_kn, N_k_output, s_n]
+    if provide_test:
+        returns.append(test)
+    return returns
 
-def load_exponentials(n_states, n_samples):
+def load_exponentials(n_states, n_samples, provide_test=False):
     name = "%dx%d exponentials" % (n_states, n_samples)
     rates = np.linspace(1, 3, n_states)
     N_k = (np.ones(n_states) * n_samples).astype('int')
     test = pymbar.testsystems.exponential_distributions.ExponentialTestCase(rates)
     x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
-    return name, u_kn, N_k_output, s_n
+    returns = [name, u_kn, N_k_output, s_n]
+    if provide_test:
+        returns.append(test)
+    return returns
 
 def _test(data_generator):
     try:
@@ -74,3 +80,29 @@ def test_subsampling():
     mbar_sub = pymbar.MBAR(u_kn_sub, N_k_sub)
     eq(mbar.f_k, mbar_sub.f_k, decimal=2)
     
+def test_protocols():
+    '''Test that free energy is moderatley equal to analytical solution, independent of solver protocols'''
+    #Supress the warnings when jacobian and Hessian information is not used in a specific solver
+    import warnings
+    warnings.filterwarnings('ignore', '.*does not use the jacobian.*')
+    warnings.filterwarnings('ignore', '.*does not use Hessian.*')
+    from pymbar.tests.test_mbar import z_scale_factor # Importing the hacky fix to asert that free energies are moderatley correct
+    name, u_kn, N_k, s_n, test = load_oscillators(50, 100, provide_test=True)
+    fa = test.analytical_free_energies()
+    fa = fa[1:] - fa[0]
+
+    #scipy.optimize.minimize methods, same ones that are checked for in mbar_solvers.py
+    subsampling_protocols = ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"] 
+    solver_protocols = ['hybr', 'lm'] #scipy.optimize.root methods. Omitting methods which do not use the Jacobian
+    for subsampling_protocol in subsampling_protocols:
+        for solver_protocol in solver_protocols:
+            #Solve MBAR with zeros for initial weights
+            mbar = pymbar.MBAR(u_kn, N_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
+            #Solve MBAR with the correct f_k used for the inital weights 
+            mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
+            fe, fe_sigma, Theta_ij = mbar.getFreeEnergyDifferences()
+            fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
+            z = (fe - fa) / fe_sigma
+            eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+    #Clear warning filters
+    warnings.resetwarnings()

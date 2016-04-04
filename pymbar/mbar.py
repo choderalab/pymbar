@@ -42,7 +42,7 @@ import math
 import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
-from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, logsumexp
+from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, logsumexp, check_w_normalized
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
@@ -1486,26 +1486,7 @@ class MBAR:
         if(np.sum(N_k) != N):
             raise ParameterError('W must be NxK, where N = sum_k N_k.')
 
-        # Check to make sure the weight matrix W is properly normalized.
-        tolerance = 1.0e-4  # tolerance for checking equality of sums
-
-        column_sums = np.sum(W, axis=0)
-        badcolumns = (np.abs(column_sums - 1) > tolerance)
-        if np.any(badcolumns):
-            which_badcolumns = np.arange(K)[badcolumns]
-            firstbad = which_badcolumns[0]
-            raise ParameterError(
-                'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
-                (firstbad, column_sums[firstbad], np.sum(badcolumns)))
-
-        row_sums = np.sum(W * N_k, axis=1)
-        badrows = (np.abs(row_sums - 1) > tolerance)
-        if np.any(badrows):
-            which_badrows = np.arange(N)[badrows]
-            firstbad = which_badrows[0]
-            raise ParameterError(
-                'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
-                (firstbad, row_sums[firstbad], np.sum(badrows)))
+        check_w_normalized(W, N_k)
 
         # Compute estimate of asymptotic covariance matrix using specified method.
         if method == 'approximate':
