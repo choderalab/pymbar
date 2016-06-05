@@ -2,11 +2,11 @@ USAGE:
 
 For calling with MBAR error estimates:
 
-python heat-capacity.py -d energydata > heat-capacity.py.sample_out_no_bootstrap
+python heat-capacity.py > heat-capacity.py.sample_out_no_bootstrap
  
 For calling with bootstrap error estimates using 200 bootstraps
 
-python heat-capacity.py -d energydata -b 200 > heat-capacity.py.sample_out_bootstrap
+python heat-capacity.py -b 200 > heat-capacity.py.sample_out_bootstrap
 
 Other options: 
 
@@ -14,7 +14,7 @@ Other options:
  derivatives are used in calculating finite differences 
 
 * -s spacing controls the number of intermediates used compute finite
-   differences (default is 100)
+   differences (default is 200)
 
 ----------------------------------------------------------
 
@@ -52,8 +52,9 @@ We can check the analytical uncertainty estimate by comparing to the
 bootstrap error estimate, as seen in the two sample output files.  We
 see that the first derivative numerical difference error estimate is
 off by no more than about 10%, though the variance-derived heat
-capacity error estimate is off by significantly more (and the second
-derivative variance is completely wrong).
+capacity error estimate is off by significantly more (usually 50% or
+more), and the second derivative variance is completely wrong and
+needs to be rederived.
 
 Thanks to Tommy Knotts and Jacob Lewis (BYU) for the data set and the
 first draft of the script!
