@@ -9,6 +9,7 @@ Initializing MBAR:
 --K = number of Temperatures with data = 16
 --L = number of total Temperatures = 216
 --N = number of Energies per Temperature = 693
+MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results.
 
 Computing Expectations for E...
 Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
@@ -17,7 +18,8 @@ Computing Expectations for E^2...
 Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 
 Computing Heat Capacity as ( <E^2> - <E>^2 ) / ( R*T^2 ) and as d<E>/dT
-WARNING: only the dT analytic error estimates can currently be trusted
+WARNING: only the first derivative (dT) analytic error estimates can currently be trusted.
+They are the only ones reasonably close to bootstrap, within 10-15% at all T.
 
 Analytic Error Estimates
 Temperature    dA        <E> +/- d<E>       Cv +/- dCv (var)     Cv +/- dCv (dT)     Cv +/- dCv (ddT) 

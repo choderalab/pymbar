@@ -429,7 +429,7 @@ class MBAR:
             If compute_uncertainty==True, 
             dDeltaf_ij[i,j] is the estimated statistical uncertainty 
             (one standard deviation) in Deltaf_ij[i,j].  Otherwise None.
-        Theta_ij : np.ndarray, float, shape=(K, K)
+        (optional) Theta_ij : np.ndarray, float, shape=(K, K)
             The theta_matrix if return_theta==True, otherwise None.
             
 
@@ -476,7 +476,10 @@ class MBAR:
             # Return matrix of free energy differences and uncertainties.
             dDeltaf_ij = np.array(dDeltaf_ij)
 
-        return Deltaf_ij, dDeltaf_ij, Theta_ij
+        if return_theta:
+            return Deltaf_ij, dDeltaf_ij, Theta_ij
+        else:
+            return Deltaf_ij, dDeltaf_ij
 
     #=========================================================================
     def computeExpectationsInner(self, A_n, u_ln, state_map,
