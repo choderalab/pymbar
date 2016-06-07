@@ -476,10 +476,12 @@ class MBAR:
             # Return matrix of free energy differences and uncertainties.
             dDeltaf_ij = np.array(dDeltaf_ij)
 
-        if return_theta:
-            return Deltaf_ij, dDeltaf_ij, Theta_ij
-        else:
-            return Deltaf_ij, dDeltaf_ij
+        if not return_theta:
+            #Ensure return_theta is respected, this is a placeholder until a future fix to better handle Theta_ij is implemented
+            Theta_ij = None
+
+        return Deltaf_ij, dDeltaf_ij, Theta_ij
+
 
     #=========================================================================
     def computeExpectationsInner(self, A_n, u_ln, state_map,
