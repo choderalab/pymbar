@@ -373,7 +373,7 @@ def integratedAutocorrelationTimeMultiple(A_kn, fast=False):
 #=============================================================================================
 
 
-def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
+def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=True):
     """Compute the normalized fluctuation (cross) correlation function of (two) stationary timeseries.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
@@ -388,7 +388,8 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
         B_n[n] is nth value of timeseries B.  Length is deduced from vector.
     N_max : int, default=None
         if specified, will only compute correlation function out to time lag of N_max
-
+    norm: bool, optional, default=True
+        if False will retrun the unnormalized correlation function D(t) = <A(t) B(t)>
     Returns
     -------
     C_n : np.ndarray
@@ -452,21 +453,24 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
     if(sigma2_AB == 0):
         raise ParameterError('Sample covariance sigma_AB^2 = 0 -- cannot compute statistical inefficiency')
 
-    # allocate storage for normalized fluctuation correlation function
+    # allocate storage for normalized and fluctuation correlation function
     C_n = np.zeros([N_max + 1], np.float64)
 
-    # Compute normalized correlation funtion.
+    # Compute normalized correlation function.
     t = 0
     for t in range(0, N_max + 1):
         # compute normalized fluctuation correlation function at time t
         C_n[t] = np.sum(dA_n[0:(N - t)] * dB_n[t:N] + dB_n[0:(N - t)] * dA_n[t:N]) / (2.0 * float(N - t) * sigma2_AB)
 
     # Return the computed correlation function
-    return C_n
+    if norm:
+        return C_n
+    else:
+        return C_n*sigma2_AB + mu_A*mu_B
 #=============================================================================================
 
 
-def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None):
+def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None, norm=True):
     """Compute the normalized fluctuation (cross) correlation function of (two) timeseries from multiple timeseries samples.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
@@ -480,7 +484,8 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         B_kn[k] is the kth timeseries, and B_kn[k][n] is nth value of timeseries k.  B_kn[k] must have same length as A_kn[k]
     N_max : int, optional, default=None
         if specified, will only compute correlation function out to time lag of N_max
-
+    norm: bool, optional, default=True
+        if False, will return unnormalized D(t) = <A(t) B(t)>
     Returns
     -------
     C_n[n] : np.ndarray
@@ -570,7 +575,7 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         sigma2_AB += np.sum(dA_kn[k] * dB_kn[k])
     sigma2_AB /= float(N)
 
-    # allocate storage for normalized fluctuation correlation function
+    # allocate storage for normalized and fluctuation correlation function
     C_n = np.zeros([N_max + 1], np.float64)
 
     # Accumulate the integrated correlation time by computing the normalized correlation time at
@@ -596,7 +601,10 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         C_n[t] = C
 
     # Return the computed fluctuation correlation function.
-    return C_n
+    if norm:
+        return C_n
+    else:
+        return C_n*sigma2_AB + mu_A*mu_B
 #=============================================================================================
 
 
