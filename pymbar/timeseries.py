@@ -453,7 +453,7 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=Tru
     if(sigma2_AB == 0):
         raise ParameterError('Sample covariance sigma_AB^2 = 0 -- cannot compute statistical inefficiency')
 
-    # allocate storage for normalized and fluctuation correlation function
+    # allocate storage for normalized fluctuation correlation function
     C_n = np.zeros([N_max + 1], np.float64)
 
     # Compute normalized correlation function.
@@ -577,7 +577,7 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         sigma2_AB += np.sum(dA_kn[k] * dB_kn[k])
     sigma2_AB /= float(N)
 
-    # allocate storage for normalized and fluctuation correlation function
+    # allocate storage for normalized fluctuation correlation function
     C_n = np.zeros([N_max + 1], np.float64)
 
     # Accumulate the integrated correlation time by computing the normalized correlation time at
