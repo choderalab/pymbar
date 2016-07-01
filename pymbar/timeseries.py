@@ -470,7 +470,7 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=Tru
 #=============================================================================================
 
 
-def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None, norm=True):
+def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None, norm=True, truncate=False):
     """Compute the normalized fluctuation (cross) correlation function of (two) timeseries from multiple timeseries samples.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
@@ -486,6 +486,8 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         if specified, will only compute correlation function out to time lag of N_max
     norm: bool, optional, default=True
         if False, will return unnormalized D(t) = <A(t) B(t)>
+    truncate: bool, optional, default=False
+        if True, will stop calculating the correlation function when it goes below 0
     Returns
     -------
     C_n[n] : np.ndarray
@@ -583,8 +585,11 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
     # this is unlikely to occur unless the correlation function has decayed to the point where it
     # is dominated by noise and indistinguishable from zero.
     t = 0
+    negative = False
     for t in range(0, N_max + 1):
         # compute unnormalized correlation function
+        if negative:
+            break
         numerator = 0.0
         denominator = 0.0
         for k in range(K):
@@ -592,6 +597,8 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
                 continue  # skip this trajectory if t is longer than the timeseries
             numerator += np.sum(dA_kn[k][0:(N_k[k] - t)] * dB_kn[k][t:N_k[k]])
             denominator += float(N_k[k] - t)
+            if truncate and numerator < 0:
+                negative = True
         C = numerator / denominator
 
         # compute normalized fluctuation correlation function at time t
@@ -602,9 +609,9 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
 
     # Return the computed fluctuation correlation function.
     if norm:
-        return C_n
+        return C_n[:t]
     else:
-        return C_n*sigma2_AB + mu_A*mu_B
+        return C_n[:t]*sigma2_AB + mu_A*mu_B
 #=============================================================================================
 
 
