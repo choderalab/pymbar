@@ -588,8 +588,6 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
     negative = False
     for t in range(0, N_max + 1):
         # compute unnormalized correlation function
-        if negative:
-            break
         numerator = 0.0
         denominator = 0.0
         for k in range(K):
@@ -606,6 +604,9 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
 
         # Store correlation function.
         C_n[t] = C
+
+        if negative:
+            break
 
     # Return the computed fluctuation correlation function.
     if norm:
