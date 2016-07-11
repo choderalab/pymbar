@@ -373,7 +373,7 @@ def integratedAutocorrelationTimeMultiple(A_kn, fast=False):
 #=============================================================================================
 
 
-def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
+def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=True):
     """Compute the normalized fluctuation (cross) correlation function of (two) stationary timeseries.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
@@ -388,7 +388,8 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
         B_n[n] is nth value of timeseries B.  Length is deduced from vector.
     N_max : int, default=None
         if specified, will only compute correlation function out to time lag of N_max
-
+    norm: bool, optional, default=True
+        if False will retrun the unnormalized correlation function D(t) = <A(t) B(t)>
     Returns
     -------
     C_n : np.ndarray
@@ -455,18 +456,21 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None):
     # allocate storage for normalized fluctuation correlation function
     C_n = np.zeros([N_max + 1], np.float64)
 
-    # Compute normalized correlation funtion.
+    # Compute normalized correlation function.
     t = 0
     for t in range(0, N_max + 1):
         # compute normalized fluctuation correlation function at time t
         C_n[t] = np.sum(dA_n[0:(N - t)] * dB_n[t:N] + dB_n[0:(N - t)] * dA_n[t:N]) / (2.0 * float(N - t) * sigma2_AB)
 
     # Return the computed correlation function
-    return C_n
+    if norm:
+        return C_n
+    else:
+        return C_n*sigma2_AB + mu_A*mu_B
 #=============================================================================================
 
 
-def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None):
+def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None, norm=True, truncate=False):
     """Compute the normalized fluctuation (cross) correlation function of (two) timeseries from multiple timeseries samples.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
@@ -480,7 +484,10 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         B_kn[k] is the kth timeseries, and B_kn[k][n] is nth value of timeseries k.  B_kn[k] must have same length as A_kn[k]
     N_max : int, optional, default=None
         if specified, will only compute correlation function out to time lag of N_max
-
+    norm: bool, optional, default=True
+        if False, will return unnormalized D(t) = <A(t) B(t)>
+    truncate: bool, optional, default=False
+        if True, will stop calculating the correlation function when it goes below 0
     Returns
     -------
     C_n[n] : np.ndarray
@@ -578,6 +585,7 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
     # this is unlikely to occur unless the correlation function has decayed to the point where it
     # is dominated by noise and indistinguishable from zero.
     t = 0
+    negative = False
     for t in range(0, N_max + 1):
         # compute unnormalized correlation function
         numerator = 0.0
@@ -587,6 +595,8 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
                 continue  # skip this trajectory if t is longer than the timeseries
             numerator += np.sum(dA_kn[k][0:(N_k[k] - t)] * dB_kn[k][t:N_k[k]])
             denominator += float(N_k[k] - t)
+            if truncate and numerator < 0:
+                negative = True
         C = numerator / denominator
 
         # compute normalized fluctuation correlation function at time t
@@ -595,8 +605,14 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         # Store correlation function.
         C_n[t] = C
 
+        if negative:
+            break
+
     # Return the computed fluctuation correlation function.
-    return C_n
+    if norm:
+        return C_n[:t]
+    else:
+        return C_n[:t]*sigma2_AB + mu_A*mu_B
 #=============================================================================================
 
 

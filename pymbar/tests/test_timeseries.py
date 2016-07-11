@@ -140,3 +140,18 @@ def test_detectEquil_constant_trailing():
     ~50 if we try to include part of the equilibration samples, or it can be Neff=1 if we find that the
     whole first half is discarded. 
     """
+
+def test_correlationFunctionMultiple():
+    """
+    tests the truncate and norm feature
+    """
+    A_t = [testsystems.correlated_timeseries_example(N=10000, tau=10.0) for i in range(10)]
+    corr_norm = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t)
+    corr = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t, norm=False)
+    corr_norm_trun = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t, truncate=True)
+    corr_trun = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t, norm=False, truncate=True)
+    assert (corr_norm_trun[-1] >= 0)
+    assert (corr_trun[-1] >= 0)
+    assert (corr_norm[0] == 1.)
+    assert (corr_norm_trun[0] == 1.)
+    assert (len(corr_trun) == len(corr_norm_trun))
