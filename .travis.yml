@@ -19,8 +19,10 @@ script:
   - conda create --yes -n test python=$python
   # Activate the test environment
   - source activate test
-  # Add Channels
+  # Add org channel
   - conda config --add channels ${ORGNAME}
+  # Add omnia dev channels
+   - conda config --add channels https://conda.anaconda.org/omnia/label/dev
   # Build recipie
   - conda build devtools/conda-recipe
   # Install locally-built package
