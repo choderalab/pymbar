@@ -5,17 +5,32 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
 
+branches:
+  only:
+    - master
+
 install:
   - bash -x devtools/travis-ci/install.sh
   - export PYTHONUNBUFFERED=true
   - export PATH=$HOME/miniconda/bin:$PATH
 
 script:
+  # Create a test environment
+  - conda create --yes -n test python=$python
+  # Activate the test environment
+  - source activate test
+  # Add org channel
   - conda config --add channels ${ORGNAME}
+  # Add omnia dev channels
+  - conda config --add channels https://conda.anaconda.org/omnia/label/dev
+  # Build recipie
   - conda build devtools/conda-recipe
-  - source activate _test
+  # Install locally-built package
+  - conda install --yes --use-local ${PACKAGENAME}-dev
   - conda install --yes --quiet pip nose nose-timer
+  # Test the package
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer && cd ..
+
 env:
   matrix:
     - python=2.7  CONDA_PY=27
