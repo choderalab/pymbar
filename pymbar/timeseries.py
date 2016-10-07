@@ -389,7 +389,8 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=Tru
     N_max : int, default=None
         if specified, will only compute correlation function out to time lag of N_max
     norm: bool, optional, default=True
-        if False will retrun the unnormalized correlation function D(t) = <A(t) B(t)>
+        if False will return the unnormalized correlation function D(t) = <A(t) B(t)>
+
     Returns
     -------
     C_n : np.ndarray
@@ -488,6 +489,7 @@ def normalizedFluctuationCorrelationFunctionMultiple(A_kn, B_kn=None, N_max=None
         if False, will return unnormalized D(t) = <A(t) B(t)>
     truncate: bool, optional, default=False
         if True, will stop calculating the correlation function when it goes below 0
+
     Returns
     -------
     C_n[n] : np.ndarray
@@ -807,6 +809,7 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
         If this function is used several times on arrays of comparable size then one might benefit 
         from setting this option to False. If set to True then clear np.fft cache to avoid a fast 
         increase in memory consumption when this function is called on many arrays of different sizes.
+
     Returns
     -------
     g : np.ndarray,
