@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/choderalab/pymbar.png)](https://travis-ci.org/choderalab/pymbar)
+[![Anaconda Cloud Downloads Badge](https://anaconda.org/omnia/pymbar/badges/downloads.svg)](https://anaconda.org/omnia/pymbar)
+[![Anaconda Cloud Badge](https://anaconda.org/omnia/pymbar/badges/installer/conda.svg)](https://anaconda.org/omnia/pymbar)
 [![PyPI Version](https://badge.fury.io/py/pymbar.png)](https://pypi.python.org/pypi/pymbar)
-[![Downloads](https://pypip.in/d/pymbar/badge.png)](https://pypi.python.org/pypi/pymbar)
-[![Binstar Badge](https://binstar.org/omnia/pymbar/badges/installer/conda.svg)](https://conda.binstar.org/omnia)
 
 pymbar
 ======
