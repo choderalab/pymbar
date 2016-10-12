@@ -109,3 +109,7 @@ Zhiqiang Tan, Patrick Varilly, Todd Gingrich, Aaron Keys, Anna Schneider, Adrian
 Nick Schafer, Thomas Speck, Troy van Voorhis, Gupreet Singh, Jason Wagoner, Gabriel Rocklin,
 Yannick Spill, Ilya Chorny, Greg Bowman, Vincent Voelz, Peter Kasson, Dave Caplan, Sam Moors,
 Carl Rogers, Josua Adelman, Javier Palacios, David Chandler, Andrew Jewett, Stefano Martiniani, and Antonia Mey.
+
+Notes
+-----
+* `alchemical-analysis.py` described in [this publication](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4420631/) has been [relocated here](https://github.com/MobleyLab/alchemical-analysis).
