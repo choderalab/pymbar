@@ -831,7 +831,7 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
     try:
         import statsmodels.api as sm
     except ImportError as err:
-        err.message += "\n You need to install statsmodels to use the FFT based correlation function."
+        err.args = (err.args[0] + "\n You need to install statsmodels to use the FFT based correlation function.",)
         raise
 
     # Create np copies of input arguments.
