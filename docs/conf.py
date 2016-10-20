@@ -52,6 +52,10 @@ autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
 numpydoc_show_class_members = False
 
+# concatenate both class and __init__ docstrings when generating autodoc class
+# docs
+autoclass_content = 'both'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -308,3 +312,4 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
