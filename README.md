@@ -63,20 +63,6 @@ Authors
 * Levi N. Naden <levi.naden@choderalab.org>
 * Michael R. Shirts <michael.shirts@virginia.edu>
 
-Manifest
---------
-
-This archive contains the following files:
-
-* `README.md` - this file
-* `LICENSE` - a copy of the GNU General Public License version 2 covering this code
-* `pymbar/` - Python MBAR package
-* `examples/` - examples of applications of MBAR to various types of calculations
-  See the README.md in that folder for more information
-* `docs/` - sphinx documetation
-* `devtools/` - travis CI and conda configuration files
-
-
 References
 ----------
 
