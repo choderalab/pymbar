@@ -88,10 +88,14 @@ References
 
   Chodera JD, Swope WC, Pitera JW, Seok C, and Dill KA. Use of the weighted histogram analysis method for the analysis of simulated and parallel tempering simulations. J. Chem. Theor. Comput. 3(1):26-41 (2007).  [DOI](http://dx.doi.org/10.1021/ct0502864)
 
+* The automatic equilibration detection method provided in `pymbar.timeseries.detectEquilibration()` is described here:
+
+  Chodera JD. A simple method for automated equilibration detection in molecular simulations. J. Chem. Theor. Comput. 12:1799, 2016.  [DOI](http://dx.doi.org/10.1021/acs.jctc.5b00784)
+
 License
 -------
 
-`pymbar`` is free software and is licensed under the LGPLv2 license.
+`pymbar` is free software and is licensed under the LGPLv2 license.
 
 
 Thanks
