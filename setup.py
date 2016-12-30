@@ -15,7 +15,7 @@ import six
 
 ##########################
 VERSION = "3.0.0"
-ISRELEASED = True
+ISRELEASED = False
 __version__ = VERSION
 ##########################
 
