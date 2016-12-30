@@ -8,7 +8,6 @@ pymbar
 
 Python implementation of the `multistate Bennett acceptance ratio (MBAR) <http://www.alchemistry.org/wiki/Multistate_Bennett_Acceptance_Ratio>`_ method for estimating expectations and free energy differences
 
-
 Documentation
 -------------
 
@@ -20,8 +19,7 @@ Documentation
    mbar
    timeseries
    testsystems
-
-
+   references
 
 Indices and tables
 ==================

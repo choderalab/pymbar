@@ -2,3 +2,4 @@ numpy
 nose
 numpydoc
 scipy
+sphinxcontrib-bibtex

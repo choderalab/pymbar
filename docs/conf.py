@@ -46,7 +46,8 @@ import os
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
               'sphinx.ext.todo', 'sphinx.ext.pngmath', 'sphinx.ext.ifconfig',
               'numpydoc', 'sphinx.ext.inheritance_diagram',
-              'sphinx.ext.autosummary', 'sphinx.ext.extlinks', ]
+              'sphinx.ext.autosummary', 'sphinx.ext.extlinks',
+              'sphinxcontrib.bibtex']
 
 autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
@@ -312,4 +313,3 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
-
