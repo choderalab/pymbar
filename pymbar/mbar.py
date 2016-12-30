@@ -57,9 +57,9 @@ class MBAR:
     """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
     Notes
-    -----    
+    -----
     Note that this method assumes the data are uncorrelated.
-    Correlated data must be subsampled to extract uncorrelated (effectively independent) samples (see example below).
+    Correlated data must be subsampled to extract uncorrelated (effectively independent) samples.
 
     References
     ----------
@@ -75,32 +75,32 @@ class MBAR:
 
         Upon initialization, the dimensionless free energies for all states are computed.
         This may take anywhere from seconds to minutes, depending upon the quantity of data.
-        After initialization, the computed free energies may be obtained by a call to 'getFreeEnergies()', or
-        free energies or expectation at any state of interest can be computed by calls to 'computeFreeEnergy()' or
-        'computeExpectations()'.
+        After initialization, the computed free energies may be obtained by a call to :function:`getFreeEnergies`, or
+        free energies or expectation at any state of interest can be computed by calls to :function:`computeFreeEnergy` or
+        :function:`computeExpectations`.
 
         ----------
         u_kn : np.ndarray, float, shape=(K, N_max)
-            u_kn[k,n] is the reduced potential energy of uncorrelated
+            ``u_kn[k,n]`` is the reduced potential energy of uncorrelated
             configuration n evaluated at state k.
-            u_kln: np.ndarray, float, shape (K, L, N_max)
-               if the simulation is in form u_kln[k,l,n] it is converted to u_kn format
+        u_kln : np.ndarray, float, shape (K, L, N_max)
+            if the simulation is in form ``u_kln[k,l,n]`` it is converted to ``u_kn`` format
 
-        u_kn = [ u_1(x_1) u_1(x_2) u_1(x_3) . . . u_1(x_n)
-                 u_2(x_1) u_2(x_2) u_2(x_3) . . . u_2(x_n)
-                                .  .  .
-                 u_k(x_1) u_k(x_2) u_k(x_3) . . . u_k(x_n)]
+            u_kn = [ u_1(x_1) u_1(x_2) u_1(x_3) . . . u_1(x_n)
+                     u_2(x_1) u_2(x_2) u_2(x_3) . . . u_2(x_n)
+                                                . . .
+                     u_k(x_1) u_k(x_2) u_k(x_3) . . . u_k(x_n)]
 
         N_k :  np.ndarray, int, shape=(K)
-            N_k[k] is the number of uncorrelated snapshots sampled from state k.
+            ``N_k[k]`` is the number of uncorrelated snapshots sampled from state ``k``.
             Some may be zero, indicating that there are no samples from that state.
 
-        We assume that the states are ordered such that the first N_k
-        are from the first state, the 2nd N_k the second state, and so
-        forth. This only becomes important for BAR -- MBAR does not
-        care which samples are from which state.  We should eventually
-        allow this assumption to be overwritten by parameters passed
-        from above, once u_kln is phased out.
+            We assume that the states are ordered such that the first ``N_k``
+            are from the first state, the 2nd ``N_k`` the second state, and so
+            forth. This only becomes important for BAR -- MBAR does not
+            care which samples are from which state.  We should eventually
+            allow this assumption to be overwritten by parameters passed
+            from above, once ``u_kln`` is phased out.
 
         maximum_iterations : int, optional
             Set to limit the maximum number of iterations performed (default 1000)
@@ -109,7 +109,7 @@ class MBAR:
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
         initial_f_k : np.ndarray, float, shape=(K), optional
-            Set to the initial dimensionless free energies to use as a 
+            Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
         method : list(dict), optional, default=None
             List of dictionaries to define a sequence of solver algorithms
@@ -123,7 +123,7 @@ class MBAR:
             (default: 'zeros', unless specific values are passed in.)
         x_kindices
             Which state is each x from?  Usually doesn't matter, but does for BAR. We assume the samples
-            are in K order (the first N_k[0] samples are from the 0th state, the next N_k[1] samples from 
+            are in K order (the first N_k[0] samples are from the 0th state, the next N_k[1] samples from
             the 1st state, and so forth.
 
         Notes
@@ -189,7 +189,7 @@ class MBAR:
             for k in range(K):
                 self.x_kindices[Nsum:Nsum+N_k[k]] = k
                 Nsum += N_k[k]
-            
+
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
 
@@ -260,10 +260,10 @@ class MBAR:
                 print("Initial dimensionless free energies with method %s" % (initialize))
                 print("f_k = ")
                 print(self.f_k)
-        
+
         self.f_k = mbar_solvers.solve_mbar_with_subsampling(self.u_kn, self.N_k, self.f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=self.x_kindices)
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
-        
+
         # Print final dimensionless free energies.
         if self.verbose:
             print("Final dimensionless free energies")
@@ -285,7 +285,7 @@ class MBAR:
         weights : np.ndarray, float, shape=(N, K)
             NxK matrix of weights in the MBAR covariance and averaging formulas
 
-        """        
+        """
         return np.exp(self.Log_W_nk)
 
 
@@ -313,16 +313,16 @@ class MBAR:
 
         It also counts the efficiency of the sampling, which is simply the ratio
         of the effective number of samples at a given state to the total number
-        of samples collected.  This is printed in verbose output, but is not 
+        of samples collected.  This is printed in verbose output, but is not
         returned for now.
-        
+
         Returns
         -------
         N_eff : np.ndarray, float, shape=(K)
-                estimated number of samples contributing to estimates at each 
-                state i. An estimate to how many samples collected just at state 
-                i would result in similar statistical efficiency as the MBAR 
-                simulation. Valid for both sampled states (in which the weight 
+                estimated number of samples contributing to estimates at each
+                state i. An estimate to how many samples collected just at state
+                i would result in similar statistical efficiency as the MBAR
+                simulation. Valid for both sampled states (in which the weight
                 will be greater than N_k[i], and unsampled states.
 
         Parameters
@@ -335,7 +335,7 @@ class MBAR:
         # using Kish (1965) formula (Kish, Leslie (1965). Survey Sampling. New York: Wiley)
         # As the weights become more concentrated in fewer observations, the effective sample size shrinks.
         # from http://healthcare-economist.com/2013/08/22/effective-sample-size/
-        # effective # of samples contributing to averages carried out at state i 
+        # effective # of samples contributing to averages carried out at state i
         #                        =  (\sum_{n=1}^N w_in)^2 / \sum_{n=1}^N w_in^2
         #                        =  (\sum_{n=1}^N w_in^2)^-1
         #
@@ -344,7 +344,7 @@ class MBAR:
 
         Examples
         --------
-        
+
         >>> from pymbar import testsystems
         >>> [x_kn, u_kln, N_k, s_n] = testsystems.HarmonicOscillatorsTestCase().sample()
         >>> mbar = MBAR(u_kln, N_k)
@@ -426,12 +426,12 @@ class MBAR:
         Deltaf_ij : np.ndarray, float, shape=(K, K)
             Deltaf_ij[i,j] is the estimated free energy difference
         dDeltaf_ij : np.ndarray, float, shape=(K, K)
-            If compute_uncertainty==True, 
-            dDeltaf_ij[i,j] is the estimated statistical uncertainty 
+            If compute_uncertainty==True,
+            dDeltaf_ij[i,j] is the estimated statistical uncertainty
             (one standard deviation) in Deltaf_ij[i,j].  Otherwise None.
         (optional) Theta_ij : np.ndarray, float, shape=(K, K)
             The theta_matrix if return_theta==True, otherwise None.
-            
+
 
         Notes
         -----
@@ -454,14 +454,14 @@ class MBAR:
 
         """
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
-        
+
         # Compute free energy differences.
         f_i = np.matrix(self.f_k)
         Deltaf_ij = f_i - f_i.transpose()
 
         # zero out numerical error for thermodynamically identical states
         self._zerosamestates(Deltaf_ij)
-        
+
         Deltaf_ij = np.array(Deltaf_ij)  # Convert from np.matrix to np.array
 
         if compute_uncertainty or return_theta:
@@ -493,7 +493,7 @@ class MBAR:
         Compute the expectations of multiple observables of phase
         space functions [A_0(x),A_1(x),...,A_i(x)] along with the
         covariances of their estimates at multiple states.
-        
+
         intended as an internal function to keep all the optimized and
         robust expectation code in one place, but will leave it
         open to allow for later modifications
@@ -540,11 +540,11 @@ class MBAR:
              Ca_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
             (* not the square root of anything, the full covariance matrix *)
 
-        Situations this will be used for : 
-            * multiple observables, single state (called though computeMultipleExpectations) 
-            * single observable, multiple states (called through computeExpectations) 
-            This has two cases: observables that don't change with state, and observables that 
-            do change with state.  
+        Situations this will be used for :
+            * multiple observables, single state (called though computeMultipleExpectations)
+            * single observable, multiple states (called through computeExpectations)
+            This has two cases: observables that don't change with state, and observables that
+            do change with state.
             For example, the set of energies at state k consist in energy function of state
             1 evaluated at state 1, energies of state 2 evaluated at
             state 2, and so forth.
@@ -555,7 +555,6 @@ class MBAR:
         Examples
         --------
 
-        update this example to be more general
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
@@ -579,11 +578,11 @@ class MBAR:
             S = mapshape[1]
 
         # reshape arrays explicitly into 2d (even if only one state) to make it easy to manipulate
-        shapeu = np.shape(u_ln)    
+        shapeu = np.shape(u_ln)
         if len(shapeu) == 1:
             u_ln = np.reshape(u_ln,[1,shapeu[0]])
 
-        shapeA = np.shape(A_n)    
+        shapeA = np.shape(A_n)
         if len(shapeA) == 1:
             A_n = np.reshape(A_n,[1,shapeA[0]])
 
@@ -591,10 +590,10 @@ class MBAR:
         N = self.N  # N is total number of samples
         returns = {}  # dictionary we will store uncertainties in
 
-        # make observables all positive, allowing us to take the logarithm, which is 
+        # make observables all positive, allowing us to take the logarithm, which is
         # required to prevent overflow in some examples.
-        # WARNING: one issue to watch for is if one of the energies is extremely 
-        # low (-10^10 or lower), but most of the energies of interest are much higher.  
+        # WARNING: one issue to watch for is if one of the energies is extremely
+        # low (-10^10 or lower), but most of the energies of interest are much higher.
         # This could lead to roundoff problems (check with Levi N.)
 
         L_list = np.unique(state_list)
@@ -628,7 +627,7 @@ class MBAR:
         # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
         states_with_samples = (self.N_k > 0)
         log_denominator_n = logsumexp(self.f_k[states_with_samples] - self.u_kn[states_with_samples].T, b=self.N_k[states_with_samples], axis=1)
-        # Compute row of W_nk matrix for the extra states corresponding to u_ln 
+        # Compute row of W_nk matrix for the extra states corresponding to u_ln
         # that the state list specifies
         for l in L_list:
             la = K+l  #l, augmented
@@ -669,7 +668,7 @@ class MBAR:
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
                 np.exp(Log_W_nk), N_k, method=uncertainty_method)
 
-            # Note: these variances will be the same whether or not we 
+            # Note: these variances will be the same whether or not we
             # subtract a different constant from each A_i
             # for efficency, output theta in block form
             #          K*K   K*S  K*NL
@@ -731,18 +730,18 @@ class MBAR:
         Inputs: d_ij: a matrix of standard deviations of the quantities f_i - f_j
 
         K: The number of states in each 'chunk', has to be constant
-        
+
         outputs: KxK variance matrix for the sums or differences \sum a_i df_i
-        
+
         We wish to calculate the variance of a weighted sum of free energy differences.
-        for example var(\sum a_i df_i). 
-        
-        We explicitly lay out the calculations for four variables (where each variable 
+        for example var(\sum a_i df_i).
+
+        We explicitly lay out the calculations for four variables (where each variable
         is a logarithm of a partion function), then generalize.
-        
+
         The uncertainty in the sum of two weighted differences is var(a1(f_i1 - f_j1) + a2(f_i2 - f_j2)) =
         a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + 2 a1 a2 cov(f_i1 - f_j1, f_i2 - f_j2)
-        
+
         cov(f_i1 - f_j1, f_i2 - f_j2) = cov(f_i1,f_i2) - cov(f_i1,f_j2) - cov(f_j1,f_i2) + cov(f_j1,f_j2)
 
         call:
@@ -751,7 +750,7 @@ class MBAR:
         f_j1 = b
         f_i2 = c
         f_j2 = d
-        
+
         a1^2 var(a-b) + a2^2 var(c-d) + 2a1a2 cov(a-b,c-d)
         we want 2cov(a-b,c-d) = 2cov(a,c)-2cov(a,d)-2cov(b,c)+2cov(b,d)
         since  var(x-y) = var(x) + var(y) - 2cov(x,y)
@@ -764,12 +763,12 @@ class MBAR:
             2cov(b,d) = -var(b-d) + var(b) + var(d)
         adding up, we get:
             2cov(a-b,c-d) = 2cov(a,c)-2cov(a,d)-2cov(b,c)+2cov(b,d) =  - var(a-c) + var(a-d) + var(b-c) - var(b-d)
-  
+
             a1^2 var(a-b)+a2^2 var(c-d)+2a1a2cov(a-b,c-d) = a1^2 var(a-b)+a2^2 var(c-d)+a1a2 [-var(a-c)+var(a-d)+var(b-c)-var(b-d)]
             var(a1(f_i1 - f_j1) + a2(f_i2 - f_j2)) =
             = a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + 2a1 a2 cov(f_i1 - f_j1, f_i2 - f_j2)
             = a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + a1 a2 [-var(f_i1 - f_i2) + var(f_i1 - f_j2) + var(f_j1-f_i2) - var(f_j1 - f_j2)]
-            
+
         assume two arrays of free energy differences, and and array of constant vectors a.
         we want the variance var(\sum_k a_k (f_i,k - f_j,k)) Each set is separated from the other by an offset K
         same process applies with the sum, with the single var tems and the pair terms
@@ -807,7 +806,7 @@ class MBAR:
             default is self.u_kn
 
         output : string, optional
-            'averages' outputs expectations of observables and 'differences' outputs 
+            'averages' outputs expectations of observables and 'differences' outputs
             a matrix of differences in the observables.
 
         compute_uncertainty : bool, optional
@@ -919,7 +918,7 @@ class MBAR:
             mu = inner_results['observables']
             if compute_uncertainty:
                 sigma = np.sqrt(covA_ij[0:K,0:K].diagonal())
-                               
+
         if output == 'differences':
             A_im = np.matrix(inner_results['observables'])
             A_ij = A_im - A_im.transpose()
@@ -964,7 +963,7 @@ class MBAR:
         A_i : np.ndarray, float, shape=(I)
             A_i[i] is the estimate for the expectation of A_i(x) at the state specified by u_kn
         dA_i : np.ndarray, float, shape = (I)
-            dA_i[i] is the uncertainty in the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:] 
+            dA_i[i] is the uncertainty in the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
             or None if compute_uncertainty is False
         d2A_ij : np.ndarray, float, shape=(I, I)
             d2A_ij[i,j] is the COVARIANCE in the estimates of A_i[i] and A_i[j]: we can't actually take a square root
@@ -987,7 +986,7 @@ class MBAR:
         K = self.K
         N = self.N  # N is total number of samples
 
-        if len(np.shape(A_in)) == 3:  
+        if len(np.shape(A_in)) == 3:
             A_in_old = A_in.copy()  # convert to k by n format
             A_in = np.zeros([I, N], np.float64)
             for i in range(I):
@@ -1003,7 +1002,7 @@ class MBAR:
                                                       return_theta=(compute_uncertainty or compute_covariance),
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
-        
+
         expectations, uncertainties, covariances = None, None, None
         expectations = inner_results['observables']
 
@@ -1021,14 +1020,14 @@ class MBAR:
         if compute_covariance:
             # compute estimate of statistical covariance of the observables
             covariances = inner_results['Theta'][0:I,0:I]
-            
+
         return expectations, uncertainties, covariances
 
 
     #=========================================================================
     def computePerturbedFreeEnergies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10):
         """Compute the free energies for a new set of states.
-        
+
         Here, we desire the free energy differences among a set of new states, as well as the uncertainty estimates in these differences.
 
         Parameters
@@ -1081,7 +1080,7 @@ class MBAR:
                                                       warning_cutoff=warning_cutoff)
 
         Deltaf_ij, dDeltaf_ij = None, None
-        
+
         f_k = np.matrix(inner_results['free energies'])
         Deltaf_ij = np.array(f_k - f_k.transpose())
 
@@ -1148,10 +1147,10 @@ class MBAR:
         [K,N] = np.shape(u_kn)
         A_in = u_kn.copy()
         state_map = np.zeros([2,K],int)
-        for k in range(K):    
+        for k in range(K):
             state_map[0,k] = k
             state_map[1,k] = k
-    
+
         inner_results = self.computeExpectationsInner(A_in, u_kn, state_map,
                                                       return_theta=True,
                                                       uncertainty_method=uncertainty_method,
@@ -1387,7 +1386,7 @@ class MBAR:
     #=========================================================================
     # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
     #=========================================================================
-                           
+
     def _ErrorOfDifferences(self,cov,warning_cutoff=1.0e-10):
         """
         inputs:
@@ -1398,7 +1397,7 @@ class MBAR:
 
         diag = np.matrix(cov.diagonal())
         d2 = diag + diag.transpose() - 2 * cov
-        
+
         # check for any numbers below zero.
         if (np.any(d2 < 0.0)):
             if (np.any(d2) < warning_cutoff):
@@ -1470,10 +1469,10 @@ class MBAR:
           'svd' computes the generalized inverse using the singular value decomposition -- this should be efficient yet accurate (faster)
           'svd-ew' is the same as 'svd', but uses the eigenvalue decomposition of W'W to bypass the need to perform an SVD (fastest)
           'approximate' only requires multiplication of KxN and NxK matrices, but is an approximate underestimate of the uncertainty.
-        
-        svd and svd-ew are described in appendix D of Shirts, 2007 JCP, while 
+
+        svd and svd-ew are described in appendix D of Shirts, 2007 JCP, while
         "approximate" in Section 4 of Kong, 2003. J. R. Statist. Soc. B.
-        
+
         We currently recommend 'svd-ew'.
         """
 
@@ -1514,7 +1513,7 @@ class MBAR:
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
-            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.            
+            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
             Sigma = np.matrix(np.diag(S))
             V = np.matrix(Vt).T
 
