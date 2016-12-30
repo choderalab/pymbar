@@ -14,8 +14,8 @@ import subprocess
 import six
 
 ##########################
-VERSION = "3.0.0.dev0"
-ISRELEASED = False
+VERSION = "3.0.0"
+ISRELEASED = True
 __version__ = VERSION
 ##########################
 
@@ -98,9 +98,9 @@ def buildKeywordDictionary():
     setupKeywords = {}
     setupKeywords["name"]              = "pymbar"
     setupKeywords["version"]           = VERSION
-    setupKeywords["author"]            = "Michael R. Shirts and John D. Chodera"
-    setupKeywords["author_email"]      = "michael.shirts@virginia.edu, choderaj@mskcc.org"
-    setupKeywords["license"]           = "GPL 2.0"
+    setupKeywords["author"]            = "Levi N. Naden and Michael R. Shirts and John D. Chodera"
+    setupKeywords["author_email"]      = "levi.naden@choderalab.org, michael.shirts@virginia.edu, john.chodera@choderalab.org"
+    setupKeywords["license"]           = "LGPL 2.1"
     setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
     setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
     setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems', 'pymbar.tests']
@@ -115,9 +115,9 @@ def buildKeywordDictionary():
     setupKeywords["requires"]          = ["numpy", "scipy", "nose", "numexpr"]
     setupKeywords["long_description"]  = """
     Pymbar (https://simtk.org/home/pymbar) is a library
-    that provides tools for optimally combining simulations 
-    from multiple thermodynamic states using maximum likelihood 
-    methods to compute free energies (normalization constants) 
+    that provides tools for optimally combining simulations
+    from multiple thermodynamic states using maximum likelihood
+    methods to compute free energies (normalization constants)
     and expectation values from all of the samples simultaneously.
     """
     outputString=""
@@ -126,12 +126,12 @@ def buildKeywordDictionary():
     for key in sorted(setupKeywords.keys()):
          value         = setupKeywords[key]
          outputString += key.rjust(firstTab) + str( value ).rjust(secondTab) + "\n"
-    
+
     print("%s" % outputString)
 
     #get_config_var(None)  # this line is necessary to fix the imports Mac OS X
     return setupKeywords
-    
+
 
 def main():
     setupKeywords = buildKeywordDictionary()
@@ -139,7 +139,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
