@@ -30,11 +30,6 @@ script:
   - conda install --yes --quiet pip nose nose-timer
   # Test the package
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer && cd ..
-  # Test pip build
-  - source deactivate
-  - conda create --yes -n pip python=$python numpy
-  - source activate pip
-  - pip install .
 
 env:
   matrix:
