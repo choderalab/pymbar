@@ -55,7 +55,7 @@ class MBAR:
     """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
     Notes
-    -----    
+    -----
     Note that this method assumes the data are uncorrelated.
     Correlated data must be subsampled to extract uncorrelated (effectively independent) samples (see example below).
 
@@ -107,7 +107,7 @@ class MBAR:
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
         initial_f_k : np.ndarray, float, shape=(K), optional
-            Set to the initial dimensionless free energies to use as a 
+            Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
         method : string, optional
             Method for determination of dimensionless free energies:
@@ -129,7 +129,7 @@ class MBAR:
             Newton-Raphson iteration (default = 2)
         x_kindices
             Which state is each x from?  Usually doesn't matter, but does for BAR. We assume the samples
-            are in K order (the first N_k[0] samples are from the 0th state, the next N_k[1] samples from 
+            are in K order (the first N_k[0] samples are from the 0th state, the next N_k[1] samples from
             the 1st state, and so forth.
 
         Notes
@@ -358,7 +358,7 @@ class MBAR:
         Deltaf_ij :L np.ndarray, float, shape=(K, K)
             Deltaf_ij[i,j] is the estimated free energy difference
         dDeltaf_ij :L np.ndarray, float, shape=(K, K)
-            dDeltaf_ij[i,j] is the estimated statistical uncertainty 
+            dDeltaf_ij[i,j] is the estimated statistical uncertainty
             (one standard deviation) in Deltaf_ij[i,j]
 
         Notes
@@ -2138,7 +2138,7 @@ class MBAR:
         """ % vars()
                 # Execute inline C code with weave.
                 info = weave.inline(
-                    code, ['K', 'N', 'N_k', 'u_n', 'u_kn', 'f_k', 'log_w_n'], headers=['<math.h>', '<stdlib.h>'], verbose=2)
+                    code, ['K', 'N', 'N_k', 'u_n', 'u_kn', 'f_k', 'log_w_n'], headers=['<math.h>', '<stdlib.h>'])
             except:
                 # Compute unnormalized log weights in pure Python.
                 log_w_n = np.zeros([self.N], dtype=np.float64)
@@ -2257,44 +2257,44 @@ class MBAR:
   #=============================================================================================
   def _minimizeLikelihood(self, relative_tolerance=1.0e-6, maximum_iterations=10000, verbose=True, print_warning = True):
       Determine dimensionless free energies by combined self-consistent and NR iteration, choosing the 'best' each step.
-  
+
     OPTIONAL ARGUMENTS
       relative_tolerance (float between 0 and 1) - relative tolerance for convergence (default 1.0e-6)
       maximum_iterations (int) - maximum number of minimizer iterations (default 1000)
       verbose (boolean) - verbosity level for debug output
-  
+
     NOTES
-      This method determines the dimensionless free energies by minimizing a convex function whose solution is the desired estimator.      
+      This method determines the dimensionless free energies by minimizing a convex function whose solution is the desired estimator.
       The original idea came from the construction of a likelihood function that independently reproduced the work of Geyer (see [1]
       and Section 6 of [2]).
       This can alternatively be formulated as a root-finding algorithm for the Z-estimator.
-  
+
     REFERENCES
-      See Appendix C.2 of [1]. 
-  
+      See Appendix C.2 of [1].
+
       if verbose: print "Determining dimensionless free energies by LBFG minimization"
-  
+
     # Number of states with samples.
     K = self.states_with_samples.size
     if verbose:
       print "There are %d states with samples." % K
-  
+
     # Free energies
     f_k = self.f_k[self.states_with_samples].copy()
-      
+
     # Samples
     N_k = self.N_k[self.states_with_samples].copy()
-  
+
     from scipy import optimize
-    
-    results = optimize.fmin_cg(self._objectiveF,f_k,fprime=self._gradientF,gtol=relative_tolerance, full_output=verbose,disp=verbose,maxiter=maximum_iterations) 
+
+    results = optimize.fmin_cg(self._objectiveF,f_k,fprime=self._gradientF,gtol=relative_tolerance, full_output=verbose,disp=verbose,maxiter=maximum_iterations)
     # doesn't matter what starting point is -- it's determined by what is stored in self, not by 'dum'
-    #results = optimize.fmin(self._objectiveF,f_k,xtol=relative_tolerance, full_output=verbose,disp=verbose,maxiter=maximum_iterations) 
+    #results = optimize.fmin(self._objectiveF,f_k,xtol=relative_tolerance, full_output=verbose,disp=verbose,maxiter=maximum_iterations)
     self.f_k = results[0]
     if verbose:
-      print "Obtained free energies by likelihood minimization"        
-  
-    return  
+      print "Obtained free energies by likelihood minimization"
+
+    return
   """
     #=========================================================================
 
@@ -2362,7 +2362,7 @@ class MBAR:
       H = np.matrix(np.zeros([K-1,K-1], dtype=np.float64)) # Hessian
       for i in range(1,K):
         g[i-1] = N_k[i] - N_k[i] * W_nk[:,i].sum()
-        H[i-1,i-1] = - (N_k[i] * W_nk[:,i] * (1.0 - N_k[i] * W_nk[:,i])).sum() 
+        H[i-1,i-1] = - (N_k[i] * W_nk[:,i] * (1.0 - N_k[i] * W_nk[:,i])).sum()
         for j in range(1,i):
           H[i-1,j-1] = (N_k[i] * W_nk[:,i] * N_k[j] * W_nk[:,j]).sum()
           H[j-1,i-1] = H[i-1,j-1]
