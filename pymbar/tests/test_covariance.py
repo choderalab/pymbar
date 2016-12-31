@@ -37,31 +37,17 @@ def _test(data_generator):
     eq(np.exp(mbar.Log_W_nk).dot(N_k), np.ones(U.shape[1]), decimal=10)
     eq(pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10)
 
-    # Test against old MBAR code.
-    mbar0 = pymbar.old_mbar.MBAR(U, N_k)
-    fij0, dfij0 = mbar0.getFreeEnergyDifferences(uncertainty_method="svd")
-    eq(mbar.f_k, mbar0.f_k, decimal=8)
-    eq(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
-
-    eq(fij0, fij1, decimal=8)
-    eq(dfij0, dfij1, decimal=8)
-    
-    eq(fij0, fij2, decimal=8)
-    eq(dfij0, dfij2, decimal=8)
-    
-
-
 def test_100x100_oscillators():
     data_generator = lambda : load_oscillators(100, 100)
     _test(data_generator)
-    
+
 def test_200x50_oscillators():
     data_generator = lambda : load_oscillators(200, 50)
     _test(data_generator)
-    
+
 def test_200x50_exponentials():
     data_generator = lambda : load_exponentials(200, 50)
-    _test(data_generator)    
+    _test(data_generator)
 
 
 def test_gas():

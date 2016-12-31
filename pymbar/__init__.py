@@ -35,7 +35,6 @@ from pymbar import timeseries, testsystems, confidenceintervals, version
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exp import EXP, EXPGauss
-import pymbar.old_mbar
 
 try:
     from pymbar import version
