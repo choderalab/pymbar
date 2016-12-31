@@ -5,7 +5,7 @@ ratio (MBAR) estimator.
 
 """
 #from distutils.sysconfig import get_config_var
-from distutils.core import setup, Extension
+#from distutils.core import setup, Extension
 from setuptools import setup, Extension
 import numpy
 import glob
@@ -14,7 +14,7 @@ import subprocess
 import six
 
 ##########################
-VERSION = "3.0.0"
+VERSION = "3.0dev3"
 ISRELEASED = False
 __version__ = VERSION
 ##########################
@@ -108,11 +108,11 @@ def buildKeywordDictionary():
     setupKeywords["zip_safe"]          = False
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
     setupKeywords["data_files"]        = []
-    setupKeywords["ext_modules"]       = [CMBAR] if six.PY2 else []
+    #setupKeywords["ext_modules"]       = [CMBAR] if six.PY2 else []
     # setupKeywords["test_suite"]        = "tests" # requires we migrate to setuptools
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
     setupKeywords["description"]       = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method."
-    setupKeywords["requires"]          = ["numpy", "scipy", "nose", "numexpr"]
+    setupKeywords["requires"]          = ["numpy", "scipy", "nose", "numexpr", "six"]
     setupKeywords["long_description"]  = """
     Pymbar (https://simtk.org/home/pymbar) is a library
     that provides tools for optimally combining simulations
