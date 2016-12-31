@@ -39,6 +39,14 @@ or
 
   $ pip install nose
 
-You can then run the tests with:
+You can then run the quick tests with:
 
   $ nosetests -vv pymbar
+
+If you want to run the full suite of tests with large test datasets, you can grab the latest version with:
+
+  $ git clone git clone https://github.com/choderalab/pymbar-datasets.git $HOME/pymbar_data
+
+and then run the full test suite with:
+
+$ nosetests -vv pymbar
