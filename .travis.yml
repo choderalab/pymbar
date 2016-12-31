@@ -32,7 +32,7 @@ script:
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer && cd ..
   # Test pip build
   - source deactivate
-  - conda create --yes -n pip python=$python
+  - conda create --yes -n pip python=$python numpy
   - source activate pip
   - pip install .
 
