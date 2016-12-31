@@ -13,6 +13,7 @@ install:
   - bash -x devtools/travis-ci/install.sh
   - export PYTHONUNBUFFERED=true
   - export PATH=$HOME/miniconda/bin:$PATH
+  - export PYMBAR_DATA=$HOME/pymbar-datasets
 
 script:
   # Create a test environment
@@ -23,8 +24,11 @@ script:
   - conda config --add channels ${ORGNAME}
   # Add omnia dev channels
   - conda config --add channels https://conda.anaconda.org/omnia/label/dev
-  # Build recipie
+  # Build recipe
   - conda build devtools/conda-recipe
+  # Check out large test datasets
+  - echo "Checking out local copy of pymbar-datasets (will take some time)s"
+  - git clone https://github.com/choderalab/pymbar-datasets/archive/master.zip $PYMBAR_DATASETS
   # Install locally-built package
   - conda install --yes --use-local ${PACKAGENAME}-dev
   - conda install --yes --quiet pip nose nose-timer
