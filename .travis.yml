@@ -31,7 +31,7 @@ script:
   - git clone https://github.com/choderalab/pymbar-datasets.git $PYMBAR_DATASETS
   # Install locally-built package
   - conda install --yes --use-local ${PACKAGENAME}-dev
-  - conda install --yes --quiet pip nose nose-timer
+  - conda install --yes --quiet pip nose nose-timer statsmodels pytables
   # Test the package
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer && cd ..
 
