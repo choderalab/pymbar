@@ -32,7 +32,7 @@ def get_data_home(data_home=None):
 def get_sn(N_k):
     """Assuming the usual ordering of samples and states, guess the
     the state origin of each sample.
-    
+
     Parameters
     ----------
     N_k : np.ndarray, dtype='int', shape=(n_states)
@@ -41,8 +41,8 @@ def get_sn(N_k):
     Returns
     -------
     s_n : np.ndarray, dtype=int, shape=(n_samples)
-        The (guessed) state of origin of each state.  
-    
+        The (guessed) state of origin of each state.
+
     Notes
     -----
     The output MAY HAVE EMPTY STATES.
@@ -62,7 +62,7 @@ def load_from_hdf(filename):
     ----------
     filename : str
         filename of HDF5
-    
+
     Returns
     -------
 
@@ -72,7 +72,7 @@ def load_from_hdf(filename):
         Number of samples taken from each state
     s_n : np.ndarray, optional, default=None, dtype=int, shape=(n_samples)
         The state of origin of each state.  If none, guess the state origins.
-    
+
     """
     import tables
     try:
@@ -106,7 +106,7 @@ def load_k69_data():
 
 def save(name, u_kn, N_k, s_n=None, least_significant_digit=None):
     """Create an HDF5 dump of an existing MBAR job for later use / testing.
-    
+
     Parameters
     ----------
     name : str
@@ -125,10 +125,10 @@ def save(name, u_kn, N_k, s_n=None, least_significant_digit=None):
     The output HDF5 files should be readible by the helper funtions pymbar_datasets.py
     """
     import tables
-    
+
     (n_states, n_samples) = u_kn.shape
-    
-    u_kn = ensure_type(u_kn, 'float', 2, "u_kn or Q_kn", shape=(n_states, n_samples))
+
+    u_kn = ensure_type(u_kn, 'float32', 2, "u_kn or Q_kn", shape=(n_states, n_samples))
     N_k = ensure_type(N_k, 'int64', 1, "N_k", shape=(n_states,))
 
     if s_n is None:
@@ -138,7 +138,7 @@ def save(name, u_kn, N_k, s_n=None, least_significant_digit=None):
 
     hdf_filename = os.path.join("./", "%s.h5" % name)
     f = tables.File(hdf_filename, 'a')
-    f.createCArray("/", "u_kn", tables.Float64Atom(), obj=u_kn, filters=tables.Filters(complevel=9, complib="zlib", least_significant_digit=least_significant_digit))
-    f.createCArray("/", "N_k", tables.Int64Atom(), obj=N_k, filters=tables.Filters(complevel=9, complib="zlib"))
-    f.createCArray("/", "s_n", tables.Int64Atom(), obj=s_n, filters=tables.Filters(complevel=9, complib="zlib"))
+    f.create_carray("/", "u_kn", tables.Float64Atom(), obj=u_kn, filters=tables.Filters(complevel=9, complib="zlib", least_significant_digit=least_significant_digit))
+    f.create_carray("/", "N_k", tables.Int64Atom(), obj=N_k, filters=tables.Filters(complevel=9, complib="zlib"))
+    f.create_carray("/", "s_n", tables.Int64Atom(), obj=s_n, filters=tables.Filters(complevel=9, complib="zlib"))
     f.close()
