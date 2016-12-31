@@ -28,14 +28,14 @@ def generate_data(N=10000, K=10):
 def test_statistical_inefficiency_single():
     X, Y, energy = generate_data()
     timeseries.statisticalInefficiency(X[0])
-    timeseries.statisticalInefficiency(X[0], X[0])    
+    timeseries.statisticalInefficiency(X[0], X[0])
     timeseries.statisticalInefficiency(X[0] ** 2)
     timeseries.statisticalInefficiency(X[0] ** 2, X[0] ** 2)
     timeseries.statisticalInefficiency(energy[0])
     timeseries.statisticalInefficiency(energy[0], energy[0])
-    
+
     timeseries.statisticalInefficiency(X[0], X[0] ** 2)
-    
+
     # TODO: Add some checks to test statistical inefficinecies are within normal range
 
 
@@ -56,7 +56,7 @@ def test_statistical_inefficiency_fft():
     timeseries.statisticalInefficiency_fft(X[0])
     timeseries.statisticalInefficiency_fft(X[0] ** 2)
     timeseries.statisticalInefficiency_fft(energy[0])
-    
+
     g0 = timeseries.statisticalInefficiency_fft(X[0])
     g1 = timeseries.statisticalInefficiency(X[0])
     g2 = timeseries.statisticalInefficiency(X[0], X[0])
@@ -67,7 +67,7 @@ def test_statistical_inefficiency_fft():
 
 @skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
 def test_statistical_inefficiency_fft_gaussian():
-    
+
     # Run multiple times to get things with and without negative "spikes" at C(1)
     for i in range(5):
         x = np.random.normal(size=100000)
@@ -78,7 +78,7 @@ def test_statistical_inefficiency_fft_gaussian():
         eq(g0, g1, decimal=5)
         eq(g0, g2, decimal=5)
         eq(g0, g3, decimal=5)
-        
+
         eq(np.log(g0), np.log(1.0), decimal=1)
 
     for i in range(5):
@@ -102,9 +102,9 @@ def test_detectEquil():
 
 @skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
 def test_detectEquil_binary():
-    x = np.random.normal(size=10000)        
+    x = np.random.normal(size=10000)
     (t, g, Neff_max) = timeseries.detectEquilibration_binary_search(x)
-    
+
 @skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
 def test_compare_detectEquil(show_hist=False):
     """
@@ -116,7 +116,7 @@ def test_compare_detectEquil(show_hist=False):
         A_t = testsystems.correlated_timeseries_example(N=N, tau=5.0) + 2.0
         B_t = testsystems.correlated_timeseries_example(N=N, tau=5.0) + 1.0
         C_t = testsystems.correlated_timeseries_example(N=N*2, tau=5.0)
-        D_t = np.concatenate([A_t, B_t, C_t, np.zeros(20)]) #concatenate and add flat region to one end (common in MC data)         
+        D_t = np.concatenate([A_t, B_t, C_t])
         bs_de = timeseries.detectEquilibration_binary_search(D_t, bs_nodes=10)
         std_de = timeseries.detectEquilibration(D_t, fast=False, nskip=1)
         t_res.append(bs_de[0]-std_de[0])
@@ -138,7 +138,7 @@ def test_detectEquil_constant_trailing():
     """
     We only check that the code doesn't give an exception.  The exact value of Neff can either be
     ~50 if we try to include part of the equilibration samples, or it can be Neff=1 if we find that the
-    whole first half is discarded. 
+    whole first half is discarded.
     """
 
 def test_correlationFunctionMultiple():
