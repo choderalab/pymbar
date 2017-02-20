@@ -1,10 +1,10 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2010-2014 University of Virginia, Memorial Sloan-Kettering Cancer Center
+# Copyright 2010-2017 University of Virginia, Memorial Sloan-Kettering Cancer Center
 #
 # Authors: Michael Shirts, John Chodera
-# Contributors: Kyle Beauchamp
+# Contributors: Kyle Beauchamp, Levi Naden
 #
 # pymbar is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -42,6 +42,7 @@ except ImportError:
 
 class TypeCastPerformanceWarning(RuntimeWarning):
     pass
+
 
 def kln_to_kn(kln, N_k = None, cleanup = False):
 
@@ -84,6 +85,7 @@ def kln_to_kn(kln, N_k = None, cleanup = False):
 
     return kn
 
+
 def kn_to_n(kn, N_k = None, cleanup = False):
 
     """ Convert KxN_max array to N array
@@ -122,6 +124,7 @@ def kn_to_n(kn, N_k = None, cleanup = False):
     if cleanup:
         del(kn)  # very big, let's explicitly delete
     return n
+
 
 def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=None,
                 warn_on_cast=True, add_newaxis_on_deficient_ndim=False):
@@ -326,6 +329,7 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     return out
 
+
 def check_w_normalized(W, N_k, tolerance = 1.0e-4):
     """Check the weight matrix W is properly normalized. The sum over N should be 1, and the sum over k by N_k should aslo be 1
 
@@ -367,9 +371,9 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
 
     return
 
-#=============================================================================================
+# ============================================================================================
 # Exception classes
-#=============================================================================================
+# =============================================================================================
 
 
 class ParameterError(Exception):

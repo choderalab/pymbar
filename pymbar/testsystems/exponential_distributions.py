@@ -85,12 +85,12 @@ class ExponentialTestCase(object):
             return np.ones(len(self.rates))
 
     def analytical_entropies(self):
-        return self.analytical_observable(observable = 'potential energy') - self.analytical_free_energies()
+        return self.analytical_observable(observable='potential energy') - self.analytical_free_energies()
 
     def analytical_x_squared(self):
         return self.analytical_variances() + self.analytical_means() ** 2.
 
-    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kln'):
+    def sample(self, N_k=(10, 20, 30, 40, 50), mode='u_kln'):
         """Draw samples from the distribution.
 
         Parameters
@@ -123,7 +123,7 @@ class ExponentialTestCase(object):
            N_k[k] is the number of samples generated from state k
 
         """
-        N_k = np.array(N_k, np.float64)
+        N_k = np.array(N_k, np.int32)
         if len(N_k) != self.n_states:
             raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))
 
@@ -148,12 +148,12 @@ class ExponentialTestCase(object):
                 u_kn[l, index:(index + N)] = u
             index += N
 
-        if (mode == 'u_kn'):
+        if mode == 'u_kn':
             return x_n, u_kn, N_k, s_n
-        elif (mode == 'u_kln'):
+        elif mode == 'u_kln':
             return x_kn, u_kln, N_k
         else:
-            raise Exception("Unknown mode '%s'" % mode)
+            raise Exception("Unknown mode '{}'".format(mode))
 
         return
     

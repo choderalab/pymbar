@@ -1,7 +1,7 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2010-2014 University of Virginia, Memorial Sloan-Kettering Cancer Center
+# Copyright 2010-2017 University of Virginia, Memorial Sloan-Kettering Cancer Center
 #
 # Authors: Michael Shirts, John Chodera
 # Contributors: Kyle Beauchamp

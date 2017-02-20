@@ -38,7 +38,7 @@ class HarmonicOscillatorsTestCase(object):
 
     """
 
-    def __init__(self, O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16], beta=1.0):
+    def __init__(self, O_k=(0, 1, 2, 3, 4), K_k=(1, 2, 4, 8, 16), beta=1.0):
         """Generate test case with exponential distributions.
 
         Parameters
@@ -66,7 +66,7 @@ class HarmonicOscillatorsTestCase(object):
         self.K_k = np.array(K_k, np.float64)
 
         if len(self.K_k) != self.n_states:
-            raise ValueError('Lengths of K_k=%d and O_k=%d should be equal' % (len(self.O_k),len(self.K_k)))
+            raise ValueError('Lengths of K_k={} and O_k={} should be equal'.format(len(self.O_k), len(self.K_k)))
 
     def analytical_means(self):
         return self.O_k
@@ -77,7 +77,7 @@ class HarmonicOscillatorsTestCase(object):
     def analytical_standard_deviations(self):
         return (self.beta * self.K_k) ** -0.5
 
-    def analytical_observable(self, observable = 'position'):
+    def analytical_observable(self, observable='position'):
 
         if observable == 'position':
             return self.analytical_means()
