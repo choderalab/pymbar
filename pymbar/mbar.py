@@ -1,12 +1,12 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2010-2014 University of Virginia, Memorial Sloan-Kettering Cancer Center
+# Copyright 2010-2017 University of Virginia, Memorial Sloan-Kettering Cancer Center
 # Portions of this software are Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
 # Portions of this software are Copyright (c) 2007-2008 Stanford University and Columbia University.
 #
 # Authors: Michael Shirts, John Chodera
-# Contributors: Kyle Beauchamp
+# Contributors: Kyle Beauchamp, Levi Naden
 #
 # pymbar is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -47,9 +47,9 @@ from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, logsumexp, check_w_
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
 
-#=========================================================================
+# =========================================================================
 # MBAR class definition
-#=========================================================================
+# =========================================================================
 
 
 class MBAR:
@@ -171,7 +171,7 @@ class MBAR:
         if verbose:
             print("K (total states) = %d, total samples = %d" % (K, N))
 
-        if np.sum(N_k) != N:
+        if np.sum(self.N_k) != N:
             raise ParameterError(
                 'The sum of all N_k must equal the total number of samples (length of second dimension of u_kn.')
 
@@ -187,8 +187,8 @@ class MBAR:
             self.x_kindices = np.arange(N, dtype=np.int64)
             Nsum = 0
             for k in range(K):
-                self.x_kindices[Nsum:Nsum+N_k[k]] = k
-                Nsum += N_k[k]
+                self.x_kindices[Nsum:Nsum+self.N_k[k]] = k
+                Nsum += self.N_k[k]
 
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
@@ -219,7 +219,7 @@ class MBAR:
         # Print number of samples from each state.
         if self.verbose:
             print("N_k = ")
-            print(N_k)
+            print(self.N_k)
 
         # Determine list of k indices for which N_k != 0
         self.states_with_samples = np.where(self.N_k != 0)[0]
@@ -1258,7 +1258,7 @@ class MBAR:
         >>> import numpy as np
         >>> N_tot = N_k.sum()
         >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
-        >>> bins = np.append(x_n_sorted[0::(N_tot/nbins)], x_n_sorted.max()+0.1)
+        >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
         >>> bin_n = np.zeros(x_n.shape, np.int64)
         >>> bin_n = np.digitize(x_n, bins) - 1

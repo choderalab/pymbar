@@ -1,10 +1,10 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2010-2014 University of Virginia, Memorial Sloan-Kettering Cancer Center
+# Copyright 2010-2017 University of Virginia, Memorial Sloan-Kettering Cancer Center
 #
 # Authors: Michael Shirts, John Chodera
-# Contributors: Kyle Beauchamp
+# Contributors: Kyle Beauchamp, Levi Naden
 #
 # pymbar is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -27,9 +27,9 @@ ratio (MBAR) estimator.
 """
 
 __author__ = "Michael R. Shirts and John D. Chodera"
-__license__ = "LGPL"
-__maintainer__ = "Michael R. Shirts and John D. Chodera"
-__email__ = "michael.shirts@virginia.edu,choderaj@mskcc.org"
+__license__ = "LGPL 2.1"
+__maintainer__ = "Levi N. Naden, Michael R. Shirts and John D. Chodera"
+__email__ = "levi.naden@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
 
 from pymbar import timeseries, testsystems, confidenceintervals, version
 from pymbar.mbar import MBAR

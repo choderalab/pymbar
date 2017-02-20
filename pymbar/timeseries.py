@@ -1,12 +1,12 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2010-2014 University of Virginia, Memorial Sloan-Kettering Cancer Center
+# Copyright 2010-2017 University of Virginia, Memorial Sloan-Kettering Cancer Center
 # Portions of this software are Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
 # Portions of this software are Copyright (c) 2007-2008 Stanford University and Columbia University.
 #
 # Authors: Michael Shirts, John Chodera
-# Contributors: Kyle Beauchamp
+# Contributors: Kyle Beauchamp, Levi Naden
 #
 # pymbar is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -50,29 +50,29 @@ JCTC 3(1):26-41, 2007.
 
 
 __authors__ = "Michael R. Shirts and John D. Chodera."
-__license__ = "GPL 2.0"
+__license__ = "LGPL 2.1"
 
-#=============================================================================================
+
+# =============================================================================================
 # IMPORTS
-#=============================================================================================
+# =============================================================================================
 import math
+import warnings
 import numpy as np
 import numpy.linalg
 from pymbar.utils import ParameterError
 
-#=============================================================================================
+# =============================================================================================
 # Issue warning on import.
-#=============================================================================================
+# =============================================================================================
 
 LongWarning = "Warning on use of the timeseries module: If the inherent timescales of the system are long compared to those being analyzed, this statistical inefficiency may be an underestimate.  The estimate presumes the use of many statistically independent samples.  Tests should be performed to assess whether this condition is satisfied.   Be cautious in the interpretation of the data."
 
 #sys.stderr.write(LongWarning + '\n')
 
-#=============================================================================================
+# =============================================================================================
 # METHODS
-#=============================================================================================
-
-#=============================================================================================
+# =============================================================================================
 
 
 def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
@@ -793,7 +793,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     return (t, g, Neff_max)
 
 
-def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
+def statisticalInefficiency_fft(A_n, mintime=3, memsafe=None):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
@@ -805,7 +805,7 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
         The algorithm terminates after computing the correlation time out to mintime when the
         correlation function first goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
-    memsafe: bool, optional, default=True
+    memsafe: bool, optional, default=None (in depreciation)
         If this function is used several times on arrays of comparable size then one might benefit 
         from setting this option to False. If set to True then clear np.fft cache to avoid a fast 
         increase in memory consumption when this function is called on many arrays of different sizes.
@@ -843,12 +843,25 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
     C_t = sm.tsa.stattools.acf(A_n, fft=True, unbiased=True, nlags=N)
     t_grid = np.arange(N).astype('float')
     g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
-    
+
+    """
+    LNN Note:
+    Numpy 1.12 fft.fftpack swiched from using a Python dict for the cache to a LRU cache which auto prunes.
+    This makes the .clear() method undefined since the LRU does not have such a method.
+
+    Since the LRU *should* remove the problems which this code resolved (GH issue #168), I am removing this code from
+    execution. However, there may still be a problem with the LRU cache so I am leaving the code in case we need to
+    further test it
+    """
     #make function memory safe by clearing np.fft cache
     #this assumes that statsmodels uses np.fft
-    if memsafe:
-        np.fft.fftpack._fft_cache.clear()
-        np.fft.fftpack._real_fft_cache.clear()
+    #if memsafe:
+    #    np.fft.fftpack._fft_cache.clear()
+    #    np.fft.fftpack._real_fft_cache.clear()
+    if memsafe is not None:
+        warnings.warn("NumPy's FFT pack now uses an LRU cache to fix the very problem that the memsafe keyword "
+                      "was protecting. This argument no longer changes the code and will be removed in a future "
+                      "version.", FutureWarning)
     
     try:
         ind = np.where((C_t <= 0) & (t_grid > mintime))[0][0]
@@ -858,7 +871,7 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=True):
     g = 1.0 + g_t[1:ind].sum()
     g = max(1.0, g)
 
-    return g #, g_t, C_t
+    return g  # , g_t, C_t
 
 
 def detectEquilibration_binary_search(A_t, bs_nodes=10):
