@@ -23,7 +23,6 @@ requirements:
 test:
   requires:
     - nose
-    - setuptools
     - statsmodels
   imports:
     - pymbar
