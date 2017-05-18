@@ -98,7 +98,7 @@ def buildKeywordDictionary():
     setupKeywords["version"]           = VERSION
     setupKeywords["author"]            = "Levi N. Naden and Michael R. Shirts and John D. Chodera"
     setupKeywords["author_email"]      = "levi.naden@choderalab.org, michael.shirts@virginia.edu, john.chodera@choderalab.org"
-    setupKeywords["license"]           = "LGPL 2.1"
+    setupKeywords["license"]           = "MIT"
     setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
     setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
     setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems', 'pymbar.tests']

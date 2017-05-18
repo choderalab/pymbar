@@ -82,7 +82,7 @@ References
 License
 -------
 
-`pymbar` is free software and is licensed under the LGPLv2 license.
+`pymbar` is free software and is licensed under the MIT license.
 
 
 Thanks
