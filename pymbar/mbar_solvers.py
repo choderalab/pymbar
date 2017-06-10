@@ -7,8 +7,10 @@ import warnings
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
-DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
-DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
+#DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
+#DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
+DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="adaptive"), )  # First use BFGS on subsampled data.
+DEFAULT_SOLVER_PROTOCOL = (dict(method="adaptive"), )  # Then do fmin hybrid on full dataset.
 
 
 def validate_inputs(u_kn, N_k, f_k):
@@ -230,6 +232,107 @@ def mbar_W_nk(u_kn, N_k, f_k):
     """
     return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
 
+def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_iterations':1000,'print_warning':False,'gamma':1.0}):
+
+    """
+    Determine dimensionless free energies by a combination of Newton-Raphson iteration and self-consistent iteration.
+    Picks whichever method gives the lowest gradient.
+    Is slower than NR (approximated, not calculated) since it calculates the log norms twice each iteration.
+    
+    OPTIONAL ARGUMENTS
+    tol (float between 0 and 1) - relative tolerance for convergence (default 1.0e-6)
+    options: 
+    gamma (float between 0 and 1) - incrementor for NR iterations.
+    maximum_iterations (int) - maximum number of Newton-Raphson iterations (default 1000)
+    verbose (boolean) - verbosity level for debug output
+    NOTES
+
+    This method determines the dimensionless free energies by
+    minimizing a convex function whose solution is the desired
+    estimator.  The original idea came from the construction of a
+    likelihood function that independently reproduced the work of
+    Geyer (see [1] and Section 6 of [2]).  This can alternatively be
+    formulated as a root-finding algorithm for the Z-estimator.  More
+    details of this procedure will follow in a subsequent paper.  Only
+    those states with nonzero counts are include in the estimation
+    procedure.
+
+    REFERENCES
+    See Appendix C.2 of [1].
+
+    """
+    gamma = options['gamma']
+    doneIterating = False
+    if options['verbose'] == True:
+        print("Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.")
+        
+    # keep track of Newton-Raphson and self-consistent iterations
+    nr_iter = 0
+    sci_iter = 0
+
+    f_sci = np.zeros(len(f_k), dtype=np.float64)
+    f_nr = np.zeros(len(f_k), dtype=np.float64)
+
+    # Perform Newton-Raphson iterations (with sci computed on the way)
+    for iteration in range(0, options['maximum_iterations']):
+        g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
+        H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
+        Hinvg = np.linalg.lstsq(H, g)[0]
+        Hinvg -= Hinvg[0]
+        f_nr = f_k - gamma * Hinvg
+
+        # self-consistent iteration gradient norm and saved log sums.
+        f_sci = self_consistent_update(u_kn, N_k, f_k)
+        f_sci = f_sci -  f_sci[0]   # zero out the minimum
+        g_sci = mbar_gradient(u_kn, N_k, f_sci)  
+        gnorm_sci = np.dot(g_sci, g_sci)
+
+        # newton raphson gradient norm and saved log sums.
+        g_nr = mbar_gradient(u_kn, N_k, f_nr)  
+        gnorm_nr = np.dot(g_nr, g_nr)
+
+        # we could save the gradient, too, but it's not too expensive to
+        # compute since we are doing the Hessian anyway.
+
+        if options['verbose']:
+            print("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
+        # decide which directon to go depending on size of gradient norm
+        f_old = f_k
+        if (gnorm_sci < gnorm_nr or sci_iter < 2):
+            f_k = f_sci
+            sci_iter += 1
+            if options['verbose']:
+                if sci_iter < 2:
+                    print("Choosing self-consistent iteration on iteration %d" % iteration)
+                else:
+                    print("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
+        else:
+            f_k = f_nr
+            nr_iter += 1
+            if options['verbose']:
+                print("Newton-Raphson used on iteration %d" % iteration)
+                
+        # routine changes them.
+        max_delta = np.max(np.abs(f_k[1:]-f_old[1:]))/np.max(np.abs(f_old[1:]))
+        if np.isnan(max_delta) or (max_delta < tol):
+            doneIterating = True
+            break
+
+    if doneIterating:
+        if options['verbose']:
+            print('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
+            print('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
+            if np.all(f_k == 0.0):
+                # all f_k appear to be zero
+                print('WARNING: All f_k appear to be zero.')
+    else:
+        # Warn that convergence was not achieved.
+        # many times, self-consistent iteration is used in conjunction with another program.  In that case,
+        # we don't really need to warn about anything, since we are not
+        # running it to convergence.
+        print('WARNING: Did not converge to within specified tolerance.')
+        print('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
+    return f_k
 
 def precondition_u_kn(u_kn, N_k, f_k):
     """Subtract a sample-dependent constant from u_kn to improve precision
@@ -319,10 +422,13 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
             if method in ["L-BFGS-B", "CG"]:
                 hess = None  # To suppress warning from passing a hessian function.
             results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
+            f_k_nonzero = pad(results["x"])
+        elif method == 'adaptive':
+            results = adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol)
+            f_k_nonzero = results # they are the same for adaptive, until we decide to return more.
         else:
             results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
-
-    f_k_nonzero = pad(results["x"])
+            f_k_nonzero = pad(results["x"])
 
     #If there were runtime warnings, show the messages
     if len(w) > 0:
