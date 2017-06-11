@@ -1406,26 +1406,67 @@ class MBAR:
                 d2[(np.any(d2) < warning_cutoff)] = 0.0
         return np.sqrt(np.array(d2))
 
+
+    #=============================================================================================
     def _pseudoinverse(self, A, tol=1.0e-10):
-        """Compute the Moore-Penrose pseudoinverse, wraps np.linalg.pinv
+      """
+      Compute the Moore-Penrose pseudoinverse.
+      
+      REQUIRED ARGUMENTS
+      A (numpy KxK matrix) - the square matrix whose pseudoinverse is to be computed
+      
+      RETURN VALUES
+      Ainv (numpy KxK matrix) - the pseudoinverse
+      
+      OPTIONAL VALUES
+      tol - the tolerance (relative to largest magnitude singlular value) below which singular values are to not be include in forming pseudoinverse (default: 1.0e-10)
+      
+      NOTES
+      This implementation is provided because the 'pinv' function of numpy is broken in the version we were using.
+      
+      TODO
+      Can we get rid of this and use numpy.linalg.pinv instead?
 
-        REQUIRED ARGUMENTS
-          A (np KxK matrix) - the square matrix whose pseudoinverse is to be computed
+      """
 
-        RETURN VALUES
-          Ainv (np KxK matrix) - the pseudoinverse
+      # DEBUG
+      # TODO: Should we use pinv, or _pseudoinverse?
+      #return np.linalg.pinv(A)
 
-        OPTIONAL VALUES
-          tol - the tolerance (relative to largest magnitude singlular value) below which singular values are to not be include in forming pseudoinverse (default: 1.0e-10)
+      # Get size
+      [M,N] = A.shape
+      if N != M:
+          raise "pseudoinverse can only be computed for square matrices: dimensions were %d x %d" % (M, N)
 
-        NOTES
-          In previous versions of pymbar / Numpy, we wrote our own pseudoinverse
-          because of a bug in Numpy.
+      # Make sure A contains no nan.
+      if(np.any(np.isnan(A))):
+          print "attempted to compute pseudoinverse of A ="
+          print A
+          raise ParameterError("A contains nan.")    
 
-        """
+      # DEBUG
+      diagonal_loading = False
+      if diagonal_loading:
+          # Modify matrix by diagonal loading.
+          eigs = np.linalg.eigvalsh(A)
+          most_negative_eigenvalue = eigs.min()
+          if (most_negative_eigenvalue < 0.0):
+              print "most negative eigenvalue = %e" % most_negative_eigenvalue
+          # Choose loading value.
+          gamma = -most_negative_eigenvalue * 1.05
+          # Modify Theta by diagonal loading
+          A += gamma * np.eye(A.shape[0])
 
-        return np.linalg.pinv(A, rcond=tol)
+      # Compute SVD of A.
+      [U, S, Vt] = np.linalg.svd(A)
 
+      # Compute pseudoinverse by taking square root of nonzero singular values.
+      Ainv = np.matrix(np.zeros([M,M], dtype=np.float64))
+      for k in range(M):
+          if (abs(S[k]) > tol * abs(S[0])):
+              Ainv += (1.0/S[k]) * np.outer(U[:,k], Vt[k,:]).T
+
+      return Ainv
     #=========================================================================
 
     def _zerosamestates(self, A):
@@ -1479,7 +1520,8 @@ class MBAR:
         # Set 'svd-ew' as default if uncertainty method specified as None.
         if method == None:
             method = 'svd-ew'
-
+            #method = 'svd'
+            #method = 'inverse'
         # Get dimensions of weight matrix.
         [N, K] = W.shape
 
@@ -1492,17 +1534,17 @@ class MBAR:
 
         check_w_normalized(W, N_k)
 
-        # Compute estimate of asymptotic covariance matrix using specified method.
-        if method == 'approximate':
-            # Use fast approximate expression from Kong et al. -- this underestimates the true covariance, but may be a good approximation in some cases and requires no matrix inversions
-            # Theta = P'P
-
+        if method == 'inverse':
+            # Use standard inverse method (Eq. D8 of [1]) -- only applicable if all K states are different
+            # Theta = [(W'W)^-1 - N + 1 1'/N]^-1
             # Construct matrices
-            W = np.matrix(W, dtype=np.float64)
-
+            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64) # Diagonal N_k matrix.
+            O = np.ones([K,K], dtype=np.float64) / float(N) # matrix of ones, times 1/N
+            # Make sure W is nonsingular.
+            W2 = np.dot(W.T,W)
             # Compute covariance
-            Theta = W.T * W
-
+            Theta = np.linalg.inv( np.linalg.inv(W2) - Ndiag + O)
+        
         elif method == 'svd':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
             # See Appendix D.1, Eq. D4 in [1].
@@ -1518,8 +1560,8 @@ class MBAR:
             V = np.matrix(Vt).T
 
             # Compute covariance
-            Theta = V * Sigma * self._pseudoinverse(
-                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
+            S = V * Sigma
+            Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
 
         elif method == 'svd-ew':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
@@ -1540,16 +1582,17 @@ class MBAR:
             # Form matrix of singular values Sigma, and V.
             Sigma = np.matrix(np.diag(np.sqrt(S2)))
             V = np.matrix(V)
-
             # Compute covariance
-            Theta = V * Sigma * self._pseudoinverse(
-                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
-
+            S = V * Sigma
+            Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
         else:
             # Raise an exception.
             raise ParameterError('Method ' + method + ' unrecognized.')
 
+        # force theta to be symmetric (as it should be, but occasionally is off)
+        Theta = (Theta + Theta.T)/2
         return Theta
+
     #=========================================================================
 
     def _initializeFreeEnergies(self, verbose=False, method='zeros'):
