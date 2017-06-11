@@ -1409,66 +1409,6 @@ class MBAR:
 
 
     #=============================================================================================
-    def _pseudoinverse(self, A, tol=1.0e-10):
-      """
-      Compute the Moore-Penrose pseudoinverse.
-      
-      REQUIRED ARGUMENTS
-      A (numpy KxK matrix) - the square matrix whose pseudoinverse is to be computed
-      
-      RETURN VALUES
-      Ainv (numpy KxK matrix) - the pseudoinverse
-      
-      OPTIONAL VALUES
-      tol - the tolerance (relative to largest magnitude singlular value) below which singular values are to not be include in forming pseudoinverse (default: 1.0e-10)
-      
-      NOTES
-      This implementation is provided because the 'pinv' function of numpy is broken in the version we were using.
-      
-      TODO
-      Can we get rid of this and use numpy.linalg.pinv instead?
-
-      """
-
-      # DEBUG
-      # TODO: Should we use pinv, or _pseudoinverse?
-      #return np.linalg.pinv(A)
-
-      # Get size
-      [M,N] = A.shape
-      if N != M:
-          raise "pseudoinverse can only be computed for square matrices: dimensions were %d x %d" % (M, N)
-
-      # Make sure A contains no nan.
-      if(np.any(np.isnan(A))):
-          print "attempted to compute pseudoinverse of A ="
-          print A
-          raise ParameterError("A contains nan.")    
-
-      # DEBUG
-      diagonal_loading = False
-      if diagonal_loading:
-          # Modify matrix by diagonal loading.
-          eigs = np.linalg.eigvalsh(A)
-          most_negative_eigenvalue = eigs.min()
-          if (most_negative_eigenvalue < 0.0):
-              print "most negative eigenvalue = %e" % most_negative_eigenvalue
-          # Choose loading value.
-          gamma = -most_negative_eigenvalue * 1.05
-          # Modify Theta by diagonal loading
-          A += gamma * np.eye(A.shape[0])
-
-      # Compute SVD of A.
-      [U, S, Vt] = np.linalg.svd(A)
-
-      # Compute pseudoinverse by taking square root of nonzero singular values.
-      Ainv = np.matrix(np.zeros([M,M], dtype=np.float64))
-      for k in range(M):
-          if (abs(S[k]) > tol * abs(S[0])):
-              Ainv += (1.0/S[k]) * np.outer(U[:,k], Vt[k,:]).T
-
-      return Ainv
-    #=========================================================================
 
     def _zerosamestates(self, A):
         """
@@ -1518,11 +1458,12 @@ class MBAR:
         We currently recommend 'svd-ew'.
         """
 
+        tol = 1.0e-14 #set sufficiently small numbers to zero
         # Set 'svd-ew' as default if uncertainty method specified as None.
         if method == None:
-            method = 'svd-ew'
+            #method = 'svd-ew'
             #method = 'svd'
-            #method = 'inverse'
+            method = 'inverse'
         # Get dimensions of weight matrix.
         [N, K] = W.shape
 
@@ -1536,16 +1477,52 @@ class MBAR:
         check_w_normalized(W, N_k)
 
         if method == 'inverse':
+            import pdb
+            pdb.set_trace()
             # Use standard inverse method (Eq. D8 of [1]) -- only applicable if all K states are different
             # Theta = [(W'W)^-1 - N + 1 1'/N]^-1
             # Construct matrices
             Ndiag = np.matrix(np.diag(N_k), dtype=np.float64) # Diagonal N_k matrix.
+            Ninvd = np.matrix(np.zeros(K))
+            for i in range(K):
+                if Ndiag[i,i] != 0.0: 
+                    Ninvd = 1.0/Ndiag[i,i]
+            I = np.matrix(np.eye(K))
             O = np.ones([K,K], dtype=np.float64) / float(N) # matrix of ones, times 1/N
             # Make sure W is nonsingular.
             W2 = np.dot(W.T,W)
             # Compute covariance
-            Theta = np.linalg.inv( np.linalg.inv(W2) - Ndiag + O)
-        
+            if np.all(N_k) > 0:
+                # let's think about low_variance matrices
+                # W2*Ndiag is ALMOST unity.  So we can write W2 as I + I-W2
+                # inverting this is inv(I - W2-I)
+                # how can we write np.linalg.inv(W2) better?
+                G = I-W2*Ndiag
+                #Theta = np.linalg.inv( np.linalg.inv(W2) - Ndiag + O)
+                #Theta = np.linalg.inv( np.linalg.inv(W2*Ndiag*Ninvd) - Ndiag + O)
+                #Theta = np.linalg.inv( Ndiag*np.linalg.inv(W2*Ndiag) - Ndiag + O)
+                #Theta = np.linalg.inv( Ndiag*np.linalg.inv(W2*Ndiag) - Ndiag + Ndiag*Ninvd*O)
+                #Theta = np.linalg.inv(np.linalg.inv(W2*Ndiag) - I + Ninvd*O)*Ninvd
+                #Theta = np.linalg.inv(np.linalg.inv(I-I+W2*Ndiag) - I + Ninvd*O)*Ninvd
+                #Theta = np.linalg.inv(np.linalg.inv(I-(I-W2*Ndiag)) - I + Ninvd*O)*Ninvd
+                #Theta = np.linalg.inv(np.linalg.inv(I-G) - I + Ninvd*O)*Ninvd
+                #Theta = np.linalg.inv(np.linalg.inv(I-G) - I + Ninvd*O)*Ninvd
+                #Theta = np.linalg.inv(I+G+G^2+G^3 . . . - I + Ninvd*O)*Ninvd
+                #Theta = np.linalg.inv(G+G^2+G^3 . . . + Ninvd*O)*Ninvd
+                Gmult = I
+                Gaccum = np.matrix(np.zeros([K,K]))
+                while np.any(np.abs(Gmult) > tol):
+                    Gmult = Gmult*G
+                    Gaccum = Gaccum + Gmult
+                    #Theta = np.linalg.inv(Gaccum + Ninvd*O)*Ninvd
+                    #Theta = np.linalg.inv(Ninvd*Ndiag*Gaccum + Ninvd*O)*Ninvd
+                Theta = np.linalg.inv(Ndiag*Gaccum + O)
+                # OK, still doesn't quite work great.
+                #Theta = np.linalg.inv(Ndiag*Gaccum + N*N-1*O)
+                Theta = np.linalg.inv(Ndiag*Gaccum*N + O*N)*Ninv
+            else:
+                Theta = np.linalg.inv( np.linalg.inv(W2) - Ndiag + O) # standard inverse
+
         elif method == 'svd':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
             # See Appendix D.1, Eq. D4 in [1].
@@ -1556,13 +1533,18 @@ class MBAR:
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
-            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
-            Sigma = np.matrix(np.diag(S))
+            [U, S2, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            # Set any slightly negative eigenvalues to zero.  Should this be modified as an rtol?
+            S2[np.where(S2 < 0.0)] = 0.0
+            Sigma = np.matrix(np.diag(S2))
             V = np.matrix(Vt).T
 
             # Compute covariance
             S = V * Sigma
-            Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
+            #Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
+            invmat = I - Ndiag * np.diag(S2)
+            invmat[np.where(np.abs(invmat)<tol)]=0
+            Theta = S * np.linalg.pinv(invmat) * S.T
 
         elif method == 'svd-ew':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
@@ -1585,12 +1567,15 @@ class MBAR:
             V = np.matrix(V)
             # Compute covariance
             S = V * Sigma
-            Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
+            #Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
+            invmat = I - Ndiag * np.diag(S2)
+            invmat[np.where(np.abs(invmat)<tol)]=0
+            Theta = S * np.linalg.pinv(invmat) * S.T
         else:
             # Raise an exception.
             raise ParameterError('Method ' + method + ' unrecognized.')
 
-        # force theta to be symmetric (as it should be, but occasionally is off)
+        # force theta to be symmetric (as it should be, but occasionally is off because of rounding)
         Theta = (Theta + Theta.T)/2
         return Theta
 

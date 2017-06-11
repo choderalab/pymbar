@@ -313,7 +313,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_it
                 print("Newton-Raphson used on iteration %d" % iteration)
                 
         # routine changes them.
-        max_delta = np.max(np.abs(f_k[1:]-f_old[1:]))/np.max(np.abs(f_old[1:]))
+        max_delta = np.max(np.abs(f_k[1:]-f_old[1:]))/np.max(np.abs(f_k[1:]))
         if np.isnan(max_delta) or (max_delta < tol):
             doneIterating = True
             break
@@ -365,7 +365,7 @@ def precondition_u_kn(u_kn, N_k, f_k):
     return u_kn
 
 
-def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1E-20, options=None):
+def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1E-15, options=None):
     """Solve MBAR self-consistent equations using some form of equation solver.
 
     Parameters
@@ -380,7 +380,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     method : str, optional, default="hybr"
         The optimization routine to use.  This can be any of the methods
         available via scipy.optimize.minimize() or scipy.optimize.root().
-    tol : float, optional, default=1E-20
+    tol : float, optional, default=1E-15
         The convergance tolerance for minimize() or root()
     options: dict, optional, default=None
         Optional dictionary of algorithm-specific parameters.  See
@@ -603,7 +603,7 @@ def solve_mbar_with_subsampling(u_kn, N_k, f_k, solver_protocol, subsampling_pro
 
         f_k[states_with_samples] = f_k_nonzero
         f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples], solver_protocol=solver_protocol)
-    
+
     f_k[states_with_samples] = f_k_nonzero
 
     # Update all free energies because those from states with zero samples are not correctly computed by Newton-Raphson.
