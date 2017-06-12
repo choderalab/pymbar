@@ -1516,40 +1516,62 @@ class MBAR:
                     Gaccum = Gaccum + Gmult
                     #Theta = np.linalg.inv(Gaccum + Ninvd*O)*Ninvd
                     #Theta = np.linalg.inv(Ninvd*Ndiag*Gaccum + Ninvd*O)*Ninvd
-                Theta = np.linalg.inv(Ndiag*Gaccum + O)
+                Theta = linalg.inv(Ndiag*Gaccum + O)
                 # OK, still doesn't quite work great.
-                #Theta = np.linalg.inv(Ndiag*Gaccum + N*N-1*O)
-                Theta = np.linalg.inv(Ndiag*Gaccum*N + O*N)*Ninv
+                U,S,V = linalg.svd(Ndiag*Gaccum+O)
+                Theta = V.T*np.matrix(np.diag(1.0/S))*U.T
             else:
                 Theta = np.linalg.inv( np.linalg.inv(W2) - Ndiag + O) # standard inverse
+            T1 = Theta[0,0]+Theta[1,1]-2*Theta[0,1]
 
+            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) 
+                                       #memory allocation by only calculting the active subspace of U.
+            # Set any slightly negative eigenvalues to zero.  Should this be modified as an rtol?
+            S[np.where(S < 0.0)] = 0.0
+            Sigma = np.matrix(np.diag(S))
+
+            # Compute covariance
+            VS = np.matrix(Vt).T * Sigma
+            #Theta = VS * np.linalg.pinv(I - Ndiag * VS.T * VS) * VS.T
+            invmat = I - Ndiag * VS.T*VS
+            invmat[np.where(np.abs(invmat)<tol)]=0
+            Theta = VS * np.linalg.pinv(invmat) * VS.T
+            T1 = Theta[0,0]+Theta[1,1]-2*Theta[0,1]
+            #variance: 0.00042222030400000004
         elif method == 'svd':
-            # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
-            # See Appendix D.1, Eq. D4 in [1].
 
-            # Construct matrices
+            # Use singular value decomposition based approach given in supplementary material 
+            # to efficiently compute uncertainty
+            # See Appendix D.1, Eq. D4 in [1].
+            # We are taking the equation Theta = W.T [I - W*Ndiag*W.T]^+ W, and using the SVD to save time.
+
             Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
             W = np.matrix(W, dtype=np.float64)
             I = np.identity(K, dtype=np.float64)
 
+            import pdb
+            pdb.set_trace()
             # Compute SVD of W
-            [U, S2, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
             # Set any slightly negative eigenvalues to zero.  Should this be modified as an rtol?
-            S2[np.where(S2 < 0.0)] = 0.0
-            Sigma = np.matrix(np.diag(S2))
-            V = np.matrix(Vt).T
-
+            S[np.where(S < 0.0)] = 0.0
+            Sigma = np.matrix(np.diag(S))
+            
             # Compute covariance
-            S = V * Sigma
-            #Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
-            invmat = I - Ndiag * np.diag(S2)
+            VS = np.matrix(Vt).T * Sigma
+            #Theta = VS * np.linalg.pinv(I - Ndiag * VS.T * VS) * VS.T
+            invmat = I - Ndiag * VS.T*VS
             invmat[np.where(np.abs(invmat)<tol)]=0
-            Theta = S * np.linalg.pinv(invmat) * S.T
+            Theta = VS * np.linalg.pinv(invmat) * VS.T
 
         elif method == 'svd-ew':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
             # The eigenvalue decomposition of W'W is used to forego computing the SVD.
             # See Appendix D.1, Eqs. D4 and D5 of [1].
+            # We are taking the equation Theta = W.T [I - W*Ndiag*W.T]^+ W, and using the SVD to save time.
+            # let's find an approximation. 
+            import pdb
+            pdb.set_trace()
 
             # Construct matrices
             Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
@@ -1568,6 +1590,7 @@ class MBAR:
             # Compute covariance
             S = V * Sigma
             #Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
+            pdb.set_trace()
             invmat = I - Ndiag * np.diag(S2)
             invmat[np.where(np.abs(invmat)<tol)]=0
             Theta = S * np.linalg.pinv(invmat) * S.T
