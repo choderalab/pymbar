@@ -4,18 +4,16 @@ simulated and experimental data with the multistate Bennett acceptance
 ratio (MBAR) estimator.
 
 """
-#from distutils.sysconfig import get_config_var
-from distutils.core import setup, Extension
+from distutils.core import setup
 from setuptools import setup, Extension
 import numpy
-import glob
 import os
 import subprocess
 import six
 
 ##########################
 VERSION = "3.0.1"
-ISRELEASED = False
+ISRELEASED = True
 __version__ = VERSION
 ##########################
 
@@ -100,7 +98,7 @@ def buildKeywordDictionary():
     setupKeywords["version"]           = VERSION
     setupKeywords["author"]            = "Levi N. Naden and Michael R. Shirts and John D. Chodera"
     setupKeywords["author_email"]      = "levi.naden@choderalab.org, michael.shirts@virginia.edu, john.chodera@choderalab.org"
-    setupKeywords["license"]           = "LGPL 2.1"
+    setupKeywords["license"]           = "MIT"
     setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
     setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
     setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems', 'pymbar.tests']

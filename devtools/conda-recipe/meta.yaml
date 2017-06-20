@@ -23,7 +23,6 @@ requirements:
 test:
   requires:
     - nose
-    - setuptools
     - statsmodels
   imports:
     - pymbar
@@ -32,5 +31,5 @@ test:
 
 about:
   home: https://github.com/choderalab/pymbar
-  license: GNU Lesser General Public License v2 or later (LGPLv2+)
+  license: MIT
   summary: Python implementation of the multistate Bennett acceptance ratio (MBAR) method.
