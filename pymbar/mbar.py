@@ -1386,7 +1386,7 @@ class MBAR:
     # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
     #=========================================================================
 
-    def _ErrorOfDifferences(self,cov,warning_cutoff=1.0e-10):
+    def _ErrorOfDifferences(self, cov, warning_cutoff=1.0e-10):
         """
         inputs:
         cov is the covariance matrix of A
@@ -1397,12 +1397,16 @@ class MBAR:
         diag = np.matrix(cov.diagonal())
         d2 = diag + diag.transpose() - 2 * cov
 
+        # Cast warning_cutoff to compare a negative number
+        cutoff = -abs(warning_cutoff)
+
         # check for any numbers below zero.
-        if (np.any(d2 < 0.0)):
-            if (np.any(d2) < warning_cutoff):
-                print("A squared uncertainty is negative.  d2 = %e" % d2[(np.any(d2) < warning_cutoff)])
+        if np.any(d2 < 0.0):
+            if np.any(d2 < cutoff):
+                print("A squared uncertainty is negative. Largest Magnitude = {0:f}".format(
+                    abs(np.min(d2[d2 < cutoff]))))
             else:
-                d2[(np.any(d2) < warning_cutoff)] = 0.0
+                d2[np.logical_and(0 > d2, d2 > cutoff)] = 0.0
         return np.sqrt(np.array(d2))
 
     def _pseudoinverse(self, A, tol=1.0e-10):
