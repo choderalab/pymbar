@@ -333,6 +333,35 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         # the second denominator, it is an error in the original
         # NOTE: The numerical stability of this computation may need to be improved.
 
+
+        # try to rederive from Bennett, substituting (8) into (7)
+        # (8) -> W = [q0/n0 exp(-U1) + q1/n1 exp(-U0)]^-1
+        #          <(W exp(-U1))^2 >_0         <(W exp(-U0))^2 >_1  
+        # (7) -> -----------------------  +   -----------------------   - 1/n0 - 1/n1
+        #        n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
+        #
+        #    const cancels out of top and bottom.   Wexp(-U0) =[q0/n0 exp(-(U1-U0)) + q1/n1]^-1 
+        #                                                     = n1/q1 [n1/n0 q0/q1 exp(-(U1-U0)) + 1]^-1
+        #                                                     = n1/q1 [exp (M+(F1-F0)-(U1-U0)+1)^-1]
+        #                                                     = n1/q1 f(x)
+        #                                           Wexp(-U1) =[q0/n0 + q1/n1 exp(-(U0-U1))]^-1
+        #                                                     = n0/q0 [1 + n0/n1 q1/q0 exp(-(U0-U1))]^-1
+        #                                                     = n0/q0 [1 + exp(-M+[F0-F1)-(U0-U1))]^-1
+        #                                                     = n0/q0 f(-x)
+        #
+        #
+        #          <(W exp(-U1))^2 >_0          <(W exp(-U0))^2 >_1  
+        # (7) -> -----------------------   +  -----------------------   - 1/n0 - 1/n1
+        #        n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
+        #        
+        #           <[n0/q0 f(-x)]^2>_0        <[n1/q1 f(x)]^2>_1      
+        #        -----------------------  +  ------------------------   -1/n0 -1/n1
+        #          n_0 <n0/q0 f(-x)>_0^2      n_1 <n1/q1 f(x)>_1^2
+        # 
+        #       1      <[f(-x)]^2>_0                 1        <[f(x)]^2>_1      
+        #       -  [-----------------------  - 1]  + -  [------------------------  - 1]
+        #       n0      <f(-x)>_0^2                  n1      n_1<f(x)>_1^2
+
         # Determine number of forward and reverse work values provided.
         T_F = float(w_F.size)  # number of forward work values
         T_R = float(w_R.size)  # number of reverse work values
@@ -359,15 +388,20 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         afR = np.exp(logsumexp(log_fR))/T_R
 
         #var(x) = <x^2> - <x>^2
-        vfF = np.exp(logsumexp(2*log_fF))/T_F - afF**2
-        vfR = np.exp(logsumexp(2*log_fR))/T_R - afR**2
+        afF2 = np.exp(logsumexp(2*log_fF))/T_F
+        afR2 = np.exp(logsumexp(2*log_fR))/T_R
 
         # an alternate formula for the variance that works for guesses
         # for the free energy that don't satisfy the BAR equation.
 
-        variance = (vfF/T_F) / afF**2 + (vfR/T_R) / afR**2
+        variance = (afF2/afF**2 - 1.0)/T_F + (afR2/afR**2 - 1.0)/T_R
 
         dDeltaF = np.sqrt(variance)
+
+        import pdb
+        pdb.set_trace()
+        #alternate formula
+        #afM = np.exp(logsumexp(log_fF+log_fR))
 
         if verbose:
             print("DeltaF = %8.3f +- %8.3f" % (DeltaF, dDeltaF))

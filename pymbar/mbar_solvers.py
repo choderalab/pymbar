@@ -232,7 +232,7 @@ def mbar_W_nk(u_kn, N_k, f_k):
     """
     return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
 
-def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_iterations':1000,'print_warning':False,'gamma':1.0}):
+def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_iterations':50000,'print_warning':False,'gamma':1.0}):
 
     """
     Determine dimensionless free energies by a combination of Newton-Raphson iteration and self-consistent iteration.

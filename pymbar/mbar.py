@@ -70,7 +70,7 @@ class MBAR:
     """
     #=========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=DEFAULT_SOLVER_PROTOCOL, initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=DEFAULT_SUBSAMPLING_PROTOCOL, **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=2000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=DEFAULT_SOLVER_PROTOCOL, initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=DEFAULT_SUBSAMPLING_PROTOCOL, **kwargs):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -1425,7 +1425,7 @@ class MBAR:
             A[pair[1], pair[0]] = 0
 
     #=========================================================================
-    def _computeAsymptoticCovarianceMatrix(self, W, N_k, method=None):
+    def _computeAsymptoticCovarianceMatrix(self, W, N_k, method=None,tol=1e-14):
         """Compute estimate of the asymptotic covariance matrix.
 
         Parameters
@@ -1458,12 +1458,11 @@ class MBAR:
         We currently recommend 'svd-ew'.
         """
 
-        tol = 1.0e-14 #set sufficiently small numbers to zero
         # Set 'svd-ew' as default if uncertainty method specified as None.
         if method == None:
             #method = 'svd-ew'
-            #method = 'svd'
-            method = 'inverse'
+            method = 'svd'
+            #method = 'inverse'
         # Get dimensions of weight matrix.
         [N, K] = W.shape
 
@@ -1477,8 +1476,6 @@ class MBAR:
         check_w_normalized(W, N_k)
 
         if method == 'inverse':
-            import pdb
-            pdb.set_trace()
             # Use standard inverse method (Eq. D8 of [1]) -- only applicable if all K states are different
             # Theta = [(W'W)^-1 - N + 1 1'/N]^-1
             # Construct matrices
@@ -1514,55 +1511,58 @@ class MBAR:
                 while np.any(np.abs(Gmult) > tol):
                     Gmult = Gmult*G
                     Gaccum = Gaccum + Gmult
-                    #Theta = np.linalg.inv(Gaccum + Ninvd*O)*Ninvd
-                    #Theta = np.linalg.inv(Ninvd*Ndiag*Gaccum + Ninvd*O)*Ninvd
-                Theta = linalg.inv(Ndiag*Gaccum + O)
-                # OK, still doesn't quite work great.
                 U,S,V = linalg.svd(Ndiag*Gaccum+O)
                 Theta = V.T*np.matrix(np.diag(1.0/S))*U.T
             else:
                 Theta = np.linalg.inv( np.linalg.inv(W2) - Ndiag + O) # standard inverse
-            T1 = Theta[0,0]+Theta[1,1]-2*Theta[0,1]
 
-            [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) 
-                                       #memory allocation by only calculting the active subspace of U.
-            # Set any slightly negative eigenvalues to zero.  Should this be modified as an rtol?
-            S[np.where(S < 0.0)] = 0.0
-            Sigma = np.matrix(np.diag(S))
-
-            # Compute covariance
-            VS = np.matrix(Vt).T * Sigma
-            #Theta = VS * np.linalg.pinv(I - Ndiag * VS.T * VS) * VS.T
-            invmat = I - Ndiag * VS.T*VS
-            invmat[np.where(np.abs(invmat)<tol)]=0
-            Theta = VS * np.linalg.pinv(invmat) * VS.T
-            T1 = Theta[0,0]+Theta[1,1]-2*Theta[0,1]
-            #variance: 0.00042222030400000004
         elif method == 'svd':
 
             # Use singular value decomposition based approach given in supplementary material 
             # to efficiently compute uncertainty
             # See Appendix D.1, Eq. D4 in [1].
             # We are taking the equation Theta = W.T [I - W*Ndiag*W.T]^+ W, and using the SVD to save time.
-
+            #  V*S*U.T [I - U*S*V.T*Ndiag*V*S*U.T]^+ U*S*V.T
+            #  V*S [U^T U - U^T U*S*V.T*Ndiag*V*S*U.T*U]
             Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
             W = np.matrix(W, dtype=np.float64)
             I = np.identity(K, dtype=np.float64)
 
-            import pdb
-            pdb.set_trace()
+            #M1 = np.identity(np.sum(N_k)) - W*Ndiag*W.T
+            #Theta2 = W.T * np.linalg.pinv(M1,rcond=tol) * W
+
+            A = W.T * W
+            Theta3 = np.linalg.inv(np.linalg.inv(A)-Ndiag+np.ones([K,K]))
+
+            d1 = np.linalg.det(A)/A[0,1]
+
+            d2 = 1.0/((N_k[0]*N_k[1])*A[0,1]) - 1.0/N_k[0] - 1.0/N_k[1]
+
+            d3 = Theta3[0,0]+Theta3[1,1]-2*Theta3[1,0]
+
+            P = W*Ndiag
+            PTP = P.T*P
+            A = Ndiag-PTP
+            Ai = np.linalg.pinv(A,rcond=tol)
+            Nf = np.matrix(N_k)
+            Theta4 = Ai*(PTP-Nf.T*Nf/(1.0*N))*Ai
+            d4 = Theta4[0,0] + Theta4[1,1] - 2*Theta4[0,1]
+            
             # Compute SVD of W
             [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            #[U, S, Vt] = linalg.svd(W, full_matrices=True)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
             # Set any slightly negative eigenvalues to zero.  Should this be modified as an rtol?
             S[np.where(S < 0.0)] = 0.0
             Sigma = np.matrix(np.diag(S))
             
             # Compute covariance
             VS = np.matrix(Vt).T * Sigma
-            #Theta = VS * np.linalg.pinv(I - Ndiag * VS.T * VS) * VS.T
-            invmat = I - Ndiag * VS.T*VS
+            invmat = I - VS.T*Ndiag*VS
+            # issue is that invmat is nearly sigular.
+            
             invmat[np.where(np.abs(invmat)<tol)]=0
-            Theta = VS * np.linalg.pinv(invmat) * VS.T
+            Theta = VS * np.linalg.pinv(invmat, rcond=tol) * VS.T
+
 
         elif method == 'svd-ew':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
@@ -1570,8 +1570,6 @@ class MBAR:
             # See Appendix D.1, Eqs. D4 and D5 of [1].
             # We are taking the equation Theta = W.T [I - W*Ndiag*W.T]^+ W, and using the SVD to save time.
             # let's find an approximation. 
-            import pdb
-            pdb.set_trace()
 
             # Construct matrices
             Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
@@ -1584,16 +1582,14 @@ class MBAR:
             [S2, V] = linalg.eigh(W.T * W)
             # Set any slightly negative eigenvalues to zero.
             S2[np.where(S2 < 0.0)] = 0.0
+
             # Form matrix of singular values Sigma, and V.
             Sigma = np.matrix(np.diag(np.sqrt(S2)))
-            V = np.matrix(V)
-            # Compute covariance
-            S = V * Sigma
-            #Theta = S * np.linalg.pinv(I - Ndiag * S.T * S) * S.T
-            pdb.set_trace()
-            invmat = I - Ndiag * np.diag(S2)
+            VS = np.matrix(V) * Sigma
+            invmat = I - VS.T*Ndiag*VS
             invmat[np.where(np.abs(invmat)<tol)]=0
-            Theta = S * np.linalg.pinv(invmat) * S.T
+            Theta = VS * np.linalg.pinv(invmat,rcond=tol) * VS.T
+
         else:
             # Raise an exception.
             raise ParameterError('Method ' + method + ' unrecognized.')
