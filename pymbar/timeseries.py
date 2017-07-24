@@ -355,7 +355,13 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
 
 
 def integratedAutocorrelationTime(A_n, B_n=None, fast=False, mintime=3):
-    """Estimate the integrated autocorrelation time."""
+    """Estimate the integrated autocorrelation time.
+
+    See Also
+    --------
+    statisticalInefficiency
+
+    """
 
     g = statisticalInefficiency(A_n, B_n, fast, mintime)
     tau = (g - 1.0) / 2.0
@@ -364,7 +370,13 @@ def integratedAutocorrelationTime(A_n, B_n=None, fast=False, mintime=3):
 
 
 def integratedAutocorrelationTimeMultiple(A_kn, fast=False):
-    """Estimate the integrated autocorrelation time from multiple timeseries."""
+    """Estimate the integrated autocorrelation time from multiple timeseries.
+
+    See Also
+    --------
+    statisticalInefficiencyMultiple
+
+    """
 
     g = statisticalInefficiencyMultiple(A_kn, fast, False)
     tau = (g - 1.0) / 2.0
