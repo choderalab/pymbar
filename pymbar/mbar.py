@@ -52,12 +52,14 @@ DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
 
 
 class MBAR:
+    """
 
-    """Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
+    Multistate Bennett acceptance ratio method (MBAR) for the analysis of multiple equilibrium samples.
 
     Notes
     -----
     Note that this method assumes the data are uncorrelated.
+
     Correlated data must be subsampled to extract uncorrelated (effectively independent) samples.
 
     References
@@ -74,21 +76,23 @@ class MBAR:
 
         Upon initialization, the dimensionless free energies for all states are computed.
         This may take anywhere from seconds to minutes, depending upon the quantity of data.
-        After initialization, the computed free energies may be obtained by a call to :function:`getFreeEnergies`, or
-        free energies or expectation at any state of interest can be computed by calls to :function:`computeFreeEnergy` or
-        :function:`computeExpectations`.
+        After initialization, the computed free energies may be obtained by a call to :func:`getFreeEnergyDifferences`,
+        or expectation at any state of interest can be computed by calls to :func:`computeExpectations`.
 
+        Parameters
         ----------
         u_kn : np.ndarray, float, shape=(K, N_max)
             ``u_kn[k,n]`` is the reduced potential energy of uncorrelated
-            configuration n evaluated at state k.
+            configuration n evaluated at state ``k``.
         u_kln : np.ndarray, float, shape (K, L, N_max)
-            if the simulation is in form ``u_kln[k,l,n]`` it is converted to ``u_kn`` format
+            If the simulation is in form ``u_kln[k,l,n]`` it is converted to ``u_kn`` format
 
-            u_kn = [ u_1(x_1) u_1(x_2) u_1(x_3) . . . u_1(x_n)
-                     u_2(x_1) u_2(x_2) u_2(x_3) . . . u_2(x_n)
-                                                . . .
-                     u_k(x_1) u_k(x_2) u_k(x_3) . . . u_k(x_n)]
+            .. code-block:: python
+
+                u_kn = [ u_1(x_1) u_1(x_2) u_1(x_3) . . . u_1(x_n)
+                         u_2(x_1) u_2(x_2) u_2(x_3) . . . u_2(x_n)
+                                                    . . .
+                         u_k(x_1) u_k(x_2) u_k(x_3) . . . u_k(x_n)]
 
         N_k :  np.ndarray, int, shape=(K)
             ``N_k[k]`` is the number of uncorrelated snapshots sampled from state ``k``.
@@ -122,23 +126,37 @@ class MBAR:
             (default: 'zeros', unless specific values are passed in.)
         x_kindices
             Which state is each x from?  Usually doesn't matter, but does for BAR. We assume the samples
-            are in K order (the first N_k[0] samples are from the 0th state, the next N_k[1] samples from
+            are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
             the 1st state, and so forth.
 
         Notes
         -----
-        The reduced potential energy u_kn[k,n] = u_k(x_{ln}), where the reduced potential energy u_l(x) is defined (as in the text) by:
-        u_k(x) = beta_k [ U_k(x) + p_k V(x) + mu_k' n(x) ]
+        The reduced potential energy ``u_kn[k,n] = u_k(x_{ln})``, where the reduced potential energy ``u_l(x)`` is
+        defined (as in the text) by:
+        ``u_k(x) = beta_k [ U_k(x) + p_k V(x) + mu_k' n(x) ]``
         where
-        beta_k = 1/(kB T_k) is the inverse temperature of condition k, where kB is Boltzmann's constant
-        U_k(x) is the potential energy function for state k
-        p_k is the pressure at state k (if an isobaric ensemble is specified)
-        V(x) is the volume of configuration x
-        mu_k is the M-vector of chemical potentials for the various species, if a (semi)grand ensemble is specified, and ' denotes transpose
-        n(x) is the M-vector of numbers of the various molecular species for configuration x, corresponding to the chemical potential components of mu_m.
-        x_n indicates that the samples are from k different simulations of the n states. These simulations need only be a subset of the k states.
-        The configurations x_ln must be uncorrelated.  This can be ensured by subsampling a correlated timeseries with a period larger than the statistical inefficiency,
-        which can be estimated from the potential energy timeseries {u_k(x_ln)}_{n=1}^{N_k} using the provided utility function 'statisticalInefficiency()'.
+
+        ``beta_k = 1/(kB T_k)`` is the inverse temperature of condition ``k``, where kB is Boltzmann's constant
+
+        ``U_k(x)`` is the potential energy function for state ``k``
+
+        ``p_k`` is the pressure at state ``k`` (if an isobaric ensemble is specified)
+
+        ``V(x)`` is the volume of configuration ``x``
+
+        ``mu_k`` is the M-vector of chemical potentials for the various species, if a (semi)grand ensemble is
+        specified, and ``'`` denotes transpose
+
+        ``n(x)`` is the M-vector of numbers of the various molecular species for configuration ``x``,
+        corresponding to the chemical potential components of ``mu_m``.
+
+        ``x_n`` indicates that the samples are from ``k`` different simulations of the ``n`` states. These simulations
+        need only be a subset of the k states.
+
+        The configurations ``x_ln`` must be uncorrelated.  This can be ensured by subsampling a correlated timeseries
+        with a period larger than the statistical inefficiency, which can be estimated from the potential energy
+        timeseries ``{u_k(x_ln)}_{n=1}^{N_k}`` using the provided utility
+        :func:`pymbar.timeseries.statisticalInefficiency`.
         See the help for this function for more information.
 
         Examples
@@ -272,7 +290,6 @@ class MBAR:
         if self.verbose:
             print("MBAR initialization complete.")
 
-
     @property
     def W_nk(self):
         """Retrieve the weight matrix W_nk from the MBAR algorithm.
@@ -287,8 +304,7 @@ class MBAR:
         """
         return np.exp(self.Log_W_nk)
 
-
-    #=========================================================================
+    # =========================================================================
     def getWeights(self):
         """Retrieve the weight matrix W_nk from the MBAR algorithm.
 
@@ -303,7 +319,7 @@ class MBAR:
 
         return self.W_nk
 
-    #=========================================================================
+    # =========================================================================
     def computeEffectiveSampleNumber(self, verbose = False):
         """
         Compute the effective sample number of each state;
@@ -331,15 +347,19 @@ class MBAR:
         Notes
         -----
 
-        # using Kish (1965) formula (Kish, Leslie (1965). Survey Sampling. New York: Wiley)
-        # As the weights become more concentrated in fewer observations, the effective sample size shrinks.
-        # from http://healthcare-economist.com/2013/08/22/effective-sample-size/
-        # effective # of samples contributing to averages carried out at state i
-        #                        =  (\sum_{n=1}^N w_in)^2 / \sum_{n=1}^N w_in^2
-        #                        =  (\sum_{n=1}^N w_in^2)^-1
-        #
-        # the effective sample number is most useful to diagnose when there are only a few samples
-        # contributing to the averages.
+        Using Kish (1965) formula (Kish, Leslie (1965). Survey Sampling. New York: Wiley)
+
+        As the weights become more concentrated in fewer observations, the effective sample size shrinks.
+        from http://healthcare-economist.com/2013/08/22/effective-sample-size/
+
+        .. code-block:: none
+
+            effective number of samples contributing to averages carried out at state i
+                =  (\sum_{n=1}^N w_in)^2 / \sum_{n=1}^N w_in^2
+                =  (\sum_{n=1}^N w_in^2)^-1
+
+        the effective sample number is most useful to diagnose when there are only a few samples
+        contributing to the averages.
 
         Examples
         --------
@@ -360,9 +380,10 @@ class MBAR:
 
         return N_eff
 
-    #=========================================================================
+    # =========================================================================
     def computeOverlap(self):
-        """Compute estimate of overlap matrix between the states.
+        """
+        Compute estimate of overlap matrix between the states.
 
         Returns
         -------
@@ -371,17 +392,20 @@ class MBAR:
         eigenval : np.ndarray, float, shape=(K)
             The sorted (descending) eigenvalues of the overlap matrix.
         O : np.ndarray, float, shape=(K, K)
-            estimated state overlap matrix: O[i,j] is an estimate
+            Estimated state overlap matrix: O[i,j] is an estimate
             of the probability of observing a sample from state i in state j
 
         Notes
         -----
 
-        W.T * W \approx \int (p_i p_j /\sum_k N_k p_k)^2 \sum_k N_k p_k dq^N
-                      = \int (p_i p_j /\sum_k N_k p_k) dq^N
+        .. code-block:: none
+
+            W.T * W \approx \int (p_i p_j /\sum_k N_k p_k)^2 \sum_k N_k p_k dq^N
+                = \int (p_i p_j /\sum_k N_k p_k) dq^N
 
         Multiplying elementwise by N_i, the elements of row i give the probability
         for a sample from state i being observed in state j.
+
 
         Examples
         --------
@@ -390,6 +414,7 @@ class MBAR:
         >>> (x_kn, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> O_ij = mbar.computeOverlap()
+
         """
 
         W = np.matrix(self.getWeights(), np.float64)
@@ -481,13 +506,13 @@ class MBAR:
 
         return Deltaf_ij, dDeltaf_ij, Theta_ij
 
-
-    #=========================================================================
+    # =========================================================================
     def computeExpectationsInner(self, A_n, u_ln, state_map,
                                  uncertainty_method=None,
                                  warning_cutoff=1.0e-10,
                                  return_theta=False):
-        """Compute the expectations of multiple observables of phase space functions in multiple states.
+        """
+        Compute the expectations of multiple observables of phase space functions in multiple states.
 
         Compute the expectations of multiple observables of phase
         space functions [A_0(x),A_1(x),...,A_i(x)] along with the
@@ -507,20 +532,12 @@ class MBAR:
         u_ln : np.ndarray, float, shape=(L, N)
             u_ln[l,n] is the reduced potential of configuration n at state l
             if u_ln = None, we use self.u_kn
-
         state_map : np.ndarray, int, shape (2,NS) or shape(1,NS)
-                    If state_map has only one dimension
-                    where NS is the
-                    total number of states we want to simulate things
-                    a.  The list will be of the form
-                    [[0,1,2],[0,1,1]]. This particular example
-                    indicates we want to output the properties of
-                    three observables total: the first property A[0]
-                    at the 0th state, the 2nd property A[1] at the
-                    1th state, and the 2nd property A[1] at the 2nd
-                    state. This allows us to tailor our output to a
-                    large number of different situations.
-
+            If state_map has only one dimension where NS is the total number of states we want to simulate things
+            a.  The list will be of the form ``[[0,1,2],[0,1,1]]``. This particular example indicates we want to output
+            the properties of three observables total: the first property A[0] at the 0th state, the 2nd property
+            A[1] at the 1th state, and the 2nd property A[1] at the 2nd state. This allows us to tailor our output to a
+            large number of different situations.
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
@@ -536,20 +553,26 @@ class MBAR:
             A_i[i] is the estimate for the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
 
         d2A_ij : np.ndarray, float, shape = (I, J)
-             Ca_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
-            (* not the square root of anything, the full covariance matrix *)
+            Ca_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
+            (*not the square root of anything, the full covariance matrix*)
+
+        Notes
+        -----
 
         Situations this will be used for :
-            * multiple observables, single state (called though computeMultipleExpectations)
-            * single observable, multiple states (called through computeExpectations)
+
+        * Multiple observables, single state (called though computeMultipleExpectations)
+        * Single observable, multiple states (called through computeExpectations)
+
             This has two cases: observables that don't change with state, and observables that
             do change with state.
             For example, the set of energies at state k consist in energy function of state
             1 evaluated at state 1, energies of state 2 evaluated at
             state 2, and so forth.
-            * computing only free energies at new states.
-            * Would require additional work to work with potentials of mean force, because we need to ignore the
-              functions that are zero when integrating.
+
+        * Computing only free energies at new states.
+
+        * Would require additional work to work with potentials of mean force, because we need to ignore the functions that are zero when integrating.
 
         Examples
         --------
@@ -726,51 +749,70 @@ class MBAR:
     def computeCovarianceOfSums(self, d_ij, K, a):
 
         """
-        Inputs: d_ij: a matrix of standard deviations of the quantities f_i - f_j
-
-        K: The number of states in each 'chunk', has to be constant
-
-        outputs: KxK variance matrix for the sums or differences \sum a_i df_i
-
         We wish to calculate the variance of a weighted sum of free energy differences.
-        for example var(\sum a_i df_i).
+        for example ``var(\sum a_i df_i)``.
 
         We explicitly lay out the calculations for four variables (where each variable
-        is a logarithm of a partion function), then generalize.
+        is a logarithm of a partition function), then generalize.
 
-        The uncertainty in the sum of two weighted differences is var(a1(f_i1 - f_j1) + a2(f_i2 - f_j2)) =
-        a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + 2 a1 a2 cov(f_i1 - f_j1, f_i2 - f_j2)
+        The uncertainty in the sum of two weighted differences is
 
-        cov(f_i1 - f_j1, f_i2 - f_j2) = cov(f_i1,f_i2) - cov(f_i1,f_j2) - cov(f_j1,f_i2) + cov(f_j1,f_j2)
+        .. code-block:: none
+
+            var(a1(f_i1 - f_j1) + a2(f_i2 - f_j2)) =
+                a1^2 var(f_i1 - f_j1) +
+                a2^2 var(f_i2 - f_j2) +
+                2 a1 a2 cov(f_i1 - f_j1, f_i2 - f_j2)
+            cov(f_i1 - f_j1, f_i2 - f_j2) =
+                cov(f_i1,f_i2) -
+                cov(f_i1,f_j2) -
+                cov(f_j1,f_i2) +
+                cov(f_j1,f_j2)
 
         call:
 
-        f_i1 = a
-        f_j1 = b
-        f_i2 = c
-        f_j2 = d
+        .. code-block:: none
 
-        a1^2 var(a-b) + a2^2 var(c-d) + 2a1a2 cov(a-b,c-d)
-        we want 2cov(a-b,c-d) = 2cov(a,c)-2cov(a,d)-2cov(b,c)+2cov(b,d)
-        since  var(x-y) = var(x) + var(y) - 2cov(x,y)
-        then:
-            2cov(x,y) = -var(x-y) + var(x) + var(y)
-        so:
+            f_i1 = a
+            f_j1 = b
+            f_i2 = c
+            f_j2 = d
+            a1^2 var(a-b) + a2^2 var(c-d) + 2a1a2 cov(a-b,c-d)
+
+        we want ``2cov(a-b,c-d) = 2cov(a,c)-2cov(a,d)-2cov(b,c)+2cov(b,d)``,
+        since ``var(x-y) = var(x) + var(y) - 2cov(x,y)``,
+        then, ``2cov(x,y) = -var(x-y) + var(x) + var(y)``. So, we get
+
+        .. code-block:: none
+
             2cov(a,c) = -var(a-c) + var(a) + var(c)
             -2cov(a,d) = +var(a-d) - var(a) - var(d)
             -2cov(b,c) = +var(b-c) - var(b) - var(c)
             2cov(b,d) = -var(b-d) + var(b) + var(d)
-        adding up, we get:
-            2cov(a-b,c-d) = 2cov(a,c)-2cov(a,d)-2cov(b,c)+2cov(b,d) =  - var(a-c) + var(a-d) + var(b-c) - var(b-d)
 
-            a1^2 var(a-b)+a2^2 var(c-d)+2a1a2cov(a-b,c-d) = a1^2 var(a-b)+a2^2 var(c-d)+a1a2 [-var(a-c)+var(a-d)+var(b-c)-var(b-d)]
+        adding up, finally :
+
+        .. code-block:: none
+
+            2cov(a-b,c-d) = 2cov(a,c)-2cov(a,d)-2cov(b,c)+2cov(b,d) =
+                - var(a-c) + var(a-d) + var(b-c) - var(b-d)
+
+            a1^2 var(a-b)+a2^2 var(c-d)+2a1a2cov(a-b,c-d) =
+                a1^2 var(a-b)+a2^2 var(c-d)+a1a2 [-var(a-c)+var(a-d)+var(b-c)-var(b-d)]
+
             var(a1(f_i1 - f_j1) + a2(f_i2 - f_j2)) =
-            = a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + 2a1 a2 cov(f_i1 - f_j1, f_i2 - f_j2)
+                a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + 2a1 a2 cov(f_i1 - f_j1, f_i2 - f_j2)
             = a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + a1 a2 [-var(f_i1 - f_i2) + var(f_i1 - f_j2) + var(f_j1-f_i2) - var(f_j1 - f_j2)]
 
         assume two arrays of free energy differences, and and array of constant vectors a.
-        we want the variance var(\sum_k a_k (f_i,k - f_j,k)) Each set is separated from the other by an offset K
-        same process applies with the sum, with the single var tems and the pair terms
+        we want the variance ``var(\sum_k a_k (f_i,k - f_j,k))`` Each set is separated from the other by an offset K
+        same process applies with the sum, with the single var terms and the pair terms
+
+        Parameters
+        ----------
+        d_ij : a matrix of standard deviations of the quantities f_i - f_j
+        K : The number of states in each 'chunk', has to be constant
+        outputs : KxK variance matrix for the sums or differences ``\sum a_i df_i``
         """
 
         # todo: vectorize this.
@@ -1206,7 +1248,8 @@ class MBAR:
     #=====================================================================
 
     def computePMF(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None):
-        """Compute the free energy of occupying a number of bins.
+        """
+        Compute the free energy of occupying a number of bins.
 
         This implementation computes the expectation of an indicator-function observable for each bin.
 
@@ -1220,11 +1263,13 @@ class MBAR:
             The number of bins
         uncertainties : string, optional
             Method for reporting uncertainties (default: 'from-lowest')
-            'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
-            'from-specified' - same as from lowest, but from a user specified point
-            'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
-            'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
-         pmf_reference : int, optional
+
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-specified' - same as from lowest, but from a user specified point
+            * 'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
+
+        pmf_reference : int, optional
             the reference state that is zeroed when uncertainty = 'from-specified'
 
         Returns
@@ -1236,11 +1281,10 @@ class MBAR:
 
         Notes
         -----
-        All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
-        This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
-        To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
-        the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy
-        are then computed in the standard way.
+        * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
+        * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
+        * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
+        * the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
 
         Examples
         --------
