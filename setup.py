@@ -13,7 +13,7 @@ import six
 
 ##########################
 VERSION = "3.0.3"
-ISRELEASED = False
+ISRELEASED = True
 __version__ = VERSION
 ##########################
 
@@ -105,7 +105,7 @@ def buildKeywordDictionary():
     setupKeywords["package_dir"]       = {'pymbar' : 'pymbar', 'pymbar.tests' : 'pymbar/tests'}
     setupKeywords["zip_safe"]          = False
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
-    setupKeywords["data_files"]        = []
+    setupKeywords["data_files"]        = [('pymbar', ["pymbar/_pymbar.c"])]  # Ensures the _pymbar.c files are shipped regardless of Py Version
     setupKeywords["ext_modules"]       = [CMBAR] if six.PY2 else []
     # setupKeywords["test_suite"]        = "tests" # requires we migrate to setuptools
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
