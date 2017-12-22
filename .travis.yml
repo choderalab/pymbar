@@ -15,12 +15,12 @@ install:
   - export PATH=$HOME/miniconda/bin:$PATH
 
 script:
+  # Add org channel
+  - conda config --add channels ${ORGNAME}
   # Create a test environment
   - conda create --quiet --yes -n test python=$python
   # Activate the test environment
   - source activate test
-  # Add org channel
-  - conda config --add channels ${ORGNAME}
   # Build recipie
   - conda build devtools/conda-recipe
   # Install locally-built package
