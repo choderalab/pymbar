@@ -15,16 +15,16 @@ install:
   - export PATH=$HOME/miniconda/bin:$PATH
 
 script:
-  # Create a test environment
-  - conda create --yes -n test python=$python
-  # Activate the test environment
-  - source activate test
   # Add org channel
   - conda config --add channels ${ORGNAME}
+  # Create a test environment
+  - conda create --quiet --yes -n test python=$python
+  # Activate the test environment
+  - source activate test
   # Build recipie
   - conda build devtools/conda-recipe
   # Install locally-built package
-  - conda install --yes --use-local ${PACKAGENAME}-dev
+  - conda install --yes --quiet --use-local ${PACKAGENAME}-dev
   - conda install --yes --quiet pip nose nose-timer
   # Test the package
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer && cd ..

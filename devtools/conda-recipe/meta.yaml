@@ -1,6 +1,6 @@
 package:
   name: pymbar-dev
-  version: !!str 3.0.3.dev0
+  version: !!str 3.0.4.dev0
 
 source:
   path: ../../
@@ -10,11 +10,11 @@ requirements:
     - python
     - setuptools
     - six
-    - numpy x.x
+    - numpy 1.11.*
     - toolchain
   run:
     - python
-    - numpy x.x
+    - numpy >=1.11
     - scipy
     - numexpr
     - six
