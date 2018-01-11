@@ -15,18 +15,16 @@ install:
   - export PATH=$HOME/miniconda/bin:$PATH
 
 script:
-  # Create a test environment
-  - conda create --yes -n test python=$python
-  # Activate the test environment
-  - source activate test
   # Add org channel
   - conda config --add channels ${ORGNAME}
-  # Add omnia dev channels
-  - conda config --add channels https://conda.anaconda.org/omnia/label/dev
+  # Create a test environment
+  - conda create --quiet --yes -n test python=$python
+  # Activate the test environment
+  - source activate test
   # Build recipie
   - conda build devtools/conda-recipe
   # Install locally-built package
-  - conda install --yes --use-local ${PACKAGENAME}-dev
+  - conda install --yes --quiet --use-local ${PACKAGENAME}-dev
   - conda install --yes --quiet pip nose nose-timer
   # Test the package
   - cd devtools && nosetests $PACKAGENAME --nocapture --verbosity=2 --with-doctest --with-timer && cd ..
@@ -39,7 +37,7 @@ env:
     - python=3.6  CONDA_PY=36
 
   global:
-    - ORGNAME="omnia"
+    - ORGNAME="conda-forge"
     - PACKAGENAME="pymbar"
     # encrypted BINSTAR_TOKEN for push of dev package to binstar
     - secure: "TCAT3UIHKGb2yndGXrjLILFZggGjVL//apC48YQTQqqHDj+PNFnmYw6GeVfiGLKYMG74aiTgOPxVUjsY73CdXCp/u76cscq4h5htIo3ed1gcsmfK1MTZxKx7xrdTJa3Qedc8QbpPhV9RhagoCEFNQj1TWyeDKQPv8nFcufZsELo="

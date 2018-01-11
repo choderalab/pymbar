@@ -1,6 +1,6 @@
 package:
   name: pymbar-dev
-  version: !!str 3.0.1.dev0
+  version: !!str 3.0.4.dev0
 
 source:
   path: ../../
@@ -8,14 +8,13 @@ source:
 requirements:
   build:
     - python
-    - numpy
-    - scipy
     - setuptools
-    - numexpr
     - six
+    - numpy 1.11.*
+    - toolchain
   run:
     - python
-    - numpy
+    - numpy >=1.11
     - scipy
     - numexpr
     - six
@@ -23,7 +22,6 @@ requirements:
 test:
   requires:
     - nose
-    - setuptools
     - statsmodels
   imports:
     - pymbar
@@ -32,5 +30,5 @@ test:
 
 about:
   home: https://github.com/choderalab/pymbar
-  license: GNU Lesser General Public License v2 or later (LGPLv2+)
+  license: MIT
   summary: Python implementation of the multistate Bennett acceptance ratio (MBAR) method.

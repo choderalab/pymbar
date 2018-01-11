@@ -4,17 +4,15 @@ simulated and experimental data with the multistate Bennett acceptance
 ratio (MBAR) estimator.
 
 """
-#from distutils.sysconfig import get_config_var
-from distutils.core import setup, Extension
+from distutils.core import setup
 from setuptools import setup, Extension
 import numpy
-import glob
 import os
 import subprocess
 import six
 
 ##########################
-VERSION = "3.0.1"
+VERSION = "3.0.4"
 ISRELEASED = False
 __version__ = VERSION
 ##########################
@@ -100,14 +98,14 @@ def buildKeywordDictionary():
     setupKeywords["version"]           = VERSION
     setupKeywords["author"]            = "Levi N. Naden and Michael R. Shirts and John D. Chodera"
     setupKeywords["author_email"]      = "levi.naden@choderalab.org, michael.shirts@virginia.edu, john.chodera@choderalab.org"
-    setupKeywords["license"]           = "LGPL 2.1"
+    setupKeywords["license"]           = "MIT"
     setupKeywords["url"]               = "http://github.com/choderalab/pymbar"
     setupKeywords["download_url"]      = "http://github.com/choderalab/pymbar"
     setupKeywords["packages"]          = ['pymbar', 'pymbar.testsystems', 'pymbar.tests']
     setupKeywords["package_dir"]       = {'pymbar' : 'pymbar', 'pymbar.tests' : 'pymbar/tests'}
     setupKeywords["zip_safe"]          = False
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
-    setupKeywords["data_files"]        = []
+    setupKeywords["data_files"]        = [('pymbar', ["pymbar/_pymbar.c"])]  # Ensures the _pymbar.c files are shipped regardless of Py Version
     setupKeywords["ext_modules"]       = [CMBAR] if six.PY2 else []
     # setupKeywords["test_suite"]        = "tests" # requires we migrate to setuptools
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
