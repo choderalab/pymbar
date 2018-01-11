@@ -75,7 +75,7 @@ def test_protocols():
 
     #scipy.optimize.minimize methods, same ones that are checked for in mbar_solvers.py
     subsampling_protocols = ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]
-    solver_protocols = ['hybr', 'lm'] #scipy.optimize.root methods. Omitting methods which do not use the Jacobian
+    solver_protocols = ['hybr', 'lm', 'adaptive'] #scipy.optimize.root methods. Omitting methods which do not use the Jacobian
     for subsampling_protocol in subsampling_protocols:
         for solver_protocol in solver_protocols:
             #Solve MBAR with zeros for initial weights
