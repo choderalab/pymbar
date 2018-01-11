@@ -397,8 +397,6 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
 
         dDeltaF = np.sqrt(variance)
 
-        import pdb
-        pdb.set_trace()
         #alternate formula
         #afM = np.exp(logsumexp(log_fF+log_fR))
 
