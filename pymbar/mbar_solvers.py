@@ -232,7 +232,7 @@ def mbar_W_nk(u_kn, N_k, f_k):
     """
     return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
 
-def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_iterations':50000,'print_warning':False,'gamma':1.0}):
+def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, verbose = False, options = {'maximum_iterations':250,'print_warning':False,'gamma':1.0}):
 
     """
     Determine dimensionless free energies by a combination of Newton-Raphson iteration and self-consistent iteration.
@@ -240,11 +240,12 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_it
     Is slower than NR since it calculates the log norms twice each iteration.
 
     OPTIONAL ARGUMENTS
-    tol (float between 0 and 1) - relative tolerance for convergence (default 1.0e-10)
-    options
-    gamma (float between 0 and 1) - incrementor for NR iterations (default 1.0).  Usually not changed now, since adaptively switch.
-    maximum_iterations (int) - maximum number of Newton-Raphson iterations (default 1000)
+    tol (float between 0 and 1) - relative tolerance for convergence (default 1.0e-12)
     verbose (boolean) - verbosity level for debug output
+
+    options: dictionary of options
+        gamma (float between 0 and 1) - incrementor for NR iterations (default 1.0).  Usually not changed now, since adaptively switch.
+        maximum_iterations (int) - maximum number of Newton-Raphson iterations (default 250: either NR converges or doesn't, pretty quickly)
     NOTES
 
     This method determines the dimensionless free energies by
@@ -263,9 +264,11 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_it
     """
     gamma = options['gamma']
     doneIterating = False
-    if options['verbose'] == True:
+    if verbose == True:
         print("Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.")
 
+    if tol < 1.5e-15:
+        print("Tolerance may be too close to machine precision to converge.")
     # keep track of Newton-Raphson and self-consistent iterations
     nr_iter = 0
     sci_iter = 0
@@ -294,14 +297,14 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_it
         # we could save the gradient, for the next round, but it's not too expensive to
         # compute since we are doing the Hessian anyway.
 
-        if options['verbose']:
+        if verbose:
             print("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
         if (gnorm_sci < gnorm_nr or sci_iter < 2):
             f_k = f_sci
             sci_iter += 1
-            if options['verbose']:
+            if verbose:
                 if sci_iter < 2:
                     print("Choosing self-consistent iteration on iteration %d" % iteration)
                 else:
@@ -309,7 +312,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_it
         else:
             f_k = f_nr
             nr_iter += 1
-            if options['verbose']:
+            if verbose:
                 print("Newton-Raphson used on iteration %d" % iteration)
 
         # routine changes them.
@@ -319,7 +322,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_it
             break
 
     if doneIterating:
-        if options['verbose']:
+        if verbose:
             print('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
             print('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
             if np.all(f_k == 0.0):
@@ -361,7 +364,7 @@ def precondition_u_kn(u_kn, N_k, f_k):
     return u_kn
 
 
-def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1E-15, options=None):
+def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1E-12, verbose=False, options=None):
     """Solve MBAR self-consistent equations using some form of equation solver.
 
     Parameters
@@ -376,8 +379,10 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     method : str, optional, default="hybr"
         The optimization routine to use.  This can be any of the methods
         available via scipy.optimize.minimize() or scipy.optimize.root().
-    tol : float, optional, default=1E-15
+    tol : float, optional, default=1E-14
         The convergance tolerance for minimize() or root()
+    verbose: bool
+        Whether to print information about the solution method.
     options: dict, optional, default=None
         Optional dictionary of algorithm-specific parameters.  See
         scipy.optimize.root or scipy.optimize.minimize for details.
@@ -420,7 +425,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
             results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
             f_k_nonzero = pad(results["x"])
         elif method == 'adaptive':
-            results = adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol)
+            results = adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, verbose=verbose)
             f_k_nonzero = results # they are the same for adaptive, until we decide to return more.
         else:
             results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
@@ -461,7 +466,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
         The converged reduced free energies.
     all_results : list(dict())
         List of results from each step of solver_protocol.  Each element in
-        list contains the results dictionary from solve_mbar_single()
+        list contains the results dictionary from solve_mbar_once()
         for the corresponding step.
 
     Notes
@@ -473,7 +478,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
     to be zero.
 
     This function calls `solve_mbar_once()` multiple times to achieve
-    converged results.  Generally, a single call to solve_mbar_single()
+    converged results.  Generally, a single call to solve_mbar_once()
     will not give fully converged answers because of limited numerical precision.
     Each call to `solve_mbar_once()` re-conditions the nonlinear
     equations using the current guess.
@@ -483,12 +488,13 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, ver
 
     all_results = []
     for k, options in enumerate(solver_protocol):
+        if verbose:
+            options['verbose'] = True
         f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, **options)
         all_results.append(results)
     
     if verbose:
         print(("Final gradient norm: %.3g" % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero))))
-
     return f_k_nonzero, all_results
 
 
@@ -551,7 +557,7 @@ def subsample_data(u_kn0, N_k0, s_n, subsampling, rescale=False, replace=False):
     return u_kn, N_k
 
 
-def solve_mbar_with_subsampling(u_kn, N_k, f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=None):
+def solve_mbar_with_subsampling(u_kn, N_k, f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=None, verbose=False):
     """Solve for free energies of states with samples, then calculate for
     empty states.  Optionally uses subsampling as a hot-start to speed up
     calculations.
@@ -593,12 +599,12 @@ def solve_mbar_with_subsampling(u_kn, N_k, f_k, solver_protocol, subsampling_pro
         if subsampling is not None and x_kindices is not None and subsampling > 1:
             s_n = np.unique(x_kindices, return_inverse=True)[1]
             u_kn_subsampled, N_k_subsampled = subsample_data(u_kn[states_with_samples], N_k[states_with_samples], s_n, subsampling=subsampling)
-            f_k_nonzero, all_results = solve_mbar(u_kn_subsampled, N_k_subsampled, f_k[states_with_samples], solver_protocol=subsampling_protocol)
+            f_k_nonzero, all_results = solve_mbar(u_kn_subsampled, N_k_subsampled, f_k[states_with_samples], solver_protocol=subsampling_protocol, verbose=verbose)
         else:
-            f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples], solver_protocol=subsampling_protocol)
+            f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples], solver_protocol=subsampling_protocol,verbose=verbose)
 
         f_k[states_with_samples] = f_k_nonzero
-        f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples], solver_protocol=solver_protocol)
+        f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples], solver_protocol=solver_protocol, verbose=verbose)
 
     f_k[states_with_samples] = f_k_nonzero
 
