@@ -277,7 +277,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-10, options = {'verbose':False,'maximum_it
     for iteration in range(0, options['maximum_iterations']):
         g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
-        Hinvg = np.linalg.lstsq(H, g)[0]
+        Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
         Hinvg -= Hinvg[0]
         f_nr = f_k - gamma * Hinvg
 
