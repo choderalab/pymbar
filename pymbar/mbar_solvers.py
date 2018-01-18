@@ -9,8 +9,8 @@ import warnings
 # Note: we use tuples instead of lists to avoid accidental mutability.
 #DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
 #DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
-DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="adaptive",options=dict()),)  # First use BFGS on subsampled data.
-DEFAULT_SOLVER_PROTOCOL = (dict(method="adaptive",options=dict()),)  # Then do fmin hybrid on full dataset.
+DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="adaptive"),)  # First use BFGS on subsampled data.
+DEFAULT_SOLVER_PROTOCOL = (dict(method="adaptive",),)  # Then do fmin hybrid on full dataset.
 
 
 def validate_inputs(u_kn, N_k, f_k):
