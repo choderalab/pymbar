@@ -9,8 +9,9 @@ import warnings
 # Note: we use tuples instead of lists to avoid accidental mutability.
 #DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
 #DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
-DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="adaptive"),)  # First use BFGS on subsampled data.
-DEFAULT_SOLVER_PROTOCOL = (dict(method="adaptive",),)  # Then do fmin hybrid on full dataset.
+# Use Adpative solver as first attempt
+DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="adaptive"),)
+DEFAULT_SOLVER_PROTOCOL = (dict(method="adaptive",),)
 
 
 def validate_inputs(u_kn, N_k, f_k):
@@ -338,7 +339,10 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
                 print('WARNING: All f_k appear to be zero.')
     else:
         print('WARNING: Did not converge to within specified tolerance.')
-        print('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
+        if options['maximum_iterations'] <= 0:
+            print("No iterations ran be cause maximum_iterations was <= 0 ({})!".format(options['maximum_iterations']))
+        else:
+            print('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
     return f_k
 
 def precondition_u_kn(u_kn, N_k, f_k):
