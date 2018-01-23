@@ -278,6 +278,24 @@ class MBAR:
                 print("f_k = ")
                 print(self.f_k)
 
+        for solver in subsampling_protocol:
+            if 'options' not in solver:
+                solver['options'] = dict()  # make sure there is SOME dictionary in for options.
+                if self.verbose:
+                    # should add in other ways to get information out of the scipy solvers, not just adaptive,
+                    # which might involve passing in different combinations of options, and passing out other strings.
+                    if solver['method'] == 'adaptive':
+                        solver['options']['verbose']=True
+
+        for solver in solver_protocol:
+            if 'options' not in solver:
+                solver['options'] = dict()
+                if self.verbose:
+                    # should add in other ways to get information out of the scipy solvers, not just adaptive,
+                    # which might involve passing in different combinations of options, and passing out other strings.
+                    if solver['method'] == 'adaptive':
+                        solver['options']['verbose']=True
+
         self.f_k = mbar_solvers.solve_mbar_with_subsampling(self.u_kn, self.N_k, self.f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=self.x_kindices)
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
