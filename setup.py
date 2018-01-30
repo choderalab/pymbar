@@ -106,7 +106,7 @@ def buildKeywordDictionary():
     setupKeywords["zip_safe"]          = False
     #setupKeywords["py_modules"]        = ["pymbar", "timeseries", "testsystems", "confidenceintervals"]
     setupKeywords["data_files"]        = [('pymbar', ["pymbar/_pymbar.c"])]  # Ensures the _pymbar.c files are shipped regardless of Py Version
-    setupKeywords["ext_modules"]       = [CMBAR] if six.PY2 else []
+    setupKeywords["ext_modules"]       = [CMBAR]
     # setupKeywords["test_suite"]        = "tests" # requires we migrate to setuptools
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
     setupKeywords["description"]       = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method."
