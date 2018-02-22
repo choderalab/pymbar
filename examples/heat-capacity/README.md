@@ -2,11 +2,11 @@ USAGE:
 
 For calling with MBAR error estimates:
 
-python heat-capacity.py > heat-capacity.py.sample_out_no_bootstrap
+python heat-capacity.py -r 0 > heat-capacity.py.sample_out_no_bootstrap
  
 For calling with bootstrap error estimates using 200 bootstraps
 
-python heat-capacity.py -b 200 > heat-capacity.py.sample_out_bootstrap
+python heat-capacity.py -b 200 -r 0 > heat-capacity.py.sample_out_bootstrap
 
 Other options: 
 
