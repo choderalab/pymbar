@@ -147,7 +147,7 @@ def BARzero(w_F, w_R, DeltaF):
     return fzero
 
 
-def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-15, verbose=False, method='false-position', iterated_solution=True):
+def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True):
     """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
     Parameters
@@ -201,7 +201,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
     >>> [DeltaF, dDeltaF] = BAR(w_F, w_R)
-    >>> print('Free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF))
+    >>> print('Free energy difference is {:.3f} +- {:.3f kT}'.format(DeltaF, dDeltaF))
     Free energy difference is 1.088 +- 0.050 kT
 
     Test various other schemes.
@@ -270,7 +270,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if FNew == 0:
                 # Convergence is achieved.
                 if verbose:
-                    print("Convergence achieved.")
+                    print('Convergence achieved.')
                 relative_change = 10 ** (-15)
                 break
 
@@ -288,7 +288,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         if (DeltaF == 0.0):
             # The free energy difference appears to be zero -- return.
             if verbose:
-                print("The free energy difference appears to be zero.")
+                print('The free energy difference appears to be zero.')
             if compute_uncertainty:
                 return [0.0, 0.0]
             else:
@@ -319,15 +319,15 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
                 raise BoundsError(message)
 
         if verbose:
-            print("iteration {:5d}: DeltaF = {:16.3f}",format(iteration, DeltaF))
+            print("iteration {:5d}: DeltaF = {:16.3f}".format(iteration, DeltaF))
 
     # Report convergence, or warn user if not achieved.
     if iterated_solution:
         if iteration < maximum_iterations:
             if verbose:
-                print('Converged to tolerance of %e in %d iterations (%d function evaluations)' % (relative_change, iteration, nfunc))
+                print('Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)'.format(relative_change, iteration, nfunc))
         else:
-            message = 'WARNING: Did not converge to within specified tolerance. max_delta = %f, TOLERANCE = %f, MAX_ITS = %d' % (relative_change, relative_tolerance, maximum_iterations)
+            message = 'WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = %d'.format(relative_change, relative_tolerance, maximum_iterations)
             raise ConvergenceError(message)
 
     if compute_uncertainty:
