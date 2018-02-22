@@ -7,9 +7,16 @@ MINICONDA=Miniconda2-latest-Linux-x86_64.sh
 MINICONDA_HOME=$HOME/miniconda
 MINICONDA_MD5=$(curl -s https://repo.continuum.io/miniconda/ | grep -A3 $MINICONDA | sed -n '4p' | sed -n 's/ *<td>\(.*\)<\/td> */\1/p')
 wget -q http://repo.continuum.io/miniconda/$MINICONDA
+# Parse version out of file as fall back
+# Sed cuts out everything before the first digit, then traps the first digit and everything after
+MINICONDA_DL_VER=$(head $MINICONDA | grep VER | sed -n 's/[^0-9]*\([0-9.]*\)/\1/p')
+MINICONDA_FILE_VER="Miniconda2-$MINICONDA_DL_VER-Linux-x86_64.sh"
+MINICONDA_MD5_VER=$(curl -s https://repo.continuum.io/miniconda/ | grep -A3 $MINICONDA_FILE_VER | sed -n '4p' | sed -n 's/ *<td>\(.*\)<\/td> */\1/p')
 if [[ $MINICONDA_MD5 != $(md5sum $MINICONDA | cut -d ' ' -f 1) ]]; then
-    echo "Miniconda MD5 mismatch"
-    exit 1
+    if [[ $MINICONDA_MD5_VER != $(md5sum $MINICONDA | cut -d ' ' -f 1) ]]; then
+        echo "Miniconda MD5 mismatch"
+        exit 1
+    fi
 fi
 bash $MINICONDA -b -p $MINICONDA_HOME
 
