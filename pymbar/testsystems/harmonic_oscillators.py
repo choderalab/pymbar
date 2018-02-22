@@ -97,7 +97,7 @@ class HarmonicOscillatorsTestCase(object):
     def analytical_entropies(self, subtract_component = 0):
         return self.analytical_observable(observable = 'potential energy') - self.analytical_free_energies(subtract_component)
 
-    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kn'):
+    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kn', seed = None):
         """Draw samples from the distribution.
 
         Parameters
@@ -108,6 +108,8 @@ class HarmonicOscillatorsTestCase(object):
         mode : str, optional, default='u_kn'
             If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
             If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
+
+        seed: int, optional, default=None.  Provides control over the random seed for replicability.
 
         Returns
         -------
@@ -130,6 +132,9 @@ class HarmonicOscillatorsTestCase(object):
            N_k[k] is the number of samples generated from state k
 
         """
+
+        np.random.seed(seed)
+
         N_k = np.array(N_k, np.int32)
         if len(N_k) != self.n_states:
             raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))
@@ -207,6 +212,6 @@ class HarmonicOscillatorsTestCase(object):
         N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
 
         testsystem = cls(O_k, k_k)
-        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
+        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn', seed=seed)
 
         return name, testsystem, x_n, u_kn, N_k_output, s_n
