@@ -618,12 +618,12 @@ def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100
   for i in range(numbrellas):
     center = []
     for d in range(ndim):
-      val = gridscale*((i/dp[d]) % nperdim[d] + xrange[d][0])
+      val = gridscale*((int(i//dp[d])) % nperdim[d] + xrange[d][0])
       center.append(val)
     center = numpy.array(center)
     xu_i[i,:] = center
     mu2 = numpy.dot(center,center)
-    f_k_analytical[i] = numpy.log((ndim*numpy.pi/ksum)**(3/2) *numpy.exp(-kprod*mu2/(2*ksum)))
+    f_k_analytical[i] = numpy.log((ndim*numpy.pi/ksum)**(3.0/2.0) *numpy.exp(-kprod*mu2/(2.0*ksum)))
     if numpy.all(center==0.0):  # assumes that we have one state that is at the zero.
       umbrella_zero = i
     i += 1
@@ -758,7 +758,7 @@ dy = (ymax-ymin)/nbinsperdim
 nbins = 1 + nbinsperdim**ndim
 bin_centers = numpy.zeros([nbins,ndim],numpy.float64)
 
-ibin = 1;
+ibin = 1; # first reserved for something outside.
 pmf_analytical = numpy.zeros([nbins],numpy.float64)
 minmu2 = 1000000;
 zeroindex = 0;
@@ -774,7 +774,7 @@ for i in range(nbinsperdim):
     if (mu2 < minmu2):
       minmu2 = mu2;
       zeroindex = ibin
-    pmf_analytical[ibin] = K0*mu2/2.0 
+    pmf_analytical[ibin] = K0*mu2/2.0
     ibin += 1
 fzero = pmf_analytical[zeroindex]
 pmf_analytical -= fzero
@@ -784,7 +784,9 @@ bin_n = numpy.zeros([numbrellas * nsamples], int)
 # Determine indices of those within bounds.
 within_bounds = (x_n[:,0] >= xmin) & (x_n[:,0] < xmax) & (x_n[:,1] >= ymin) & (x_n[:,1] < ymax)
 # Determine states for these.
-bin_n[within_bounds] = 1 + numpy.floor((x_n[within_bounds,0]-xmin)/dx) + nbinsperdim*numpy.floor((x_n[within_bounds,1]-ymin)/dy)
+xgrid = (x_n[within_bounds,0]-xmin)/dx
+ygrid = (x_n[within_bounds,1]-ymin)/dy
+bin_n[within_bounds] = 1 + xgrid.astype(int) + nbinsperdim*ygrid.astype(int)
 
 # Determine indices of bins that are not empty.
 bin_counts = numpy.zeros([nbins], int)
@@ -793,9 +795,6 @@ for i in range(nbins):
 
 # Compute PMF.          
 print("Computing PMF ...")
-import pdb
-pdb.set_trace()
-
 [f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF:")
