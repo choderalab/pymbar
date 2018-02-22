@@ -49,7 +49,7 @@ if (dtype == 'temperature'): # if the temperatures are equally spaced
 elif (dtype == 'beta'): # if the inverse temperatures are equally spaced.
     types = ['var','dbeta','ddbeta']
 else:
-    print 'type of finite difference not recognized must be \'beta\' or \'temperature\''
+    print('type of finite difference not recognized must be \'beta\' or \'temperature\'')
     quit()
 ntypes = len(types)
 
@@ -72,7 +72,7 @@ def read_total_energies(pathname,colnum):
 	colnum (integer) column the energy is found in
     """
 
-    print "--Reading total energies from %s/..." % pathname
+    print("--Reading total energies from %s/..." % pathname)
 
     # Initialize Return variables
     E_kn = numpy.zeros([NumTemps, NumIterations], numpy.float64)
@@ -104,7 +104,7 @@ def read_simulation_temps(pathname,NumTemps):
         beforehand the total number of temperatures (parameter at top)
     """
     
-    print "--Reading temperatures from %s/..." % pathname    
+    print("--Reading temperatures from %s/..." % pathname)    
 
     # Initialize return variable
     temps_from_file = numpy.zeros(NumTemps, numpy.float64)
@@ -124,20 +124,20 @@ def read_simulation_temps(pathname,NumTemps):
 
 def PrintResults(string,E,dE,Cv,dCv,types):
 
-    print string
-    print "Temperature    dA        <E> +/- d<E>  ",
+    print(string)
+    print("Temperature    dA        <E> +/- d<E>  ", end=' ')
     for t in types:
-        print "    Cv +/- dCv (%s)" % (t),    
-    print ""    
-    print "------------------------------------------------------------------------------------------------------"
+        print("    Cv +/- dCv (%s)" % (t), end=' ')    
+    print("")    
+    print("------------------------------------------------------------------------------------------------------")
     for k in range(originalK,K):
-        print "%8.3f %8.3f %9.3f +/- %5.3f" % (Temp_k[k],mbar.f_k[k]/beta_k[k],E[k],dE[k]),
+        print("%8.3f %8.3f %9.3f +/- %5.3f" % (Temp_k[k],mbar.f_k[k]/beta_k[k],E[k],dE[k]), end=' ')
         for i in range(len(types)):
             if Cv[k,i,0] < -100000.0:
-                print "         N/A          ", 
+                print("         N/A          ", end=' ') 
             else:
-                print "    %7.4f +/- %6.4f" % (Cv[k,i,0],dCv[k,i]), 
-        print ""    
+                print("    %7.4f +/- %6.4f" % (Cv[k,i,0],dCv[k,i]), end=' ') 
+        print("")    
             
 #========================================================================
 # MAIN
@@ -215,7 +215,7 @@ beta_k = 1 / (kB * Temp_k)
 # Compute reduced potential energies
 #------------------------------------------------------------------------
 
-print "--Computing reduced energies..."
+print("--Computing reduced energies...")
 
 u_kln = numpy.zeros([K,K,NumIterations], numpy.float64) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
 E_kn_samp = numpy.zeros([K,NumIterations], numpy.float64) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
@@ -231,12 +231,12 @@ dE_expect = numpy.zeros([K],numpy.float64)
 
 for n in range(nBoots_work):
     if (n > 0):
-        print "Bootstrap: %d/%d" % (n,nBoots)
+        print("Bootstrap: %d/%d" % (n,nBoots))
     for k in range(K):
     # resample the results:
         if Nall_k[k] > 0:
             if (n == 0):  # don't randomize the first one
-                booti = numpy.array(range(N_k[k]))
+                booti = numpy.array(list(range(N_k[k])))
             else:
                 booti=numpy.random.randint(Nall_k[k],size=Nall_k[k])
             E_kn_samp[k,0:Nall_k[k]] = E_kn[k,booti] 
@@ -251,11 +251,11 @@ for n in range(nBoots_work):
 
 # Initialize MBAR with Newton-Raphson
     if (n==0):  # only print this information the first time        
-        print ""
-        print "Initializing MBAR:"
-        print "--K = number of Temperatures with data = %d" % (originalK)
-        print "--L = number of total Temperatures = %d" % (K) 
-        print "--N = number of Energies per Temperature = %d" % (numpy.max(Nall_k))
+        print("")
+        print("Initializing MBAR:")
+        print("--K = number of Temperatures with data = %d" % (originalK))
+        print("--L = number of total Temperatures = %d" % (K)) 
+        print("--N = number of Energies per Temperature = %d" % (numpy.max(Nall_k)))
 
     if (n==0):
         initial_f_k = None # start from zero 
@@ -268,8 +268,8 @@ for n in range(nBoots_work):
     # Compute Expectations for E_kt and E2_kt as E_expect and E2_expect
     #------------------------------------------------------------------------
 
-    print ""
-    print "Computing Expectations for E..."
+    print("")
+    print("Computing Expectations for E...")
     E_kln = u_kln  # not a copy, we are going to write over it, but we don't need it any more.
     for k in range(K):
         E_kln[:,k,:]*=beta_k[k]**(-1)  # get the 'unreduced' potential -- we can't take differences of reduced potentials because the beta is different; math is much more confusing with derivatives of the reduced potentials..
@@ -278,7 +278,7 @@ for n in range(nBoots_work):
     # expectations for the differences, which we need for numerical derivatives
     (DeltaE_expect, dDeltaE_expect) = mbar.computeExpectations(E_kln,output='differences', state_dependent = True)
 
-    print "Computing Expectations for E^2..."
+    print("Computing Expectations for E^2...")
     (E2_expect,dE2_expect) = mbar.computeExpectations(E_kln**2, state_dependent = True)
     allE2_expect[:,n] = E2_expect[:]
 
@@ -290,8 +290,8 @@ for n in range(nBoots_work):
     #------------------------------------------------------------------------
 
     if (n==0):
-        print ""
-        print "Computing Heat Capacity as ( <E^2> - <E>^2 ) / ( R*T^2 ) and as d<E>/dT"
+        print("")
+        print("Computing Heat Capacity as ( <E^2> - <E>^2 ) / ( R*T^2 ) and as d<E>/dT")
 
     # Problem is that we don't have a good uncertainty estimate for the variance.
     # Try a silly trick: but it doesn't work super well.
@@ -386,9 +386,9 @@ for n in range(nBoots_work):
                 # also wrong, need to be fixed.
              
     if (n==0):            
-        print 'WARNING: only the first derivative (dT) analytic error estimates can currently be trusted.'
-        print 'They are the only ones reasonably close to bootstrap, within 10-15% at all T.'
-        print ''
+        print('WARNING: only the first derivative (dT) analytic error estimates can currently be trusted.')
+        print('They are the only ones reasonably close to bootstrap, within 10-15% at all T.')
+        print('')
         PrintResults("Analytic Error Estimates",E_expect,dE_expect,allCv_expect,dCv_expect,types)
 
 if nBoots > 0:
