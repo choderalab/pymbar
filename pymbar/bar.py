@@ -147,7 +147,7 @@ def BARzero(w_F, w_R, DeltaF):
     return fzero
 
 
-def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, relative_tolerance=1.0e-20, verbose=False, method='false-position', iterated_solution=True):
+def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-15, verbose=False, method='false-position', iterated_solution=True):
     """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
     Parameters
@@ -162,6 +162,9 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         DeltaF can be set to initialize the free energy difference with a guess
     compute_uncertainty : bool, optional, default=True
         if False, only the free energy is returned
+    uncertainty_method: string, optional, default=BAR
+        There are two possible uncertainty estimates for BAR.  One agrees with MBAR for two states exactly;
+        The other only agrees with MBAR in the limit of good overlap. See below.
     maximum_iterations : int, optional, default=500
         can be set to limit the maximum number of iterations performed
     relative_tolerance : float, optional, default=1E-11
@@ -294,7 +297,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         if iterated_solution:
             relative_change = abs((DeltaF - DeltaF_old) / DeltaF)
             if verbose:
-                print("relative_change = %12.3f" % relative_change)
+                print("relative_change = {:12.3f}".format(relative_change))
 
             if ((iteration > 0) and (relative_change < relative_tolerance)):
                 # Convergence is achieved.
@@ -316,7 +319,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
                 raise BoundsError(message)
 
         if verbose:
-            print("iteration %5d : DeltaF = %16.3f" % (iteration, DeltaF))
+            print("iteration {:5d}: DeltaF = {:16.3f}",format(iteration, DeltaF))
 
     # Report convergence, or warn user if not achieved.
     if iterated_solution:
@@ -329,44 +332,114 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
 
     if compute_uncertainty:
 
-        # Compute asymptotic variance estimate using Eq. 10a of Bennett, 1976 (except with n_1<f>_1^2 in
-        # the second denominator, it is an error in the original
-        # NOTE: The numerical stability of this computation may need to be improved, because BAR and MBAR 
-        # don't agree for poor overlap.
+        '''
+
+        Compute asymptotic variance estimate using Eq. 10a of Bennett,
+        1976 (except with n_1<f>_1^2 in the second denominator, it is
+        an error in the original NOTE: The 'BAR' and 'MBAR' estimators
+        do not agree for poor overlap. This is not because of
+        numerical precision, but because they are fundamentally
+        different estimators. For poor overlap, 'MBAR' diverges high,
+        and 'BAR' diverges by being too low. In situations they are
+        noticeably from each other, they are also pretty different
+        from the true answer (obtained by calculating the standard
+        deviation over lots of realizations).
+
+        First, we examine the 'BAR' equation. Rederive from Bennett, substituting (8) into (7)
+
+        (8)    -> W = [q0/n0 exp(-U1) + q1/n1 exp(-U0)]^-1
+                    <(W exp(-U1))^2 >_0         <(W exp(-U0))^2 >_1
+        (7)    -> -----------------------  +   -----------------------   - 1/n0 - 1/n1
+                   n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
+
+            Const cancels out of top and bottom.   Wexp(-U0) = [q0/n0 exp(-(U1-U0)) + q1/n1]^-1
+                                                             =  n1/q1 [n1/n0 q0/q1 exp(-(U1-U0)) + 1]^-1
+                                                             =  n1/q1 [exp (M+(F1-F0)-(U1-U0)+1)^-1]
+                                                             =  n1/q1 f(x)
+                                                   Wexp(-U1) = [q0/n0 + q1/n1 exp(-(U0-U1))]^-1
+                                                             =  n0/q0 [1 + n0/n1 q1/q0 exp(-(U0-U1))]^-1
+                                                             =  n0/q0 [1 + exp(-M+[F0-F1)-(U0-U1))]^-1
+                                                             =  n0/q0 f(-x)
 
 
-        # try to rederive from Bennett, substituting (8) into (7)
-        # (8) -> W = [q0/n0 exp(-U1) + q1/n1 exp(-U0)]^-1
-        #          <(W exp(-U1))^2 >_0         <(W exp(-U0))^2 >_1
-        # (7) -> -----------------------  +   -----------------------   - 1/n0 - 1/n1
-        #        n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
-        #
-        #    const cancels out of top and bottom.   Wexp(-U0) =[q0/n0 exp(-(U1-U0)) + q1/n1]^-1
-        #                                                     = n1/q1 [n1/n0 q0/q1 exp(-(U1-U0)) + 1]^-1
-        #                                                     = n1/q1 [exp (M+(F1-F0)-(U1-U0)+1)^-1]
-        #                                                     = n1/q1 f(x)
-        #                                           Wexp(-U1) =[q0/n0 + q1/n1 exp(-(U0-U1))]^-1
-        #                                                     = n0/q0 [1 + n0/n1 q1/q0 exp(-(U0-U1))]^-1
-        #                                                     = n0/q0 [1 + exp(-M+[F0-F1)-(U0-U1))]^-1
-        #                                                     = n0/q0 f(-x)
-        #
-        #
-        #          <(W exp(-U1))^2 >_0          <(W exp(-U0))^2 >_1
-        # (7) -> -----------------------   +  -----------------------   - 1/n0 - 1/n1
-        #        n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
-        #
-        #           <[n0/q0 f(-x)]^2>_0        <[n1/q1 f(x)]^2>_1
-        #        -----------------------  +  ------------------------   -1/n0 -1/n1
-        #          n_0 <n0/q0 f(-x)>_0^2      n_1 <n1/q1 f(x)>_1^2
-        #
-        #       1      <[f(-x)]^2>_0                 1        <[f(x)]^2>_1
-        #       -  [-----------------------  - 1]  + -  [------------------------  - 1]
-        #       n0      <f(-x)>_0^2                  n1      n_1<f(x)>_1^2
+                  <(W exp(-U1))^2 >_0          <(W exp(-U0))^2 >_1
+         (7) -> -----------------------   +  -----------------------   - 1/n0 - 1/n1
+                n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
 
-        # where f = fermi function.
+                   <[n0/q0 f(-x)]^2>_0        <[n1/q1 f(x)]^2>_1
+                -----------------------  +  ------------------------   -1/n0 -1/n1
+                  n_0 <n0/q0 f(-x)>_0^2      n_1 <n1/q1 f(x)>_1^2
+
+               1      <[f(-x)]^2>_0                 1        <[f(x)]^2>_1
+               -  [-----------------------  - 1]  + -  [------------------------  - 1]
+               n0      <f(-x)>_0^2                  n1      n_1<f(x)>_1^2
+
+        where f = the fermi function, 1/(1+exp(-x))
+
+        This formula the 'BAR' equation works for works for free
+        energies (F0-F1) that don't satisfy the BAR equation.  The
+        'MBAR' equation, detailed below, only works for free energies
+        that satisfy the equation.
+
+
+        Now, let's look at the MBAR version of the uncertainty.  This
+        is written (from Shirts and Chodera, JPC, 129, 124105, Equation E9) as
+
+              [ n0<f(x)f(-x)>_0 + n1<f(x)f(-x)_1 ]^-1 - n0^-1 - n1^-1
+
+              we note the f(-x) + f(x)  = 1, and change this to:
+
+              [ n0<(1-f(-x)f(-x)>_0 + n1<f(x)(1-f(x))_1 ]^-1 - n0^-1 - n1^-1
+
+              [ n0<f(-x)-f(-x)^2)>_0 + n1<f(x)-f(x)^2)_1 ]^-1 - n0^-1 - n1^-1
+
+                                                1                                         1     1
+              --------------------------------------------------------------------    -  --- - ---
+                 n0 <f(-x)>_0 - n0 <[f(-x)]^2>_0 + n1 <f(x)>_1 + n1 <[f(x)]^2>_1          n0    n1
+
+
+        Removing the factor of - (T_F + T_R)/(T_F*T_R)) from both, we compare:
+
+                  <[f(-x)]^2>_0          <[f(x)]^2>_1
+              [------------------]  + [---------------]
+                 n0 <f(-x)>_0^2          n1 <f(x)>_1^2
+
+                                                1
+              --------------------------------------------------------------------
+                 n0 <f(-x)>_0 - n0 <[f(-x)]^2>_0 + n1 <f(x)>_1 + n1 <[f(x)]^2>_1
+
+        denote: <f(-x)>_0 = afF
+                <f(-x)^2>_0 = afF2
+                <f(x)>_1 = afR
+                <f(x)^2>_1 = afF2
+
+        Then we can look at both of these as:
+
+        variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
+        variance_MBAR = 1/(afF*T_F - afF2*T_F + afR*T_R - afR2*T_R)
+
+        Rearranging:
+
+        variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
+        variance_MBAR = 1/(afF*T_F + afR*T_R - (afF2*T_F +  afR2*T_R))
+
+        # check the steps below?  Not quite sure.
+        variance_BAR = (afF2/afF**2) + (afR2/afR**2)  = (afF2 + afR2)/afR**2
+        variance_MBAR = 1/(afF + afR - (afF2 +  afR2)) = 1/(2*afR-(afF2+afR2))
+
+        Definitely not the same.  Now, the reason that they both work
+        for high overlap is still not clear. We will determine the
+        difference at some point.
+
+        see https://github.com/choderalab/pymbar/issues/281 for more information.
+
+        Now implement the two computations.
+        '''
+
         # Determine number of forward and reverse work values provided.
         T_F = float(w_F.size)  # number of forward work values
         T_R = float(w_R.size)  # number of reverse work values
+
         # Compute log ratio of forward and reverse counts.
         M = np.log(T_F / T_R)
 
@@ -375,81 +448,42 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, maximum_iterations=500, 
         else:
             C = M - DeltaF_initial
 
-        # fF = 1 / (1 + np.exp(w_F + C)), but we need to handle overflows
-        # In theory, overflow handling should not be needed now, because we use numlogexp or a custom routine.
-        # but still seems to give some slight differences for very large entries.  Leave for now,
-        # because uncertainties only calculated once.
+        # In theory, overflow handling should not be needed now, because we use numlogexp or a custom routine?
 
+        # fF = 1 / (1 + np.exp(w_F + C)), but we need to handle overflows
         exp_arg_F = (w_F + C)
         max_arg_F  = np.max(exp_arg_F)
         log_fF = - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
         afF  = np.exp(logsumexp(log_fF)-max_arg_F)/T_F
 
-        #fR = 1 / (1 + np.exp(w_R - C)), but we need to handle overflows
+        # fR = 1 / (1 + np.exp(w_R - C)), but we need to handle overflows
         exp_arg_R = (w_R - C)
         max_arg_R  = np.max(exp_arg_R)
         log_fR = - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
         afR = np.exp(logsumexp(log_fR)-max_arg_R)/T_R
 
-        #var(x) = <x^2> - <x>^2
         afF2 = np.exp(logsumexp(2*log_fF)-2*max_arg_F)/T_F
         afR2 = np.exp(logsumexp(2*log_fR)-2*max_arg_R)/T_R
 
-        # an alternate formula for the variance that works for guesses
-        # for the free energy that don't satisfy the BAR equation.
-        
-        #import pdb
-        #pdb.set_trace()
-        
-        variance = (afF2/afF**2 - 1.0)/T_F + (afR2/afR**2 - 1.0)/T_R
+        nrat = (T_F + T_R)/(T_F * T_R)   # same for both methods
 
-        dDeltaF = np.sqrt(variance)
-
-        import pdb
-        pdb.set_trace()
-
-        # let's look at the MBAR version 
-
-        #var1 = 0
-        #var1 += np.exp(logsumexp(- np.log(1 + np.exp(exp_arg_F)) - np.log(1 + np.exp(-exp_arg_F))))
-        #var1 += np.exp(logsumexp(- np.log(1 + np.exp(exp_arg_R)) - np.log(1 + np.exp(-exp_arg_R))))
-
-        #var2 = 0
-        #var2 += np.exp(logsumexp(- np.log(1 + np.exp(exp_arg_F)))) # afF*T_F
-        #var2 -= np.exp(logsumexp(- 2*np.log(1 + np.exp(exp_arg_F)))) # afF2*T_F
-        #var2 += np.exp(logsumexp(- np.log(1 + np.exp(exp_arg_R)))) # afR*T_R
-        #var2 -= np.exp(logsumexp(- 2*np.log(1 + np.exp(exp_arg_R)))) # afR2 * T_R
-        # OR equivalently
-        var3 = (afF*T_F - afF2*T_F + afR*T_R - afR2 * T_R) 
-        res = np.sqrt((1.0/var3) - (T_F + T_R)/(T_F*T_R))
-
-        # and at this point, afR and afT are equal. Removing the factor of - (T_F + T_R)/(T_F*T_R)) from both
-        # we are looking at
-
-        # variance1 = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
-        # variance2 = 1/(afF*T_F - afF2*T_F + afR*T_R - afR2*T_R) 
-
-        # c1 = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
-        # c2 = 1/(afF*T_F + afR*T_R - (afF2*T_F +  afR2*T_R)) 
-
-        # c1 = (afF2/afF**2) + (afR2/afR**2)  = (afF2 + afR2)/afR**2
-        # c2 = 1/(afF + afR - (afF2 +  afR2)) = 1/(2*afR-(afF2+afR2))
-
-        #             <[f(-x)]^2>_0          <[f(x)]^2>_1            1     1
-        #         [------------------]  + [---------------]    -    --- - ---
-        #            n0 <f(-x)>_0^2          n1 <f(x)>_1^2           n0    n1
-
-
-        #                                           1                                         1     1 
-        #         --------------------------------------------------------------------    -  --- - ---
-        #            n0 <f(-x)>_0 - n0 <[f(-x)]^2>_0 + n1 <f(x)>_1 + n1 <[f(x)]^2>_1          n0    n1
+        if uncertainty_method == 'BAR':
+            variance = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R - nrat
+            dDeltaF = np.sqrt(variance)
+        elif uncertainty_method == 'MBAR':
+            # OR equivalently
+            vartemp = ((afF - afF2)*T_F + (afR - afR2)*T_R)
+            dDeltaF = np.sqrt(1.0/vartemp - nrat)
+        else:
+            message = 'ERROR: BAR uncertainty method {:s} is not defined'.format(uncertainty_method)
+            raise ParameterError(message)
 
         if verbose:
-            print("DeltaF = %8.3f +- %8.3f" % (DeltaF, dDeltaF))
-        return (DeltaF, dDeltaF, res)
+            print("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
+        return (DeltaF, dDeltaF)
     else:
         if verbose:
-            print("DeltaF = %8.3f" % (DeltaF))
+            print("DeltaF = {:8.3f}".format(DeltaF))
         return DeltaF
 
 #=============================================================================================
