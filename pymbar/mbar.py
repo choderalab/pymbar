@@ -41,7 +41,7 @@ import math
 import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
-from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, logsumexp, check_w_normalized
+from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
@@ -506,6 +506,10 @@ class MBAR:
 
         Deltaf_ij = np.array(Deltaf_ij)  # Convert from np.matrix to np.array
 
+        return_vals = dict()
+
+        return_vals['Deltaf'] = Deltaf_ij
+
         if compute_uncertainty or return_theta:
             # Compute asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
@@ -517,12 +521,12 @@ class MBAR:
             self._zerosamestates(dDeltaf_ij)
             # Return matrix of free energy differences and uncertainties.
             dDeltaf_ij = np.array(dDeltaf_ij)
+            return_vals['dDeltaf'] = dDeltaf_ij
 
-        if not return_theta:
-            #Ensure return_theta is respected, this is a placeholder until a future fix to better handle Theta_ij is implemented
-            Theta_ij = None
+        if return_theta:
+            return_vals['Theta'] = Theta_ij
 
-        return Deltaf_ij, dDeltaf_ij, Theta_ij
+        return return_vals
 
     # =========================================================================
     def computeExpectationsInner(self, A_n, u_ln, state_map,
@@ -628,7 +632,7 @@ class MBAR:
 
         K = self.K
         N = self.N  # N is total number of samples
-        returns = {}  # dictionary we will store uncertainties in
+        return_vals = dict() # dictionary we will store uncertainties in
 
         # make observables all positive, allowing us to take the logarithm, which is
         # required to prevent overflow in some examples.
@@ -723,16 +727,16 @@ class MBAR:
             li = K+state_list
             i = np.concatenate((si,li))
             Theta = Theta_ij[np.ix_(i, i)]
-            returns['Theta'] = Theta
+            return_vals['Theta'] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                returns['Amin'] = (A_min[state_map[1,np.arange(S)]] - 1)
+                return_vals['Amin'] = (A_min[state_map[1,np.arange(S)]] - 1)
 
         # free energies at these new states
-        returns['free energies'] =  f_k[K+state_list]
+        return_vals['f'] =  f_k[K+state_list]
 
         # Return expectations and uncertainties.
-        return returns
+        return return_vals
 
         # For reference
         # Covariance of normalization constants is cov(ln A - ln a, ln B - ln b) = (Theta(c_A,c_B)-Theta(c_A,c_b)-Theta(c_B,c_a) + Theta(c_a,c_b))
@@ -849,7 +853,7 @@ class MBAR:
     #=========================================================================
     def computeExpectations(self, A_n, u_kn=None, output='averages', state_dependent=False,
                             compute_uncertainty=True, uncertainty_method=None,
-                            warning_cutoff=1.0e-10):
+                            warning_cutoff=1.0e-10, return_theta=False):
         """Compute the expectation of an observable of a phase space function.
 
         Compute the expectation of an observable of a single phase space
@@ -960,9 +964,8 @@ class MBAR:
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
 
-        mu, sigma = None, None
-
-        if compute_uncertainty:
+        result_vals = dict()
+        if compute_uncertainty or return_theta:
             # we want the theta matrix for the exponentials of the
             # observables, which means we need to make the
             # transformation.
@@ -972,25 +975,28 @@ class MBAR:
             np.fill_diagonal(Adiag,diag)
             Theta = Adiag*inner_results['Theta']*Adiag
             covA_ij = np.array(Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K])
-
+            
         if output == 'averages':
-            mu = inner_results['observables']
+            results['mu'] = inner_results['observables']
             if compute_uncertainty:
-                sigma = np.sqrt(covA_ij[0:K,0:K].diagonal())
-
+                results['sigma'] = np.sqrt(covA_ij[0:K,0:K].diagonal())
+                
         if output == 'differences':
             A_im = np.matrix(inner_results['observables'])
             A_ij = A_im - A_im.transpose()
 
-            mu = np.array(A_ij)
+            result_vals['mu'] = np.array(A_ij)
             if compute_uncertainty:
-                sigma = self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff)
+                result_vals['sigma'] = self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff)
 
-        return mu, sigma
+        if return_theta:
+            returns['Theta'] = Theta
+
+        return result_vals
 
     #=========================================================================
     def computeMultipleExpectations(self, A_in, u_n, compute_uncertainty=True, compute_covariance=False,
-                                    uncertainty_method=None, warning_cutoff=1.0e-10):
+                                    uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False):
         """Compute the expectations of multiple observables of phase space functions.
 
         Compute the expectations of multiple observables of phase
@@ -1061,26 +1067,28 @@ class MBAR:
                                                       return_theta=(compute_uncertainty or compute_covariance),
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
-
+        result_vals = dict()
         expectations, uncertainties, covariances = None, None, None
-        expectations = inner_results['observables']
+        results_vals['expectations'] = inner_results['observables']
 
-        if compute_uncertainty or compute_covariance:
+        if compute_uncertainty or compute_covariance or return_theta:
             Adiag = np.zeros([2*I,2*I],dtype=np.float64)
             diag = np.ones(2*I,dtype=np.float64)
             diag[0:I] = diag[I:2*I] = inner_results['observables']-inner_results['Amin']
             np.fill_diagonal(Adiag,diag)
             Theta = Adiag*inner_results['Theta']*Adiag
+            if return_theta:
+                return_vals['Theta'] = Theta
 
-        if compute_uncertainty:
-            covA_ij = np.array(Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I])
-            uncertainties = np.sqrt(covA_ij[0:I,0:I].diagonal())
+            if compute_uncertainty:
+                covA_ij = np.array(Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I])
+                results_vals['uncertainties'] = np.sqrt(covA_ij[0:I,0:I].diagonal())
 
-        if compute_covariance:
-            # compute estimate of statistical covariance of the observables
-            covariances = inner_results['Theta'][0:I,0:I]
+            if compute_covariance:
+                # compute estimate of statistical covariance of the observables
+                results_vals['covariances'] = inner_results['Theta'][0:I,0:I]
 
-        return expectations, uncertainties, covariances
+        return results_vals
 
 
     #=========================================================================
@@ -1129,7 +1137,7 @@ class MBAR:
 
         # Check dimensions.
         if (N < self.N):
-            raise "There seems to be too few samples in u_kn. You must evaluate at the new potential with all of the samples used originally."
+            raise DataError("There seems to be too few samples in u_kn. You must evaluate at the new potential with all of the samples used originally.")
 
         state_list = np.arange(L)   # need to get it into the correct shape
         A_in = np.array([0])
@@ -1141,13 +1149,16 @@ class MBAR:
         Deltaf_ij, dDeltaf_ij = None, None
 
         f_k = np.matrix(inner_results['free energies'])
-        Deltaf_ij = np.array(f_k - f_k.transpose())
+
+        results_vals = dict()
+        results_vals['Deltaf'] = np.array(f_k - f_k.transpose())
 
         if (compute_uncertainty):
-            dDeltaf_ij = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
-
+            results_vals['Deltaf'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
+            
+            
         # Return matrix of free energy differences and uncertainties.
-        return Deltaf_ij, dDeltaf_ij
+        return results_vals
 
     #=====================================================================
 
@@ -1260,8 +1271,15 @@ class MBAR:
         # note: not clear that Theta[K:2*K,2*K:3*K] and Theta[K:2*K,2*K:3*K] are symmetric?
         dDelta_s_ij = self._ErrorOfDifferences(covs,warning_cutoff=warning_cutoff)
 
-        # Return expectations and uncertainties.
-        return (Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij)
+        results_vals = dict()
+        results_vals['Delta_f'] = Delta_f_ij
+        results_vals['dDelta_f'] = dDelta_f_ij
+        results_vals['Delta_u'] = Delta_u_ij
+        results_vals['dDelta_u'] = dDelta_u_ij
+        results_vals['Delta_s'] = Delta_s_ij
+        results_vals['dDelta_s'] = dDelta_s_ij
+
+        return results_vals 
 
     #=====================================================================
 
@@ -1357,7 +1375,7 @@ class MBAR:
 
             # Sanity check.
             if (len(indices) == 0):
-                raise "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
+                raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
 
             # Compute dimensionless free energy of occupying state i.
             f_i[i] = - logsumexp(log_w_n[indices])
@@ -1441,7 +1459,7 @@ class MBAR:
             return (f_i, df_i)
 
         else:
-            raise "Uncertainty method '%s' not recognized." % uncertainties
+            raise ParameterError("Uncertainty method '%s' not recognized." % uncertainties)
 
 
     #=========================================================================

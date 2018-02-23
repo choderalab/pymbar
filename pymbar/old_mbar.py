@@ -42,7 +42,7 @@ This module contains implementations of
 import math
 import numpy as np
 import numpy.linalg as linalg
-from pymbar.utils import _logsum, kln_to_kn, kn_to_n, ParameterError
+from pymbar.utils import _logsum, kln_to_kn, kn_to_n, ParameterError, DataError
 
 #=========================================================================
 # MBAR class definition
@@ -1147,7 +1147,7 @@ class MBAR:
 
         # Check dimensions.
         if (N < self.N):
-            raise "There seems to be too few samples in u_kn. You must evaluate at the new potential with all of the samples used originally."
+            raise DataError("There seems to be too few samples in u_kn. You must evaluate at the new potential with all of the samples used originally.")
 
         # Retrieve N and K for convenience.
         N = self.N
@@ -1543,7 +1543,7 @@ class MBAR:
             return (f_i, df_i)
 
         else:
-            raise "Uncertainty method '%s' not recognized." % uncertainties
+            raise ParameterError("Uncertainty method '%s' not recognized." % uncertainties)
 
         return
 
@@ -1604,7 +1604,7 @@ class MBAR:
 
             # Sanity check.
             if (len(indices) == 0):
-                raise "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
+                raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
 
             # Compute dimensionless free energy of occupying state i.
             f_i[i] = - _logsum(log_w_n[indices])
@@ -1754,8 +1754,8 @@ class MBAR:
         # Get size
         [M, N] = A.shape
         if N != M:
-            raise "pseudoinverse can only be computed for square matrices: dimensions were %d x %d" % (
-                M, N)
+            raise DataError("pseudoinverse can only be computed for square matrices: dimensions were %d x %d" % (
+                M, N))
 
         # Make sure A contains no nan.
         if(np.any(np.isnan(A))):
