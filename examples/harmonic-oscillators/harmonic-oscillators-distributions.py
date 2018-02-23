@@ -26,6 +26,7 @@
 #=============================================================================================
 import numpy
 from pymbar import testsystems, MBAR, confidenceintervals
+from pymbar.utils import ParameterError, DataError
 #=============================================================================================
 # PARAMETERS
 #=============================================================================================
@@ -41,7 +42,7 @@ if (generateplots):
   try:
     import matplotlib.pyplot as plt
   except:
-    print "Can't import matplotlib, will not produce graphs."
+    print("Can't import matplotlib, will not produce graphs.")
     generateplots = False
 
 observe = 'position^2' # the observable, one of 'mean square displacement','position', or 'potential energy'
@@ -55,7 +56,8 @@ numpy.random.seed(0)
 
 # Determine number of simulations.
 K = numpy.size(N_k)
-if numpy.shape(K_k) != numpy.shape(N_k): raise "K_k and N_k must have same dimensions."
+if numpy.shape(K_k) != numpy.shape(N_k): 
+  raise DataError("K_k and N_k must have same dimensions.")
 
 # Determine maximum number of samples to be drawn for any state.
 N_max = numpy.max(N_k)
@@ -64,12 +66,12 @@ N_max = numpy.max(N_k)
 # For a harmonic oscillator with spring constant K,
 # x ~ Normal(x_0, sigma^2), where sigma = 1/sqrt(beta K)
 sigma_k = (beta * K_k)**-0.5
-print "Gaussian widths:"
-print sigma_k
+print("Gaussian widths:")
+print(sigma_k)
 
 # Compute the absolute dimensionless free energies of each oscillator analytically.
 # f = - ln(sqrt((2 pi)/(beta K)) )
-print 'Computing dimensionless free energies analytically...'
+print('Computing dimensionless free energies analytically...')
 f_k_analytical = - numpy.log(numpy.sqrt(2 * numpy.pi) * sigma_k )
 
 # Compute true free energy differences.
@@ -88,17 +90,17 @@ elif observe == 'position':
 elif observe == 'position^2': 
   A_k_analytical  = (1+ beta*K_k*O_k**2)/(beta*K_k)                 # observable is the position^2
 else:
-  raise "Observable %s not known." % observe
+  raise ParameterError("Observable %s not known." % observe)
 
 # DEBUG info
-print "This script will perform %d replicates of an experiment where samples are drawn from %d harmonic oscillators." % (nreplicates, K)
-print "The harmonic oscillators have equilibrium positions"
-print O_k
-print "and spring constants"
-print K_k
-print "and the following number of samples will be drawn from each (can be zero if no samples drawn):"
-print N_k
-print ""
+print("This script will perform %d replicates of an experiment where samples are drawn from %d harmonic oscillators." % (nreplicates, K))
+print("The harmonic oscillators have equilibrium positions")
+print(O_k)
+print("and spring constants")
+print(K_k)
+print("and the following number of samples will be drawn from each (can be zero if no samples drawn):")
+print(N_k)
+print("")
 
 # Conduct a number of replicates of the same experiment
 replicates_observable = [] # storage for one hash for each replicate
@@ -107,7 +109,7 @@ replicates_df = [] # storage for one hash for each replicate
 replicates_fdf = [] # storage for one hash for final observable
 
 for replicate_index in range(0,nreplicates):
-  print "Performing replicate %d / %d" % (replicate_index+1, nreplicates)
+  print("Performing replicate %d / %d" % (replicate_index+1, nreplicates))
 
   # Initialize a hash to store data for this replicate.
   replicate_df = { }
@@ -177,8 +179,8 @@ for replicate_index in range(0,nreplicates):
         As_k_estimated[k] = numpy.average(A_kn[k,k,0:N_k[k]])
         dAs_k_estimated[k]  = numpy.sqrt(numpy.var(A_kn[k,k,0:N_k[k]])/(N_k[k]-1))
 
-  print A_k_estimated
-  print dA_k_estimated
+  print(A_k_estimated)
+  print(dA_k_estimated)
 
   # need to additionally transform to get the square root
   if observe == 'RMS displacement':
@@ -212,29 +214,29 @@ for replicate_index in range(0,nreplicates):
 
 
 # compute the probability distribution of all states
-print "Free energies"
+print("Free energies")
 # compute anderson/darling statistics
 
 D = confidenceintervals.AndersonDarling(replicates_df,K)
-print "Anderson-Darling Metrics (see README.md)"
-print D
+print("Anderson-Darling Metrics (see README.md)")
+print(D)
 if (generateplots):
   confidenceintervals.QQPlot(replicates_df,K,title='Q-Q plots of free energy differences',filename="QQdf.pdf")
 (alpha_fij,Pobs_fij,Plow_fij,Phigh_fij,dPobs_fij,Pnorm_fij) = confidenceintervals.generateConfidenceIntervals(replicates_df,K)
 
-print "Standard ensemble averaged observables"
+print("Standard ensemble averaged observables")
 (alpha_Ai,Pobs_Ai,Plow_Ai,Phigh_Ai,dPobs_Ai,Pnorm_Ai) = confidenceintervals.generateConfidenceIntervals(replicates_standobservable,numpy.sum(ifzero))
 D = confidenceintervals.AndersonDarling(replicates_standobservable,numpy.sum(ifzero))
-print "Anderson-Darling Metrics (see README.md)"
-print D
+print("Anderson-Darling Metrics (see README.md)")
+print(D)
 if (generateplots):
   confidenceintervals.QQPlot(replicates_standobservable,numpy.sum(ifzero),title='Q-Q plots of ensemble averaged observables \n with standard error estimates', filename="QQstandardobserve.pdf")
 
-print "MBAR ensemble averaged observables"
+print("MBAR ensemble averaged observables")
 (alpha_Ai,Pobs_Ai,Plow_Ai,Phigh_Ai,dPobs_Ai,Pnorm_Ai) = confidenceintervals.generateConfidenceIntervals(replicates_observable,K)
 D = confidenceintervals.AndersonDarling(replicates_observable,K)
-print "Anderson-Darling Metrics (see README.md)"
-print D
+print("Anderson-Darling Metrics (see README.md)")
+print(D)
 if (generateplots):
   confidenceintervals.QQPlot(replicates_observable,K,title='Q-Q plots of ensemble averaged observables using MBAR', filename="QQMBARobserve.pdf")
 
@@ -264,8 +266,8 @@ for k in range(1,K):
      replicate['error'] = replicate_ij['error'][0,k]
      replicates_fdf.append(replicate)
    # compute the distribution of the end states only
-   print ""
-   print " ==== State %d alone with MBAR ===== " %(k)   
+   print("")
+   print(" ==== State %d alone with MBAR ===== " %(k))   
    (alpha_f,Pobs_f,Plow_f,Phigh_f,dPobs_f,Pnorm_f) = confidenceintervals.generateConfidenceIntervals(replicates_fdf,K);
    label = 'State %d' % k
    if (generateplots):
