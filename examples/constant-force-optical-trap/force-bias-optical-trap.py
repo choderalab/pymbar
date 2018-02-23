@@ -13,7 +13,7 @@ import numpy
 from math import * # additional mathematical functions
 import pymbar # multistate Bennett acceptance ratio analysis (provided by pymbar)
 from pymbar import timeseries # timeseries analysis (provided by pymbar)
-import commands
+import subprocess
 import os
 import os.path
 import sys
@@ -116,12 +116,12 @@ biasing_force_k = zeros([K], float64) # biasing_force_k[k] is the constant exter
 for k in range(K):
     biasing_force_k[k] = float(elements[k])
 infile.close()
-print "biasing forces (in pN) = "
-print biasing_force_k
+print("biasing forces (in pN) = ")
+print(biasing_force_k)
 
 # Determine maximum number of snapshots in all trajectories.
 filename = os.path.join(directory, prefix + '.trajectories')
-T_max = int(commands.getoutput('wc -l %s' % filename).split()[0]) + 1
+T_max = int(subprocess.getoutput('wc -l %s' % filename).split()[0]) + 1
 
 # Allocate storage for original (correlated) trajectories
 T_k = zeros([K], int32) # T_k[k] is the number of snapshots from umbrella simulation k
@@ -129,7 +129,7 @@ x_kt = zeros([K,T_max], float64) # x_kt[k,t] is the position of snapshot t from 
 
 # Read the trajectories.
 filename = os.path.join(directory, prefix + '.trajectories')
-print "Reading %s..." % filename
+print("Reading %s..." % filename)
 infile = open(filename, 'r')
 lines = infile.readlines()
 infile.close()
@@ -149,7 +149,7 @@ for k in range(0,K):
 all_data_indices = where(mask_kt)
 
 # Construct equal-frequency extension bins
-print "binning data..."
+print("binning data...")
 bin_kt = zeros([K, T_max], int32)
 (bin_left_boundary_i, bin_center_i, bin_width_i, bin_assignments) = construct_nonuniform_bins(x_kt[all_data_indices], nbins)
 bin_kt[all_data_indices] = bin_assignments
@@ -162,7 +162,7 @@ for k in range(K):
     g = timeseries.statisticalInefficiency(x_kt[k,0:T_k[k]], x_kt[k,0:T_k[k]])
     # store statistical inefficiency
     g_k[k] = g
-    print "timeseries %d : g = %.1f, %.0f uncorrelated samples (of %d total samples)" % (k+1, g, floor(T_k[k] / g), T_k[k])
+    print("timeseries %d : g = %.1f, %.0f uncorrelated samples (of %d total samples)" % (k+1, g, floor(T_k[k] / g), T_k[k]))
     N_max = max(N_max, ceil(T_k[k] / g) + 1)
 
 # Subsample trajectory position data.
@@ -181,8 +181,8 @@ for k in range(K):
 x0_k = zeros([K], float64) # x position corresponding to zero of potential
 for k in range(K):
     x0_k[k] = x_kn[k,0:N_k[k]].mean()
-print "x0_k = "
-print x0_k
+print("x0_k = ")
+print(x0_k)
 
 # Compute bias energies in units of kT.
 u_kln = zeros([K,K,N_max], float64) # u_kln[k,l,n] is the reduced (dimensionless) relative potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
@@ -199,7 +199,7 @@ for k in range(K):
 start_time = time.time()
 
 # Initialize MBAR.
-print "Running MBAR..."
+print("Running MBAR...")
 mbar = pymbar.MBAR(u_kln, N_k, verbose = True, method = 'adaptive', relative_tolerance = 1.0e-10)
 
 # Compute unbiased energies (all biasing forces are zero).
@@ -209,15 +209,15 @@ for k in range(K):
     u_kn[k,0:N_k[k]] = 0.0 + pN_nm_to_kT * biasing_force_k[k] * (x_kn[k,0:N_k[k]] - x0_k[k])
 
 # Compute PMF in unbiased potential (in units of kT).
-print "Computing PMF..."
+print("Computing PMF...")
 (f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
 # compute estimate of PMF including Jacobian term
 pmf_i = f_i + numpy.log(bin_width_i)
 # Write out unbiased estimate of PMF
-print "Unbiased PMF (in units of kT)"
-print "%8s %8s %8s %8s %8s" % ('bin', 'f', 'df', 'pmf', 'width')
+print("Unbiased PMF (in units of kT)")
+print("%8s %8s %8s %8s %8s" % ('bin', 'f', 'df', 'pmf', 'width'))
 for i in range(nbins):
-    print "%8.3f %8.3f %8.3f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i], pmf_i[i], bin_width_i[i])
+    print("%8.3f %8.3f %8.3f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i], pmf_i[i], bin_width_i[i]))
 
 filename = os.path.join(output_directory, 'pmf-unbiased.out')
 outfile = open(filename, 'w')
@@ -229,7 +229,7 @@ outfile.close()
 # DEBUG
 stop_time = time.time()
 elapsed_time = stop_time - start_time
-print "analysis took %f seconds" % elapsed_time
+print("analysis took %f seconds" % elapsed_time)
 
 # compute observed and expected histograms at each state
 for l in range(0,K):
@@ -256,9 +256,9 @@ for l in range(0,K):
     N_i_expected = float(N) * p_i
     dN_i_expected = numpy.sqrt(float(N) * p_i * (1.0 - p_i)) # only approximate, since correlations df_i df_j are neglected
     # plot
-    print "state %d (%f pN)" % (l, biasing_force_k[l])
+    print("state %d (%f pN)" % (l, biasing_force_k[l]))
     for bin_index in range(nbins):
-        print "%8.3f %10f %10f +- %10f" % (bin_center_i[bin_index], N_i_expected[bin_index], N_i_observed[bin_index], dN_i_observed[bin_index])        
+        print("%8.3f %10f %10f +- %10f" % (bin_center_i[bin_index], N_i_expected[bin_index], N_i_observed[bin_index], dN_i_observed[bin_index]))        
 
     # Write out observed bin counts
     filename = os.path.join(output_directory, 'counts-observed-%d.out' % l)    
@@ -314,8 +314,8 @@ plot "%(output_directory)s/pmf-expected-%(l)d.out" u 1:2:3 with yerrorbars t "MB
     outfile = open(gnuplot_input_filename, 'w')
     outfile.write(gnuplot_input)
     outfile.close()
-    output = commands.getoutput('gnuplot < %(gnuplot_input_filename)s' % vars())
-    output = commands.getoutput('epstopdf %(filename)s' % vars())    
+    output = subprocess.getoutput('gnuplot < %(gnuplot_input_filename)s' % vars())
+    output = subprocess.getoutput('epstopdf %(filename)s' % vars())    
     
 
 
