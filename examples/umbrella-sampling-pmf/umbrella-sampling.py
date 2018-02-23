@@ -144,7 +144,7 @@ for k in range(K):
 
 # Initialize MBAR.
 print("Running MBAR...")
-mbar = pymbar.MBAR(u_kln, N_k, verbose = True, method = 'adaptive')
+mbar = pymbar.MBAR(u_kln, N_k, verbose = True)
 
 # Compute PMF in unbiased potential (in units of kT).
 (f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
