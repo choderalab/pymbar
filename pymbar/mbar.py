@@ -1074,7 +1074,7 @@ class MBAR:
                                                       warning_cutoff=warning_cutoff)
         result_vals = dict()
         expectations, uncertainties, covariances = None, None, None
-        results_vals['expectations'] = inner_results['observables']
+        results_vals['mu'] = inner_results['observables']
 
         if compute_uncertainty or compute_covariance or return_theta:
             Adiag = np.zeros([2*I,2*I],dtype=np.float64)
@@ -1087,7 +1087,7 @@ class MBAR:
 
             if compute_uncertainty:
                 covA_ij = np.array(Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I])
-                results_vals['uncertainties'] = np.sqrt(covA_ij[0:I,0:I].diagonal())
+                results_vals['sigma'] = np.sqrt(covA_ij[0:I,0:I].diagonal())
 
             if compute_covariance:
                 # compute estimate of statistical covariance of the observables
