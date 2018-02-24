@@ -437,10 +437,10 @@ class MBAR:
 
         W = np.matrix(self.getWeights(), np.float64)
         O = np.multiply(self.N_k, W.T * W)
-        (eigenval, eigevec) = linalg.eig(O)
+        (eigenvals, eigevec) = linalg.eig(O)
         # sort in descending order
-        eigenvals = np.sort(eigenval)[::-1]
-        overlap_scalar = 1 - eigenval[1]
+        eigenvals = np.sort(eigenvals)[::-1]
+        overlap_scalar = 1 - eigenvals[1] # 1 minus the second largest eigenvalue
 
         results_vals = dict()
         results_vals['scalar'] = overlap_scalar

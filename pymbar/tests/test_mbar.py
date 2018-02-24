@@ -74,7 +74,6 @@ def test_mbar_free_energies():
         results = mbar.getFreeEnergyDifferences()
         fe = results['Delta_f']
         fe_sigma = results['dDelta_f']
-        Theta_ij = results['Theta']
         fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
 
         fe0 = test.analytical_free_energies()
@@ -286,7 +285,6 @@ def test_mbar_computePerturbedFreeEnergeies():
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         numN = np.sum(N_k[:2])
         mbar = MBAR(u_kn[:2,:numN], N_k[:2])  # only do MBAR with the first and last set
-        fe, fe_sigma = 
         results = mbar.computePerturbedFreeEnergies(u_kn[2:,:numN])
         fe = results['Delta_f']
         fe_sigma = results['dDelta_f']
