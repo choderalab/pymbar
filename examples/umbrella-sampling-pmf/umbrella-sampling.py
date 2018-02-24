@@ -147,7 +147,9 @@ print("Running MBAR...")
 mbar = pymbar.MBAR(u_kln, N_k, verbose = True)
 
 # Compute PMF in unbiased potential (in units of kT).
-(f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
+results = mbar.computePMF(u_kn, bin_kn, nbins)
+f_i = results['f_i']
+df_i = results['df_i']
 
 # Write out PMF
 print("PMF (in units of kT)")
