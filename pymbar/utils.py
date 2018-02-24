@@ -294,11 +294,11 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     See Also
     --------
-    numpy.logaddexp, numpy.logaddexp2, scipy.misc.logsumexp
+    numpy.logaddexp, numpy.logaddexp2, scipy.special.logsumexp
 
     Notes
     -----
-    This is based on scipy.misc.logsumexp but with optional numexpr
+    This is based on scipy.special.logsumexp but with optional numexpr
     support for improved performance.
     """
 

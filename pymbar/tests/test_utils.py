@@ -1,7 +1,7 @@
 import numpy as np
 import pymbar
 from pymbar.utils_for_testing import eq
-import scipy.misc
+import scipy.special
 from nose import SkipTest
 
 def test_logsumexp():
@@ -10,7 +10,7 @@ def test_logsumexp():
     for axis in range(a.ndim):
         ans_ne = pymbar.utils.logsumexp(a, axis=axis)
         ans_no_ne = pymbar.utils.logsumexp(a, axis=axis, use_numexpr=False)
-        ans_scipy = scipy.misc.logsumexp(a, axis=axis)
+        ans_scipy = scipy.special.logsumexp(a, axis=axis)
         eq(ans_ne, ans_no_ne)
         eq(ans_ne, ans_scipy)
 
@@ -21,7 +21,7 @@ def test_logsumexp_b():
     for axis in range(a.ndim):
         ans_ne = pymbar.utils.logsumexp(a, b=b, axis=axis)
         ans_no_ne = pymbar.utils.logsumexp(a, b=b, axis=axis, use_numexpr=False)
-        ans_scipy = scipy.misc.logsumexp(a, b=b, axis=axis)
+        ans_scipy = scipy.special.logsumexp(a, b=b, axis=axis)
         eq(ans_ne, ans_no_ne)
         eq(ans_ne, ans_scipy)
 
