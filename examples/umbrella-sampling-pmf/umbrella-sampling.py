@@ -7,6 +7,7 @@
 # D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
 # http://dx.doi.org/10.1016/j.jmb.2007.06.002
 
+from __future__ import print_function
 import numpy # numerical array library
 import pymbar # multistate Bennett acceptance ratio
 from pymbar import timeseries # timeseries analysis
@@ -24,12 +25,12 @@ chi_max = +180.0 # max for PMF
 nbins = 36 # number of bins for 1D PMF
 
 # Allocate storage for simulation data
-N_k = numpy.zeros([K], numpy.int32) # N_k[k] is the number of snapshots from umbrella simulation k
-K_k = numpy.zeros([K], numpy.float64) # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
-chi0_k = numpy.zeros([K], numpy.float64) # chi0_k[k] is the spring center location (in deg) for umbrella simulation k
-chi_kn = numpy.zeros([K,N_max], numpy.float64) # chi_kn[k,n] is the torsion angle (in deg) for snapshot n from umbrella simulation k
-u_kn = numpy.zeros([K,N_max], numpy.float64) # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
-g_k = numpy.zeros([K],numpy.float32);
+N_k = numpy.zeros([K], dtype = int) # N_k[k] is the number of snapshots from umbrella simulation k
+K_k = numpy.zeros([K]) # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
+chi0_k = numpy.zeros([K]) # chi0_k[k] is the spring center location (in deg) for umbrella simulation k
+chi_kn = numpy.zeros([K,N_max]) # chi_kn[k,n] is the torsion angle (in deg) for snapshot n from umbrella simulation k
+u_kn = numpy.zeros([K,N_max]) # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
+g_k = numpy.zeros([K]);
 
 # Read in umbrella spring constants and centers.
 infile = open('data/centers.dat', 'r')
@@ -52,7 +53,7 @@ if (min(T_k) == max(T_k)):
 for k in range(K):
     # Read torsion angle data.
     filename = 'data/prod%d_dihed.xvg' % k
-    print "Reading %s..." % filename
+    print("Reading %s..." % filename)
     infile = open(filename, 'r')
     lines = infile.readlines()
     infile.close()
@@ -76,7 +77,7 @@ for k in range(K):
                                  # then we need the energies to compute the PMF
         # Read energies
         filename = 'data/prod%d_energies.xvg' % k
-        print "Reading %s..." % filename
+        print("Reading %s..." % filename)
         infile = open(filename, 'r')
         lines = infile.readlines()
         infile.close()
@@ -93,15 +94,15 @@ for k in range(K):
             
     if (DifferentTemperatures):        
         g_k[k] = timeseries.statisticalInefficiency(u_kn[k,:], u_kn[k,0:N_k[k]])
-        print "Correlation time for set %5d is %10.3f" % (k,g_k[k])
+        print("Correlation time for set %5d is %10.3f" % (k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(u_kn[k,0:N_k[k]])
     else:
         chi_radians = chi_kn[k,0:N_k[k]]/(180.0/numpy.pi)
         g_cos = timeseries.statisticalInefficiency(numpy.cos(chi_radians))
         g_sin = timeseries.statisticalInefficiency(numpy.sin(chi_radians))
-        print "g_cos = %.1f | g_sin = %.1f" % (g_cos, g_sin)
+        print("g_cos = %.1f | g_sin = %.1f" % (g_cos, g_sin))
         g_k[k] = max(g_cos, g_sin)
-        print "Correlation time for set %5d is %10.3f" % (k,g_k[k])
+        print("Correlation time for set %5d is %10.3f" % (k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(chi_radians, g=g_k[k]) 
     # Subsample data.
     N_k[k] = len(indices)
@@ -115,7 +116,7 @@ u_kln = numpy.zeros([K,K,N_max], numpy.float64) # u_kln[k,l,n] is the reduced po
 u_kn -= u_kn.min()
 
 # Construct torsion bins
-print "Binning data..."
+print("Binning data...")
 delta = (chi_max - chi_min) / float(nbins)
 # compute bin centers
 bin_center_i = numpy.zeros([nbins], numpy.float64)
@@ -129,7 +130,7 @@ for k in range(K):
         bin_kn[k,n] = int((chi_kn[k,n] - chi_min) / delta)
 
 # Evaluate reduced energies in all umbrellas
-print "Evaluating reduced potential energies..."
+print("Evaluating reduced potential energies...")
 for k in range(K):
     for n in range(N_k[k]):
         # Compute minimum-image torsion deviation from umbrella center l
@@ -142,15 +143,15 @@ for k in range(K):
         u_kln[k,:,n] = u_kn[k,n] + beta_k[k] * (K_k/2.0) * dchi**2
 
 # Initialize MBAR.
-print "Running MBAR..."
-mbar = pymbar.MBAR(u_kln, N_k, verbose = True, method = 'adaptive')
+print("Running MBAR...")
+mbar = pymbar.MBAR(u_kln, N_k, verbose = True)
 
 # Compute PMF in unbiased potential (in units of kT).
 (f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
 
 # Write out PMF
-print "PMF (in units of kT)"
-print "%8s %8s %8s" % ('bin', 'f', 'df')
+print("PMF (in units of kT)")
+print("%8s %8s %8s" % ('bin', 'f', 'df'))
 for i in range(nbins):
-    print "%8.1f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i])
+    print("%8.1f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i]))
 

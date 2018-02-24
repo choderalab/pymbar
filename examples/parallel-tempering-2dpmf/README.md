@@ -24,5 +24,7 @@ The system of interest is terminally-blocked alanine peptide in explicit solvent
 
 ## Manifest
 
+* `README.md` - This file
 * `parallel-tempering-2dpmf.py` - Python script to execute this data analysis example
 * `data/` - data directory (see `data/README.md` for documentation of data files)
+* `parallel-tempering-2dpmf.sampleoutput` - output when the script is run
