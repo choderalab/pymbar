@@ -439,7 +439,7 @@ class MBAR:
         O = np.multiply(self.N_k, W.T * W)
         (eigenval, eigevec) = linalg.eig(O)
         # sort in descending order
-        eigenval = np.sort(eigenval)[::-1]
+        eigenvals = np.sort(eigenval)[::-1]
         overlap_scalar = 1 - eigenval[1]
 
         results_vals = dict()
@@ -511,9 +511,9 @@ class MBAR:
 
         Deltaf_ij = np.array(Deltaf_ij)  # Convert from np.matrix to np.array
 
-        results_vals = dict()
+        result_vals = dict()
 
-        results_vals['Delta_f'] = Deltaf_ij
+        result_vals['Delta_f'] = Deltaf_ij
 
         if compute_uncertainty or return_theta:
             # Compute asymptotic covariance matrix.
@@ -526,9 +526,9 @@ class MBAR:
             self._zerosamestates(dDeltaf_ij)
             # Return matrix of free energy differences and uncertainties.
             dDeltaf_ij = np.array(dDeltaf_ij)
-            results_vals['dDelta_f'] = dDeltaf_ij
+            result_vals['dDelta_f'] = dDeltaf_ij
 
-        if result_theta:
+        if return_theta:
             result_vals['Theta'] = Theta_ij
 
         return result_vals
@@ -735,7 +735,7 @@ class MBAR:
             result_vals['Theta'] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                return_vals['Amin'] = (A_min[state_map[1,np.arange(S)]] - 1)
+                result_vals['Amin'] = (A_min[state_map[1,np.arange(S)]] - 1)
 
         # free energies at these new states
         result_vals['f'] =  f_k[K+state_list]
@@ -982,9 +982,9 @@ class MBAR:
             covA_ij = np.array(Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K])
 
         if output == 'averages':
-            results['mu'] = inner_results['observables']
+            result_vals['mu'] = inner_results['observables']
             if compute_uncertainty:
-                results['sigma'] = np.sqrt(covA_ij[0:K,0:K].diagonal())
+                result_vals['sigma'] = np.sqrt(covA_ij[0:K,0:K].diagonal())
 
         if output == 'differences':
             A_im = np.matrix(inner_results['observables'])
@@ -1074,7 +1074,7 @@ class MBAR:
                                                       warning_cutoff=warning_cutoff)
         result_vals = dict()
         expectations, uncertainties, covariances = None, None, None
-        results_vals['mu'] = inner_results['observables']
+        result_vals['mu'] = inner_results['observables']
 
         if compute_uncertainty or compute_covariance or return_theta:
             Adiag = np.zeros([2*I,2*I],dtype=np.float64)
@@ -1083,17 +1083,17 @@ class MBAR:
             np.fill_diagonal(Adiag,diag)
             Theta = Adiag*inner_results['Theta']*Adiag
             if return_theta:
-                results_vals['Theta'] = Theta
+                result_vals['Theta'] = Theta
 
             if compute_uncertainty:
                 covA_ij = np.array(Theta[0:I,0:I]+Theta[I:2*I,I:2*I]-Theta[0:I,I:2*I]-Theta[I:2*I,0:I])
-                results_vals['sigma'] = np.sqrt(covA_ij[0:I,0:I].diagonal())
+                result_vals['sigma'] = np.sqrt(covA_ij[0:I,0:I].diagonal())
 
             if compute_covariance:
                 # compute estimate of statistical covariance of the observables
-                results_vals['covariances'] = inner_results['Theta'][0:I,0:I]
+                result_vals['covariances'] = inner_results['Theta'][0:I,0:I]
 
-        return results_vals
+        return result_vals
 
 
     #=========================================================================
@@ -1153,16 +1153,16 @@ class MBAR:
 
         Deltaf_ij, dDeltaf_ij = None, None
 
-        f_k = np.matrix(inner_results['free energies'])
+        f_k = np.matrix(inner_results['f'])
 
-        results_vals = dict()
-        results_vals['Deltaf_'] = np.array(f_k - f_k.transpose())
+        result_vals = dict()
+        result_vals['Delta_f'] = np.array(f_k - f_k.transpose())
 
         if (compute_uncertainty):
-            results_vals['dDelta_f'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
+            result_vals['dDelta_f'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
 
         # Return matrix of free energy differences and uncertainties.
-        return results_vals
+        return result_vals
 
     #=====================================================================
 
@@ -1243,7 +1243,7 @@ class MBAR:
         Theta = Adiag*Theta*Adiag
 
         # Compute reduced free energy difference.
-        f_k = np.matrix(inner_results['free energies'])
+        f_k = np.matrix(inner_results['f'])
         Delta_f_ij = np.array(f_k - f_k.transpose())
         # compute uncertainty matrix in free energies:
         covf = Theta[2*K:3*K,2*K:3*K]
@@ -1275,15 +1275,15 @@ class MBAR:
         # note: not clear that Theta[K:2*K,2*K:3*K] and Theta[K:2*K,2*K:3*K] are symmetric?
         dDelta_s_ij = self._ErrorOfDifferences(covs,warning_cutoff=warning_cutoff)
 
-        results_vals = dict()
-        results_vals['Delta_f'] = Delta_f_ij
-        results_vals['dDelta_f'] = dDelta_f_ij
-        results_vals['Delta_u'] = Delta_u_ij
-        results_vals['dDelta_u'] = dDelta_u_ij
-        results_vals['Delta_s'] = Delta_s_ij
-        results_vals['dDelta_s'] = dDelta_s_ij
+        result_vals = dict()
+        result_vals['Delta_f'] = Delta_f_ij
+        result_vals['dDelta_f'] = dDelta_f_ij
+        result_vals['Delta_u'] = Delta_u_ij
+        result_vals['dDelta_u'] = dDelta_u_ij
+        result_vals['Delta_s'] = Delta_s_ij
+        result_vals['dDelta_s'] = dDelta_s_ij
 
-        return results_vals
+        return result_vals
 
     #=====================================================================
 

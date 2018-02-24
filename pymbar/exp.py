@@ -183,6 +183,7 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     # Estimate free energy difference by Gaussian approximation, dG = <U> - 0.5*var(U)
     DeltaF = np.average(w_F) - 0.5 * var
 
+    result_vals = dict()
     if compute_uncertainty:
         # Compute effective number of uncorrelated samples.
         g = 1.0  # statistical inefficiency

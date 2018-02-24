@@ -135,8 +135,10 @@ for replicate_index in range(0,nreplicates):
 
   # Initialize the MBAR class, determining the free energies.
   mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10,verbose=False) # use fast Newton-Raphson solver
-  (Deltaf_ij_estimated, dDeltaf_ij_estimated, _theta) = mbar.getFreeEnergyDifferences()
-  
+  results = mbar.getFreeEnergyDifferences()
+  Deltaf_ij_estimated = results['Delta_f']
+  dDeltaf_ij_estimated = results['dDelta_f']
+
   # Compute error from analytical free energy differences.
   Deltaf_ij_error = Deltaf_ij_estimated - Deltaf_ij_analytical
 
@@ -163,12 +165,13 @@ for replicate_index in range(0,nreplicates):
     for k in range(0,K):
       A_kn[k,0:N_k[k]] = x_kn[k,0:N_k[k]]**2   
 
-  (A_k_estimated, dA_k_estimated) = mbar.computeExpectations(A_kn)
+  results = mbar.computeExpectations(A_kn)
+  A_k_estimated = results['mu']
+  dA_k_estimated = results['sigma']
   As_k_estimated = numpy.zeros([K],numpy.float64)
   dAs_k_estimated = numpy.zeros([K],numpy.float64)
 
   # 'standard' expectation averages
-
   ifzero = numpy.array(N_k != 0)
 
   for k in range(K):

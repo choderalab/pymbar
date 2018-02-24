@@ -228,8 +228,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         nfunc = 0
 
     if method == 'bisection' or method == 'false-position':
-        UpperB = EXP(w_F)[0]
-        LowerB = -EXP(w_R)[0]
+        UpperB = EXP(w_F)['Delta_f']
+        LowerB = -EXP(w_R)['Delta_f']
 
         FUpperB = BARzero(w_F, w_R, UpperB)
         FLowerB = BARzero(w_F, w_R, LowerB)
@@ -242,9 +242,9 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if compute_uncertainty:
                 result_vals['Delta_f'] = 0.0 
                 result_vals['dDelta_f'] = 0.0
-                return results_vals
+                return result_vals
             else:
-                results_vals['Delta_f'] = 0.0 
+                result_vals['Delta_f'] = 0.0 
                 return result_vals
 
         while FUpperB * FLowerB > 0:
