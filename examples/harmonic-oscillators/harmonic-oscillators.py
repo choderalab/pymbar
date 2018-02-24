@@ -160,7 +160,7 @@ print("Standard deviations away is:")
 df_ij_mod = dDelta_f_ij_estimated + numpy.identity(K)
 stdevs = numpy.abs(Delta_f_ij_error/df_ij_mod)
 for k in range(K):
-  stdevs[k,k] = 0;
+  stdevs[k,k] = 0
 print(stdevs)
 
 print("==============================================")
@@ -254,7 +254,7 @@ for observe in observables:
 
   if observe == 'RMS displacement':
     state_dependent = True
-    A_kn = numpy.zeros([K,N], dtype = numpy.float64);
+    A_kn = numpy.zeros([K,N], dtype = numpy.float64)
     n = 0
     for k in range(0,K):
       for nk in range(0,N_k[k]):
@@ -265,7 +265,7 @@ for observe in observables:
   # thermodynamic state
   elif observe == 'potential energy':
     state_dependent = True
-    A_kn = numpy.zeros([K,N], dtype = numpy.float64);
+    A_kn = numpy.zeros([K,N], dtype = numpy.float64)
     n = 0
     for k in range(0,K):
       for nk in range(0,N_k[k]):
@@ -364,7 +364,7 @@ for observe in observables:
     print("MBAR estimators differ by X standard deviations")
     stdevs = numpy.abs(A_kl_error/(dA_kl_estimated+numpy.identity(K)))
     for k in range(K):
-      stdevs[k,k] = 0;
+      stdevs[k,k] = 0
     print(stdevs)
 
   # save up the A_k for use in computeMultipleExpectations
@@ -449,7 +449,7 @@ print("Standard deviations away is:")
 ds_ij_mod = dDelta_s_ij + numpy.identity(K)
 stdevs = numpy.abs(Delta_s_ij_error/ds_ij_mod)
 for k in range(K):
-  stdevs[k,k] = 0;
+  stdevs[k,k] = 0
 print(stdevs)
 
 print("============================================")
@@ -482,7 +482,7 @@ print("Standard deviations away is:")
 df_ij_mod = dDelta_f_ij_estimated + numpy.identity(L)
 stdevs = numpy.abs(Delta_f_ij_error/df_ij_mod)
 for l in range(L):
-  stdevs[l,l] = 0;
+  stdevs[l,l] = 0
 print(stdevs)
 
 print("============================================")
@@ -498,7 +498,7 @@ for observe in observables:
 
   if observe == 'RMS displacement':
     state_dependent = True
-    A_kn = numpy.zeros([K,1,N_max], dtype = numpy.float64);
+    A_kn = numpy.zeros([K,1,N_max], dtype = numpy.float64)
     for k in range(0,K):
       A_kn[k,0,0:N_k[k]] = (x_kn[k,0:N_k[k]] - O_extra[nth])**2 # observable is the squared displacement
 
@@ -714,17 +714,17 @@ dx = (xmax-xmin)/nbinsperdim
 nbins = 1 + nbinsperdim**ndim
 bin_centers = numpy.zeros([nbins,ndim],numpy.float64)
 
-ibin = 1;
+ibin = 1
 pmf_analytical = numpy.zeros([nbins],numpy.float64)
-minmu2 = 1000000;
-zeroindex = 0;
+minmu2 = 1000000
+zeroindex = 0
 # construct the bins and the pmf
 for i in range(nbinsperdim):
   xbin = xmin + dx * (i + 0.5)
   bin_centers[ibin,0] = xbin
   mu2 = xbin*xbin
   if (mu2 < minmu2):
-    minmu2 = mu2;
+    minmu2 = mu2
     zeroindex = ibin
   pmf_analytical[ibin] = K0*mu2/2.0
   ibin += 1
@@ -795,10 +795,10 @@ dy = (ymax-ymin)/nbinsperdim
 nbins = 1 + nbinsperdim**ndim
 bin_centers = numpy.zeros([nbins,ndim],numpy.float64)
 
-ibin = 1; # first reserved for something outside.
+ibin = 1 # first reserved for something outside.
 pmf_analytical = numpy.zeros([nbins],numpy.float64)
-minmu2 = 1000000;
-zeroindex = 0;
+minmu2 = 1000000
+zeroindex = 0
 # construct the bins and the pmf
 for i in range(nbinsperdim):
   xbin = xmin + dx * (i + 0.5)
@@ -809,7 +809,7 @@ for i in range(nbinsperdim):
     bin_centers[ibin,1] = ybin
     mu2 = xbin*xbin+ybin*ybin
     if (mu2 < minmu2):
-      minmu2 = mu2;
+      minmu2 = mu2
       zeroindex = ibin
     pmf_analytical[ibin] = K0*mu2/2.0
     ibin += 1

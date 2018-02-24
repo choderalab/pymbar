@@ -244,7 +244,7 @@ for n in range(nBoots_work):
     # resample the results:
         if Nall_k[k] > 0:
             if (n == 0):  # don't randomize the first one
-                booti = numpy.array(list(range(N_k[k])))
+                booti = numpy.array(range(N_k[k]))
             else:
                 booti=numpy.random.randint(Nall_k[k],size=Nall_k[k])
             E_kn_samp[k,0:Nall_k[k]] = E_kn[k,booti]
