@@ -400,3 +400,12 @@ class BoundsError(Exception):
 
     """
     pass
+
+
+class DataError(Exception):
+
+    """
+    Data is inconsistent.
+
+    """
+    pass
