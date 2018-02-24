@@ -66,10 +66,13 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
     Returns
     -------
-    DeltaF : float
-        DeltaF is the free energy difference between the two states.
-    dDeltaF : float
-        dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
+    result_vals : dictionary
+    
+    Possible keys in the result_vals dictonary
+    'Delta_f' : float
+        Free energy difference
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference
 
     Notes
     -----
@@ -90,6 +93,8 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     Reverse free energy difference is -1.073 +- 0.082 kT
 
     """
+
+    result_vals = dict()
 
     # Get number of work measurements.
     T = float(np.size(w_F))  # number of work measurements
@@ -119,9 +124,11 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
         dDeltaF = (dx / Ex)
 
         # Return estimate of free energy difference and uncertainty.
-        return (DeltaF, dDeltaF)
+        result_vals['Delta_f'] = DeltaF
+        result_vals['dDelta_f'] = dDeltaF 
     else:
-        return DeltaF
+        result_vals['Delta_f'] = DeltaF
+    return result_vals
 
 #=============================================================================================
 # Gaussian approximation to exponential averaging (Gauss).
@@ -142,10 +149,13 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
     Returns
     -------
-    DeltaF : float
-        DeltaF is the free energy difference between the two states.
-    dDeltaF : float
-        dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
+    result_vals : dictionary
+    
+    Possible keys in the result_vals dictonary
+    'Delta_f' : float
+        Free energy difference
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference
 
     Notes
     -----
@@ -188,10 +198,11 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
         dDeltaF = np.sqrt(dx2)
 
         # Return estimate of free energy difference and uncertainty.
-        return (DeltaF, dDeltaF)
+        result_vals['Delta_f'] = DeltaF
+        result_vals['dDelta_f'] = dDeltaF 
     else:
-        return DeltaF
-
+        result_vals['Delta_f'] = DeltaF
+    return result_vals
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta
