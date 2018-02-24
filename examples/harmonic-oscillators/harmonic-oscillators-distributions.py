@@ -24,6 +24,7 @@
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
+from __future__ import print_function
 import numpy
 from pymbar import testsystems, MBAR, confidenceintervals
 from pymbar.utils import ParameterError, DataError
