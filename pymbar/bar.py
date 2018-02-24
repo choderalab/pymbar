@@ -181,7 +181,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     -------
     result_vals : dictionary
     
-    Possible keys in the result_vals dictonary
+    Possible keys in the result_vals dictionary
     'Delta_f' : float
         Free energy difference
     'dDelta_f': float

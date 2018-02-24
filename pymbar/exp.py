@@ -68,7 +68,8 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     -------
     result_vals : dictionary
     
-    Possible keys in the result_vals dictonary
+    Possible keys in the result_vals dictionary
+
     'Delta_f' : float
         Free energy difference
     'dDelta_f': float
@@ -151,11 +152,12 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     -------
     result_vals : dictionary
     
-    Possible keys in the result_vals dictonary
+    Possible keys in the result_vals dictionary
+
     'Delta_f' : float
-        Free energy difference
+        Free energy difference between the two states
     'dDelta_f': float
-        Estimated standard deviation of free energy difference
+        Estimated standard deviation of free energy difference between the two states.
 
     Notes
     -----

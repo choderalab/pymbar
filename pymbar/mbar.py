@@ -405,11 +405,15 @@ class MBAR:
 
         Returns
         -------
-        overlap_scalar : np.ndarray, float, shape=(K, K)
-            One minus the largest nontrival eigenvalue
-        eigenval : np.ndarray, float, shape=(K)
+        result_vals : dictonary
+
+        Possible keys in the result_vals dictionary:
+
+        'scalar' : np.ndarray, float, shape=(K, K)
+            One minus the largest nontrival eigenvalue (largest is 1 or -1)
+        'eigenvalues' : np.ndarray, float, shape=(K)
             The sorted (descending) eigenvalues of the overlap matrix.
-        O : np.ndarray, float, shape=(K, K)
+        'O' : np.ndarray, float, shape=(K, K)
             Estimated state overlap matrix: O[i,j] is an estimate
             of the probability of observing a sample from state i in state j
 
@@ -431,7 +435,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_kn, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> O_ij = mbar.computeOverlap()
+        >>> results = mbar.computeOverlap()
 
         """
 
@@ -470,15 +474,18 @@ class MBAR:
 
         Returns
         -------
-        Deltaf_ij : np.ndarray, float, shape=(K, K)
+        result_vals : dictionary
+
+        Possible keys in the result_vals dictionary:
+
+        'Delta_f' : np.ndarray, float, shape=(K, K)
             Deltaf_ij[i,j] is the estimated free energy difference
-        dDeltaf_ij : np.ndarray, float, shape=(K, K)
+        'dDelta_f' : np.ndarray, float, shape=(K, K)
             If compute_uncertainty==True,
             dDeltaf_ij[i,j] is the estimated statistical uncertainty
-            (one standard deviation) in Deltaf_ij[i,j].  Otherwise None.
-        (optional) Theta_ij : np.ndarray, float, shape=(K, K)
-            The theta_matrix if return_theta==True, otherwise None.
-
+            (one standard deviation) in Deltaf_ij[i,j].  Otherwise not included.
+        'Theta' : np.ndarray, float, shape=(K, K)
+            The theta_matrix if return_theta==True, otherwise not included.
 
         Notes
         -----
@@ -497,7 +504,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> Deltaf_ij, dDeltaf_ij, Theta_ij = mbar.getFreeEnergyDifferences()
+        >>> results = mbar.getFreeEnergyDifferences()
 
         """
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
@@ -575,13 +582,18 @@ class MBAR:
 
         Returns
         -------
+        result_vals : dictionary
 
-        A_i : np.ndarray, float, shape = (I)
-            A_i[i] is the estimate for the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
+        Possible keys in the result_vals dictionary:
 
-        d2A_ij : np.ndarray, float, shape = (I, J)
-            Ca_ij[i,j] is the COVARIANCE in the estimates of observables A_i and A_j (as determined by the state list)
-            (*not the square root of anything, the full covariance matrix*)
+        'observables': np.ndarray, float, shape = (S)
+            results_vals['observables'][i] is the estimate for the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
+
+        'Theta' : np.ndarray, float, shape = (K+len(state_list), K+len(state_list)) the covariance matrix of log weights.
+
+        'Amin' : np.ndarray, float, shape = (S), needed for reconstructing the covariance one level up. 
+
+        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+1)) as the log form is easier to work with.
 
         Notes
         -----
@@ -610,7 +622,7 @@ class MBAR:
         >>> A_n = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[:2,:]
         >>> state_map = np.array([[0,0],[1,0],[2,0],[2,1]],int)
-        >>> [A_i, d2A_ij] = mbar.computeExpectationsInner(A_n, u_n, state_map)
+        >>> results = mbar.computeExpectationsInner(A_n, u_n, state_map)
 
         """
 
@@ -892,15 +904,20 @@ class MBAR:
 
         Returns
         -------
-        A : np.ndarray, float
+        result_vals : dictionary
+
+        Possible keys in the result_vals dictionary:
+
+        'mu' : np.ndarray, float
             if output is 'averages'
             A_i  (K np float64 array) -  A_i[i] is the estimate for the expectation of A(x) for state i.
             if output is 'differences'
-        dA : np.ndarray, float
+        'sigma' : np.ndarray, float
             dA_i  (K np float64 array) - dA_i[i] is uncertainty estimate (one standard deviation) for A_i[i]
             or
             dA_ij (K np float64 array) - dA_ij[i,j] is uncertainty estimate (one standard deviation) for the difference in A beteen i and j
             or None, if compute_uncertainty is False.
+        'Theta' ((KxK np float64 array): Covariance matrix of log weights
 
         References
         ----------
@@ -914,9 +931,9 @@ class MBAR:
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_n = x_n
-        >>> (A_ij, dA_ij) = mbar.computeExpectations(A_n)
+        >>> results = mbar.computeExpectations(A_n)
         >>> A_n = u_kn[0,:]
-        >>> (A_ij, dA_ij) = mbar.computeExpectations(A_n, output='differences')
+        >>> results = mbar.computeExpectations(A_n, output='differences')
         """
 
         dims = len(np.shape(A_n))
@@ -1011,8 +1028,10 @@ class MBAR:
         which is the energy of the n samples evaluated at a the chosen
         state.
 
-        Parameters
-        ----------
+        
+        Parameters:
+        -------------
+
         A_in : np.ndarray, float, shape=(I, k, N)
             A_in[i,n] = A_i(x_n), the value of phase observable i for configuration n at state of interest
         u_n : np.ndarray, float, shape=(N)
@@ -1028,16 +1047,20 @@ class MBAR:
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
         Returns
-        -------
+        -------------
+        result_vals : dictionary
 
-        A_i : np.ndarray, float, shape=(I)
-            A_i[i] is the estimate for the expectation of A_i(x) at the state specified by u_kn
-        dA_i : np.ndarray, float, shape = (I)
-            dA_i[i] is the uncertainty in the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
+        Possible keys in the result_vals dictionary:
+
+        'mu' : np.ndarray, float, shape=(I)
+            result_vals['mu'] is the estimate for the expectation of A_i(x) at the state specified by u_kn
+        'sigma' : np.ndarray, float, shape = (I)
+            result_vals['sigma'] is the uncertainty in the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
             or None if compute_uncertainty is False
-        d2A_ij : np.ndarray, float, shape=(I, I)
-            d2A_ij[i,j] is the COVARIANCE in the estimates of A_i[i] and A_i[j]: we can't actually take a square root
+        'covariances' : np.ndarray, float, shape=(I, I)
+            result_vals['covariances'] is the COVARIANCE in the estimates of A_i[i] and A_i[j]: we can't actually take a square root
             or None if compute_covariance is False
+        'Theta': np.ndarray, float, shape=(I, I), covariances of the log weights, useful for some additional calculations.
 
         Examples
         --------
@@ -1047,7 +1070,7 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_in = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[0,:]
-        >>> (A_i, dA_i, d2A_ij) = mbar.computeMultipleExpectations(A_in, u_kn)
+        >>> results = mbar.computeMultipleExpectations(A_in, u_kn)
 
         """
 
@@ -1117,18 +1140,22 @@ class MBAR:
 
         Returns
         -------
-        Deltaf_ij : np.ndarray, float, shape=(L, L)
-            Deltaf_ij[i,j] = f_j - f_i, the dimensionless free energy difference between new states i and j
-        dDeltaf_ij : np.ndarray, float, shape=(L, L)
-            dDeltaf_ij[i,j] is the estimated statistical uncertainty in Deltaf_ij[i,j]
-            or None if compute_uncertainty is False
+        result_vals : dictionary
+
+        Possible keys in the result_vals dictionary:
+
+        'Delta_f' : np.ndarray, float, shape=(L, L)
+            result_vals['Delta_f'] = f_j - f_i, the dimensionless free energy difference between new states i and j
+        'dDelta_f' : np.ndarray, float, shape=(L, L)
+            result_vals['dDelta_f'] is the estimated statistical uncertainty in result_vals['Delta_f']
+            or not included if `compute_uncertainty` is False
 
         Examples
         --------
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> Deltaf_ij, dDeltaf_ij = mbar.computePerturbedFreeEnergies(u_kn)
+        >>> results = mbar.computePerturbedFreeEnergies(u_kn)
         """
 
         # Convert to np matrix.
@@ -1185,18 +1212,22 @@ class MBAR:
 
         Returns
         -------
-        Delta_f_ij : np.ndarray, float, shape=(K, K)
-            Delta_f_ij[i,j] is the dimensionless free energy difference f_j - f_i
-        dDelta_f_ij : np.ndarray, float, shape=(K, K)
-            uncertainty in Delta_f_ij
-        Delta_u_ij : np.ndarray, float, shape=(K, K)
-            Delta_u_ij[i,j] is the reduced potential energy difference u_j - u_i
-        dDelta_u_ij : np.ndarray, float, shape=(K, K)
-            uncertainty in Delta_f_ij
-        Delta_s_ij : np.ndarray, float, shape=(K, K)
-            Delta_s_ij[i,j] is the reduced entropy difference S/k between states i and j (s_j - s_i)
-        dDelta_s_ij : np.ndarray, float, shape=(K, K)
-            uncertainty in Delta_s_ij
+        result_vals : dictionary
+
+        Keys in the result_vals dictionary:
+
+        'Delta_f' : np.ndarray, float, shape=(K, K)
+            results['Delta_f'] is the dimensionless free energy difference f_j - f_i
+        'dDelta_f' : np.ndarray, float, shape=(K, K)
+            uncertainty in results['Delta_f']
+        'Delta_u' : np.ndarray, float, shape=(K, K)
+            results['Delta_u'] is the reduced potential energy difference u_j - u_i
+        'dDelta_u' : np.ndarray, float, shape=(K, K)
+            uncertainty in results['Delta_u']
+        'Delta_s' : np.ndarray, float, shape=(K, K)
+            results['Delta_s'] is the reduced entropy difference S/k between states i and j (s_j - s_i)
+        'dDelta_s' : np.ndarray, float, shape=(K, K)
+            uncertainty in results['Delta_s']
 
         Examples
         --------
@@ -1204,7 +1235,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> [Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij] = mbar.computeEntropyAndEnthalpy()
+        >>> results = mbar.computeEntropyAndEnthalpy()
 
         """
         if verbose:
@@ -1314,10 +1345,14 @@ class MBAR:
 
         Returns
         -------
-        f_i : np.ndarray, float, shape=(K)
-            f_i[i] is the dimensionless free energy of state i, relative to the state of lowest free energy
-        df_i : np.ndarray, float, shape=(K)
-            df_i[i] is the uncertainty in the difference of f_i with respect to the state of lowest free energy
+        result_vals : dictionary
+
+        Possible keys in the result_vals dictionary:
+
+        'f_i' : np.ndarray, float, shape=(K)
+            result_vals['f_i'][i] is the dimensionless free energy of state i, relative to the state of lowest free energy
+        'df_i' : np.ndarray, float, shape=(K)
+            result_vals['df_i'][i] is the uncertainty in the difference of f_i with respect to the state of lowest free energy
 
         Notes
         -----
@@ -1346,9 +1381,9 @@ class MBAR:
         >>> bin_n = np.zeros(x_n.shape, np.int64)
         >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
-        >>> [f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins)
+        >>> results = mbar.computePMF(u_n, bin_n, nbins)
         >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
-        >>> f_i_corrected = f_i - np.log(bin_widths)
+        >>> f_i_corrected = results['f_i'] - np.log(bin_widths)
 
         """
 
