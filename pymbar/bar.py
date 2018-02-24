@@ -179,10 +179,13 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     Returns
     -------
-    DeltaF : float
+    return_vals : dictionary
+    
+    possible keys in the results_vals dictonary
+    'Delta_f' : float
         Free energy difference
-    dDeltaF : float
-     Estimated standard deviation of free energy difference
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference
 
     References
     ----------
@@ -212,6 +215,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     """
 
+    result_vals = dict()
     # if computing nonoptimized, one step value, we set the max-iterations
     # to 1, and the method to 'self-consistent-iteration'
 
@@ -233,11 +237,15 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
         if (np.isnan(FUpperB) or np.isnan(FLowerB)):
             # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
+            # consider returning more information about failure
             print("Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty.")
             if compute_uncertainty:
-                return [0.0, 0.0]
+                result_vals['Delta_f'] = 0.0 
+                result_vals['dDelta_f'] = 0.0
+                return results_vals
             else:
-                return 0.0
+                results_vals['Delta_f'] = 0.0 
+                return result_vals
 
         while FUpperB * FLowerB > 0:
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
@@ -289,10 +297,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             # The free energy difference appears to be zero -- return.
             if verbose:
                 print('The free energy difference appears to be zero.')
-            if compute_uncertainty:
-                return [0.0, 0.0]
-            else:
-                return 0.0
+            result_vals['Delta_f'] = 0.0 
+            break
 
         if iterated_solution:
             relative_change = abs((DeltaF - DeltaF_old) / DeltaF)
@@ -480,11 +486,14 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
         if verbose:
             print("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
-        return (DeltaF, dDeltaF)
+        result_vals['Delta_f'] = DeltaF
+        result_vals['dDelta_f'] = dDeltaF
     else:
         if verbose:
             print("DeltaF = {:8.3f}".format(DeltaF))
-        return DeltaF
+        result_vals['Delta_f'] = DeltaF
+
+    return result_vals
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta
