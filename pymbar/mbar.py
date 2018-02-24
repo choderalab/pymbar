@@ -41,7 +41,7 @@ import math
 import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
-from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, logsumexp, check_w_normalized
+from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
@@ -1142,7 +1142,7 @@ class MBAR:
 
         # Check dimensions.
         if (N < self.N):
-            raise "There seems to be too few samples in u_kn. You must evaluate at the new potential with all of the samples used originally."
+            raise DataError("There seems to be too few samples in u_kn. You must evaluate at the new potential with all of the samples used originally.")
 
         state_list = np.arange(L)   # need to get it into the correct shape
         A_in = np.array([0])
@@ -1379,7 +1379,7 @@ class MBAR:
 
             # Sanity check.
             if (len(indices) == 0):
-                raise "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
+                raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
 
             # Compute dimensionless free energy of occupying state i.
             f_i[i] = - logsumexp(log_w_n[indices])
@@ -1473,7 +1473,7 @@ class MBAR:
             result_vals['df_i'] = df_i
 
         else:
-            raise "Uncertainty method '%s' not recognized." % uncertainties
+            raise ParameterError("Uncertainty method '%s' not recognized." % uncertainties)
 
 
     #=========================================================================

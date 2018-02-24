@@ -90,7 +90,7 @@ class ExponentialTestCase(object):
     def analytical_x_squared(self):
         return self.analytical_variances() + self.analytical_means() ** 2.
 
-    def sample(self, N_k=(10, 20, 30, 40, 50), mode='u_kln'):
+    def sample(self, N_k=(10, 20, 30, 40, 50), mode='u_kln', seed=None):
         """Draw samples from the distribution.
 
         Parameters
@@ -101,6 +101,7 @@ class ExponentialTestCase(object):
         mode : str, optional, default='u_kln'
             If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
             If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
+        seed: int, optional, default=None.  Provides control over the random seed for replicability.
 
         Returns
         -------
@@ -123,6 +124,9 @@ class ExponentialTestCase(object):
            N_k[k] is the number of samples generated from state k
 
         """
+
+        np.random.seed(seed)
+
         N_k = np.array(N_k, np.int32)
         if len(N_k) != self.n_states:
             raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))

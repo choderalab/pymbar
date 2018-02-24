@@ -1,23 +1,23 @@
-MBAR analysis of single-molecule DNA hairpin single-molecule equilibrium experiments under constant force load.
+##MBAR analysis of single-molecule DNA hairpin single-molecule equilibrium experiments under constant force load.
 
-DESCRIPTION
+#DESCRIPTION
 
-REFERENCES
+#REFERENCES
 
 [1] Woodside MT, Behnke-Parks WM, Larizadeh K, Travers K, Herschlag D, and Block SM. Nanomechanical measurements of the sequence-dependent folding landscapes of single nucleic acid hairpins. PNAS 103(16):6190-6195, 2006.
 [2] Greenleaf WJ, Woodside MT, Abbondanzieri EA, and Block SM. Passive all-optical force clamp for high-resolution laser trapping. PRL 95:208102, 2005.
 
 
-MANIFEST
+#MANIFEST
 
-original-data/ - original data in Excel spreadsheet form, provided by Michael T. Woodside <Michael.Woodside@nrc-cnrc.gc.ca>, corresponding author of [1].  Data has been compressed with bzip2 as 20R55_4T_data.xls.bz2
-processed-data/ - external biasing forces (in pN) and extension trajectories (in nm, 0.1 ms time resolution) extracted from the Excel files in original-data/
-extract-data.py - Python script to extract data from Excel datafiles (slow!)
-force-bias-optical-trap.py - Python script to compute potentials of mean force (PMFs) using MBAR
-plots/ - directory containing plots
-output/ - directory containing PMFs
+`original-data/` - original data in Excel spreadsheet form, provided by Michael T. Woodside <Michael.Woodside@nrc-cnrc.gc.ca>, corresponding author of [1].  Data has been compressed with bzip2 as 20R55_4T_data.xls.bz2
+`processed-data/` - external biasing forces (in pN) and extension trajectories (in nm, 0.1 ms time resolution) extracted from the Excel files in original-data/
+`extract-data.py` - Python script to extract data from Excel datafiles (run as `extract_data.py` in place)
+`force-bias-optical-trap.py` - Python script to compute potentials of mean force (PMFs) using MBAR
+`plots/` - directory containing plots
+`output/` - directory containing PMFs
 
-CORRESPONDENCE
+#USAGE
 
 Correspondence with the corresponding author, Michael T. Woodside, describing the dataset appears below.
 
@@ -50,10 +50,5 @@ Cheers,
 Michael Woodside
 National Institute for Nanotechnology, NRC
  and Dept. of Physics, University of Alberta
-11421 Saskatchewan Dr
-Edmonton AB, T6G 2M9
-Canada
-tel: (780) 641-1695
-fax: (780) 641-1601
 ---------------------------------------------------------------
 

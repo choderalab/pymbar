@@ -54,47 +54,47 @@ Using g = 149.7 to obtain 67 uncorrelated samples per temperature
 67 uncorrelated samples per temperature
 Computing reduced potential energies...
 Binning torsions...
-66 bins were populated:
-bin     0 (-162.0, -162.0)           71 conformations
-bin     1 (-162.0, -126.0)           15 conformations
+67 bins were populated:
+bin     0 (-162.0, -162.0)           73 conformations
+bin     1 (-162.0, -126.0)           14 conformations
 bin     2 (-162.0,  -90.0)           14 conformations
 bin     3 (-162.0,  -54.0)           27 conformations
 bin     4 (-162.0,  -18.0)            3 conformations
 bin     5 (-162.0,   18.0)            8 conformations
 bin     6 (-162.0,   54.0)           18 conformations
-bin     7 (-162.0,   90.0)           41 conformations
-bin     8 (-162.0,  126.0)          143 conformations
+bin     7 (-162.0,   90.0)           42 conformations
+bin     8 (-162.0,  126.0)          141 conformations
 bin     9 (-162.0,  162.0)          262 conformations
-bin    10 (-126.0, -162.0)          101 conformations
-bin    11 (-126.0, -126.0)           18 conformations
-bin    12 (-126.0,  -90.0)           33 conformations
-bin    13 (-126.0,  -54.0)           54 conformations
-bin    14 (-126.0,  -18.0)           19 conformations
+bin    10 (-126.0, -162.0)           99 conformations
+bin    11 (-126.0, -126.0)           20 conformations
+bin    12 (-126.0,  -90.0)           32 conformations
+bin    13 (-126.0,  -54.0)           51 conformations
+bin    14 (-126.0,  -18.0)           20 conformations
 bin    15 (-126.0,   18.0)           18 conformations
-bin    16 (-126.0,   54.0)           16 conformations
+bin    16 (-126.0,   54.0)           15 conformations
 bin    17 (-126.0,   90.0)           46 conformations
-bin    18 (-126.0,  126.0)          185 conformations
-bin    19 (-126.0,  162.0)          304 conformations
-bin    20 ( -90.0, -162.0)           50 conformations
-bin    21 ( -90.0, -126.0)            9 conformations
-bin    22 ( -90.0,  -90.0)           21 conformations
-bin    23 ( -90.0,  -54.0)           42 conformations
-bin    24 ( -90.0,  -18.0)           25 conformations
+bin    18 (-126.0,  126.0)          187 conformations
+bin    19 (-126.0,  162.0)          306 conformations
+bin    20 ( -90.0, -162.0)           51 conformations
+bin    21 ( -90.0, -126.0)            8 conformations
+bin    22 ( -90.0,  -90.0)           22 conformations
+bin    23 ( -90.0,  -54.0)           43 conformations
+bin    24 ( -90.0,  -18.0)           24 conformations
 bin    25 ( -90.0,   18.0)            8 conformations
 bin    26 ( -90.0,   54.0)           18 conformations
 bin    27 ( -90.0,   90.0)           62 conformations
-bin    28 ( -90.0,  126.0)          166 conformations
+bin    28 ( -90.0,  126.0)          164 conformations
 bin    29 ( -90.0,  162.0)          195 conformations
 bin    30 ( -54.0, -162.0)           14 conformations
 bin    31 ( -54.0, -126.0)            3 conformations
-bin    32 ( -54.0,  -90.0)           14 conformations
-bin    33 ( -54.0,  -54.0)           79 conformations
+bin    32 ( -54.0,  -90.0)           16 conformations
+bin    33 ( -54.0,  -54.0)           78 conformations
 bin    34 ( -54.0,  -18.0)           24 conformations
 bin    35 ( -54.0,   18.0)            1 conformations
 bin    36 ( -54.0,   54.0)            8 conformations
-bin    37 ( -54.0,   90.0)           38 conformations
-bin    38 ( -54.0,  126.0)          254 conformations
-bin    39 ( -54.0,  162.0)          173 conformations
+bin    37 ( -54.0,   90.0)           40 conformations
+bin    38 ( -54.0,  126.0)          250 conformations
+bin    39 ( -54.0,  162.0)          174 conformations
 bin    40 ( -18.0,  -90.0)            4 conformations
 bin    41 ( -18.0,  -54.0)            5 conformations
 bin    42 ( -18.0,  -18.0)            1 conformations
@@ -118,9 +118,10 @@ bin    59 ( 126.0,  -54.0)            1 conformations
 bin    60 ( 126.0,  126.0)            1 conformations
 bin    61 ( 162.0, -162.0)            1 conformations
 bin    62 ( 162.0, -126.0)            1 conformations
-bin    63 ( 162.0,   90.0)            2 conformations
-bin    64 ( 162.0,  126.0)            6 conformations
-bin    65 ( 162.0,  162.0)            3 conformations
+bin    63 ( 162.0,  -54.0)            1 conformations
+bin    64 ( 162.0,   90.0)            2 conformations
+bin    65 ( 162.0,  126.0)            6 conformations
+bin    66 ( 162.0,  162.0)            3 conformations
 K (total states) = 40, total samples = 2680
 N_k = 
 [67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67 67
@@ -132,84 +133,157 @@ f_k =
 [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.
   0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.
   0.  0.  0.  0.]
+Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.
+self consistent iteration gradient norm is 1.6698e+05, Newton-Raphson gradient norm is 1.8824e+05
+Choosing self-consistent iteration on iteration 0
+self consistent iteration gradient norm is 1.4621e+05, Newton-Raphson gradient norm is      12805
+Choosing self-consistent iteration for lower gradient on iteration 1
+self consistent iteration gradient norm is 1.2934e+05, Newton-Raphson gradient norm is      10613
+Newton-Raphson used on iteration 2
+self consistent iteration gradient norm is       8943, Newton-Raphson gradient norm is 1.2952e+05
+Choosing self-consistent iteration for lower gradient on iteration 3
+self consistent iteration gradient norm is     7908.5, Newton-Raphson gradient norm is      15755
+Choosing self-consistent iteration for lower gradient on iteration 4
+self consistent iteration gradient norm is     7134.6, Newton-Raphson gradient norm is      14702
+Choosing self-consistent iteration for lower gradient on iteration 5
+self consistent iteration gradient norm is     6514.4, Newton-Raphson gradient norm is      12537
+Choosing self-consistent iteration for lower gradient on iteration 6
+self consistent iteration gradient norm is     6000.6, Newton-Raphson gradient norm is     9717.6
+Choosing self-consistent iteration for lower gradient on iteration 7
+self consistent iteration gradient norm is       5566, Newton-Raphson gradient norm is     7436.1
+Choosing self-consistent iteration for lower gradient on iteration 8
+self consistent iteration gradient norm is     5193.1, Newton-Raphson gradient norm is     6157.5
+Choosing self-consistent iteration for lower gradient on iteration 9
+self consistent iteration gradient norm is     4869.7, Newton-Raphson gradient norm is     5796.9
+Choosing self-consistent iteration for lower gradient on iteration 10
+self consistent iteration gradient norm is     4586.6, Newton-Raphson gradient norm is     5578.3
+Choosing self-consistent iteration for lower gradient on iteration 11
+self consistent iteration gradient norm is     4336.8, Newton-Raphson gradient norm is     5555.5
+Choosing self-consistent iteration for lower gradient on iteration 12
+self consistent iteration gradient norm is     4114.9, Newton-Raphson gradient norm is     4740.6
+Choosing self-consistent iteration for lower gradient on iteration 13
+self consistent iteration gradient norm is     3916.6, Newton-Raphson gradient norm is     4594.7
+Choosing self-consistent iteration for lower gradient on iteration 14
+self consistent iteration gradient norm is     3738.4, Newton-Raphson gradient norm is     4276.1
+Choosing self-consistent iteration for lower gradient on iteration 15
+self consistent iteration gradient norm is     3577.5, Newton-Raphson gradient norm is     3970.5
+Choosing self-consistent iteration for lower gradient on iteration 16
+self consistent iteration gradient norm is     3431.5, Newton-Raphson gradient norm is     3536.6
+Choosing self-consistent iteration for lower gradient on iteration 17
+self consistent iteration gradient norm is     3298.4, Newton-Raphson gradient norm is     3362.1
+Choosing self-consistent iteration for lower gradient on iteration 18
+self consistent iteration gradient norm is     3176.6, Newton-Raphson gradient norm is     3041.5
+Newton-Raphson used on iteration 19
+self consistent iteration gradient norm is     1401.5, Newton-Raphson gradient norm is 1.8876e+05
+Choosing self-consistent iteration for lower gradient on iteration 20
+self consistent iteration gradient norm is     981.37, Newton-Raphson gradient norm is     143.26
+Newton-Raphson used on iteration 21
+self consistent iteration gradient norm is     24.688, Newton-Raphson gradient norm is     7.5354
+Newton-Raphson used on iteration 22
+self consistent iteration gradient norm is    0.51877, Newton-Raphson gradient norm is   0.026163
+Newton-Raphson used on iteration 23
+self consistent iteration gradient norm is 0.00069412, Newton-Raphson gradient norm is 3.9927e-07
+Newton-Raphson used on iteration 24
+self consistent iteration gradient norm is 1.6906e-08, Newton-Raphson gradient norm is 1.2464e-16
+Newton-Raphson used on iteration 25
+self consistent iteration gradient norm is 3.9528e-18, Newton-Raphson gradient norm is 1.8499e-22
+Newton-Raphson used on iteration 26
+Converged to tolerance of 3.369711e-13 in 27 iterations.
+Of 27 iterations, 8 were Newton-Raphson iterations and 19 were self-consistent iterations
+Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.
+self consistent iteration gradient norm is     179.35, Newton-Raphson gradient norm is     1.3962
+Choosing self-consistent iteration on iteration 0
+self consistent iteration gradient norm is     89.168, Newton-Raphson gradient norm is   0.055416
+Choosing self-consistent iteration for lower gradient on iteration 1
+self consistent iteration gradient norm is     60.304, Newton-Raphson gradient norm is   0.018579
+Newton-Raphson used on iteration 2
+self consistent iteration gradient norm is  0.0012036, Newton-Raphson gradient norm is 1.2798e-09
+Newton-Raphson used on iteration 3
+self consistent iteration gradient norm is 3.3436e-11, Newton-Raphson gradient norm is 1.3858e-20
+Newton-Raphson used on iteration 4
+self consistent iteration gradient norm is 3.9754e-21, Newton-Raphson gradient norm is 4.1296e-21
+Choosing self-consistent iteration for lower gradient on iteration 5
+Converged to tolerance of 1.191950e-16 in 6 iterations.
+Of 6 iterations, 3 were Newton-Raphson iterations and 3 were self-consistent iterations
 Final dimensionless free energies
 f_k = 
-[    0.           157.68968815   311.25405464   460.70275354   606.09653496
-   747.45481071   885.00505479  1018.93368593  1149.2899461   1276.07598087
-  1399.43053544  1519.43115236  1636.19069763  1749.78621622  1860.2113658
-  1967.53411441  2071.93328756  2173.51738658  2272.34970171  2368.48698732
-  2461.95959434  2552.84095672  2641.17731125  2726.99510429  2810.44635809
-  2891.60035253  2970.465576    3047.10003613  3121.58926783  3194.03793204
-  3264.47438314  3332.93812703  3399.46004667  3464.09815245  3526.88392174
-  3587.86797694  3647.13331222  3704.72232508  3760.69836336  3815.06601059]
+[    0.           157.70780629   311.28368865   460.74191535   606.14852524
+   747.51266947   885.06668838  1018.99642036  1149.35150261  1276.14072887
+  1399.49547453  1519.49271043  1636.25153358  1749.84115916  1860.25506774
+  1967.57487383  2071.97455481  2173.55777491  2272.38803794  2368.52707993
+  2461.99985177  2552.87746989  2641.21374251  2727.04285932  2810.51450569
+  2891.6841314   2970.55008516  3047.17666039  3121.66194963  3194.11110179
+  3264.54821714  3333.00867899  3399.52528825  3464.1631533   3526.9564952
+  3587.94764169  3647.21485344  3704.80430538  3760.78275156  3815.15337969]
 MBAR initialization complete.
 Computing potential of mean force...
 2D PMF
 
      bin    phi    psi        N          f         df
-       0 -162.0 -162.0       71      2.285      0.486
-       1 -162.0 -126.0       15      4.911      1.019
-       2 -162.0  -90.0       14      2.963      0.775
-       3 -162.0  -54.0       27      2.928      0.644
-       4 -162.0  -18.0        3      5.830      1.001
-       5 -162.0   18.0        8      4.569      1.018
-       6 -162.0   54.0       18     33.375      1.058
-       7 -162.0   90.0       41      2.619      0.658
-       8 -162.0  126.0      143      1.251      0.362
-       9 -162.0  162.0      262      0.466      0.270
-      10 -126.0 -162.0      101      1.349      0.349
-      11 -126.0 -126.0       18      2.854      0.651
-      12 -126.0  -90.0       33      3.505      1.015
-      13 -126.0  -54.0       54      2.514      0.670
-      14 -126.0  -18.0       19      3.549      0.877
-      15 -126.0   18.0       18      3.754      0.892
-      16 -126.0   54.0       16      3.191      0.754
-      17 -126.0   90.0       46      2.391      0.565
-      18 -126.0  126.0      185      0.627      0.281
-      19 -126.0  162.0      304      0.000      0.000
-      20  -90.0 -162.0       50      3.441      0.859
-      21  -90.0 -126.0        9      8.056      1.027
-      22  -90.0  -90.0       21      3.282      0.737
-      23  -90.0  -54.0       42      2.207      0.486
-      24  -90.0  -18.0       25      5.412      1.022
-      25  -90.0   18.0        8     17.417      1.042
-      26  -90.0   54.0       18      9.466      1.030
-      27  -90.0   90.0       62      1.778      0.455
-      28  -90.0  126.0      166      0.750      0.286
-      29  -90.0  162.0      195      0.270      0.252
-      30  -54.0 -162.0       14      4.256      0.789
-      31  -54.0 -126.0        3    156.526      1.114
-      32  -54.0  -90.0       14      3.278      0.777
-      33  -54.0  -54.0       79      2.482      0.517
-      34  -54.0  -18.0       24      4.010      0.947
-      35  -54.0   18.0        1    410.730      1.164
-      36  -54.0   54.0        8     49.086      1.069
-      37  -54.0   90.0       38      2.760      0.692
-      38  -54.0  126.0      254      0.290      0.246
-      39  -54.0  162.0      173      1.121      0.313
-      40  -18.0  -90.0        4     26.002      1.051
-      41  -18.0  -54.0        5     76.067      1.084
-      42  -18.0  -18.0        1    290.025      1.145
-      43  -18.0   90.0        7      3.317      1.014
-      44  -18.0  126.0       12      7.684      1.022
-      45  -18.0  162.0        1    221.389      1.130
-      46   18.0 -126.0        1    265.031      1.140
-      47   18.0   90.0        3     70.377      1.081
-      48   54.0 -162.0        3    228.525      1.132
-      49   54.0 -126.0        3      3.496      0.964
-      50   54.0  -90.0        5    106.306      1.097
-      51   54.0  -54.0        3      6.241      1.025
-      52   54.0   18.0        2    218.057      1.130
-      53   54.0   54.0        4     30.531      1.055
-      54   54.0   90.0        1    179.234      1.120
-      55   54.0  126.0        1    343.052      1.154
-      56   54.0  162.0        5     91.633      1.091
-      57   90.0 -126.0        1    396.901      1.162
-      58   90.0  -54.0        3    222.634      1.131
-      59  126.0  -54.0        1    448.357      1.169
-      60  126.0  126.0        1    366.969      1.158
-      61  162.0 -162.0        1    226.659      1.132
-      62  162.0 -126.0        1    309.748      1.148
-      63  162.0   90.0        2    230.841      1.133
-      64  162.0  126.0        6      7.932      0.930
-      65  162.0  162.0        3      8.792      1.032
+       0 -162.0 -162.0       73      1.977      0.459
+       1 -162.0 -126.0       14      4.928      1.018
+       2 -162.0  -90.0       14      2.976      0.775
+       3 -162.0  -54.0       27      3.620      0.703
+       4 -162.0  -18.0        3      5.846      1.000
+       5 -162.0   18.0        8      4.586      1.018
+       6 -162.0   54.0       18     33.383      1.057
+       7 -162.0   90.0       42      2.626      0.656
+       8 -162.0  126.0      141      1.261      0.361
+       9 -162.0  162.0      262      0.468      0.268
+      10 -126.0 -162.0       99      1.511      0.369
+      11 -126.0 -126.0       20      2.865      0.652
+      12 -126.0  -90.0       32      3.501      1.004
+      13 -126.0  -54.0       51      2.529      0.672
+      14 -126.0  -18.0       20      3.564      0.877
+      15 -126.0   18.0       18      3.759      0.893
+      16 -126.0   54.0       15      3.201      0.755
+      17 -126.0   90.0       46      2.406      0.565
+      18 -126.0  126.0      187      0.638      0.280
+      19 -126.0  162.0      306      0.000      0.000
+      20  -90.0 -162.0       51      3.452      0.856
+      21  -90.0 -126.0        8      8.074      1.026
+      22  -90.0  -90.0       22      3.291      0.737
+      23  -90.0  -54.0       43      2.214      0.485
+      24  -90.0  -18.0       24      5.407      1.022
+      25  -90.0   18.0        8     17.434      1.042
+      26  -90.0   54.0       18      9.484      1.029
+      27  -90.0   90.0       62      1.791      0.454
+      28  -90.0  126.0      164      0.762      0.285
+      29  -90.0  162.0      195      0.281      0.251
+      30  -54.0 -162.0       14      4.267      0.786
+      31  -54.0 -126.0        3    156.543      1.113
+      32  -54.0  -90.0       16      3.288      0.775
+      33  -54.0  -54.0       78      2.491      0.517
+      34  -54.0  -18.0       24      4.013      0.948
+      35  -54.0   18.0        1    410.768      1.164
+      36  -54.0   54.0        8     49.084      1.069
+      37  -54.0   90.0       40      2.770      0.691
+      38  -54.0  126.0      250      0.305      0.246
+      39  -54.0  162.0      174      1.131      0.312
+      40  -18.0  -90.0        4     26.016      1.051
+      41  -18.0  -54.0        5     76.061      1.084
+      42  -18.0  -18.0        1    290.049      1.144
+      43  -18.0   90.0        7      3.329      1.014
+      44  -18.0  126.0       12      7.701      1.022
+      45  -18.0  162.0        1    221.420      1.130
+      46   18.0 -126.0        1    265.057      1.140
+      47   18.0   90.0        3     70.372      1.081
+      48   54.0 -162.0        3    228.554      1.132
+      49   54.0 -126.0        3      3.502      0.963
+      50   54.0  -90.0        5    106.300      1.096
+      51   54.0  -54.0        3      6.231      1.025
+      52   54.0   18.0        2    218.088      1.129
+      53   54.0   54.0        4     30.542      1.055
+      54   54.0   90.0        1    179.266      1.120
+      55   54.0  126.0        1    343.080      1.154
+      56   54.0  162.0        5     91.627      1.090
+      57   90.0 -126.0        1    396.937      1.162
+      58   90.0  -54.0        3    222.664      1.130
+      59  126.0  -54.0        1    448.397      1.169
+      60  126.0  126.0        1    367.001      1.158
+      61  162.0 -162.0        1    226.688      1.131
+      62  162.0 -126.0        1    309.771      1.148
+      63  162.0  -54.0        1    431.276      1.167
+      64  162.0   90.0        2    230.870      1.132
+      65  162.0  126.0        6      7.949      0.929
+      66  162.0  162.0        3      8.772      1.031

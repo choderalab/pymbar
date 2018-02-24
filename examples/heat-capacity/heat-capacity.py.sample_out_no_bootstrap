@@ -9,7 +9,6 @@ Initializing MBAR:
 --K = number of Temperatures with data = 16
 --L = number of total Temperatures = 216
 --N = number of Energies per Temperature = 693
-MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results.
 
 Computing Expectations for E...
 Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
