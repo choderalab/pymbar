@@ -1,7 +1,6 @@
 import numpy as np
 import pymbar
 from pymbar.utils_for_testing import eq
-import scipy.misc
 from nose import SkipTest
 
 def load_oscillators(n_states, n_samples):
