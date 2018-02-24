@@ -203,15 +203,15 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R)
-    >>> print('Free energy difference is {:.3f} +- {:.3f} kT'.format(DeltaF, dDeltaF))
+    >>> results = BAR(w_F, w_R)
+    >>> print('Free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Free energy difference is 1.088 +- 0.050 kT
 
-    Test various other schemes.
+    Test completion of various other schemes.
 
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='self-consistent-iteration')
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='false-position')
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='bisection')
+    >>> results = BAR(w_F, w_R, method='self-consistent-iteration')
+    >>> results = BAR(w_F, w_R, method='false-position')
+    >>> results = BAR(w_F, w_R, method='bisection')
 
     """
 
