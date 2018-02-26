@@ -62,7 +62,7 @@ def test_subsampling():
     eq(mbar.f_k, mbar_sub.f_k, decimal=2)
 
 def test_protocols():
-    '''Test that free energy is moderatley equal to analytical solution, independent of solver protocols'''
+    '''Test that free energy is moderately equal to analytical solution, independent of solver protocols'''
     #Supress the warnings when jacobian and Hessian information is not used in a specific solver
     import warnings
     warnings.filterwarnings('ignore', '.*does not use the jacobian.*')
@@ -81,8 +81,9 @@ def test_protocols():
             mbar = pymbar.MBAR(u_kn, N_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
             #Solve MBAR with the correct f_k used for the inital weights
             mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
-            fe, fe_sigma, Theta_ij = mbar.getFreeEnergyDifferences()
-            fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
+            results = mbar.getFreeEnergyDifferences()
+            fe = results['Delta_f'][0,1:]
+            fe_sigma = results['dDelta_f'][0,1:]
             z = (fe - fa) / fe_sigma
             eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
     #Clear warning filters

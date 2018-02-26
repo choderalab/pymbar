@@ -24,8 +24,13 @@ def _test(data_generator):
     name, U, N_k, s_n = data_generator()
     print(name)
     mbar = pymbar.MBAR(U, N_k)
-    fij1, dfij1, Theta_ij = mbar.getFreeEnergyDifferences(uncertainty_method="svd")
-    fij2, dfij2, Theta_ij = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew")
+    results1 = mbar.getFreeEnergyDifferences(uncertainty_method="svd")
+    results2 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew")
+    fij1 = results1['Delta_f']
+    dfij1 = results1['dDelta_f']
+    fij2 = results2['Delta_f']
+    dfij2 = results2['dDelta_f']
+
     eq(pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8)
     eq(np.exp(mbar.Log_W_nk).sum(0), np.ones(len(N_k)), decimal=10)
     eq(np.exp(mbar.Log_W_nk).dot(N_k), np.ones(U.shape[1]), decimal=10)
