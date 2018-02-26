@@ -44,7 +44,6 @@ from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
-DEFAULT_SUBSAMPLING_PROTOCOL = mbar_solvers.DEFAULT_SUBSAMPLING_PROTOCOL
 
 # =========================================================================
 # MBAR class definition
@@ -69,9 +68,10 @@ class MBAR:
     J. Chem. Phys. 129:124105, 2008
     http://dx.doi.org/10.1063/1.2978177
     """
-    #=========================================================================
+    # =========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=DEFAULT_SOLVER_PROTOCOL, initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=DEFAULT_SUBSAMPLING_PROTOCOL, **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None,
+                 solver_protocol=None, initialize='zeros', x_kindices=None, **kwargs):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -114,12 +114,12 @@ class MBAR:
         initial_f_k : np.ndarray, float, shape=(K), optional
             Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
-        method : list(dict), optional, default=None
+        solver_protocol : list(dict) or None, optional, default=None
             List of dictionaries to define a sequence of solver algorithms
             and options used to estimate the dimensionless free energies.
             See `pymbar.mbar_solvers.solve_mbar()` for details.  If None,
             use the developers best guess at an appropriate algorithm.
-        initialize : string, optional
+        initialize : 'zeros' or 'BAR', optional
             If equal to 'BAR', use BAR between the pairwise state to
             initialize the free energies.  Eventually, should specify a path;
             for now, it just does it zipping up the states.
@@ -168,7 +168,7 @@ class MBAR:
 
         """
         for key, val in kwargs.items():
-            print(("Warning: parameter %s=%s is unrecognized and unused." % (key, val)))
+            print("Warning: parameter {}={} is unrecognized and unused.".format(key, val))
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
@@ -278,25 +278,17 @@ class MBAR:
                 print("f_k = ")
                 print(self.f_k)
 
-        for solver in subsampling_protocol:
-            if 'options' not in solver:
-                solver['options'] = dict()  # make sure there is SOME dictionary in for options.
-                if self.verbose:
-                    # should add in other ways to get information out of the scipy solvers, not just adaptive,
-                    # which might involve passing in different combinations of options, and passing out other strings.
-                    if solver['method'] == 'adaptive':
-                        solver['options']['verbose']=True
-
+        if solver_protocol is None:
+            solver_protocol = ({'method': None},)
         for solver in solver_protocol:
             if 'options' not in solver:
                 solver['options'] = dict()
-                if self.verbose:
-                    # should add in other ways to get information out of the scipy solvers, not just adaptive,
-                    # which might involve passing in different combinations of options, and passing out other strings.
-                    if solver['method'] == 'adaptive':
-                        solver['options']['verbose']=True
+            if 'verbose' not in solver['options']:
+                # should add in other ways to get information out of the scipy solvers, not just adaptive,
+                # which might involve passing in different combinations of options, and passing out other strings.
+                solver['options']['verbose'] = self.verbose
 
-        self.f_k = mbar_solvers.solve_mbar_with_subsampling(self.u_kn, self.N_k, self.f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=self.x_kindices)
+        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol)
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
