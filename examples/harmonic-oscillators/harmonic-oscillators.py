@@ -142,7 +142,9 @@ print("=============================================")
 print("      Testing getFreeEnergyDifferences       ")
 print("=============================================")
 
-(Delta_f_ij_estimated, dDelta_f_ij_estimated, _Theta_ij) = mbar.getFreeEnergyDifferences()
+results = mbar.getFreeEnergyDifferences()
+Delta_f_ij_estimated = results['Delta_f']
+dDelta_f_ij_estimated = results['dDelta_f']
 
 # Compute error from analytical free energy differences.
 Delta_f_ij_error = Delta_f_ij_estimated - Delta_f_ij_analytical
@@ -172,7 +174,9 @@ for i in range(Knon-1):
   k1 = nonzero_indices[i+1]
   w_F = u_kln[k, k1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
   w_R = u_kln[k1, k, 0:N_k[k1]] - u_kln[k1, k1, 0:N_k[k1]]    # reverse work                                  
-  (df_bar,ddf_bar) = BAR(w_F, w_R)
+  results = BAR(w_F, w_R)
+  df_bar = results['Delta_f']
+  ddf_bar = results['dDelta_f']
   bar_analytical = (f_k_analytical[k1]-f_k_analytical[k]) 
   bar_error = bar_analytical - df_bar
   print("BAR estimator for reduced free energy from states %d to %d is %f +/- %f" % (k,k1,df_bar,ddf_bar)) 
@@ -185,8 +189,10 @@ print("==============================================")
 print("EXP forward free energy")
 for k in range(K-1):
   if N_k[k] != 0:
-    w_F = u_kln[k, k+1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
-    (df_exp,ddf_exp) = EXP(w_F)
+    w_F = u_kln[k, k+1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work
+    results = EXP(w_F)
+    df_exp = results['Delta_f']
+    ddf_exp = results['dDelta_f']
     exp_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
     exp_error = exp_analytical - df_exp
     print("df from states %d to %d is %f +/- %f" % (k,k+1,df_exp,ddf_exp)) 
@@ -197,7 +203,8 @@ for k in range(1,K):
   if N_k[k] != 0:
     w_R = u_kln[k, k-1, 0:N_k[k]] - u_kln[k, k, 0:N_k[k]]         # reverse work                                  
     (df_exp,ddf_exp) = EXP(w_R)
-    df_exp = -df_exp
+    df_exp = -results['Delta_f']
+    ddf_exp = results['dDelta_f']
     exp_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
     exp_error = exp_analytical - df_exp
     print("df from states %d to %d is %f +/- %f" % (k,k-1,df_exp,ddf_exp)) 
@@ -211,7 +218,9 @@ print("Gaussian forward estimate")
 for k in range(K-1):
   if N_k[k] != 0:
     w_F = u_kln[k, k+1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
-    (df_gauss,ddf_gauss) = EXPGauss(w_F)
+    results = EXPGauss(w_F)
+    df_gauss = results['Delta_f']
+    ddf_gauss = results['dDelta_f']
     gauss_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
     gauss_error = gauss_analytical - df_gauss
     print("df for reduced free energy from states %d to %d is %f +/- %f" % (k,k+1,df_gauss,ddf_gauss)) 
@@ -221,8 +230,9 @@ print("Gaussian reverse estimate")
 for k in range(1,K):
   if N_k[k] != 0:
     w_R = u_kln[k, k-1, 0:N_k[k]] - u_kln[k, k, 0:N_k[k]]         # reverse work                                  
-    (df_gauss,ddf_gauss) = EXPGauss(w_R)
-    df_gauss = df_gauss
+    results = EXPGauss(w_R)
+    df_gauss = results['Delta_f']
+    ddf_gauss = results['dDelta_f']
     gauss_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
     gauss_error = gauss_analytical - df_gauss
     print("df for reduced free energy from states %d to %d is %f +/- %f" % (k,k-1,df_gauss,ddf_gauss)) 
@@ -276,7 +286,9 @@ for observe in observables:
     for k in range(0,K):
       A_kn[k,0:N_k[k]] = x_kn[k,0:N_k[k]]**2
 
-  (A_k_estimated, dA_k_estimated) = mbar.computeExpectations(A_kn, state_dependent = state_dependent)
+  results = mbar.computeExpectations(A_kn, state_dependent = state_dependent)
+  A_k_estimated = results['mu']
+  dA_k_estimated = results['sigma']
 
   # need to additionally transform to get the square root
   if observe == 'RMS displacement':
@@ -328,7 +340,10 @@ for observe in observables:
   stdevs = numpy.abs(As_k_error[Nk_ne_zero]/dAs_k_estimated[Nk_ne_zero])
   print(stdevs)
 
-  (A_kl_estimated, dA_kl_estimated) = mbar.computeExpectations(A_kn, state_dependent = state_dependent, output = 'differences')
+  results = mbar.computeExpectations(A_kn, state_dependent = state_dependent, output = 'differences')
+  A_kl_estimated = results['mu']  
+  dA_kl_estimated = results['sigma']
+
 
   print("------------------------------")
   print("Now testing 'differences' mode")
@@ -368,7 +383,10 @@ A_ikn = numpy.zeros([len(observables_single), K, N_k.max()], numpy.float64)
 for i,observe in enumerate(observables_single):
   A_ikn[i,:,:] = A_kn_all[observe]
 for i in range(K):
-  [A_i,dA_ij,Ca_ij] = mbar.computeMultipleExpectations(A_ikn, u_kln[:,i,:], compute_covariance=True)
+  results = mbar.computeMultipleExpectations(A_ikn, u_kln[:,i,:], compute_covariance=True)
+  A_i = results['mu']
+  dA_ij = results['sigma']
+  Ca_ij = results['covariances']
   print("Averages for state %d" % (i))
   print(A_i)
   print("Uncertainties for state %d" % (i))
@@ -380,7 +398,14 @@ print("============================================")
 print("      Testing computeEntropyAndEnthalpy")
 print("============================================")
 
-(Delta_f_ij, dDelta_f_ij, Delta_u_ij, dDelta_u_ij, Delta_s_ij, dDelta_s_ij) = mbar.computeEntropyAndEnthalpy(u_kn = u_kln, verbose = True)
+results = mbar.computeEntropyAndEnthalpy(u_kn = u_kln, verbose = True)
+Delta_f_ij = results['Delta_f']
+dDelta_f_ij = results['dDelta_f']
+Delta_u_ij = results['Delta_u']
+dDelta_u_ij = results['dDelta_u']
+Delta_s_ij = results['Delta_s']
+dDelta_s_ij = results['dDelta_s']
+
 print("Free energies")
 print(Delta_f_ij)
 print(dDelta_f_ij)
@@ -442,7 +467,9 @@ for k in range(K):
     for l in range(L):
       unew_kln[k,l,0:N_k[k]] = (K_extra[l]/2.0) * (x_kn[k,0:N_k[k]]-O_extra[l])**2
 
-(Delta_f_ij_estimated, dDelta_f_ij_estimated) = mbar.computePerturbedFreeEnergies(unew_kln)
+results = mbar.computePerturbedFreeEnergies(unew_kln)
+Delta_f_ij_estimated = results['Delta_f']
+dDelta_f_ij_estimated = results['dDelta_f']
 
 Delta_f_ij_error = Delta_f_ij_estimated - Delta_f_ij_analytical
 
@@ -491,8 +518,10 @@ for observe in observables:
     state_dependent = False
     A_kn = A_kn_all['position^2']
 
-  A_k_estimated, dA_k_estimated = mbar.computeExpectations(A_kn,unew_kln[:,[nth],:],state_dependent=state_dependent)
-
+  A_k_estimated, dA_k_estimated 
+  results = mbar.computeExpectations(A_kn,unew_kln[:,[nth],:],state_dependent=state_dependent)
+  A_k_estimated = results['mu'] 
+  dA_k_estimated = results['sigma']
   # need to additionally transform to get the square root
   if observe == 'RMS displacement':
     A_k_estimated = numpy.sqrt(A_k_estimated)
@@ -514,7 +543,10 @@ print("============================================")
 print("      Testing computeOverlap   ")
 print("============================================")
 
-O, O_i, O_ij = mbar.computeOverlap()
+results = mbar.computeOverlap()
+O = results['scalar']
+O_i = results['eigenvalues']
+O_ij = results['matrix']
 
 print("Overlap matrix output")
 print(O_ij)
@@ -545,7 +577,9 @@ print("We should have that with MBAR, err_MBAR = sqrt(N_k/N_eff)*err_standard,")
 print("so standard (scaled) results should be very close to MBAR results.")
 print("No standard estimate exists for states that are not sampled.")
 A_kn = x_kn
-(val_mbar, err_mbar) = mbar.computeExpectations(A_kn)
+results = mbar.computeExpectations(A_kn)
+val_mbar = results['mu']
+err_mbar = results['sigma']
 err_standard = numpy.zeros([K],dtype = numpy.float64)
 err_scaled = numpy.zeros([K],dtype = numpy.float64)
 
@@ -710,7 +744,10 @@ for i in range(nbins):
 
 # Compute PMF.
 print("Computing PMF ...")
-[f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)
+results = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)
+f_i = results['f_i']
+df_i = results['df_i']
+
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 
 print("1D PMF:")
@@ -795,7 +832,11 @@ for i in range(nbins):
 
 # Compute PMF.          
 print("Computing PMF ...")
-[f_i, df_i] = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)
+[f_i, df_i] 
+results = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)
+f_i = results['f_i']
+df_i = results['df_i']
+
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF:")
 

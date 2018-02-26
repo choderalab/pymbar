@@ -66,10 +66,14 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
     Returns
     -------
-    DeltaF : float
-        DeltaF is the free energy difference between the two states.
-    dDeltaF : float
-        dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
+    result_vals : dictionary
+    
+    Possible keys in the result_vals dictionary
+
+    'Delta_f' : float
+        Free energy difference
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference
 
     Notes
     -----
@@ -82,14 +86,16 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> [DeltaF, dDeltaF] = EXP(w_F)
-    >>> print('Forward free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF))
+    >>> results = EXP(w_F)
+    >>> print('Forward free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Forward free energy difference is 1.088 +- 0.076 kT
-    >>> [DeltaF, dDeltaF] = EXP(w_R)
-    >>> print('Reverse free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF))
+    >>> results = EXP(w_R)
+    >>> print('Reverse free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Reverse free energy difference is -1.073 +- 0.082 kT
 
     """
+
+    result_vals = dict()
 
     # Get number of work measurements.
     T = float(np.size(w_F))  # number of work measurements
@@ -119,9 +125,11 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
         dDeltaF = (dx / Ex)
 
         # Return estimate of free energy difference and uncertainty.
-        return (DeltaF, dDeltaF)
+        result_vals['Delta_f'] = DeltaF
+        result_vals['dDelta_f'] = dDeltaF 
     else:
-        return DeltaF
+        result_vals['Delta_f'] = DeltaF
+    return result_vals
 
 #=============================================================================================
 # Gaussian approximation to exponential averaging (Gauss).
@@ -142,10 +150,14 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
     Returns
     -------
-    DeltaF : float
-        DeltaF is the free energy difference between the two states.
-    dDeltaF : float
-        dDeltaF is the uncertainty, and is only returned if compute_uncertainty is set to True
+    result_vals : dictionary
+    
+    Possible keys in the result_vals dictionary
+
+    'Delta_f' : float
+        Free energy difference between the two states
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference between the two states.
 
     Notes
     -----
@@ -157,11 +169,11 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> [DeltaF, dDeltaF] = EXPGauss(w_F)
-    >>> print('Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF))
+    >>> results = EXPGauss(w_F)
+    >>> print('Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-    >>> [DeltaF, dDeltaF] = EXPGauss(w_R)
-    >>> print('Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (DeltaF, dDeltaF))
+    >>> results = EXPGauss(w_R)
+    >>> print('Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
 
     """
@@ -173,6 +185,7 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     # Estimate free energy difference by Gaussian approximation, dG = <U> - 0.5*var(U)
     DeltaF = np.average(w_F) - 0.5 * var
 
+    result_vals = dict()
     if compute_uncertainty:
         # Compute effective number of uncorrelated samples.
         g = 1.0  # statistical inefficiency
@@ -188,10 +201,11 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
         dDeltaF = np.sqrt(dx2)
 
         # Return estimate of free energy difference and uncertainty.
-        return (DeltaF, dDeltaF)
+        result_vals['Delta_f'] = DeltaF
+        result_vals['dDelta_f'] = dDeltaF 
     else:
-        return DeltaF
-
+        result_vals['Delta_f'] = DeltaF
+    return result_vals
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta
