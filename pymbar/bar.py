@@ -297,7 +297,6 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             # The free energy difference appears to be zero -- return.
             if verbose:
                 print('The free energy difference appears to be zero.')
-            result_vals['Delta_f'] = 0.0 
             break
 
         if iterated_solution:
