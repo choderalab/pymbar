@@ -1,8 +1,6 @@
 import numpy as np
 import pymbar
 from pymbar.utils_for_testing import eq, suppress_derivative_warnings_for_tests
-import scipy.misc
-from nose import SkipTest
 
 def load_oscillators(n_states, n_samples):
     name = "%dx%d oscillators" % (n_states, n_samples)
