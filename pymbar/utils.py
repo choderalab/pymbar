@@ -294,7 +294,7 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     See Also
     --------
-    numpy.logaddexp, numpy.logaddexp2, scipy.misc.logsumexp
+    numpy.logaddexp, numpy.logaddexp2, scipy.misc.logsumexp (soon to be replaced with  scipy.special.logsumexp)
 
     Notes
     -----
