@@ -119,10 +119,23 @@ class MBAR:
             and options used to estimate the dimensionless free energies.
             See `pymbar.mbar_solvers.solve_mbar()` for details.  If None,
             use the developers best guess at an appropriate algorithm.
-        initialize : 'zeros' or 'BAR', optional
+
+            The default will try to solve with an adaptive solver algorithm
+            which alternates between self-consistent iteration and
+            Newton-Raphson, where the method with the smallest
+            gradient is chosen to improve numerical stability.
+
+        initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
             If equal to 'BAR', use BAR between the pairwise state to
             initialize the free energies.  Eventually, should specify a path;
             for now, it just does it zipping up the states.
+
+            The 'BAR' option works best when the states are ordered such that adjacent states
+            maximize the overlap between states. Its up to the user
+            to arrange the states in such an order, or at least close to such an order.
+            If you are uncertain what the order of states should be, or if it does not make
+            sense to think of states as adjacent, then choose 'zeroes'.
+
             (default: 'zeros', unless specific values are passed in.)
         x_kindices
             Which state is each x from?  Usually doesn't matter, but does for BAR. We assume the samples
