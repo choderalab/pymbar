@@ -293,7 +293,9 @@ u_kn = target_beta * U_kn
 # f_i[i] is the dimensionless free energy of bin i (in kT) at the temperature of interest
 # df_i[i,j] is an estimate of the covariance in the estimate of (f_i[i] - f_j[j], with reference
 # the lowest free energy state.
-(f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins, uncertainties='from-lowest')
+results = mbar.computePMF(u_kn, bin_kn, nbins, uncertainties='from-lowest')
+f_i = results['f_i']
+df_i = results['df_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF")

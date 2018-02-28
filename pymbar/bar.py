@@ -179,10 +179,13 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     Returns
     -------
-    DeltaF : float
+    result_vals : dictionary
+    
+    Possible keys in the result_vals dictionary
+    'Delta_f' : float
         Free energy difference
-    dDeltaF : float
-     Estimated standard deviation of free energy difference
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference
 
     References
     ----------
@@ -200,18 +203,19 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R)
-    >>> print('Free energy difference is {:.3f} +- {:.3f} kT'.format(DeltaF, dDeltaF))
+    >>> results = BAR(w_F, w_R)
+    >>> print('Free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Free energy difference is 1.088 +- 0.050 kT
 
-    Test various other schemes.
+    Test completion of various other schemes.
 
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='self-consistent-iteration')
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='false-position')
-    >>> [DeltaF, dDeltaF] = BAR(w_F, w_R, method='bisection')
+    >>> results = BAR(w_F, w_R, method='self-consistent-iteration')
+    >>> results = BAR(w_F, w_R, method='false-position')
+    >>> results = BAR(w_F, w_R, method='bisection')
 
     """
 
+    result_vals = dict()
     # if computing nonoptimized, one step value, we set the max-iterations
     # to 1, and the method to 'self-consistent-iteration'
 
@@ -224,8 +228,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         nfunc = 0
 
     if method == 'bisection' or method == 'false-position':
-        UpperB = EXP(w_F)[0]
-        LowerB = -EXP(w_R)[0]
+        UpperB = EXP(w_F)['Delta_f']
+        LowerB = -EXP(w_R)['Delta_f']
 
         FUpperB = BARzero(w_F, w_R, UpperB)
         FLowerB = BARzero(w_F, w_R, LowerB)
@@ -233,11 +237,15 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
         if (np.isnan(FUpperB) or np.isnan(FLowerB)):
             # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
+            # consider returning more information about failure
             print("Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty.")
             if compute_uncertainty:
-                return [0.0, 0.0]
+                result_vals['Delta_f'] = 0.0 
+                result_vals['dDelta_f'] = 0.0
+                return result_vals
             else:
-                return 0.0
+                result_vals['Delta_f'] = 0.0 
+                return result_vals
 
         while FUpperB * FLowerB > 0:
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
@@ -289,10 +297,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             # The free energy difference appears to be zero -- return.
             if verbose:
                 print('The free energy difference appears to be zero.')
-            if compute_uncertainty:
-                return [0.0, 0.0]
-            else:
-                return 0.0
+            break
 
         if iterated_solution:
             relative_change = abs((DeltaF - DeltaF_old) / DeltaF)
@@ -480,11 +485,14 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
         if verbose:
             print("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
-        return (DeltaF, dDeltaF)
+        result_vals['Delta_f'] = DeltaF
+        result_vals['dDelta_f'] = dDeltaF
     else:
         if verbose:
             print("DeltaF = {:8.3f}".format(DeltaF))
-        return DeltaF
+        result_vals['Delta_f'] = DeltaF
+
+    return result_vals
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta
