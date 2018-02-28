@@ -1,7 +1,7 @@
 import numpy as np
 import pymbar
 import warnings
-from pymbar.utils_for_testing import eq, suppress_warnings
+from pymbar.utils_for_testing import eq, suppress_derivative_warnings_for_tests
 import scipy.misc
 from nose import SkipTest
 
@@ -41,7 +41,7 @@ def _test(data_generator):
     eq(pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10)
 
     # Test against old MBAR code.
-    with suppress_warnings():
+    with suppress_derivative_warnings_for_tests():
         mbar0 = pymbar.old_mbar.MBAR(U, N_k)
     eq(mbar.f_k, mbar0.f_k, decimal=8)
     eq(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
@@ -64,7 +64,7 @@ def test_200x50_exponentials():
 
 def test_protocols():
     '''
-    Test that free energy is moderatley equal to analytical solution, independent of solver protocols
+    Test that free energy is moderately equal to analytical solution, independent of solver protocols
     '''
 
     # Importing the hacky fix to asert that free energies are moderately correct
@@ -72,7 +72,7 @@ def test_protocols():
     name, u_kn, N_k, s_n, test = load_oscillators(50, 100, provide_test=True)
     fa = test.analytical_free_energies()
     fa = fa[1:] - fa[0]
-    with suppress_warnings():
+    with suppress_derivative_warnings_for_tests():
         # scipy.optimize.minimize methods, same ones that are checked for in mbar_solvers.py
         # subsampling_protocols = ['adaptive', 'L-BFGS-B', 'dogleg', 'CG', 'BFGS', 'Newton-CG', 'TNC', 'trust-ncg', 'SLSQP']
         # scipy.optimize.root methods. Omitting methods which do not use the Jacobian. Adding the custom adaptive protocol.

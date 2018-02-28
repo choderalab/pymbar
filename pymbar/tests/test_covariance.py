@@ -1,6 +1,6 @@
 import numpy as np
 import pymbar
-from pymbar.utils_for_testing import eq, suppress_warnings
+from pymbar.utils_for_testing import eq, suppress_derivative_warnings_for_tests
 import scipy.misc
 from nose import SkipTest
 
@@ -35,7 +35,7 @@ def _test(data_generator):
     eq(pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10)
 
     # Test against old MBAR code.
-    with suppress_warnings():
+    with suppress_derivative_warnings_for_tests():
         mbar0 = pymbar.old_mbar.MBAR(U, N_k)
     fij0, dfij0 = mbar0.getFreeEnergyDifferences(uncertainty_method="svd")
     eq(mbar.f_k, mbar0.f_k, decimal=8)

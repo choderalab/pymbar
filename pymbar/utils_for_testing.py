@@ -50,7 +50,7 @@ __all__ = ['assert_allclose', 'assert_almost_equal', 'assert_approx_equal',
            'assert_equal', 'assert_raises', 'assert_string_equal', 'assert_warns',
            'get_fn', 'eq', 'assert_dict_equal', 'assert_sparse_matrix_equal',
            'expected_failure', 'skip', 'ok_', 'eq_', 'raises', 'skipif', 'slow',
-           'suppress_warnings']
+           'suppress_derivative_warnings_for_tests']
 
 ##############################################################################
 # functions
@@ -58,12 +58,12 @@ __all__ = ['assert_allclose', 'assert_almost_equal', 'assert_approx_equal',
 
 
 @contextlib.contextmanager
-def suppress_warnings():
+def suppress_derivative_warnings_for_tests():
     """
-    Supress specific warnings and then reset when done, used as a with supress_warnings():
+    Suppress specific warnings and then reset when done, used as a with suppress_warnings():
     """
-    # Supress the warnings when jacobian and Hessian information is not used in a specific solver
-    warnings.filterwarnings('ignore', '.*does not use the jacobian.*')
+    # Supress the warnings when Jacobian and Hessian information is not used in a specific solver
+    warnings.filterwarnings('ignore', '.*does not use the Jacobian.*')
     warnings.filterwarnings('ignore', '.*does not use Hessian.*')
     warnings.filterwarnings('ignore', '.*parameter will change to the default of machine precision.*')
     yield
