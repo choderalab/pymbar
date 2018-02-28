@@ -71,7 +71,7 @@ class MBAR:
     """
     #=========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=DEFAULT_SOLVER_PROTOCOL, initialize='zeros', x_kindices=None, subsampling=6, subsampling_protocol=DEFAULT_SUBSAMPLING_PROTOCOL, **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None, solver_protocol=DEFAULT_SOLVER_PROTOCOL, initialize='zeros', x_kindices=None, subsampling=6, nboots = None, subsampling_protocol=DEFAULT_SUBSAMPLING_PROTOCOL, **kwargs):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -297,6 +297,15 @@ class MBAR:
                         solver['options']['verbose']=True
 
         self.f_k = mbar_solvers.solve_mbar_with_subsampling(self.u_kn, self.N_k, self.f_k, solver_protocol, subsampling_protocol, subsampling, x_kindices=self.x_kindices)
+
+        if nboots != 'None':
+            #save the origina data:
+            f_k_boots = np.zeros([nboots,self.K])
+            for b in nbootstrap:
+                allN = np.sum(N_k)
+                rinit = np.random.randint(allN,size=allN)
+                f_k_boots[i,:] = mbar_solvers.solve(self.u_kn[rinit], self.N_k, self.f_k, solver_protocol)
+
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
@@ -522,18 +531,23 @@ class MBAR:
 
         result_vals['Delta_f'] = Deltaf_ij
 
-        if compute_uncertainty or return_theta:
+        if compute_uncertainty and uncertainty_method == 'bootstrap':
+            # something
+
+        if compute_uncertainty or return_theta and uncertainty_method == 'analytical':
             # Compute asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
                 np.exp(self.Log_W_nk), self.N_k, method=uncertainty_method)
 
-        if compute_uncertainty:
+        if compute_uncertainty and uncertainty_method ='analytical':
             dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
             # zero out numerical error for thermodynamically identical states
             self._zerosamestates(dDeltaf_ij)
             # Return matrix of free energy differences and uncertainties.
             dDeltaf_ij = np.array(dDeltaf_ij)
             result_vals['dDelta_f'] = dDeltaf_ij
+        if compute_uncertainty and uncertainty_method == 'bootstrap':
+             result_vals['dDelta_f'] = dDeltaf_ij
 
         if return_theta:
             result_vals['Theta'] = Theta_ij
