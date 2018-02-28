@@ -83,12 +83,6 @@ def test_protocols():
             mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({'method': solver_protocol},))
             # Solve MBAR with the correct f_k used for the inital weights
             mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({'method': solver_protocol},))
-            fe, fe_sigma, Theta_ij = mbar.getFreeEnergyDifferences()
-            fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
-            #Solve MBAR with zeros for initial weights
-            mbar = pymbar.MBAR(u_kn, N_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
-            #Solve MBAR with the correct f_k used for the inital weights
-            mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, subsampling_protocol=({'method':subsampling_protocol},), solver_protocol=({'method':solver_protocol},))
             results = mbar.getFreeEnergyDifferences()
             fe = results['Delta_f'][0,1:]
             fe_sigma = results['dDelta_f'][0,1:]
