@@ -71,7 +71,8 @@ class MBAR:
     # =========================================================================
 
     def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None,
-                 solver_protocol=None, initialize='zeros', x_kindices=None, **kwargs):
+                 solver_protocol=None, initialize='zeros', x_kindices=None, nbootstraps = None, rseed = None, **kwargs):
+
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -301,16 +302,26 @@ class MBAR:
                 # which might involve passing in different combinations of options, and passing out other strings.
                 solver['options']['verbose'] = self.verbose
 
-        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol)
+        np.random.seed(rseed)
+        if rseed != None:
+            self.rstate = np.random.get_state()
 
-        if nboots != 'None':
-            #save the origina data:
-            f_k_boots = np.zeros([nboots,self.K])
-            for b in nbootstrap:
+        f_k_init = self.f_k.copy()  # we need to pass a copy so we don't overwrite the original 
+        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, f_k_init, solver_protocol)
+
+        self.bootstraps = None    
+        if nbootstraps != None:
+            self.nbootstraps = nbootstraps
+            #save the original data:
+            self.f_k_boots = np.zeros([self.nbootstraps,self.K])
+            for b in range(self.nbootstraps):
                 allN = np.sum(N_k)
                 rinit = np.random.randint(allN,size=allN)
-                f_k_boots[i,:] = mbar_solvers.solve(self.u_kn[rinit], self.N_k, self.f_k, solver_protocol)
-
+                self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol)
+                if verbose:
+                    if b%10==0:
+                        print("Caculated {:d}/{:d} bootstrap samples".format(b,self.nbootstraps)) 
+                        
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
@@ -521,7 +532,8 @@ class MBAR:
         >>> results = mbar.getFreeEnergyDifferences()
 
         """
-        Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
+        if uncertainty_method == 'bootstrap' and self.nbootstraps == None:
+            raise ParameterError("Cannot request bootstrap sampling of free energy differences without any bootstraps")
 
         # Compute free energy differences.
         f_i = np.matrix(self.f_k)
@@ -537,22 +549,25 @@ class MBAR:
         result_vals['Delta_f'] = Deltaf_ij
 
         if compute_uncertainty and uncertainty_method == 'bootstrap':
-            # something
+            diffm = np.zeros([self.K,self.K,self.nbootstraps])
+            # take the matrix of differences of f_ij
+            for b in range(self.nbootstraps):
+                diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose() 
+            dDeltaf_ij = np.std(diffm,axis=2)
+            result_vals['dDelta_f'] = dDeltaf_ij
 
-        if compute_uncertainty or return_theta and uncertainty_method == 'analytical':
+        if (compute_uncertainty or return_theta) and uncertainty_method != 'bootstrap':
             # Compute asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
                 np.exp(self.Log_W_nk), self.N_k, method=uncertainty_method)
 
-        if compute_uncertainty and uncertainty_method ='analytical':
+        if compute_uncertainty and uncertainty_method != 'bootstrap':
             dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
             # zero out numerical error for thermodynamically identical states
             self._zerosamestates(dDeltaf_ij)
             # Return matrix of free energy differences and uncertainties.
             dDeltaf_ij = np.array(dDeltaf_ij)
             result_vals['dDelta_f'] = dDeltaf_ij
-        if compute_uncertainty and uncertainty_method == 'bootstrap':
-             result_vals['dDelta_f'] = dDeltaf_ij
 
         if return_theta:
             result_vals['Theta'] = Theta_ij
