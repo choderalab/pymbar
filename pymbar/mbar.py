@@ -309,7 +309,7 @@ class MBAR:
         f_k_init = self.f_k.copy()  # we need to pass a copy so we don't overwrite the original 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, f_k_init, solver_protocol)
 
-        self.bootstraps = None    
+        self.nbootstraps = None
         if nbootstraps != None:
             self.nbootstraps = nbootstraps
             #save the original data:
@@ -532,6 +532,7 @@ class MBAR:
         >>> results = mbar.getFreeEnergyDifferences()
 
         """
+
         if uncertainty_method == 'bootstrap' and self.nbootstraps == None:
             raise ParameterError("Cannot request bootstrap sampling of free energy differences without any bootstraps")
 

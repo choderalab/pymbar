@@ -82,6 +82,19 @@ def test_mbar_free_energies():
         z = (fe - fe0) / fe_sigma
         eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
+        # now test the bootstrap uncertainty
+        mbar = MBAR(u_kn, N_k, nbootstraps = 40)
+        results = mbar.getFreeEnergyDifferences(uncertainty_method='bootstrap')
+        fe = results['Delta_f']
+        fe_sigma = results['dDelta_f']
+        fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
+
+        fe0 = test.analytical_free_energies()
+        fe0 = fe0[1:] - fe0[0]
+
+        z = (fe - fe0) / fe_sigma
+        eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+
 def test_mbar_computeExpectations_position_averages():
 
     """Can MBAR calculate E(x_n)??"""
