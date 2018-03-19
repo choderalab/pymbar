@@ -303,8 +303,7 @@ class MBAR:
                 solver['options']['verbose'] = self.verbose
 
         np.random.seed(rseed)
-        if rseed != None:
-            self.rstate = np.random.get_state()
+        self.rstate = np.random.get_state()
 
         f_k_init = self.f_k.copy()  # we need to pass a copy so we don't overwrite the original 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, f_k_init, solver_protocol)
@@ -553,7 +552,7 @@ class MBAR:
             diffm = np.zeros([self.K,self.K,self.nbootstraps])
             # take the matrix of differences of f_ij
             for b in range(self.nbootstraps):
-                diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose() 
+                diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose()
             dDeltaf_ij = np.std(diffm,axis=2)
             result_vals['dDelta_f'] = dDeltaf_ij
 
@@ -578,6 +577,7 @@ class MBAR:
     # =========================================================================
     def computeExpectationsInner(self, A_n, u_ln, state_map,
                                  uncertainty_method=None,
+                                 bootstrap_index=None
                                  warning_cutoff=1.0e-10,
                                  return_theta=False):
         """
@@ -716,9 +716,13 @@ class MBAR:
 
         # <A> = A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
         # Fill in first section of matrix with existing q_k(x) from states.
-        Log_W_nk[:, 0:K] = self.Log_W_nk
         N_k[0:K] = self.N_k
-        f_k[0:K] = self.f_k
+        if bootstrap_index == None:
+            f_k[0:K] = self.f_k
+            Log_W_nk[:, 0:K] = self.Log_W_nk
+        else:
+            f_k[0:K] = self.f_k_boots[b,:]
+            Log_W_nk[:, 0:K] = mbar_log_W_kn(self.u_kn[:,r
 
         # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
         states_with_samples = (self.N_k > 0)
@@ -1209,18 +1213,35 @@ class MBAR:
         state_list = np.arange(L)   # need to get it into the correct shape
         A_in = np.array([0])
         inner_results = self.computeExpectationsInner(A_in, u_ln, state_list,
-                                                      return_theta=compute_uncertainty,
+                                                      return_theta=(compute_uncertainty and uncertainty_method!='bootstrap'),
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
 
-        Deltaf_ij, dDeltaf_ij = None, None
-
         f_k = np.matrix(inner_results['f'])
-
         result_vals = dict()
         result_vals['Delta_f'] = np.array(f_k - f_k.transpose())
+        
+        if compute_uncertainty and uncertainty_method=='bootstrap':
+            # save the random state before bootstrapping
+            tempstate = np.random.get_state()
+            np.random.set_state(self.rstate)
+            fksize = np.shape(u_ln)[0]
+            bootstrap_vals = np.zeros([fksize,fksize,self.nbootstraps])
+            for b in range(self.nbootstraps):
+                allN = np.sum(self.N_k)
+                rinit = np.random.randint(allN,size=allN)
+                import pdb
+                pdb.set_trace()
+                inner_results=self.computeExpectationsInner(A_in, u_ln[:,rinit], state_list,
+                                                      warning_cutoff=warning_cutoff, bootstrap_index=b)
+                f_k = np.matrix(inner_results['f'])                      
+                bootstrap_vals[:,:,b] = np.array(f_k - f_k.transpose())
+                
+            # restore the pre-bootstrapping random state.        
+            result_vals['dDelta_f'] = np.std(bootstrap_vals,axis=2)
+            np.random.set_state(tempstate)
 
-        if (compute_uncertainty):
+        elif compute_uncertainty:
             result_vals['dDelta_f'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
 
         # Return matrix of free energy differences and uncertainties.
