@@ -152,8 +152,6 @@ pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 histogram_parameters = dict()
 histogram_parameters['bin_n'] = bin_kn
 histogram_parameters['bin_edges'] = bin_edges
-import pdb
-pdb.set_trace()
 
 pmf.generatePMF(u_kln[0], pmf_type = 'histogram', histogram_parameters=histogram_parameters)
 results = pmf.getPMF(bin_center_i)
