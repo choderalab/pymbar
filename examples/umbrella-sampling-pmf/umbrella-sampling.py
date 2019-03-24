@@ -11,6 +11,8 @@ from __future__ import print_function
 import numpy # numerical array library
 import pymbar # multistate Bennett acceptance ratio
 from pymbar import timeseries # timeseries analysis
+from pymbar import PMF
+
 # Constants.
 kB = 1.381e-23 * 6.022e23 / 1000.0 # Boltzmann constant in kJ/mol/K
 
@@ -144,10 +146,9 @@ for k in range(K):
 
 # Initialize MBAR.
 print("Running MBAR...")
-mbar = pymbar.MBAR(u_kln, N_k, verbose = True)
-
+pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 # Compute PMF in unbiased potential (in units of kT).
-results = mbar.computePMF(u_kn, bin_kn, nbins)
+results = pmf.generatePMF(u_kln[0], bin_kn, bins)
 f_i = results['f_i']
 df_i = results['df_i']
 
