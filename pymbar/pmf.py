@@ -33,12 +33,13 @@ import pymbar
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
+import pdb
+
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
 # =========================================================================
 # PMF class definition
 # =========================================================================
-
 
 class PMF:
     """
@@ -63,7 +64,7 @@ class PMF:
     """
     # =========================================================================
 
-    def __init__(self, u_kn, N_k, mbar_options = None, **kwargs):
+    def __init__(self, u_kn, N_k, verbose = False, mbar_options = None, **kwargs):
 
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -121,10 +122,6 @@ class PMF:
 
         K, N = np.shape(u_kn)
 
-        if mbar_options:
-            if mbar_options['verbose']:
-                print("K (total states) = %d, total samples = %d" % (K, N))
-
         if np.sum(self.N_k) != N:
             raise ParameterError(
                 'The sum of all N_k must equal the total number of samples (length of second dimension of u_kn.')
@@ -134,21 +131,11 @@ class PMF:
         # N = \sum_{k=1}^K N_k is the total number of samples
         self.N = N  # maximum number of configurations
 
-        # if not defined, identify from which state each sample comes from.
-        if x_kindices is not None:
-            self.x_kindices = x_kindices
-        else:
-            self.x_kindices = np.arange(N, dtype=np.int64)
-            Nsum = 0
-            for k in range(K):
-                self.x_kindices[Nsum:Nsum+self.N_k[k]] = k
-                Nsum += self.N_k[k]
-
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
 
-        if mbar_options==None:
-            pmf_mbar = MBAR(u_kn, N_k)
+        if mbar_options == None:
+            pmf_mbar = pymbar.MBAR(u_kn, N_k)
         else:
             # if the dictionary does not define the option, add it in
             required_mbar_options = ('maximum_iterations','relative_tolerance','verbose','initial_f_k'
@@ -165,16 +152,137 @@ class PMF:
             if mbar_options['initialize'] == None:
                 mbar_options['initialize'] = 'zeros'
 
-            pmf_mbar = MBAR(u_kn, N_k, 
-                            maximum_iterations = mbar_options['maximum_iterations'],
-                            relative_tolerance = mbar_options['relative_tolerance'],
-                            verbose = mbar_options['verbose'],
-                            initial_f_k = mbar_options['initial_f_k'],
-                            solver_protocol = mbar_options['solver_protocol'],
-                            initialize = mbar_options['zeros'],
-                            x_indices = mbar_options['x_indices'])
+            pmf_mbar = pymbar.MBAR(u_kn, N_k, 
+                                   maximum_iterations = mbar_options['maximum_iterations'],
+                                   relative_tolerance = mbar_options['relative_tolerance'],
+                                   verbose = mbar_options['verbose'],
+                                   initial_f_k = mbar_options['initial_f_k'],
+                                   solver_protocol = mbar_options['solver_protocol'],
+                                   initialize = mbar_options['zeros'],
+                                   x_indices = mbar_options['x_indices'])
 
-            self.mbar = pmf_mbar
+        self.mbar = pmf_mbar
+
+        if self.verbose:
+            print("PMF initialized")
+
+    def generatePMF(self, u_n, pmf_type = 'histogram', histogram_parameters = None, uncertainties='from-lowest', pmf_reference=None):
+
+        """
+        With the initialized PMF, compute a PMF using the options.
+
+        This implementation computes the expectation of an indicator-function observable for each bin.
+
+        Parameters
+        ----------
+
+        pmf_type: string
+             options = 'histogram'
+        
+        u_n : np.ndarray, float, shape=(N)
+            u_n[n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed. 
+            Often, it will be one of the indicies of u_kn, used in initializing the PMF object, but we want
+            to allow more generality.
+
+        histogram_parameters:
+            - bin_n : np.ndarray, float, shape=(N)
+                 bin_n[n] is the bin index of snapshot n of state k.  bin_n can assume a value in range(0,nbins)
+            - bin_edges : np.ndarray, float, shape=(N,M)
+                 The bin edges. Compatible with `bin_edges` output of np.histogram.  If multiple dimensions, 
+                 the M=1,2,3. . . column gives edges in x,y,z
+
+        Notes
+        -----
+        * pmf_type = 'histogram':
+            * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
+            * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
+            * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states . . . (?)
+            * the potential is given by u_n within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
+
+        Examples
+        --------
+
+        >>> # Generate some test data
+        >>> from pymbar import testsystems
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> # Select the potential we want to compute the PMF for (here, condition 0).
+        >>> u_n = u_kn[0, :]
+        >>> # Sort into nbins equally-populated bins
+        >>> nbins = 10 # number of equally-populated bins to use
+        >>> import numpy as np
+        >>> N_tot = N_k.sum()
+        >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
+        >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
+        >>> bin_widths = bins[1:] - bins[0:-1]
+        >>> bin_n = np.zeros(x_n.shape, np.int64)
+        >>> bin_n = np.digitize(x_n, bins) - 1
+        >>> # Compute PMF for these unequally-sized bins.
+        >>> pmf.generatePMF(u_n, bin_edges, bin_n)
+        >>> results = pmf.getPMF(x)
+        >>> f_i = results['f_i']
+        >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
+        >>> mbar = pmf.getMBAR()
+        >>> f_i_corrected = mbar['f_i'] - np.log(bin_widths)
+
+        """
+        self.pmf_type = pmf_type
+        self.u_n = u_n
+
+        import pdb
+
+        if self.pmf_type == 'histogram':
+            if 'bin_edges' not in histogram_parameters:
+                ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
+
+            # Verify that no PMF bins are empty -- we can't deal with empty bins,
+            # because the free energy is infinite.
+            if 'bin_n' not in histogram_parameters:    
+                ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
+
+            bin_n = histogram_parameters['bin_n']
+            bins = histogram_parameters['bin_edges']
+
+            dims = len(np.shape(bins))
+
+            if dims == 1:
+                self.nbins = len(bins)-1
+            if dims == 2:
+                self.nbins = (len(bins)-1)**2
+            if dims > 2:
+                ParameterError("Can only handle histograms of dimension 1 or 2")
+
+            # WARNING: probably doesn't handle 2D yet.
+            self.histogram_parameters = histogram_parameters
+
+            for i in range(self.nbins):
+                if np.sum(bin_n == i) == 0:
+                    raise ParameterError(
+                "At least one bin in provided bin_n argument has no samples.  All bins must have samples for free energies to be finite.  Adjust bin sizes or eliminate empty bins to ensure at least one sample per bin.")
+            K = self.mbar.K
+
+            # Compute unnormalized log weights for the given reduced potential
+            # u_n.
+            log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
+
+            # Compute the free energies for these histogram states
+            f_i = np.zeros([self.nbins], np.float64)
+            df_i = np.zeros([self.nbins], np.float64)
+            for i in range(self.nbins):
+                # Get linear n-indices of samples that fall in this bin.
+                indices = np.where(bin_n == i)
+
+                # Sanity check.
+                if (len(indices) == 0):
+                    raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
+
+                # Compute dimensionless free energy of occupying state i.
+                f_i[i] = - pymbar.mbar.logsumexp(log_w_n[indices])
+
+            self.fbin_i = f_i  # histogram bin free energies (may need a better name?)
+   
+        else:
+            raise ParameterError("pmf_type '%s' not recognized." % pmf_type)
+
 
     def getPMF(self, x, uncertainties = 'from-lowest', pmf_reference = None):
 
@@ -208,35 +316,47 @@ class PMF:
         if self.pmf_type == None:
             ParameterError('pmf_type has not been set!')
 
+        K = self.mbar.K  # number of states
+
         # create dictionary to return results
         result_vals = dict()
 
         if self.pmf_type == 'histogram':
             # figure out which bins the samples are in. Clearly a faster way to do this.
-            x_indices = np.zeros(np.len(x),int) 
-            for i, xi in enumerate(x):
-                for j in range(nbins-1):
-                    if x > bins[j]:
-                        x_indices[i] = j
-                        continue
+            bins = self.histogram_parameters['bin_edges']
+            bin_n = self.histogram_parameters['bin_n']
 
-            # now we know what bins to calculate values for.
-    
+            dims = len(np.shape(bins))
+            if dims == 1:
+                # what index does each x fall into?
+                diffedge = np.abs(np.floor(np.subtract.outer(x,bins))) # how far is it above each bin edge?
+                x_indices = diffedge.argmin(axis=1)
+            if dims == 2:
+                # what index does each x fall into?
+                diffedge = np.abs(np.floor(np.subtract.outer(x,bins[0,:]))) # how far is it above each bin edge?
+                x_indices = diffedge.argmin(axis=1)
+                diffedge = np.abs(np.floor(np.subtract.outer(x,bins[1,:]))) # how far is it above each bin edge?
+                y_indices = diffedge.argmin(axis=1)
+
             # Compute uncertainties by forming matrix of W_nk.
-            N_k = np.zeros([self.K + nbins], np.int64)
+            N_k = np.zeros([self.K + self.nbins], np.int64)
             N_k[0:K] = self.N_k
-            W_nk = np.zeros([self.N, self.K + nbins], np.float64)
+            W_nk = np.zeros([self.N, self.K + self.nbins], np.float64)
             W_nk[:, 0:K] = np.exp(self.mbar.Log_W_nk)
-            for i in range(nbins):
+
+            log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
+            for i in range(self.nbins):
                 # Get indices of samples that fall in this bin.
                 indices = np.where(bin_n == i)
 
                 # Compute normalized weights for this state.
-                W_nk[indices, K + i] = np.exp(log_w_n[indices] + self.f_i[i])
+                W_nk[indices, K + i] = np.exp(log_w_n[indices] + self.fbin_i[i])
 
-             # Compute asymptotic covariance matrix using specified method.
+            # Compute asymptotic covariance matrix using specified method.
             Theta_ij = self.mbar._computeAsymptoticCovarianceMatrix(W_nk, N_k)
 
+            f_i = np.zeros([len(x)], np.float64)
+            df_i = np.zeros([len(x)], np.float64)
 
             if (uncertainties == 'from-lowest') or (uncertainties == 'from-specified'):
                 # Report uncertainties in free energy difference from a given point
@@ -244,7 +364,7 @@ class PMF:
 
                 if (uncertainties == 'from-lowest'):
                     # Determine bin index with lowest free energy.
-                    j = self.mbar.f_i.argmin()
+                    j = self.fbin_i.argmin()
                 elif (uncertainties == 'from-specified'):
                     if pmf_reference == None:
                         raise ParameterError(
@@ -253,18 +373,16 @@ class PMF:
                         j = pmf_reference
                 # Compute uncertainties with respect to difference in free energy
                 # from this state j.
-                for i in range(nbins):
+                for i in range(self.nbins):
                     df_i[i] = math.sqrt(
                     Theta_ij[K + i, K + i] + Theta_ij[K + j, K + j] - 2.0 * Theta_ij[K + i, K + j])
 
                 # Shift free energies so that state j has zero free energy.
-                f_i -= f_i[j]
+                f_i = self.fbin_i - self.fbin_i[j]
 
-                fx_vals = np.zeros(len(x_indices))
-                dfx_vals = np.zeros(len(x_indices))
-                for i in range(x_indices):
-                    fx_vals = f_[x_indices]
-                    dfx_vals = df[x_indices]
+                # doesn't yet support 2D
+                fx_vals = self.fbin_i[x_indices]
+                dfx_vals = df_i[x_indices]
 
                 # Return dimensionless free energy and uncertainty.
                 result_vals['f_i'] = fx_vals
@@ -283,7 +401,7 @@ class PMF:
                 fx_vals = np.zeros(len(x_indices))
                 dfx_vals = np.zeros(len(x_indices),len(x_indices))
                 for i in range(x_indices):
-                    fx_vals = f_i[x_indices]
+                    fx_vals = self.fbin_i[x_indices]
                     for j in range(x_indices):
                         dfx_vals = df_ij[x_indices,x_indices]
 
@@ -295,14 +413,14 @@ class PMF:
                 # Determine uncertainties from normalization that \sum_i p_i = 1.
 
                 # Compute bin probabilities p_i
-                p_i = np.exp(-f_i - logsumexp(-f_i))
+                p_i = np.exp(-self.fbin_i - logsumexp(-self.fbin_i))
 
                 # todo -- eliminate triple loop over nbins!
                 # Compute uncertainties in bin probabilities.
-                d2p_i = np.zeros([nbins], np.float64)
+                d2p_i = np.zeros([self.nbins], np.float64)
                 for k in range(nbins):
-                    for i in range(nbins):
-                        for j in range(nbins):
+                    for i in range(self.nbins):
+                        for j in range(self.nbins):
                             delta_ik = 1.0 * (i == k)
                             delta_jk = 1.0 * (j == k)
                             d2p_i[k] += p_i[k] * (p_i[i] - delta_ik) * p_i[k] * (p_i[j] - delta_jk) * Theta_ij[K + i, K + j]
@@ -313,9 +431,8 @@ class PMF:
 
                 fx_vals = np.zeros(len(x_indices))
                 dfx_vals = np.zeros(len(x_indices))
-                for i in range(x_indices):
-                    fx_vals = f_i[x_indices]
-                    dfx_vals = df_i[x_indices]
+                fx_vals = self.fbin_i[x_indices]
+                dfx_vals = df_i[x_indices]
 
                 # Return dimensionless free energy and uncertainty.
                 result_vals['f_i'] = fx_vals
@@ -323,105 +440,6 @@ class PMF:
 
             
         return result_vals
-
-
-    def generatePMF(self, pmf_type = 'histogram', histogram_parameters = None, uncertainties='from-lowest', pmf_reference=None):
-
-        """
-        With the initialized PMF, compute a PMF using the options.
-
-        This implementation computes the expectation of an indicator-function observable for each bin.
-
-        Parameters
-        ----------
-
-        pmf_type: string
-             options = 'histogram'
-        
-        u_n : np.ndarray, float, shape=(N)
-            u_n[n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed.
-
-        histogram_parameters:
-            - bin_n : np.ndarray, float, shape=(N)
-                 bin_n[n] is the bin index of snapshot n of state k.  bin_n can assume a value in range(0,nbins)
-            - nbins : int
-                 The number of bins
-
-        Notes
-        -----
-        * pmf_type = 'histogram':
-            * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
-            * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
-            * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states . . . (?)
-            * the potential is given by u_n within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
-
-        Examples
-        --------
-
-        >>> # Generate some test data
-        >>> from pymbar import testsystems
-        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
-        >>> # Select the potential we want to compute the PMF for (here, condition 0).
-        >>> u_n = u_kn[0, :]
-        >>> # Sort into nbins equally-populated bins
-        >>> nbins = 10 # number of equally-populated bins to use
-        >>> import numpy as np
-        >>> N_tot = N_k.sum()
-        >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
-        >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
-        >>> bin_widths = bins[1:] - bins[0:-1]
-        >>> bin_n = np.zeros(x_n.shape, np.int64)
-        >>> bin_n = np.digitize(x_n, bins) - 1
-        >>> # Compute PMF for these unequally-sized bins.
-        >>> pmf.generatePMF(u_n, bin_n, nbins)
-        >>> results = pmf.getPMF()x)
-        >>> f_i = results['f_i']
-        >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
-        >>> mbar = pmf.getMBAR()
-        >>> f_i_corrected = mbar['f_i'] - np.log(bin_widths)
-
-        """
-        self.pmf_type = pmf_type
-
-        if self.pmf_type == 'histogram':
-            if histogram_parameters['nbins'] == None:
-                ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
-            else:
-                if histogram_paramters['nbins'] < 0:
-                    ParameterError('histogram_parameters[\'nbins\'] must be positive')
-
-            # Verify that no PMF bins are empty -- we can't deal with empty bins,
-            # because the free energy is infinite.
-            if histogram_parameters['bins_n'] == None:    
-                ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
-                
-            for i in range(nbins):
-                if np.sum(bin_n == i) == 0:
-                    raise ParameterError(
-                "At least one bin in provided bin_n argument has no samples.  All bins must have samples for free energies to be finite.  Adjust bin sizes or eliminate empty bins to ensure at least one sample per bin.")
-            K = self.K
-
-            # Compute unnormalized log weights for the given reduced potential
-            # u_n.
-            log_w_n = self.mbar._computeUnnormalizedLogWeights(u_n)
-
-            # Compute the free energies for these states.
-            f_i = np.zeros([nbins], np.float64)
-            df_i = np.zeros([nbins], np.float64)
-            for i in range(nbins):
-                # Get linear n-indices of samples that fall in this bin.
-                indices = np.where(bin_n == i)
-
-                # Sanity check.
-                if (len(indices) == 0):
-                    raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
-
-                # Compute dimensionless free energy of occupying state i.
-                f_i[i] = - pymbar.mbar.logsumexp(log_w_n[indices])
-
-        else:
-            raise ParameterError("Uncertainty method '%s' not recognized." % uncertainties)
-
 
 
     def getMBAR(self):
