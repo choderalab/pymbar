@@ -122,8 +122,11 @@ print("Binning data...")
 delta = (chi_max - chi_min) / float(nbins)
 # compute bin centers
 bin_center_i = numpy.zeros([nbins], numpy.float64)
+bin_edges = numpy.zeros([nbins+1], numpy.float64)
+bin_edges[0] = chi_min
 for i in range(nbins):
     bin_center_i[i] = chi_min + delta/2 + delta * i
+    bin_edges[i+1] = bin_center_i[i] + delta/2
 # Bin data
 bin_kn = numpy.zeros([K,N_max], numpy.int32)
 for k in range(K):
@@ -143,12 +146,17 @@ for k in range(K):
 
         # Compute energy of snapshot n from simulation k in umbrella potential l
         u_kln[k,:,n] = u_kn[k,n] + beta_k[k] * (K_k/2.0) * dchi**2
-
-# Initialize MBAR.
-print("Running MBAR...")
+#initialize PMF with the data collected
 pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 # Compute PMF in unbiased potential (in units of kT).
-results = pmf.generatePMF(u_kln[0], bin_kn, bins)
+histogram_parameters = dict()
+histogram_parameters['bin_n'] = bin_kn
+histogram_parameters['bin_edges'] = bin_edges
+import pdb
+pdb.set_trace()
+
+pmf.generatePMF(u_kln[0], pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+results = pmf.getPMF(bin_center_i)
 f_i = results['f_i']
 df_i = results['df_i']
 

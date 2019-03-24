@@ -116,6 +116,12 @@ class PMF:
         # N_k[k] is the number of samples from state k, some of which might be zero.
         self.N_k = np.array(N_k, dtype=np.int64)
         self.N = np.sum(self.N_k)
+        
+        # for now, still need to convert from 3 to 2 dim
+        # Get dimensions of reduced potential energy matrix, and convert to KxN form if needed.
+        if len(np.shape(u_kn)) == 3:
+            self.K = np.shape(u_kn)[1]  # need to set self.K, and it's the second index
+            u_kn = kln_to_kn(u_kn, N_k=self.N_k)
 
         # u_kn[k,n] is the reduced potential energy of sample n evaluated at state k
         self.u_kn = np.array(u_kn, dtype=np.float64)
@@ -226,9 +232,13 @@ class PMF:
 
         """
         self.pmf_type = pmf_type
+
+        if len(np.shape(u_n)) == 2:
+            u_n = pymbar.mbar.kn_to_n(u_n, N_k = self.N_k)
+
         self.u_n = u_n
 
-        import pdb
+
 
         if self.pmf_type == 'histogram':
             if 'bin_edges' not in histogram_parameters:
@@ -240,14 +250,19 @@ class PMF:
                 ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
 
             bin_n = histogram_parameters['bin_n']
-            bins = histogram_parameters['bin_edges']
+            self.bins = histogram_parameters['bin_edges']
 
-            dims = len(np.shape(bins))
+            if len(np.shape(bin_n)) == 2:
+                bin_n = pymbar.mbar.kn_to_n(bin_n, N_k = self.N_k)
+
+            self.bin_n = bin_n 
+
+            dims = len(np.shape(self.bins))
 
             if dims == 1:
-                self.nbins = len(bins)-1
+                self.nbins = len(self.bins)-1
             if dims == 2:
-                self.nbins = (len(bins)-1)**2
+                self.nbins = (len(self.bins)-1)**2
             if dims > 2:
                 ParameterError("Can only handle histograms of dimension 1 or 2")
 
@@ -255,13 +270,12 @@ class PMF:
             self.histogram_parameters = histogram_parameters
 
             for i in range(self.nbins):
-                if np.sum(bin_n == i) == 0:
+                if np.sum(self.bin_n == i) == 0:
                     raise ParameterError(
                 "At least one bin in provided bin_n argument has no samples.  All bins must have samples for free energies to be finite.  Adjust bin sizes or eliminate empty bins to ensure at least one sample per bin.")
             K = self.mbar.K
 
-            # Compute unnormalized log weights for the given reduced potential
-            # u_n.
+            # Compute unnormalized log weights for the given reduced potential u_n.
             log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
 
             # Compute the free energies for these histogram states
@@ -269,7 +283,7 @@ class PMF:
             df_i = np.zeros([self.nbins], np.float64)
             for i in range(self.nbins):
                 # Get linear n-indices of samples that fall in this bin.
-                indices = np.where(bin_n == i)
+                indices = np.where(self.bin_n == i)
 
                 # Sanity check.
                 if (len(indices) == 0):
@@ -323,19 +337,17 @@ class PMF:
 
         if self.pmf_type == 'histogram':
             # figure out which bins the samples are in. Clearly a faster way to do this.
-            bins = self.histogram_parameters['bin_edges']
-            bin_n = self.histogram_parameters['bin_n']
 
-            dims = len(np.shape(bins))
+            dims = len(np.shape(self.bins))
             if dims == 1:
                 # what index does each x fall into?
-                diffedge = np.abs(np.floor(np.subtract.outer(x,bins))) # how far is it above each bin edge?
+                diffedge = np.abs(np.floor(np.subtract.outer(x,self.bins))) # how far is it above each bin edge?
                 x_indices = diffedge.argmin(axis=1)
             if dims == 2:
                 # what index does each x fall into?
-                diffedge = np.abs(np.floor(np.subtract.outer(x,bins[0,:]))) # how far is it above each bin edge?
+                diffedge = np.abs(np.floor(np.subtract.outer(x,self.bins[0,:]))) # how far is it above each bin edge?
                 x_indices = diffedge.argmin(axis=1)
-                diffedge = np.abs(np.floor(np.subtract.outer(x,bins[1,:]))) # how far is it above each bin edge?
+                diffedge = np.abs(np.floor(np.subtract.outer(x,self.bins[1,:]))) # how far is it above each bin edge?
                 y_indices = diffedge.argmin(axis=1)
 
             # Compute uncertainties by forming matrix of W_nk.
@@ -347,7 +359,7 @@ class PMF:
             log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
             for i in range(self.nbins):
                 # Get indices of samples that fall in this bin.
-                indices = np.where(bin_n == i)
+                indices = np.where(self.bin_n == i)
 
                 # Compute normalized weights for this state.
                 W_nk[indices, K + i] = np.exp(log_w_n[indices] + self.fbin_i[i])
