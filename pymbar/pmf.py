@@ -239,7 +239,6 @@ class PMF:
         self.u_n = u_n
 
 
-
         if self.pmf_type == 'histogram':
             if 'bin_edges' not in histogram_parameters:
                 ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
@@ -269,6 +268,8 @@ class PMF:
             # WARNING: probably doesn't handle 2D yet.
             self.histogram_parameters = histogram_parameters
 
+            import pdb
+            pdb.set_trace()
             for i in range(self.nbins):
                 if np.sum(self.bin_n == i) == 0:
                     raise ParameterError(
@@ -345,10 +346,10 @@ class PMF:
                 x_indices = diffedge.argmin(axis=1)
             if dims == 2:
                 # what index does each x fall into?
-                diffedge = np.abs(np.floor(np.subtract.outer(x,self.bins[0,:]))) # how far is it above each bin edge?
-                x_indices = diffedge.argmin(axis=1)
-                diffedge = np.abs(np.floor(np.subtract.outer(x,self.bins[1,:]))) # how far is it above each bin edge?
-                y_indices = diffedge.argmin(axis=1)
+                diff_edge = np.abs(np.floor(np.subtract.outer(x[:,0],self.bins[:,0]))) # how far is it above each bin edge?
+                x_indices = diff_edge.argmin(axis=1)
+                diffedge = np.abs(np.floor(np.subtract.outer(x[:,1],self.bins[:,1]))) # how far is it above each bin edge?
+                y_indices = diff_edge.argmin(axis=1)
 
             # Compute uncertainties by forming matrix of W_nk.
             N_k = np.zeros([self.K + self.nbins], np.int64)

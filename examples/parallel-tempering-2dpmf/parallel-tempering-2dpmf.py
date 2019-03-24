@@ -244,6 +244,7 @@ bin_kn = numpy.zeros([K,N_max], numpy.int16) # bin_kn[k,n] is the index of which
 nbins = 0
 bin_counts = list()
 bin_centers = list() # bin_centers[i] is a (phi,psi) tuple that gives the center of bin i
+
 for i in range(nbins_per_torsion):
    for j in range(nbins_per_torsion):
       # Determine (phi,psi) of bin center.
@@ -272,13 +273,14 @@ for i in range(nbins_per_torsion):
 print("%d bins were populated:" % nbins)
 for i in range(nbins):
    print("bin %5d (%6.1f, %6.1f) %12d conformations" % (i, bin_centers[i][0], bin_centers[i][1], bin_counts[i]))
+bin_edges = numpy.zeros([nbins_per_torsion+1,2])
 
-#===================================================================================================
-# Initialize MBAR.
-#===================================================================================================
+for i in range(nbins_per_torsion+1):
+   bin_edges[i,0] = torsion_min + dx * i
+   bin_edges[i,1] = torsion_min + dx * i
 
-# Initialize MBAR
-mbar = pymbar.MBAR(u_kln, N_k, verbose=True)
+# Initialize PMF with data collected
+pmf = pymbar.PMF(u_kln,N_k) 
 
 #===================================================================================================
 # Compute PMF at the desired temperature.
@@ -293,7 +295,14 @@ u_kn = target_beta * U_kn
 # f_i[i] is the dimensionless free energy of bin i (in kT) at the temperature of interest
 # df_i[i,j] is an estimate of the covariance in the estimate of (f_i[i] - f_j[j], with reference
 # the lowest free energy state.
-results = mbar.computePMF(u_kn, bin_kn, nbins, uncertainties='from-lowest')
+# Compute PMF in unbiased potential (in units of kT).
+histogram_parameters = dict()
+import pdb
+pdb.set_trace()
+histogram_parameters['bin_n'] = bin_kn
+histogram_parameters['bin_edges'] = bin_edges
+pmf.generatePMF(u_kn, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+results = mbar.getPMF(bin_centers, uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
 
