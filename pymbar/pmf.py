@@ -393,7 +393,7 @@ class PMF:
                 f_i = self.fbin_i - self.fbin_i[j]
 
                 # doesn't yet support 2D
-                fx_vals = self.fbin_i[x_indices]
+                fx_vals = f_i[x_indices]
                 dfx_vals = df_i[x_indices]
 
                 # Return dimensionless free energy and uncertainty.
