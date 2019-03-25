@@ -151,9 +151,10 @@ pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
 histogram_parameters['bin_n'] = bin_kn
-histogram_parameters['bin_edges'] = bin_edges
+histogram_parameters['bin_edges'] = [bin_edges]
 pmf.generatePMF(u_kn, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
-results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
+#results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
+results = pmf.getPMF(bin_center_i, uncertainties = 'all-differences')
 f_i = results['f_i']
 df_i = results['df_i']
 

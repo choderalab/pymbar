@@ -268,9 +268,13 @@ class PMF:
             states = np.shape(bin_n)[0] 
             Nmax = np.shape(bin_n)[1]
             bins_counted = np.zeros([states,Nmax],dtype=int)
+
             for k in range(states):
                 for n in range(Nmax):
-                    ind2 = tuple(bin_n[k,n])
+                    if dims == 1:
+                        ind2 = bin_n[k,n]
+                    else:
+                        ind2 = tuple(bin_n[k,n])
                     if ind2 not in nonzero_bins:
                         nonzero_n += 1
                         nonzero_bins.append(ind2)
@@ -364,7 +368,7 @@ class PMF:
             dims = len(self.bins)
             if dims == 1:
                 # what index does each x fall into?
-                diffedge = np.abs(np.floor(np.subtract.outer(x,self.bins[0]))) # how far is it above each bin edge?
+                diff_edge = np.abs(np.floor(np.subtract.outer(x,self.bins[0]))) # how far is it above each bin edge?
                 loc_indices = diff_edge.argmin(axis=1)
             else:
                 loc_indices = np.zeros([len(x),dims],dtype=int)
@@ -419,7 +423,10 @@ class PMF:
                 dfx_vals = np.zeros(len(x))
 
                 for i,l in enumerate(loc_indices):
-                    vol_e = self.fbin[tuple(l)]
+                    if dims == 1:
+                        vol_e = self.fbin[l]
+                    else:
+                        vol_e = self.fbin[tuple(l)]
                     if vol_e >= 0:
                         fx_vals[i] = f_i[vol_e]
                         dfx_vals[i] = df_i[vol_e]
@@ -434,19 +441,32 @@ class PMF:
             elif (uncertainties == 'all-differences'):
                 # Report uncertainties in all free energy differences.
 
+                pdb.set_trace()
                 diag = Theta_ij.diagonal()
-                dii = diag[K, K + nbins]
-                d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K:K + nbins, K:K + nbins]
+                dii = diag[K, K + self.nbins]  # appears broken?  Not used?
+                d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K:K + self.nbins, K:K + self.nbins]
 
                 # unsquare uncertainties
                 df_ij = np.sqrt(d2f_ij)
 
-                fx_vals = np.zeros(len(loc_indices))
-                dfx_vals = np.zeros(len(loc_indices),len(loc_indices))
-                for i in range(x_indices):
-                    fx_vals = self.fbin[loc_indices]
-                    for j in range(x_indices):
-                        dfx_vals = df_ij[loc_indices,loc_indices]
+                fx_vals = np.zeros(len(x))
+                dfx_vals = np.zeros([len(x),len(x)])
+
+                vol_es = list()
+                for i,l in enumerate(loc_indices):
+                    if dims == 1:
+                        vol_e = self.fbin[l]
+                    else:
+                        vol_e = self.fbin[tuple(l)]
+                    if vol_e >= 0:
+                        fx_vals[i] = f_i[vol_e]
+                    else:
+                        fx_vals[i] = np.nan
+                    vol_es.append(vol_e)
+
+                for i,vi in enumerate(vol_es):
+                    for j,vj in enumerate(vol_es):
+                        dfx_vals[i,j] = df_ij[vi,vj]
 
                 # Return dimensionless free energy and uncertainty.
                 result_vals['f_i'] = fx_vals
@@ -472,10 +492,21 @@ class PMF:
                 d2f_i = d2p_i / p_i ** 2
                 df_i = np.sqrt(d2f_i)
 
-                fx_vals = np.zeros(len(loc_indices))
-                dfx_vals = np.zeros(len(loc__indices))
-                fx_vals = self.fbin[loc_indices]
-                dfx_vals = df_i[loc_indices]
+
+                fx_vals = np.zeros(len(x))
+                dfx_vals = np.zeros(len(x))
+
+                for i,l in enumerate(loc_indices):
+                    if dims == 1:
+                        vol_e = self.fbin[l]
+                    else:
+                        vol_e = self.fbin[tuple(l)]
+                    if vol_e >= 0:
+                        fx_vals[i] = f_i[vol_e]
+                        dfx_vals[i] = df_i[vol_e]
+                    else:
+                        fx_vals[i] = np.nan
+                        dfx_vals[i] = np.nan
 
                 # Return dimensionless free energy and uncertainty.
                 result_vals['f_i'] = fx_vals
