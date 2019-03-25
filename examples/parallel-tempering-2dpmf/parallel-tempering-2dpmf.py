@@ -32,6 +32,8 @@ from pymbar import timeseries # for timeseries analysis
 import os
 import os.path
 
+import pdb
+
 #===================================================================================================
 # CONSTANTS
 #===================================================================================================
@@ -240,11 +242,16 @@ torsion_min = -180.0
 torsion_max = +180.0
 dx = (torsion_max - torsion_min) / float(nbins_per_torsion)
 # Assign torsion bins
-bin_kn = numpy.zeros([K,N_max], numpy.int16) # bin_kn[k,n] is the index of which histogram bin sample n from temperature index k belongs to
-nbins = 0
-bin_counts = list()
-bin_centers = list() # bin_centers[i] is a (phi,psi) tuple that gives the center of bin i
+bin_kn = numpy.zeros([K,N_max,2], numpy.int16) # bin_kn[k,n] is the index of which histogram bin sample n from temperature index k belongs to
 
+# two ways to keep track of the bins.  One is as a list of counts and bin centers.  This scales to as many 
+# dimensions as one wants in the code.  
+# However, that makes it difficult to call the PMF afterwards to determine the value of the PMF a given point,
+# and is incompatible with using the output of numpy.histogram or numpy.histogramdd 
+
+bin_nonzero = 0
+count_nonzero = list()
+centers_nonzero = list()
 for i in range(nbins_per_torsion):
    for j in range(nbins_per_torsion):
       # Determine (phi,psi) of bin center.
@@ -255,29 +262,22 @@ for i in range(nbins_per_torsion):
       in_bin = (phi-dx/2 <= phi_kn[indices]) & (phi_kn[indices] < phi+dx/2) & (psi-dx/2 <= psi_kn[indices]) & (psi_kn[indices] < psi+dx/2)
       # Count number of configurations in this bin.
       bin_count = in_bin.sum()
-
       # Generate list of indices in bin.
       indices_in_bin = (indices[0][in_bin], indices[1][in_bin])
+      # assign these conformations to the bin index
+      bin_kn[indices_in_bin] = [i,j]  # this is a multidimensional array
+      if bin_count > 0:
+         count_nonzero.append(bin_count)
+         centers_nonzero.append((phi,psi))
+         bin_nonzero += 1
 
-      if (bin_count > 0):
-         # store bin (phi,psi)
-         bin_centers.append( (phi, psi) )
-         bin_counts.append( bin_count )
+print("%d bins were populated:" % bin_nonzero)
+for i in range(bin_nonzero):
+   print("bin %5d (%6.1f, %6.1f) %12d conformations" % (i, centers_nonzero[i][0], centers_nonzero[i][1], count_nonzero[i]))
 
-         # assign these conformations to the bin index
-         bin_kn[indices_in_bin] = nbins
-
-         # increment number of bins
-         nbins += 1
-
-print("%d bins were populated:" % nbins)
-for i in range(nbins):
-   print("bin %5d (%6.1f, %6.1f) %12d conformations" % (i, bin_centers[i][0], bin_centers[i][1], bin_counts[i]))
-bin_edges = numpy.zeros([nbins_per_torsion+1,2])
-
-for i in range(nbins_per_torsion+1):
-   bin_edges[i,0] = torsion_min + dx * i
-   bin_edges[i,1] = torsion_min + dx * i
+bin_edges = list()
+for i in range(2):
+   bin_edges.append(numpy.linspace(torsion_min,torsion_max,nbins_per_torsion+1))
 
 # Initialize PMF with data collected
 pmf = pymbar.PMF(u_kln,N_k) 
@@ -297,12 +297,10 @@ u_kn = target_beta * U_kn
 # the lowest free energy state.
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
-import pdb
-pdb.set_trace()
 histogram_parameters['bin_n'] = bin_kn
 histogram_parameters['bin_edges'] = bin_edges
 pmf.generatePMF(u_kn, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
-results = mbar.getPMF(bin_centers, uncertainties = 'from-lowest')
+results = pmf.getPMF(numpy.array(centers_nonzero), uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
 
@@ -311,6 +309,6 @@ print("2D PMF")
 print("")
 print("%8s %6s %6s %8s %10s %10s" % ('bin', 'phi', 'psi', 'N', 'f', 'df'))
 
-for i in range(nbins):
-   print('%8d %6.1f %6.1f %8d %10.3f %10.3f' % (i, bin_centers[i][0], bin_centers[i][1], bin_counts[i], f_i[i], df_i[i]))
+for i in range(bin_nonzero):
+   print('%8d %6.1f %6.1f %8d %10.3f %10.3f' % (i, centers_nonzero[i][0], centers_nonzero[i][1], count_nonzero[i], f_i[i], df_i[i]))
 
