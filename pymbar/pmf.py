@@ -295,6 +295,7 @@ class PMF:
             # Compute the free energies for these histogram states with samples
             f_i = np.zeros([self.nbins], np.float64)
             df_i = np.zeros([self.nbins], np.float64)
+            pdb.set_trace()
             for i in range(self.nbins):
                 # Get linear n-indices of samples that fall in this bin.
                 indices = np.where(self.bin_n == i)

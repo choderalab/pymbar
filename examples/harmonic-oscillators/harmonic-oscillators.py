@@ -119,7 +119,7 @@ print("")
   
 print('generating samples...')
 randomsample = testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(O_k=O_k, K_k=K_k, beta=beta)
-[x_kn,u_kln,N_k] = randomsample.sample(N_k,mode='u_kln')
+[x_kn,u_kln,N_k] = randomsample.sample(N_k,mode='u_kln',seed=seed)
 
 # get the unreduced energies
 U_kln = u_kln/beta
