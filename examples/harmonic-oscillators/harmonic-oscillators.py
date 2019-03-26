@@ -742,7 +742,9 @@ for i in range(nbins):
   bin_counts[i] = (bin_n == i).sum()
 # Compute PMF.
 print("Solving for free energies of state to initialize PMF...")
-pmf = PMF(u_kn,N_k)
+mbar_options = dict()
+mbar_options['verbose'] = True
+pmf = PMF(u_kn,N_k,mbar_options=mbar_options)
 print("Computing PMF ...")
 histogram_parameters = dict()
 histogram_parameters['bin_n'] = bin_n # Indicates which state each sample comes from.

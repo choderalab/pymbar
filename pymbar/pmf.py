@@ -98,8 +98,8 @@ class PMF:
             verbosity : bool, optional
             initial_f_k : np.ndarray, float, shape=(K), optional
             solver_protocol : list(dict) or None, optional, default=None
-            mbar_initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
-            x_indices : 
+            initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
+            x_indices : ?
 
         Examples
         --------
@@ -144,7 +144,7 @@ class PMF:
             pmf_mbar = pymbar.MBAR(u_kn, N_k)
         else:
             # if the dictionary does not define the option, add it in
-            required_mbar_options = ('maximum_iterations','relative_tolerance','verbose','initial_f_k'
+            required_mbar_options = ('maximum_iterations','relative_tolerance','verbose','initial_f_k',
                                      'solver_protocol','initialize','x_kindices')
             for o in required_mbar_options:
                 if o not in mbar_options:
@@ -154,7 +154,7 @@ class PMF:
             if mbar_options['maximum_iterations'] == None:
                 mbar_options['maximum_iterations'] = 10000
             if mbar_options['relative_tolerance'] == None:
-                mbar_options['relative_toleratance'] = 1.0e-7
+                mbar_options['relative_tolerance'] = 1.0e-7
             if mbar_options['initialize'] == None:
                 mbar_options['initialize'] = 'zeros'
 
@@ -164,8 +164,8 @@ class PMF:
                                    verbose = mbar_options['verbose'],
                                    initial_f_k = mbar_options['initial_f_k'],
                                    solver_protocol = mbar_options['solver_protocol'],
-                                   initialize = mbar_options['zeros'],
-                                   x_indices = mbar_options['x_indices'])
+                                   initialize = mbar_options['initialize'],
+                                   x_kindices = mbar_options['x_kindices'])
 
         self.mbar = pmf_mbar
 
