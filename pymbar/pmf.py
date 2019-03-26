@@ -66,12 +66,26 @@ class PMF:
 
     def __init__(self, u_kn, N_k, verbose = False, mbar_options = None, **kwargs):
 
-        """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
+        """Initialize a potential of mean force calculation by performing
+        multistate Bennett acceptance ratio (MBAR) on a set of
+        simulation data from umbrella sampling at K states.
 
-        Upon initialization, the dimensionless free energies for all states are computed.
-        This may take anywhere from seconds to minutes, depending upon the quantity of data.
-        After initialization, the computed free energies may be obtained by a call to :func:`getFreeEnergyDifferences`,
-        or expectation at any state of interest can be computed by calls to :func:`computeExpectations`.
+        Upon initialization, the dimensionless free energies for all
+        states are computed.  This may take anywhere from seconds to
+        minutes, depending upon the quantity of data.
+
+        This creates an internal mbar object that is used to create
+        the potential of means force.
+
+        Methods are: 
+
+           generatePMF: given an intialized MBAR object, a set of points, 
+                        the desired energies at that point, and a method, generate 
+                        an object that contains the PMF information.
+
+           getPMF: given coordinates, generate the PMF at each coordinate (and uncertainty)
+
+           getMBAR: return the underlying mbar object.
 
         Parameters
         ----------
@@ -99,7 +113,7 @@ class PMF:
             initial_f_k : np.ndarray, float, shape=(K), optional
             solver_protocol : list(dict) or None, optional, default=None
             initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
-            x_indices : ?
+            x_kindices : which state index each sample is from.
 
         Examples
         --------
@@ -175,10 +189,10 @@ class PMF:
     def generatePMF(self, u_n, pmf_type = 'histogram', histogram_parameters = None, uncertainties='from-lowest', pmf_reference=None):
 
         """
-        With the initialized PMF, compute a PMF using the options.
-
-        This implementation computes the expectation of an indicator-function observable for each bin.
-
+        Given an intialized MBAR object, a set of points, 
+        the desired energies at that point, and a method, generate 
+        an object that contains the PMF information.
+        
         Parameters
         ----------
 
@@ -211,34 +225,40 @@ class PMF:
         Examples
         --------
 
-        # fix this example. . . . 
         >>> # Generate some test data
         >>> from pymbar import testsystems
-        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> from pymbar import PMF
+        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn',seed=0)
         >>> # Select the potential we want to compute the PMF for (here, condition 0).
         >>> u_n = u_kn[0, :]
-        >>> # Sort into nbins equally-populated bins
-        >>> nbins = 10 # number of equally-populated bins to use
-        >>> import numpy as np
-        >>> N_tot = N_k.sum()
+        >>> # Sort into nbins equally-populated bins                                                                          
+        >>> nbins = 10 # number of equally-populated bins to use                                                              
+        >>> import numpy as np                                                                                                
+        >>> N_tot = N_k.sum()                                                                                                 
         >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
         >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
         >>> bin_n = np.zeros(x_n.shape, np.int64)
         >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
-        >>> pmf.generatePMF(u_n, bin_edges, bin_n)
-        >>> results = pmf.getPMF(x)
+        >>> pmf = PMF(u_kn,N_k)
+        >>> histogram_parameters = dict()
+        >>> histogram_parameters['bin_edges'] = [bins] 
+        >>> histogram_parameters['bin_n'] = bin_n
+        >>> pmf.generatePMF(u_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
+        >>> results = pmf.getPMF(x_n)
         >>> f_i = results['f_i']
-        >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
+        >>> for i,x_n in enumerate(x_n):
+        >>> print(x_n,f_i[i])
         >>> mbar = pmf.getMBAR()
-        >>> f_i_corrected = mbar['f_i'] - np.log(bin_widths)
+        >>> print(mbar.f_k)
+        >>> print(N_k) 
 
         """
         self.pmf_type = pmf_type
 
         # eventually, we just want the desired energy of each sample.  For now, we allow conversion 
-        # from older 2d format (K,Nmax instead of N)
+        # from older 2d format (K,Nmax instead of N); this is data SAMPLED from each k, not the energy at different K.
         if len(np.shape(u_n)) == 2:
             u_n = pymbar.mbar.kn_to_n(u_n, N_k = self.N_k)
 
@@ -260,6 +280,8 @@ class PMF:
             # First, determine the number of dimensions of the histogram. This can be determined 
             # by the shape of bin_edges
             dims = len(self.bins)
+
+            self.dims = dims  # store the dimensionality for checking later.
 
             # now we need to loop over the bin_n and identify and label the nonzero bins.
             if len(np.shape(bin_n)) > dims:
@@ -312,14 +334,14 @@ class PMF:
                 maxv = len(self.bins[d])-1
                 corner_vectors.append(np.arange(0,maxv))
                 returnsize.append(maxv)
-            gridpoints = it.product(*corner_vectors)  # iterator giving all bin locations
+            gridpoints = it.product(*corner_vectors)  # iterator giving all bin locations in N dimensions.
 
             fbin_index = np.zeros(np.array(returnsize),int) # index in self.f where the free energy for this gridpoint is stored
             for g in gridpoints:
                 if g in nonzero_bins:
                     fbin_index[g] = nonzero_bins.index(g)
                 else: 
-                    fbin_index[g] = -1  # no free energy for this index.
+                    fbin_index[g] = -1  # no free energy for this index, since there are no points.
             self.fbin_index = fbin_index
 
         else:
@@ -331,6 +353,11 @@ class PMF:
         """
         Returns values of the PMF at the specified x points.
 
+        Parameters
+        ----------
+
+        x: numpy:ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        
         uncertainties : string, optional
             Method for reporting uncertainties (default: 'from-lowest')
 
@@ -354,6 +381,13 @@ class PMF:
 
         """
 
+        if len(np.shape(x)) == 1:
+            coorddim = 1
+        else:
+            coorddim = np.shape(x)[1]
+        if self.dims != coorddim:
+            DataError('coordinates have inconsistent dimension with the PMF.')
+
         if self.pmf_type == None:
             ParameterError('pmf_type has not been set!')
 
@@ -366,6 +400,7 @@ class PMF:
 
             # figure out which bins the values are in.
             dims = len(self.bins)
+
             if dims == 1:
                 # what gridpoint does each x fall into?
                 loc_indices = np.digitize(x,self.bins[0])-1 # -1 and nbinsperdim are out of range
@@ -404,7 +439,7 @@ class PMF:
 
             df_i = np.zeros(len(self.f), np.float64)
 
-            if (uncertainties == 'from-lowest') or (uncertainties == 'from-specified'):
+            if uncertainties == 'from-lowest' or uncertainties == 'from-specified' or uncertainties == 'all-differences':
                 # Report uncertainties in free energy difference from a given point
                 # on PMF.
 
@@ -427,73 +462,6 @@ class PMF:
                 # Shift free energies so that state j has zero free energy.
                 f_i = self.f - self.f[j]
 
-                fx_vals = np.zeros(len(x))
-                dfx_vals = np.zeros(len(x))
-
-                # figure out how many grid points in each direction
-                maxp = np.zeros(dims,int)
-                for d in range(dims):
-                    maxp[d] = len(self.bins[d])
-
-                for i,l in enumerate(loc_indices):  
-                    # Must be a way to list comprehend this?
-                    if np.any(l < 0):  # out of index below
-                        fx_vals[i] = np.nan
-                        dfx_vals[i] = np.nan
-                        continue
-                    if np.any(l > maxp): # out of index above
-                        fx_vals[i] = np.nan
-                        dfx_vals[i] = np.nan
-                        continue
-
-                    if dims == 1:
-                        findex = self.fbin_index[l]  
-                    else:
-                        findex = self.fbin_index[tuple(l)] 
-                    if findex >= 0:
-                        fx_vals[i] = f_i[findex]
-                        dfx_vals[i] = df_i[findex]
-                    else:
-                        fx_vals[i] = np.nan
-                        dfx_vals[i] = np.nan
-
-                # Return dimensionless free energy and uncertainty.
-                result_vals['f_i'] = fx_vals
-                result_vals['df_i'] = dfx_vals
-
-            elif (uncertainties == 'all-differences'):
-                # Report uncertainties in all free energy differences.
-
-                diag = Theta_ij.diagonal()
-                dii = diag[K, K + self.nbins]  # appears broken?  Not used?
-                d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K:K + self.nbins, K:K + self.nbins]
-
-                # unsquare uncertainties
-                df_ij = np.sqrt(d2f_ij)
-
-                fx_vals = np.zeros(len(x))
-                dfx_vals = np.zeros([len(x),len(x)])
-
-                findexs = list()
-                for i, l in enumerate(loc_indices):
-                    if dims == 1:
-                        findex = self.fbin_index[l]
-                    else:
-                        findex = self.fbin_index[tuple(l)]
-                    if findex >= 0:
-                        fx_vals[i] = f_i[findex]
-                    else:
-                        fx_vals[i] = np.nan
-                    findexs.append(findex)
-
-                for i, vi in enumerate(findexs):
-                    for j,vj in enumerate(findexs):
-                        dfx_vals[i,j] = df_ij[vi,vj]
-
-                # Return dimensionless free energy and uncertainty.
-                result_vals['f_i'] = fx_vals
-                result_vals['df_ij'] = dfx_vals
-
             elif (uncertainties == 'from-normalization'):
                 # Determine uncertainties from normalization that \sum_i p_i = 1.
 
@@ -515,26 +483,70 @@ class PMF:
                 df_i = np.sqrt(d2f_i)
 
 
-                fx_vals = np.zeros(len(x))
-                dfx_vals = np.zeros(len(x))
+            fx_vals = np.zeros(len(x))
+            dfx_vals = np.zeros(len(x))
 
-                for i,l in enumerate(loc_indices):
-                    if dims == 1:
-                        findex = self.fbin_index[l]
-                    else:
-                        findex = self.fbin_index[tuple(l)]
-                    if findex >= 0:
-                        fx_vals[i] = f_i[findex]
-                        dfx_vals[i] = df_i[findex]
-                    else:
-                        fx_vals[i] = np.nan
-                        dfx_vals[i] = np.nan
+            # figure out how many grid points in each direction
+            maxp = np.zeros(dims,int)
+            for d in range(dims):
+                maxp[d] = len(self.bins[d])
+
+            for i,l in enumerate(loc_indices):  
+                # Must be a way to list comprehend this?
+                if np.any(l < 0):  # out of index below
+                    fx_vals[i] = np.nan
+                    dfx_vals[i] = np.nan
+                    continue
+                if np.any(l > maxp): # out of index above
+                    fx_vals[i] = np.nan
+                    dfx_vals[i] = np.nan
+                    continue
+
+                if dims == 1:
+                    findex = self.fbin_index[l]  
+                else:
+                    findex = self.fbin_index[tuple(l)] 
+                if findex >= 0:
+                    fx_vals[i] = f_i[findex]
+                    dfx_vals[i] = df_i[findex]
+                else:
+                    fx_vals[i] = np.nan
+                    dfx_vals[i] = np.nan
 
                 # Return dimensionless free energy and uncertainty.
                 result_vals['f_i'] = fx_vals
                 result_vals['df_i'] = dfx_vals
 
-            
+            if uncertainties == 'all-differences':
+                # Report uncertainties in all free energy differences as well.
+
+                diag = Theta_ij.diagonal()
+                dii = diag[K, K + self.nbins]  # appears broken?  Not used?
+                d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K:K + self.nbins, K:K + self.nbins]
+
+                # unsquare uncertainties
+                df_ij = np.sqrt(d2f_ij)
+
+                dfxij_vals = np.zeros([len(x),len(x)])
+
+                findexs = list()
+                for i, l in enumerate(loc_indices):
+                    if dims == 1:
+                        findex = self.fbin_index[l]
+                    else:
+                        findex = self.fbin_index[tuple(l)]
+                    findexs.append(findex)
+
+                for i, vi in enumerate(findexs):
+                    for j,vj in enumerate(findexs):
+                        if vi != -1 and vj != 1:
+                            dfxij_vals[i,j] = df_ij[vi,vj]
+                        else:
+                            dfxij_vals[i,j] = np.nan
+
+                # Return dimensionless free energy and uncertainty.
+                result_vals['df_ij'] = dfxij_vals
+
         return result_vals
 
 

@@ -78,62 +78,7 @@ g_cos = 1.4 | g_sin = 2.3
 Correlation time for set    25 is      2.346
 Binning data...
 Evaluating reduced potential energies...
-Running MBAR...
-K (total states) = 26, total samples = 7443
-N_k = 
-[420 401 197 122 343 203 369 326 317 313 410 256 429 246 329 115  42  82
- 311 501 273 140 409 393 282 214]
-There are 26 states with samples.
-Initializing free energies to zero.
-Initial dimensionless free energies with method zeros
-f_k = 
-[ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.
-  0.  0.  0.  0.  0.  0.  0.  0.]
-Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.
-self consistent iteration gradient norm is     6103.3, Newton-Raphson gradient norm is     1352.2
-Choosing self-consistent iteration on iteration 0
-self consistent iteration gradient norm is     4371.8, Newton-Raphson gradient norm is     601.39
-Choosing self-consistent iteration for lower gradient on iteration 1
-self consistent iteration gradient norm is     3293.9, Newton-Raphson gradient norm is     312.63
-Newton-Raphson used on iteration 2
-self consistent iteration gradient norm is     84.179, Newton-Raphson gradient norm is     1.6604
-Newton-Raphson used on iteration 3
-self consistent iteration gradient norm is    0.41006, Newton-Raphson gradient norm is 0.00020931
-Newton-Raphson used on iteration 4
-self consistent iteration gradient norm is 6.8498e-05, Newton-Raphson gradient norm is  9.818e-12
-Newton-Raphson used on iteration 5
-self consistent iteration gradient norm is 3.3885e-12, Newton-Raphson gradient norm is  9.425e-26
-Newton-Raphson used on iteration 6
-self consistent iteration gradient norm is  2.904e-26, Newton-Raphson gradient norm is 2.7976e-26
-Newton-Raphson used on iteration 7
-Converged to tolerance of 2.164921e-15 in 8 iterations.
-Of 8 iterations, 6 were Newton-Raphson iterations and 2 were self-consistent iterations
-Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.
-self consistent iteration gradient norm is     1221.6, Newton-Raphson gradient norm is     1.6718
-Choosing self-consistent iteration on iteration 0
-self consistent iteration gradient norm is     685.46, Newton-Raphson gradient norm is     1.0519
-Choosing self-consistent iteration for lower gradient on iteration 1
-self consistent iteration gradient norm is     440.12, Newton-Raphson gradient norm is    0.84695
-Newton-Raphson used on iteration 2
-self consistent iteration gradient norm is    0.36211, Newton-Raphson gradient norm is 9.4678e-06
-Newton-Raphson used on iteration 3
-self consistent iteration gradient norm is 4.2165e-06, Newton-Raphson gradient norm is 3.9119e-15
-Newton-Raphson used on iteration 4
-self consistent iteration gradient norm is 1.7776e-15, Newton-Raphson gradient norm is 7.7093e-25
-Newton-Raphson used on iteration 5
-self consistent iteration gradient norm is 1.6447e-25, Newton-Raphson gradient norm is 2.1341e-24
-Choosing self-consistent iteration for lower gradient on iteration 6
-Converged to tolerance of 1.180921e-16 in 7 iterations.
-Of 7 iterations, 4 were Newton-Raphson iterations and 3 were self-consistent iterations
-Final dimensionless free energies
-f_k = 
-[  0.           5.67115185  10.61309514  11.44969531   9.16106047
-   6.3761027    3.89159209   1.80468599   3.51701497   6.24479435
-  10.17054226  14.27222477  15.04212741  13.07778027   9.02609591
-   5.50534627   5.22606167   7.03885057   7.97151995   8.64053058
-   7.14369734   3.25826866   0.1346788    1.67556643  12.27981581
-   8.64425685]
-MBAR initialization complete.
+PMF initialized
 PMF (in units of kT)
      bin        f       df
   -175.0    0.889    0.083
