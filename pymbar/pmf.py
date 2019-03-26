@@ -183,20 +183,21 @@ class PMF:
         ----------
 
         pmf_type: string
-             options = 'histogram'
+             options = 'histogram', others to follow.
         
         u_n : np.ndarray, float, shape=(N)
             u_n[n] is the reduced potential energy of snapshot n of state for which the PMF is to be computed. 
             Often, it will be one of the states in of u_kn, used in initializing the PMF object, but we want
             to allow more generality.
 
-        histogram_pxarameters:
+        histogram_parameters:
             - bin_n : np.ndarray, float, shape=(N,K) or (N)
                  If 1D, bin_n is an length-d array with a value in range(0,nbins).
                  If 2D, bin_n is an length-d x k array x K states with a value in range(0,nbins) for each dimension.
-                 bin_n[n,k] is the bin index of snapshot n of state k.  
+                 We do not currently support passing in array of bins in the shape K x Nmax
+                 If a sample is out of the grid (out of min, max in bin edges in that direction), its value is set to -1 in that dimension.
 
-            - bin_edges : list of D np.ndarray, each array shape Nd+1
+            - bin_edges: list of ndim np.ndarray, each array shaped ndum+1
                  The bin edges. Compatible with `bin_edges` output of np.histogram.  
 
         Notes
@@ -210,6 +211,7 @@ class PMF:
         Examples
         --------
 
+        # fix this example. . . . 
         >>> # Generate some test data
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
@@ -248,46 +250,38 @@ class PMF:
             if 'bin_edges' not in histogram_parameters:
                 ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
 
-            # Verify that no PMF bins are empty -- we can't deal with empty bins,
-            # because the free energy is infinite.
             if 'bin_n' not in histogram_parameters:    
                 ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
 
             self.histogram_parameters = histogram_parameters
             bin_n = histogram_parameters['bin_n']
             self.bins = histogram_parameters['bin_edges']
-            # need to determine the shape of bin_n, as we need to:
-            #    1. remove the zeros.
-            #    1. collapse it into one dimension.
+
             # First, determine the number of dimensions of the histogram. This can be determined 
             # by the shape of bin_edges
-
             dims = len(self.bins)
 
             # now we need to loop over the bin_n and identify and label the nonzero bins.
-
             if len(np.shape(bin_n)) > dims:
                 ParameterError("bin_n must be in the format of N_total x (bin dimensions). It must not be in the form K states x N_max x (bin_dimensions).") 
 
-            nonzero_n = 0
-            nonzero_bins = list()
-            bins_counted = np.zeros(self.N,dtype=int)
-
-            # identify which states have any samples in them, just run MBAR on
-            # states with samples (can't figure out free energies w/o samples)
+            nonzero_bins = list() # a list of the bins with at least one sample in them.
+            nonzero_bins_index = np.zeros(self.N,dtype=int) # for each sample, the index of the nonzero_bins element it belongs to.
 
             for n in range(self.N):
+                if np.any(bin_n[n] < 0):
+                    nonzero_bins_index[n] = -1
+                    continue  # this sample is out of grid
                 if dims == 1:
-                    ind2 = bin_n[n]
+                    ind2 = bin_n[n]  # which bin sample n is in
                 else:
-                    ind2 = tuple(bin_n[n])
+                    ind2 = tuple(bin_n[n]) # which bin (labeled N-d) sample n is in
                 if ind2 not in nonzero_bins:
-                    nonzero_n += 1
-                    nonzero_bins.append(ind2)
-                bins_counted[n] = nonzero_bins.index(ind2)
+                    nonzero_bins.append(ind2)  # this bin has a sample.  Add it to the list 
+                nonzero_bins_index[n] = nonzero_bins.index(ind2)  # the index of the nonzero bins
 
-            self.bin_n = bins_counted 
-            self.nbins = np.int(np.max(self.bin_n)+1)  # the total number of nonzero bins
+            self.bin_n = nonzero_bins_index  # store the index of the nonzero bins for each sample. 
+            self.nbins = np.int(np.max(self.bin_n))+1  # the total number of nonzero bins
 
             # Compute unnormalized log weights for the given reduced potential u_n.
             log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
@@ -295,7 +289,7 @@ class PMF:
             # Compute the free energies for these histogram states with samples
             f_i = np.zeros([self.nbins], np.float64)
             df_i = np.zeros([self.nbins], np.float64)
-            pdb.set_trace()
+
             for i in range(self.nbins):
                 # Get linear n-indices of samples that fall in this bin.
                 indices = np.where(self.bin_n == i)
@@ -307,22 +301,26 @@ class PMF:
                 # Compute dimensionless free energy of occupying state i.
                 f_i[i] = - pymbar.mbar.logsumexp(log_w_n[indices])
 
-            self.f = f_i    
-            # now assign back the free energy from the count_only bins to all of the bins. 
+            self.f = f_i  # store the free energies for this bin  
+
+            # now assign back the free energy from the sample_only bins to all of the bins. 
+
+            # rebuild the graph from the edges.
             corner_vectors = list()
             returnsize = list()
             for d in range(dims):
                 maxv = len(self.bins[d])-1
                 corner_vectors.append(np.arange(0,maxv))
                 returnsize.append(maxv)
-            gridpoints = it.product(*corner_vectors)
-            fbin = np.zeros(np.array(returnsize),int)
+            gridpoints = it.product(*corner_vectors)  # iterator giving all bin locations
+
+            fbin_index = np.zeros(np.array(returnsize),int) # index in self.f where the free energy for this gridpoint is stored
             for g in gridpoints:
                 if g in nonzero_bins:
-                    fbin[g] = nonzero_bins.index(g)  
+                    fbin_index[g] = nonzero_bins.index(g)
                 else: 
-                    fbin[g] = -1
-            self.fbin = fbin
+                    fbin_index[g] = -1  # no free energy for this index.
+            self.fbin_index = fbin_index
 
         else:
             raise ParameterError("pmf_type '%s' not recognized." % pmf_type)
@@ -341,19 +339,18 @@ class PMF:
             * 'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
-        pmf_reference : int, optional
-            the reference state that is zeroed when uncertainty = 'from-specified'
+        pmf_reference : N-d point for int specifying grid point the reference state that is zeroed when uncertainty = 'from-specified'
         
         Returns
         -------
         result_vals : dictionary
 
-        Possible keys in the result_vals dictionary:
+        keys in the result_vals dictionary:
 
         'f_i' : np.ndarray, float, shape=(K)
-            result_vals['f_i'][i] is the dimensionless free energy of state i, relative to the state of lowest free energy
+            result_vals['f_i'][i] is the dimensionless free energy of the x_i point, relative to the reference point
         'df_i' : np.ndarray, float, shape=(K)
-            result_vals['df_i'][i] is the uncertainty in the difference of f_i with respect to the state of lowest free energy
+            result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
 
         """
 
@@ -366,30 +363,38 @@ class PMF:
         result_vals = dict()
 
         if self.pmf_type == 'histogram':
-            # figure out which bins the samples are in. Clearly a faster way to do this.
 
+            # figure out which bins the values are in.
             dims = len(self.bins)
             if dims == 1:
-                # what index does each x fall into?
-                diff_edge = np.abs(np.floor(np.subtract.outer(x,self.bins[0]))) # how far is it above each bin edge?
-                loc_indices = diff_edge.argmin(axis=1)
+                # what gridpoint does each x fall into?
+                loc_indices = np.digitize(x,self.bins[0])-1 # -1 and nbinsperdim are out of range
             else:
                 loc_indices = np.zeros([len(x),dims],dtype=int)
-                # what index does each x fall into?
                 for d in range(dims):
-                    diff_edge = np.abs(np.floor(np.subtract.outer(x[:,d],self.bins[d]))) # how far is it above each bin edge?
-                    loc_indices[:,d] = diff_edge.argmin(axis=1)
+                    loc_indices[:,d] = np.digitize(x[:,d],self.bins[d])-1  # -1 and nbinsperdim are out of range
 
-            # Compute uncertainties by forming matrix of W_nk.
+            # figure out which grid point the pmf_reference is at
+            if pmf_reference is not None:        
+                if dims == 1:
+                    pmf_reference = [pmf_reference] # make it a list for reduced code duplication.
+                pmf_ref_grid = np.zeros([dims],dtype=int)                
+                for d in range(dims):
+                    pmf_ref_grid[d] = np.digitize(pmf_reference[d],self.bins[d])-1  # -1 and nbins_per_dim are out of range
+                    if pmf_ref_grid[d] == -1 or pmf_ref_grid[d] == len(self.bins[d]):
+                        ParameterError("Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(pmf_ref_grid[d],np.min(bins[d]),np.max(bins[d])))
+
+
+            # Compute uncertainties in free energy at each gridpoint by forming matrix of W_nk.
             N_k = np.zeros([self.K + self.nbins], np.int64)
             N_k[0:K] = self.N_k
             W_nk = np.zeros([self.N, self.K + self.nbins], np.float64)
             W_nk[:, 0:K] = np.exp(self.mbar.Log_W_nk)
 
             log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
-            for i in range(self.nbins):
+            for i in range(self.nbins): # loop over the nonzero bins, internal list numbering
                 # Get indices of samples that fall in this bin.
-                indices = np.where(self.bin_n == i)
+                indices = np.where(self.bin_n == i) 
 
                 # Compute normalized weights for this state.
                 W_nk[indices, K + i] = np.exp(log_w_n[indices] + self.f[i])
@@ -397,8 +402,7 @@ class PMF:
             # Compute asymptotic covariance matrix using specified method.
             Theta_ij = self.mbar._computeAsymptoticCovarianceMatrix(W_nk, N_k)
 
-            f_i = np.zeros([len(x)], np.float64)
-            df_i = np.zeros([len(x)], np.float64)
+            df_i = np.zeros(len(self.f), np.float64)
 
             if (uncertainties == 'from-lowest') or (uncertainties == 'from-specified'):
                 # Report uncertainties in free energy difference from a given point
@@ -412,7 +416,8 @@ class PMF:
                         raise ParameterError(
                              "no reference state specified for PMF using uncertainties = from-specified")
                     else:
-                        j = pmf_reference
+                        j = self.fbin_index[tuple(pmf_ref_grid)]
+
                 # Compute uncertainties with respect to difference in free energy
                 # from this state j.
                 for i in range(self.nbins):
@@ -425,14 +430,29 @@ class PMF:
                 fx_vals = np.zeros(len(x))
                 dfx_vals = np.zeros(len(x))
 
-                for i,l in enumerate(loc_indices):
+                # figure out how many grid points in each direction
+                maxp = np.zeros(dims,int)
+                for d in range(dims):
+                    maxp[d] = len(self.bins[d])
+
+                for i,l in enumerate(loc_indices):  
+                    # Must be a way to list comprehend this?
+                    if np.any(l < 0):  # out of index below
+                        fx_vals[i] = np.nan
+                        dfx_vals[i] = np.nan
+                        continue
+                    if np.any(l > maxp): # out of index above
+                        fx_vals[i] = np.nan
+                        dfx_vals[i] = np.nan
+                        continue
+
                     if dims == 1:
-                        vol_e = self.fbin[l]
+                        findex = self.fbin_index[l]  
                     else:
-                        vol_e = self.fbin[tuple(l)]
-                    if vol_e >= 0:
-                        fx_vals[i] = f_i[vol_e]
-                        dfx_vals[i] = df_i[vol_e]
+                        findex = self.fbin_index[tuple(l)] 
+                    if findex >= 0:
+                        fx_vals[i] = f_i[findex]
+                        dfx_vals[i] = df_i[findex]
                     else:
                         fx_vals[i] = np.nan
                         dfx_vals[i] = np.nan
@@ -444,7 +464,6 @@ class PMF:
             elif (uncertainties == 'all-differences'):
                 # Report uncertainties in all free energy differences.
 
-                pdb.set_trace()
                 diag = Theta_ij.diagonal()
                 dii = diag[K, K + self.nbins]  # appears broken?  Not used?
                 d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K:K + self.nbins, K:K + self.nbins]
@@ -455,20 +474,20 @@ class PMF:
                 fx_vals = np.zeros(len(x))
                 dfx_vals = np.zeros([len(x),len(x)])
 
-                vol_es = list()
-                for i,l in enumerate(loc_indices):
+                findexs = list()
+                for i, l in enumerate(loc_indices):
                     if dims == 1:
-                        vol_e = self.fbin[l]
+                        findex = self.fbin_index[l]
                     else:
-                        vol_e = self.fbin[tuple(l)]
-                    if vol_e >= 0:
-                        fx_vals[i] = f_i[vol_e]
+                        findex = self.fbin_index[tuple(l)]
+                    if findex >= 0:
+                        fx_vals[i] = f_i[findex]
                     else:
                         fx_vals[i] = np.nan
-                    vol_es.append(vol_e)
+                    findexs.append(findex)
 
-                for i,vi in enumerate(vol_es):
-                    for j,vj in enumerate(vol_es):
+                for i, vi in enumerate(findexs):
+                    for j,vj in enumerate(findexs):
                         dfx_vals[i,j] = df_ij[vi,vj]
 
                 # Return dimensionless free energy and uncertainty.
@@ -501,12 +520,12 @@ class PMF:
 
                 for i,l in enumerate(loc_indices):
                     if dims == 1:
-                        vol_e = self.fbin[l]
+                        findex = self.fbin_index[l]
                     else:
-                        vol_e = self.fbin[tuple(l)]
-                    if vol_e >= 0:
-                        fx_vals[i] = f_i[vol_e]
-                        dfx_vals[i] = df_i[vol_e]
+                        findex = self.fbin_index[tuple(l)]
+                    if findex >= 0:
+                        fx_vals[i] = f_i[findex]
+                        dfx_vals[i] = df_i[findex]
                     else:
                         fx_vals[i] = np.nan
                         dfx_vals[i] = np.nan
