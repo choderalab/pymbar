@@ -78,7 +78,7 @@ class PMF:
         u_kn : np.ndarray, float, shape=(K, N_max)
             ``u_kn[k,n]`` is the reduced potential energy of uncorrelated
             configuration n evaluated at state ``k``.
-
+            
         N_k :  np.ndarray, int, shape=(K)
             ``N_k[k]`` is the number of uncorrelated snapshots sampled from state ``k``.
             Some may be zero, indicating that there are no samples from that state.
@@ -186,16 +186,17 @@ class PMF:
              options = 'histogram'
         
         u_n : np.ndarray, float, shape=(N)
-            u_n[n] is the reduced potential energy of snapshot n of state k for which the PMF is to be computed. 
-            Often, it will be one of the indicies of u_kn, used in initializing the PMF object, but we want
+            u_n[n] is the reduced potential energy of snapshot n of state for which the PMF is to be computed. 
+            Often, it will be one of the states in of u_kn, used in initializing the PMF object, but we want
             to allow more generality.
 
-        histogram_parameters:
-            - bin_n : np.ndarray, float, shape=(N,D)
+        histogram_pxarameters:
+            - bin_n : np.ndarray, float, shape=(N,K) or (N)
+                 If 1D, bin_n is an length-d array with a value in range(0,nbins).
+                 If 2D, bin_n is an length-d x k array x K states with a value in range(0,nbins) for each dimension.
                  bin_n[n,k] is the bin index of snapshot n of state k.  
-                 bin_n is an length-d array with a value in range(0,nbins) for each dimension.
 
-            - bin_edges : list of D np.ndarraym each shape Nd+1
+            - bin_edges : list of D np.ndarray, each array shape Nd+1
                  The bin edges. Compatible with `bin_edges` output of np.histogram.  
 
         Notes
@@ -234,11 +235,15 @@ class PMF:
         """
         self.pmf_type = pmf_type
 
+        # eventually, we just want the desired energy of each sample.  For now, we allow conversion 
+        # from older 2d format (K,Nmax instead of N)
         if len(np.shape(u_n)) == 2:
             u_n = pymbar.mbar.kn_to_n(u_n, N_k = self.N_k)
 
         self.u_n = u_n
 
+        K = self.mbar.K  # number of states
+        
         if self.pmf_type == 'histogram':
             if 'bin_edges' not in histogram_parameters:
                 ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
@@ -251,41 +256,38 @@ class PMF:
             self.histogram_parameters = histogram_parameters
             bin_n = histogram_parameters['bin_n']
             self.bins = histogram_parameters['bin_edges']
-
             # need to determine the shape of bin_n, as we need to:
+            #    1. remove the zeros.
             #    1. collapse it into one dimension.
-            #    2. remove the zeros.
             # First, determine the number of dimensions of the histogram. This can be determined 
             # by the shape of bin_edges
 
             dims = len(self.bins)
 
             # now we need to loop over the bin_n and identify and label the nonzero bins.
-            # make sure this works with 1D still
+
+            if len(np.shape(bin_n)) > dims:
+                ParameterError("bin_n must be in the format of N_total x (bin dimensions). It must not be in the form K states x N_max x (bin_dimensions).") 
 
             nonzero_n = 0
             nonzero_bins = list()
-            states = np.shape(bin_n)[0] 
-            Nmax = np.shape(bin_n)[1]
-            bins_counted = np.zeros([states,Nmax],dtype=int)
+            bins_counted = np.zeros(self.N,dtype=int)
 
-            for k in range(states):
-                for n in range(Nmax):
-                    if dims == 1:
-                        ind2 = bin_n[k,n]
-                    else:
-                        ind2 = tuple(bin_n[k,n])
-                    if ind2 not in nonzero_bins:
-                        nonzero_n += 1
-                        nonzero_bins.append(ind2)
-                    bins_counted[k,n] = nonzero_bins.index(ind2)
+            # identify which states have any samples in them, just run MBAR on
+            # states with samples (can't figure out free energies w/o samples)
 
-            bin_n = pymbar.mbar.kn_to_n(bins_counted, N_k = self.N_k)
+            for n in range(self.N):
+                if dims == 1:
+                    ind2 = bin_n[n]
+                else:
+                    ind2 = tuple(bin_n[n])
+                if ind2 not in nonzero_bins:
+                    nonzero_n += 1
+                    nonzero_bins.append(ind2)
+                bins_counted[n] = nonzero_bins.index(ind2)
 
-            self.bin_n = bin_n 
+            self.bin_n = bins_counted 
             self.nbins = np.int(np.max(self.bin_n)+1)  # the total number of nonzero bins
-
-            K = self.mbar.K
 
             # Compute unnormalized log weights for the given reduced potential u_n.
             log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)

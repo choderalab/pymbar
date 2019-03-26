@@ -25,7 +25,7 @@ http://dx.doi.org/10.1063/1.2978177
 #===================================================================================================
 
 from __future__ import print_function
-import numpy
+import numpy as np
 from math import *
 import pymbar # for MBAR analysis
 from pymbar import timeseries # for timeseries analysis
@@ -89,9 +89,9 @@ def read_file(filename):
 lines = read_file(temperature_list_filename)
 # Construct list of temperatures
 temperatures = lines[0].split()
-# Create numpy array of temperatures
+# Create array of temperatures
 K = len(temperatures)
-temperature_k = numpy.zeros([K]) # temperature_k[k] is temperature of temperature index k in K
+temperature_k = np.zeros([K]) # temperature_k[k] is temperature of temperature index k in K
 for k in range(K):
    temperature_k[k] = float(temperatures[k])
 # Compute inverse temperatures
@@ -105,7 +105,7 @@ T = trajectory_segment_length * niterations # total number of snapshots per temp
 #===================================================================================================
 
 print("Reading potential energies...")
-U_kt = numpy.zeros([K,T]) # U_kn[k,t] is the potential energy (in kcal/mol) for snapshot t of temperature index k
+U_kt = np.zeros([K,T]) # U_kn[k,t] is the potential energy (in kcal/mol) for snapshot t of temperature index k
 lines = read_file(potential_energies_filename)
 print("%d lines read, processing %d snapshots" % (len(lines), T))
 for t in range(T):
@@ -121,8 +121,8 @@ for t in range(T):
 #===================================================================================================
 
 print("Reading phi, psi trajectories...")
-phi_kt = numpy.zeros([K,T]) # phi_kt[k,n,t] is phi angle (in degrees) for snapshot t of temperature k
-psi_kt = numpy.zeros([K,T]) # psi_kt[k,n,t] is psi angle (in degrees) for snapshot t of temperature k
+phi_kt = np.zeros([K,T]) # phi_kt[k,n,t] is phi angle (in degrees) for snapshot t of temperature k
+psi_kt = np.zeros([K,T]) # psi_kt[k,n,t] is psi angle (in degrees) for snapshot t of temperature k
 for k in range(K):
    phi_filename = os.path.join(data_directory, 'backbone-torsions', '%d.phi' % (k))
    psi_filename = os.path.join(data_directory, 'backbone-torsions', '%d.psi' % (k))
@@ -141,7 +141,7 @@ for k in range(K):
 print("Reading replica indices...")
 filename = os.path.join(data_directory, 'replica-indices')
 lines = read_file(filename)
-replica_ik = numpy.zeros([niterations,K], numpy.int32) # replica_ki[i,k] is the replica index of temperature k for iteration i
+replica_ik = np.zeros([niterations,K], np.int32) # replica_ki[i,k] is the replica index of temperature k for iteration i
 for i in range(niterations):
    elements = lines[i].split()
    for k in range(K):
@@ -159,7 +159,7 @@ if (assume_uncorrelated):
    U_kn = U_kt.copy()
    phi_kn = phi_kt.copy()
    psi_kn = psi_kt.copy()
-   N_k = numpy.zeros([K], numpy.int32)
+   N_k = np.zeros([K], np.int32)
    N_k[:] = T
    N_max = T
 else:
@@ -170,7 +170,7 @@ else:
    psi_kt_replica = psi_kt.copy()
    for iteration in range(niterations):
       # Determine which snapshot indices are associated with this iteration
-      snapshot_indices = iteration*trajectory_segment_length + numpy.arange(0,trajectory_segment_length)
+      snapshot_indices = iteration*trajectory_segment_length + np.arange(0,trajectory_segment_length)
       for k in range(K):
          # Determine which replica generated the data from temperature k at this iteration
          replica_index = replica_ik[iteration,k]
@@ -182,24 +182,24 @@ else:
    # We use the max of cos and sin of the phi and psi timeseries because they are periodic angles.
    # The 
    print("Computing statistical inefficiencies...")
-   g_cosphi = timeseries.statisticalInefficiencyMultiple(numpy.cos(phi_kt_replica * numpy.pi / 180.0))
+   g_cosphi = timeseries.statisticalInefficiencyMultiple(np.cos(phi_kt_replica * np.pi / 180.0))
    print("g_cos(phi) = %.1f" % g_cosphi)
-   g_sinphi = timeseries.statisticalInefficiencyMultiple(numpy.sin(phi_kt_replica * numpy.pi / 180.0))
+   g_sinphi = timeseries.statisticalInefficiencyMultiple(np.sin(phi_kt_replica * np.pi / 180.0))
    print("g_sin(phi) = %.1f" % g_sinphi)
-   g_cospsi = timeseries.statisticalInefficiencyMultiple(numpy.cos(psi_kt_replica * numpy.pi / 180.0))
+   g_cospsi = timeseries.statisticalInefficiencyMultiple(np.cos(psi_kt_replica * np.pi / 180.0))
    print("g_cos(psi) = %.1f" % g_cospsi)
-   g_sinpsi = timeseries.statisticalInefficiencyMultiple(numpy.sin(psi_kt_replica * numpy.pi / 180.0))
+   g_sinpsi = timeseries.statisticalInefficiencyMultiple(np.sin(psi_kt_replica * np.pi / 180.0))
    print("g_sin(psi) = %.1f" % g_sinpsi)
    # Subsample data with maximum of all correlation times.
    print("Subsampling data...")
-   g = numpy.max(numpy.array([g_cosphi, g_sinphi, g_cospsi, g_sinpsi]))
+   g = np.max(np.array([g_cosphi, g_sinphi, g_cospsi, g_sinpsi]))
    indices = timeseries.subsampleCorrelatedData(U_kt[k,:], g = g)
    print("Using g = %.1f to obtain %d uncorrelated samples per temperature" % (g, len(indices)))
-   N_max = int(numpy.ceil(T / g)) # max number of samples per temperature
-   U_kn = numpy.zeros([K, N_max], numpy.float64)
-   phi_kn = numpy.zeros([K, N_max], numpy.float64)
-   psi_kn = numpy.zeros([K, N_max], numpy.float64)
-   N_k = N_max * numpy.ones([K], numpy.int32)
+   N_max = int(np.ceil(T / g)) # max number of samples per temperature
+   U_kn = np.zeros([K, N_max], np.float64)
+   phi_kn = np.zeros([K, N_max], np.float64)
+   psi_kn = np.zeros([K, N_max], np.float64)
+   N_k = N_max * np.ones([K], np.int32)
    for k in range(K):
       U_kn[k,:] = U_kt[k,indices]
       phi_kn[k,:] = phi_kt[k,indices]
@@ -211,18 +211,18 @@ else:
 #===================================================================================================
 
 # Create a list of indices of all configurations in kn-indexing.
-mask_kn = numpy.zeros([K,N_max], dtype=numpy.bool)
+mask_kn = np.zeros([K,N_max], dtype=np.bool)
 for k in range(0,K):
    mask_kn[k,0:N_k[k]] = True
 # Create a list from this mask.
-indices = numpy.where(mask_kn)
+indices = np.where(mask_kn)
 
 #===================================================================================================
 # Compute reduced potential energy of all snapshots at all temperatures
 #===================================================================================================
 
 print("Computing reduced potential energies...")
-u_kln = numpy.zeros([K,K,N_max]) # u_kln[k,l,n] is reduced potential energy of trajectory segment n of temperature k evaluated at temperature l
+u_kln = np.zeros([K,K,N_max]) # u_kln[k,l,n] is reduced potential energy of trajectory segment n of temperature k evaluated at temperature l
 for k in range(K):
    for l in range(K):
       u_kln[k,l,0:N_k[k]] = beta_k[l] * U_kn[k,0:N_k[k]]
@@ -242,16 +242,18 @@ torsion_min = -180.0
 torsion_max = +180.0
 dx = (torsion_max - torsion_min) / float(nbins_per_torsion)
 # Assign torsion bins
-bin_kn = numpy.zeros([K,N_max,2], numpy.int16) # bin_kn[k,n] is the index of which histogram bin sample n from temperature index k belongs to
+Ntot = np.sum(N_k)
+bin_n = np.zeros([Ntot,2], np.int16) # bin_n[n] is the index of which histogram bin sample n is in
 
 # two ways to keep track of the bins.  One is as a list of counts and bin centers.  This scales to as many 
 # dimensions as one wants in the code.  
 # However, that makes it difficult to call the PMF afterwards to determine the value of the PMF a given point,
-# and is incompatible with using the output of numpy.histogram or numpy.histogramdd 
+# and is incompatible with using the output of np.histogram or np.histogramdd 
 
 bin_nonzero = 0
 count_nonzero = list()
 centers_nonzero = list()
+Ntot = 0
 for i in range(nbins_per_torsion):
    for j in range(nbins_per_torsion):
       # Determine (phi,psi) of bin center.
@@ -263,9 +265,8 @@ for i in range(nbins_per_torsion):
       # Count number of configurations in this bin.
       bin_count = in_bin.sum()
       # Generate list of indices in bin.
-      indices_in_bin = (indices[0][in_bin], indices[1][in_bin])
-      # assign these conformations to the bin index
-      bin_kn[indices_in_bin] = [i,j]  # this is a multidimensional array
+      # set bin indices of both dimensions
+      bin_n[in_bin] = [i,j] 
       if bin_count > 0:
          count_nonzero.append(bin_count)
          centers_nonzero.append((phi,psi))
@@ -277,7 +278,7 @@ for i in range(bin_nonzero):
 
 bin_edges = list()
 for i in range(2):
-   bin_edges.append(numpy.linspace(torsion_min,torsion_max,nbins_per_torsion+1))
+   bin_edges.append(np.linspace(torsion_min,torsion_max,nbins_per_torsion+1))
 
 # Initialize PMF with data collected
 pmf = pymbar.PMF(u_kln,N_k) 
@@ -297,10 +298,10 @@ u_kn = target_beta * U_kn
 # the lowest free energy state.
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
-histogram_parameters['bin_n'] = bin_kn
+histogram_parameters['bin_n'] = bin_n
 histogram_parameters['bin_edges'] = bin_edges
 pmf.generatePMF(u_kn, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
-results = pmf.getPMF(numpy.array(centers_nonzero), uncertainties = 'from-lowest')
+results = pmf.getPMF(np.array(centers_nonzero), uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
 

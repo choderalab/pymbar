@@ -25,7 +25,8 @@
 from __future__ import print_function
 import sys
 import numpy
-from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR, utils
+from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR, utils, PMF
+import pdb
 
 #=============================================================================================
 # HELPER FUNCTIONS
@@ -603,7 +604,7 @@ print("Standard (scaled):", end=' ')
 print(err_standard * numpy.sqrt(N_k/N_eff))
 
 print("============================================")
-print("      Testing computePMF   ")
+print("      Testing PMF functions   ")
 print("============================================")
 
 # For 2-D, The equilibrium distribution is given analytically by
@@ -702,8 +703,6 @@ ndim = 1
 u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(K0 = K0, Ku = Ku, ndim=ndim, nbinsperdim = nbinsperdim, nsamples = nsamples, gridscale = gridscale, xrange=xrange)
 numbrellas = (numpy.shape(u_kn))[0]
 N_k = nsamples*numpy.ones([numbrellas], int)
-print("Solving for free energies of state ...")
-mbar = MBAR(u_kn, N_k)
 
 # Histogram bins are indexed using the scheme:
 # index = 1 + numpy.floor((x[0] - xmin)/dx) + nbins*numpy.floor((x[1] - xmin)/dy)
@@ -741,10 +740,15 @@ bin_n[within_bounds] = 1 + numpy.floor((x_n[within_bounds,0]-xmin)/dx)
 bin_counts = numpy.zeros([nbins], int)
 for i in range(nbins):
   bin_counts[i] = (bin_n == i).sum()
-
 # Compute PMF.
+print("Solving for free energies of state to initialize PMF...")
+pmf = PMF(u_kn,N_k)
 print("Computing PMF ...")
-results = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)
+histogram_parameters = dict()
+histogram_parameters['bin_n'] = bin_n # Indicates which state each sample comes from.
+histogram_parameters['bin_edges'] = [numpy.linspace(xmin,xmax,nbins+1)] # list of bin edges.
+pmf.generatePMF(u_n, histogram_parameters=histogram_parameters)
+results = pmf.getPMF(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = zeroindex)
 f_i = results['f_i']
 df_i = results['df_i']
 
@@ -817,39 +821,50 @@ fzero = pmf_analytical[zeroindex]
 pmf_analytical -= fzero
 pmf_analytical[0] = 0
 
-bin_n = numpy.zeros([numbrellas * nsamples], int)
+Ntot = numpy.sum(N_k)
+bin_n = numpy.zeros([Ntot,2],int)
 # Determine indices of those within bounds.
 within_bounds = (x_n[:,0] >= xmin) & (x_n[:,0] < xmax) & (x_n[:,1] >= ymin) & (x_n[:,1] < ymax)
 # Determine states for these.
 xgrid = (x_n[within_bounds,0]-xmin)/dx
 ygrid = (x_n[within_bounds,1]-ymin)/dy
-bin_n[within_bounds] = 1 + xgrid.astype(int) + nbinsperdim*ygrid.astype(int)
+bin_n[within_bounds,0] = xgrid
+bin_n[within_bounds,1] = ygrid
 
-# Determine indices of bins that are not empty.
-bin_counts = numpy.zeros([nbins], int)
-for i in range(nbins):                             
-  bin_counts[i] = (bin_n == i).sum()
+# Determine 2Dindices of bins that are not empty.
+bin_counts = numpy.zeros(nbins, int)
 
-# Compute PMF.          
+for n in range(Ntot):
+  b = bin_n[n]
+  bin_label = 1 + b[0] + nbinsperdim*b[1]
+  bin_counts[bin_label] += 1
+
+# initialize PMF
 print("Computing PMF ...")
-[f_i, df_i] 
-results = mbar.computePMF(u_n, bin_n, nbins, uncertainties = 'from-specified', pmf_reference = zeroindex)
+pmf = PMF(u_kn, N_k)
+# Compute PMF.          
+
+histogram_parameters['bin_n'] = bin_n # Indicates which state each sample comes from.  Each bin has 2D
+histogram_parameters['bin_edges'] = [numpy.linspace(xmin,xmax,nbins+1),numpy.linspace(ymin,ymax,nbins+1)] # list of histogram edges.
+pmf.generatePMF(u_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
+results = pmf.getPMF(bin_centers, uncertainties = 'from-specified', pmf_reference = zeroindex)
+
 f_i = results['f_i']
 df_i = results['df_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF:")
 
-print("%d counts out of %d counts not in any bin" % (bin_counts[0],numbrellas*nsamples))
+print("%d counts out of %d counts not in any bin" % (bin_counts[0],Ntot))
 print("%8s %6s %6s %8s %10s %10s %10s %10s %8s" % ('bin', 'x', 'y', 'N', 'f', 'true','error','df','sigmas'))
-for i in range(1,nbins):
-   if (i == zeroindex):
-     stdevs = 0
-     df_i[0] = 0
-   else:
-     error = pmf_analytical[i]-f_i[i]
-     stdevs = numpy.abs(error)/df_i[i]
-   print('%8d %6.2f %6.2f %8d %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_centers[i,1] , bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs))
+for i in range(0,nbins):
+  if bin_counts[i] == 0: 
+    df_i[i] = 0
+    stdevs = 0
+  else:
+    error = pmf_analytical[i]-f_i[i-1]
+    stdevs = numpy.abs(error)/df_i[i-1]
+  print('%8d %6.2f %6.2f %8d %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_centers[i,1] , bin_counts[i+1], f_i[i], pmf_analytical[i], error, df_i[i], stdevs))
 
 #=============================================================================================
 # TERMINATE
