@@ -26,7 +26,6 @@ from __future__ import print_function
 import sys
 import numpy
 from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR, utils, PMF
-import pdb
 
 #=============================================================================================
 # HELPER FUNCTIONS

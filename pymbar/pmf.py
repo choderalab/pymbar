@@ -34,7 +34,6 @@ import pymbar
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
-import pdb
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
 # =========================================================================
