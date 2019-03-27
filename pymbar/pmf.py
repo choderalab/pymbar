@@ -267,10 +267,10 @@ class PMF:
         
         if self.pmf_type == 'histogram':
             if 'bin_edges' not in histogram_parameters:
-                ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
+                raise ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
 
             if 'bin_n' not in histogram_parameters:    
-                ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
+                raise ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
 
             self.histogram_parameters = histogram_parameters
             bin_n = histogram_parameters['bin_n']
@@ -284,7 +284,7 @@ class PMF:
 
             # now we need to loop over the bin_n and identify and label the nonzero bins.
             if len(np.shape(bin_n)) > dims:
-                ParameterError("bin_n must be in the format of N_total x (bin dimensions). It must not be in the form K states x N_max x (bin_dimensions).") 
+                raise ParameterError("bin_n must be in the format of N_total x (bin dimensions). It must not be in the form K states x N_max x (bin_dimensions).") 
 
             nonzero_bins = list() # a list of the bins with at least one sample in them.
             nonzero_bins_index = np.zeros(self.N,dtype=int) # for each sample, the index of the nonzero_bins element it belongs to.
@@ -385,10 +385,10 @@ class PMF:
         else:
             coorddim = np.shape(x)[1]
         if self.dims != coorddim:
-            DataError('coordinates have inconsistent dimension with the PMF.')
+            raise DataError('coordinates have inconsistent dimension with the PMF.')
 
         if self.pmf_type == None:
-            ParameterError('pmf_type has not been set!')
+            raise ParameterError('pmf_type has not been set!')
 
         K = self.mbar.K  # number of states
 
@@ -416,7 +416,7 @@ class PMF:
                 for d in range(dims):
                     pmf_ref_grid[d] = np.digitize(pmf_reference[d],self.bins[d])-1  # -1 and nbins_per_dim are out of range
                     if pmf_ref_grid[d] == -1 or pmf_ref_grid[d] == len(self.bins[d]):
-                        ParameterError("Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(pmf_ref_grid[d],np.min(bins[d]),np.max(bins[d])))
+                        raise ParameterError("Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(pmf_ref_grid[d],np.min(bins[d]),np.max(bins[d])))
 
 
             # Compute uncertainties in free energy at each gridpoint by forming matrix of W_nk.
