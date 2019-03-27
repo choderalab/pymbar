@@ -185,7 +185,7 @@ class PMF:
         if self.verbose:
             print("PMF initialized")
 
-    def generatePMF(self, u_n, pmf_type = 'histogram', histogram_parameters = None, uncertainties='from-lowest', pmf_reference=None):
+    def generatePMF(self, u_n, x_n, pmf_type = 'histogram', histogram_parameters = None, uncertainties='from-lowest', pmf_reference=None):
 
         """
         Given an intialized MBAR object, a set of points, 
