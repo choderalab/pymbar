@@ -185,7 +185,7 @@ class PMF:
         if self.verbose:
             print("PMF initialized")
 
-    def generatePMF(self, u_n, pmf_type = 'histogram', histogram_parameters = None, uncertainties='from-lowest', pmf_reference=None):
+    def generatePMF(self, u_n, x_n, pmf_type = 'histogram', histogram_parameters = None, kde_parameters = None, uncertainties='from-lowest'):
 
         """
         Given an intialized MBAR object, a set of points, 
@@ -196,12 +196,17 @@ class PMF:
         ----------
 
         pmf_type: string
-             options = 'histogram', others to follow.
+             options = 'histogram', 'kde'
         
         u_n : np.ndarray, float, shape=(N)
             u_n[n] is the reduced potential energy of snapshot n of state for which the PMF is to be computed. 
             Often, it will be one of the states in of u_kn, used in initializing the PMF object, but we want
             to allow more generality.
+
+        x_n : np.ndarray, float, shape=(N,D)
+            x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
+            Currently, not used for pmf_type='histogram', which takes bin counts, but it probably should be used in the future,
+            with the bin count determined within the program.
 
         histogram_parameters:
             - bin_n : np.ndarray, float, shape=(N,K) or (N)
@@ -212,6 +217,11 @@ class PMF:
 
             - bin_edges: list of ndim np.ndarray, each array shaped ndum+1
                  The bin edges. Compatible with `bin_edges` output of np.histogram.  
+
+        kde_parameters:
+            - all the parameters from sklearn (https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html).
+              Defaults will be used if nothing changed.
+
 
         Notes
         -----
@@ -244,7 +254,7 @@ class PMF:
         >>> histogram_parameters = dict()
         >>> histogram_parameters['bin_edges'] = [bins] 
         >>> histogram_parameters['bin_n'] = bin_n
-        >>> pmf.generatePMF(u_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
+        >>> pmf.generatePMF(u_n, x_n=None, pmf_type='histogram', histogram_parameters = histogram_parameters)
         >>> results = pmf.getPMF(x_n)
         >>> f_i = results['f_i']
         >>> for i,x_n in enumerate(x_n):
@@ -262,6 +272,10 @@ class PMF:
             u_n = pymbar.mbar.kn_to_n(u_n, N_k = self.N_k)
 
         self.u_n = u_n
+        
+        # Compute unnormalized log weights for the given reduced potential u_n, needed for all methods.
+        log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
+
 
         K = self.mbar.K  # number of states
         
@@ -304,9 +318,6 @@ class PMF:
             self.bin_n = nonzero_bins_index  # store the index of the nonzero bins for each sample. 
             self.nbins = np.int(np.max(self.bin_n))+1  # the total number of nonzero bins
 
-            # Compute unnormalized log weights for the given reduced potential u_n.
-            log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
-
             # Compute the free energies for these histogram states with samples
             f_i = np.zeros([self.nbins], np.float64)
             df_i = np.zeros([self.nbins], np.float64)
@@ -343,7 +354,28 @@ class PMF:
                     fbin_index[g] = -1  # no free energy for this index, since there are no points.
             self.fbin_index = fbin_index
 
+
+        elif pmf_type == 'kde':
+            from sklearn.neighbors.kde import KernelDensity
+            kde = KernelDensity()
+            kde_defaults = kde.get_params()  # get the default params to set them.
+
+            for k in kde_defaults:
+                if k in kde_parameters:
+                    kde_defaults[k] = kde_parameters[k]
+
+            # make sure we didn't pass any arguments that DON'T belong here
+            for k in kde_parameters:
+                if k not in kde_defaults:
+                    raise "Warning: {:s} is not a parameter in KernelDensity".format(k)
+
+            kde.set_params(**kde_defaults) 
+
+            kde.fit(x_n, sample_weight = np.exp(log_w_n))
+            self.kde = kde
+
         else:
+
             raise ParameterError("pmf_type '%s' not recognized." % pmf_type)
 
 
@@ -365,7 +397,7 @@ class PMF:
             * 'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
-        pmf_reference : N-d point for int specifying grid point the reference state that is zeroed when uncertainty = 'from-specified'
+        pmf_reference : an N-d point specifying the reference state. Ignored except with uncertainty method 'from_specified''
         
         Returns
         -------
@@ -385,10 +417,14 @@ class PMF:
         else:
             coorddim = np.shape(x)[1]
         if self.dims != coorddim:
-            DataError('coordinates have inconsistent dimension with the PMF.')
+            raise DataError('coordinates have inconsistent dimension with the PMF.')
+
+        if uncertainties is 'from-specified' and pmf_reference is None:
+            raise ParameterError(
+                "No reference state specified for PMF using uncertainties = from-specified")
 
         if self.pmf_type == None:
-            ParameterError('pmf_type has not been set!')
+            raise ParameterError('pmf_type has not been set!')
 
         K = self.mbar.K  # number of states
 
@@ -416,7 +452,7 @@ class PMF:
                 for d in range(dims):
                     pmf_ref_grid[d] = np.digitize(pmf_reference[d],self.bins[d])-1  # -1 and nbins_per_dim are out of range
                     if pmf_ref_grid[d] == -1 or pmf_ref_grid[d] == len(self.bins[d]):
-                        ParameterError("Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(pmf_ref_grid[d],np.min(bins[d]),np.max(bins[d])))
+                        raise ParameterError("Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(pmf_ref_grid[d],np.min(bins[d]),np.max(bins[d])))
 
 
             # Compute uncertainties in free energy at each gridpoint by forming matrix of W_nk.
@@ -446,11 +482,7 @@ class PMF:
                     # Determine bin index with lowest free energy.
                     j = self.f.argmin()
                 elif (uncertainties == 'from-specified'):
-                    if pmf_reference == None:
-                        raise ParameterError(
-                             "no reference state specified for PMF using uncertainties = from-specified")
-                    else:
-                        j = self.fbin_index[tuple(pmf_ref_grid)]
+                    j = self.fbin_index[tuple(pmf_ref_grid)]
 
                 # Compute uncertainties with respect to difference in free energy
                 # from this state j.
@@ -546,6 +578,21 @@ class PMF:
                 # Return dimensionless free energy and uncertainty.
                 result_vals['df_ij'] = dfxij_vals
 
+        elif self.pmf_type == 'kde':
+            f_i = -self.kde.score_samples(x)
+            if uncertainties == 'from_lowest':
+                fmin = np.min(f_i)
+                f_i =- fmin
+            elif uncertainties == 'from-specified':
+                fmin = -self.kde.score_samples(np.array(pmf_reference).reshape(1, -1))
+                f_i = f_i - fmin
+            # uncertainites "from normalization" reference is applied, since the density is normalized.
+            result_vals['f_i'] = f_i
+            # no error method yet. Maybe write a bootstrap class? 
+
+        else:
+            raise ParameterError('pmf_type {:s} is not defined!'.format(pmf_type))
+
         return result_vals
 
 
@@ -556,6 +603,20 @@ class PMF:
 
            Returns: MBAR object
         """
+        if self.mbar is not None:
+           return self.mbar
+        else:
+           raise DataError('MBAR in the PMF object is not initialized, cannot return it.')
 
-        return self.mbar
+    def getKDE(self):
+        """ return the KernelDensity object of it exists.
 
+            Parameters: None
+     
+            Returns: sklearn KernelDensity object
+        """
+
+        if self.pmf_type == 'kde':
+            return self.kde
+        else:
+            raise ParameterError('Can\'t return the KernelDensity object because pmf_type != kde')

@@ -745,23 +745,30 @@ print("Computing PMF ...")
 histogram_parameters = dict()
 histogram_parameters['bin_n'] = bin_n # Indicates which bin each sample comes from. -1 indicates out of sample.
 histogram_parameters['bin_edges'] = bin_edges
-pmf.generatePMF(u_n, histogram_parameters = histogram_parameters)
+pmf.generatePMF(u_n, x_n = None, histogram_parameters = histogram_parameters)
 results = pmf.getPMF(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = 0.0)
 f_i = results['f_i']
 df_i = results['df_i']
+
+# now KDE
+kde_parameters = dict()
+kde_parameters['bandwidth'] = 0.5*dx
+pmf.generatePMF(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
+results_kde = pmf.getPMF(bin_centers, uncertainties='from-specified', pmf_reference = 0.0)
+f_ik = results_kde['f_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 
 print("1D PMF:")
 print("%d counts out of %d counts not in any bin" % (numpy.sum(bin_n==-1),numbrellas*nsamples))
-print("%8s %6s %8s %10s %10s %10s %10s %8s" % ('bin', 'x', 'N', 'f', 'true','error','df','sigmas'))
+print("%8s %6s %8s %10s %10s %10s %10s %10s %10s %8s" % ('bin', 'x', 'N', 'f_hist', 'f_kde', 'true','err_h','err_kde','df','sigmas'))
 for i in range(0,nbins):
   error = pmf_analytical[i]-f_i[i]
   if df_i[i] != 0:
     stdevs = numpy.abs(error)/df_i[i]
   else:
     stdevs = 0
-  print('%8d %6.2f %8d %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs))
+  print('%8d %6.2f %8d %10.3f %10.3f %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
 
 print("============================================")
 print("      Test 2: 2D PMF   ")
@@ -839,7 +846,7 @@ pmf = PMF(u_kn, N_k)
 
 histogram_parameters['bin_n'] = bin_n # Indicates which state each sample comes from.  Each bin has 2D
 histogram_parameters['bin_edges'] = [numpy.linspace(xmin,xmax,nbinsperdim+1),numpy.linspace(ymin,ymax,nbinsperdim+1)] # list of histogram edges.
-pmf.generatePMF(u_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
+pmf.generatePMF(u_n, x_n=None, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
 delta = 0.0001  # to break ties in things being too close.
 
 results = pmf.getPMF(bin_centers+delta, uncertainties = 'from-specified', pmf_reference = [0,0])
@@ -847,17 +854,23 @@ results = pmf.getPMF(bin_centers+delta, uncertainties = 'from-specified', pmf_re
 f_i = results['f_i']
 df_i = results['df_i']
 
+kde_parameters['bandwidth'] = 0.5*dx
+pmf.generatePMF(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
+results_kde = pmf.getPMF(bin_centers, uncertainties='from-specified',pmf_reference = [0,0])
+
+f_ik = results_kde['f_i']
+
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF:")
 print("%d counts out of %d counts not in any bin" % (numpy.sum(numpy.any(bin_n==-1,axis=1)),Ntot))
-print("%8s %6s %6s %8s %10s %10s %10s %10s %8s" % ('bin', 'x', 'y', 'N', 'f', 'true','error','df','sigmas'))
+print("%8s %6s %6s %8s %10s %10s %10s %10s %10s %10s %8s" % ('bin', 'x', 'y', 'N', 'f_hist', 'f_kde','true','err_h','err_kde','df','sigmas'))
 for i in range(0,nbins):
   if df_i[i] == 0:
     stdevs = 0
   else:
     error = pmf_analytical[i]-f_i[i]
     stdevs = numpy.abs(error)/df_i[i]
-  print('%8d %6.2f %6.2f %8d %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_centers[i,1], bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs))
+  print('%8d %6.2f %6.2f %8d %10.3f %10.3f %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_centers[i,1], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
 
 #=============================================================================================
 # TERMINATE
