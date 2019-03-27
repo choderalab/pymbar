@@ -374,6 +374,9 @@ class PMF:
             kde.fit(x_n, sample_weight = np.exp(log_w_n))
             self.kde = kde
 
+        elif pmf_type == 'maxlikelihood':
+            return 0
+    
         else:
 
             raise ParameterError("pmf_type '%s' not recognized." % pmf_type)

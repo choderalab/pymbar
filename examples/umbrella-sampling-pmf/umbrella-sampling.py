@@ -127,15 +127,6 @@ bin_edges[0] = chi_min
 for i in range(nbins):
     bin_center_i[i] = chi_min + delta/2 + delta * i
     bin_edges[i+1] = bin_center_i[i] + delta/2
-# Bin data: which bin is each sample in?
-N = np.sum(N_k)
-bin_n = np.zeros(N, np.int32)
-ntot = 0
-for k in range(K):
-    for n in range(N_k[k]):
-        # Compute bin assignment.
-        bin_n[ntot] = int((chi_kn[k,n] - chi_min) / delta)
-        ntot +=1
 
 # Evaluate reduced energies in all umbrellas
 print("Evaluating reduced potential energies...")
