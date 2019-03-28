@@ -743,9 +743,8 @@ mbar_options['verbose'] = True
 pmf = PMF(u_kn,N_k,mbar_options=mbar_options)
 print("Computing PMF ...")
 histogram_parameters = dict()
-histogram_parameters['bin_n'] = bin_n # Indicates which bin each sample comes from. -1 indicates out of sample.
 histogram_parameters['bin_edges'] = bin_edges
-pmf.generatePMF(u_n, histogram_parameters = histogram_parameters)
+pmf.generatePMF(u_n, x_n, histogram_parameters = histogram_parameters)
 results = pmf.getPMF(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = 0.0)
 f_i = results['f_i']
 df_i = results['df_i']
@@ -837,9 +836,9 @@ print("Computing PMF ...")
 pmf = PMF(u_kn, N_k)
 # Compute PMF.          
 
-histogram_parameters['bin_n'] = bin_n # Indicates which state each sample comes from.  Each bin has 2D
+#histogram_parameters['bin_n'] = bin_n # Indicates which state each sample comes from.  Each bin has 2D
 histogram_parameters['bin_edges'] = [numpy.linspace(xmin,xmax,nbinsperdim+1),numpy.linspace(ymin,ymax,nbinsperdim+1)] # list of histogram edges.
-pmf.generatePMF(u_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
+pmf.generatePMF(u_n, x_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
 delta = 0.0001  # to break ties in things being too close.
 
 results = pmf.getPMF(bin_centers+delta, uncertainties = 'from-specified', pmf_reference = [0,0])

@@ -111,30 +111,29 @@ for k in range(K):
     u_kn[k,0:N_k[k]] = u_kn[k,indices]
     chi_kn[k,0:N_k[k]] = chi_kn[k,indices]
 
+# data loaded, now calculate the PMF
+
 N_max = np.max(N_k) # shorten the array size
 u_kln = np.zeros([K,K,N_max], np.float64) # u_kln[k,l,n] is the reduced potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
 
 # Set zero of u_kn -- this is arbitrary.
 u_kn -= u_kn.min()
 
-# Construct torsion bins
 print("Binning data...")
-delta = (chi_max - chi_min) / float(nbins)
+
 # compute bin centers
 bin_center_i = np.zeros([nbins], np.float64)
-bin_edges = np.zeros([nbins+1], np.float64)
-bin_edges[0] = chi_min
+bin_edges = np.linspace(chi_min,chi_max,nbins+1)
 for i in range(nbins):
-    bin_center_i[i] = chi_min + delta/2 + delta * i
-    bin_edges[i+1] = bin_center_i[i] + delta/2
-# Bin data: which bin is each sample in?
+    bin_center_i[i] = 0.5*(bin_edges[i] + bin_edges[i+1])
+
 N = np.sum(N_k)
-bin_n = np.zeros(N, np.int32)
+x_n = np.zeros(N,np.int32)
 ntot = 0
 for k in range(K):
     for n in range(N_k[k]):
         # Compute bin assignment.
-        bin_n[ntot] = int((chi_kn[k,n] - chi_min) / delta)
+        x_n[ntot] = chi_kn[k,n]
         ntot +=1
 
 # Evaluate reduced energies in all umbrellas
@@ -149,13 +148,13 @@ for k in range(K):
 
         # Compute energy of snapshot n from simulation k in umbrella potential l
         u_kln[k,:,n] = u_kn[k,n] + beta_k[k] * (K_k/2.0) * dchi**2
+
 #initialize PMF with the data collected
 pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
-histogram_parameters['bin_n'] = bin_n
 histogram_parameters['bin_edges'] = [bin_edges]
-pmf.generatePMF(u_kn, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+pmf.generatePMF(u_kn, x_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
 results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
