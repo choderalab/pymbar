@@ -205,8 +205,6 @@ class PMF:
 
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
-            Currently, not used for pmf_type='histogram', which takes bin counts, but it probably should be used in the future,
-            with the bin count determined within the program.
 
         histogram_parameters:
             - bin_n : np.ndarray, float, shape=(N,K) or (N)
@@ -247,14 +245,11 @@ class PMF:
         >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
         >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
-        >>> bin_n = np.zeros(x_n.shape, np.int64)
-        >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
         >>> pmf = PMF(u_kn,N_k)
         >>> histogram_parameters = dict()
         >>> histogram_parameters['bin_edges'] = [bins] 
-        >>> histogram_parameters['bin_n'] = bin_n
-        >>> pmf.generatePMF(u_n, x_n=None, pmf_type='histogram', histogram_parameters = histogram_parameters)
+        >>> pmf.generatePMF(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
         >>> results = pmf.getPMF(x_n)
         >>> f_i = results['f_i']
         >>> for i,x_n in enumerate(x_n):
@@ -281,24 +276,29 @@ class PMF:
         
         if self.pmf_type == 'histogram':
             if 'bin_edges' not in histogram_parameters:
-                ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
+                raise ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
 
-            if 'bin_n' not in histogram_parameters:    
-                ParameterError('histogram_parameters[\'nbins\'] cannot be undefined with pmf_type = histogram')
-
-            self.histogram_parameters = histogram_parameters
-            bin_n = histogram_parameters['bin_n']
             self.bins = histogram_parameters['bin_edges']
 
             # First, determine the number of dimensions of the histogram. This can be determined 
             # by the shape of bin_edges
             dims = len(self.bins)
-
             self.dims = dims  # store the dimensionality for checking later.
 
+            # now create the bins from the data.
+            if len(np.shape(x_n))==1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
+                x_n = x_n.reshape(-1,1)
+
+            bin_n = np.zeros(x_n.shape, np.int64)
+
+            for d in range(dims):
+                bin_n[:,d] = np.digitize(x_n[:,d], self.bins[d])-1 # bins returns 0 as out of bin.  We want to use -1 as out of bin
+            self.bin_n = bin_n
+
+            self.histogram_parameters = histogram_parameters
+
+
             # now we need to loop over the bin_n and identify and label the nonzero bins.
-            if len(np.shape(bin_n)) > dims:
-                ParameterError("bin_n must be in the format of N_total x (bin dimensions). It must not be in the form K states x N_max x (bin_dimensions).") 
 
             nonzero_bins = list() # a list of the bins with at least one sample in them.
             nonzero_bins_index = np.zeros(self.N,dtype=int) # for each sample, the index of the nonzero_bins element it belongs to.

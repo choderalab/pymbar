@@ -241,7 +241,6 @@ torsion_max = +180.0
 dx = (torsion_max - torsion_min) / float(nbins_per_torsion)
 # Assign torsion bins
 Ntot = np.sum(N_k)
-bin_n = np.zeros([Ntot,2], np.int16) # bin_n[n] is the index of which histogram bin sample n is in
 
 # two ways to keep track of the bins.  One is as a list of counts and bin centers.  This scales to as many 
 # dimensions as one wants in the code.  
@@ -251,7 +250,6 @@ bin_n = np.zeros([Ntot,2], np.int16) # bin_n[n] is the index of which histogram 
 bin_nonzero = 0
 count_nonzero = list()
 centers_nonzero = list()
-Ntot = 0
 for i in range(nbins_per_torsion):
    for j in range(nbins_per_torsion):
       # Determine (phi,psi) of bin center.
@@ -264,7 +262,6 @@ for i in range(nbins_per_torsion):
       bin_count = in_bin.sum()
       # Generate list of indices in bin.
       # set bin indices of both dimensions
-      bin_n[in_bin] = [i,j] 
       if bin_count > 0:
          count_nonzero.append(bin_count)
          centers_nonzero.append((phi,psi))
@@ -273,6 +270,14 @@ for i in range(nbins_per_torsion):
 print("%d bins were populated:" % bin_nonzero)
 for i in range(bin_nonzero):
    print("bin %5d (%6.1f, %6.1f) %12d conformations" % (i, centers_nonzero[i][0], centers_nonzero[i][1], count_nonzero[i]))
+
+x_n = np.zeros([Ntot,2]) # the configurations
+Ntot = 0
+for k in range(K):
+   for n in range(N_k[k]):
+      x_n[Ntot,0] = phi_kn[k,n]
+      x_n[Ntot,1] = psi_kn[k,n]
+      Ntot += 1
 
 bin_edges = list()
 for i in range(2):
@@ -296,9 +301,8 @@ u_kn = target_beta * U_kn
 # the lowest free energy state.
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
-histogram_parameters['bin_n'] = bin_n
 histogram_parameters['bin_edges'] = bin_edges
-pmf.generatePMF(u_kn, x_n=None, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+pmf.generatePMF(u_kn, x_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
 results = pmf.getPMF(np.array(centers_nonzero), uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
