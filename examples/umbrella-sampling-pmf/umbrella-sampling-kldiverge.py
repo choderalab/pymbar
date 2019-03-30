@@ -3,10 +3,12 @@ import matplotlib.pyplot as plt
 nplot = 1000
 # set minimizer options to display. Apprently does not exist for BFGS. Probably don't need to set eps.
 options = {'disp':True, 'eps':10**(-4), 'gtol':10**(-3)}
-methods = ['kl-newton-1','kl-newton-3', 'sumkl-newton-1','sumkl-newton-3','kldiverge','sumkldiverge','vFEP']
+#methods = ['kl-newton-1','kl-newton-3', 'sumkl-newton-1','sumkl-newton-3','kldiverge','sumkldiverge','vFEP']
+methods = ['kde','kl-newton-1','kl-newton-3']
 
 colors = dict()
 colors['sumkldiverge'] = 'k-'
+colors['kde'] = 'm-'
 colors['vFEP'] = 'b-'
 colors['sumkl-newton-1'] = 'g--'
 colors['sumkl-newton-2'] = 'r--'
@@ -139,24 +141,22 @@ u_kln = np.zeros([K,K,N_max], np.float64) # u_kln[k,l,n] is the reduced potentia
 u_kn -= u_kn.min()
 
 # Construct torsion bins
-print("Binning data...")
-delta = (chi_max - chi_min) / float(nbins)
 # compute bin centers
-bin_center_i = np.zeros([nbins], np.float64)
-bin_edges = np.zeros([nbins+1], np.float64)
-bin_edges[0] = chi_min
-for i in range(nbins):
-    bin_center_i[i] = chi_min + delta/2 + delta * i
-    bin_edges[i+1] = bin_center_i[i] + delta/2
 
-# Bin the data: which bin is each sample in?
+bin_center_i = np.zeros([nbins], np.float64)
+bin_edges = np.linspace(chi_min,chi_max,nbins+1)
+for i in range(nbins):
+    bin_center_i[i] = 0.5*(bin_edges[i] + bin_edges[i+1])
+
 N = np.sum(N_k)
-bin_n = np.zeros(N, np.int32)
+x_n = np.zeros(N,np.int32)
+chi_n = pymbar.utils.kn_to_n(chi_kn, N_k = N_k)
+
 ntot = 0
 for k in range(K):
     for n in range(N_k[k]):
         # Compute bin assignment.
-        bin_n[ntot] = int((chi_kn[k,n] - chi_min) / delta)
+        x_n[ntot] = chi_kn[k,n]
         ntot +=1
 
 # Evaluate reduced energies in all umbrellas
@@ -177,26 +177,30 @@ for k in range(K):
 pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
-histogram_parameters['bin_n'] = bin_n
 histogram_parameters['bin_edges'] = [bin_edges]
-pmf.generatePMF(u_kn, x_n = None, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+pmf.generatePMF(u_kn, chi_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
 results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
+
+# NOW KDE:
+kde_parameters = dict()
+kde_parameters['bandwidth'] = 0.5*((chi_max-chi_min)/nbins)
+pmf.generatePMF(u_kn, chi_n, pmf_type = 'kde', kde_parameters=kde_parameters)
+results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
+f_ik = results['f_i']
 
 # Write out PMF
 print("PMF (in units of kT)")
 print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
 for i in range(nbins):
-    print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], f_i[i], df_i[i]))
+    print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], f_i[i],f_ik[i], df_i[i]))
 
-# NOW KDE:
+# get mbar ready
+mbar = pmf.getMBAR()
+
 # compute KL divergence to the empirical distribution for the trial distribution F
 # convert angles to a single array.
-chi_n = pymbar.utils.kn_to_n(chi_kn, N_k = N_k)
-
-
-mbar = pmf.getMBAR()
 
 ################
 # Now compute PMF assuming a cubic spline
@@ -298,6 +302,7 @@ def vFEP(t,ft,x_kn,K,N_k,fbias,xrange):
 x = np.linspace(chi_min,chi_max,nplot)
 #plot the bin centers
 plt.plot(bin_center_i,f_i,'rx',label='histogram')
+
 isPeriodic = True # can use this for some spline functions.
 
 times = dict()  # keep track of times that each methods take.
@@ -407,6 +412,10 @@ def calculate_h(w_n, x_n, b, db_c, expf, pF, pE, method, K, Ki, xrangeij):
             h[i,j] = h[j,i]
 
     return h
+
+def print_kde(pmf,x):
+    results = pmf.getPMF(x, uncertainties = 'from-lowest')
+    return results['f_i']
 
 for method in methods:
 
@@ -583,6 +592,12 @@ for method in methods:
         end = timer()
         times[method] = end-start
 
+    elif method == 'kde':
+        start = timer()
+        pmf_final = lambda x: print_kde(pmf,x)
+        end = timer()
+        times[method] = end-start
+
     # write out the PMF for this distribution
     yout = pmf_final(x)
     ymin = np.min(yout)
@@ -591,7 +606,7 @@ for method in methods:
     print("PMF (in units of kT) for {:s}".format(method))
     print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
     for i in range(nbins):
-        print("{:8.1f} {:8.1f}".format(bin_center_i[i], pmf_final(bin_center_i[i])-ymin))
+        print("{:8.1f} {:8.1f}".format(bin_center_i[i], float(pmf_final(bin_center_i[i])-ymin)))
     plt.plot(x,yout,colors[method],label=method)
 
 plt.xlim([chi_min,chi_max])

@@ -119,8 +119,6 @@ u_kln = np.zeros([K,K,N_max], np.float64) # u_kln[k,l,n] is the reduced potentia
 # Set zero of u_kn -- this is arbitrary.
 u_kn -= u_kn.min()
 
-print("Binning data...")
-
 # compute bin centers
 bin_center_i = np.zeros([nbins], np.float64)
 bin_edges = np.linspace(chi_min,chi_max,nbins+1)

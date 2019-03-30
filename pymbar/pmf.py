@@ -196,7 +196,7 @@ class PMF:
         ----------
 
         pmf_type: string
-             options = 'histogram', 'kde'
+             options = 'histogram', 'kde', 'maxlikelihood'
         
         u_n : np.ndarray, float, shape=(N)
             u_n[n] is the reduced potential energy of snapshot n of state for which the PMF is to be computed. 
@@ -220,6 +220,11 @@ class PMF:
             - all the parameters from sklearn (https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html).
               Defaults will be used if nothing changed.
 
+        maxlikelihood_parameters:      
+            - power - power of spline to use. 
+            - 'kl-divergence': 
+            - minimization_parameters - dictionary parameters to pass to the minimizer. 
+            - fbiaw: array of functions that return the Kth bias potential for each function
 
         Notes
         -----
@@ -371,10 +376,16 @@ class PMF:
 
             kde.set_params(**kde_defaults) 
 
+            # reshape data if needed.
+            if len(np.shape(x_n))==1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
+                x_n = x_n.reshape(-1,1)
+
             kde.fit(x_n, sample_weight = np.exp(log_w_n))
+
             self.kde = kde
 
         elif pmf_type == 'maxlikelihood':
+            
             return 0
     
         else:
@@ -415,10 +426,11 @@ class PMF:
 
         """
 
-        if len(np.shape(x)) == 1:
+        if len(np.shape(x)) <= 1: # if it's zero, it's a scalar.
             coorddim = 1
-        else:
+        else:   
             coorddim = np.shape(x)[1]
+
         if self.dims != coorddim:
             raise DataError('coordinates have inconsistent dimension with the PMF.')
 
@@ -582,7 +594,14 @@ class PMF:
                 result_vals['df_ij'] = dfxij_vals
 
         elif self.pmf_type == 'kde':
+
+            #if it's not an array, make it one.
+            x = np.array(x)
+
+            if len(np.shape(x)) <=1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
+                x = x.reshape(-1,1)
             f_i = -self.kde.score_samples(x)
+
             if uncertainties == 'from_lowest':
                 fmin = np.min(f_i)
                 f_i =- fmin
@@ -623,3 +642,51 @@ class PMF:
             return self.kde
         else:
             raise ParameterError('Can\'t return the KernelDensity object because pmf_type != kde')
+
+
+    def _kldiverge(t,ft,x_n,w_n,xrange):
+
+        # define the function f based on the current parameters t
+        t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
+        feval = ft(t) # current value of the PMF
+        # define the exponential of f based on the current parameters t
+        expf = lambda x: np.exp(-feval(x))
+        pE = np.dot(w_n,feval(x_n))
+        pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #value 0 is the value of quad
+        kl = pE + pF 
+    if verbose:
+        print(kl, t)
+    return kl
+
+    def _sumkldiverge(t,ft,x_n,K,w_kn,fbias,xrange):
+        t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
+        feval = ft(t)  # the current value of the PMF
+        fx = feval(x_n)  # only need to evaluate this over all points outside(?)      
+        kl = 0
+        # figure out the bias
+        for k in range(K):
+        # define the exponential of f based on the current parameters t.
+            expf = lambda x: np.exp(-feval(x)-fbias[k](x))
+            pE = np.dot(w_kn[:,k],fx+fbias(k,x_n))
+            pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #value 0 is the value of quad
+            kl += (pE + pF)
+        if verbose:
+            print (kl,t)
+        return kl
+
+    def vFEP(t,ft,x_kn,K,N_k,fbias,xrange):
+        t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
+        feval = ft(t)  # the current value of the PMF
+        kl = 0
+        # figure out the bias
+        for k in range(K):
+            x_n = x_kn[k,0:N_k[k]]
+            # what is the biasing function for this state
+            # define the exponential of f based on the current parameters t.
+            expf = lambda x: np.exp(-feval(x)-fbias(k,x))
+            pE = np.sum(feval(x_n)+fbias(k,x_n))/N_k[k]
+            pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #0 is the value of quad
+            kl += (pE + pF)
+        if verbose:
+            print(kl,t)
+        return kl    
