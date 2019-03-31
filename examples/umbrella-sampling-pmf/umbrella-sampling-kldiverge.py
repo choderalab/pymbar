@@ -1,3 +1,12 @@
+# Example illustrating the application of MBAR to compute a 1D PMF from an umbrella sampling simulation.
+#
+# The data represents an umbrella sampling simulation for the chi torsion of a valine sidechain in lysozyme L99A with benzene bound in the cavity.
+# 
+# REFERENCE
+# 
+# D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
+# http://dx.doi.org/10.1016/j.jmb.2007.06.002
+
 from __future__ import print_function
 import matplotlib.pyplot as plt
 nplot = 1000
@@ -203,9 +212,6 @@ mbar = pmf.getMBAR()
 # convert angles to a single array.
 
 ################
-# Now compute PMF assuming a cubic spline
-#import cProfile, pstats, StringIO
-#from scipy.interpolate import splrep, splev, splint
 from scipy.interpolate import BSpline, make_interp_spline, make_lsq_spline
 from scipy.interpolate import interp1d
 from scipy.integrate import quad, romb, romberg, quadrature

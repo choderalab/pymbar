@@ -8,7 +8,8 @@
 # http://dx.doi.org/10.1016/j.jmb.2007.06.002
 
 from __future__ import print_function
-import numpy as np# numerical array library
+from timeit import default_timer as timer
+import numpy as np # numerical array library
 import pymbar # multistate Bennett acceptance ratio
 from pymbar import timeseries # timeseries analysis
 from pymbar import PMF
@@ -27,7 +28,7 @@ chi_max = +180.0 # max for PMF
 nbins = 36 # number of bins for 1D PMF
 
 # Allocate storage for simulation data
-N_k = np.zeros([K], dtype = int) # N_k[k] is the number of snapshots from umbrella simulation k
+N_k = np.zeros([K], dtype =  int) # N_k[k] is the number of snapshots from umbrella simulation k
 K_k = np.zeros([K]) # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
 chi0_k = np.zeros([K]) # chi0_k[k] is the spring center location (in deg) for umbrella simulation k
 chi_kn = np.zeros([K,N_max]) # chi_kn[k,n] is the torsion angle (in deg) for snapshot n from umbrella simulation k
@@ -54,8 +55,8 @@ if (min(T_k) == max(T_k)):
 # Read the simulation data
 for k in range(K):
     # Read torsion angle data.
-    filename = 'data/prod%d_dihed.xvg' % k
-    print("Reading %s..." % filename)
+    filename = 'data/prod%d_dihed.xvg'.format(k)
+    print("Reading {%s}...".format(filename))
     infile = open(filename, 'r')
     lines = infile.readlines()
     infile.close()
@@ -79,7 +80,7 @@ for k in range(K):
                                  # then we need the energies to compute the PMF
         # Read energies
         filename = 'data/prod%d_energies.xvg' % k
-        print("Reading %s..." % filename)
+        print("Reading {%s}...".format(filename))
         infile = open(filename, 'r')
         lines = infile.readlines()
         infile.close()
@@ -96,15 +97,15 @@ for k in range(K):
             
     if (DifferentTemperatures):        
         g_k[k] = timeseries.statisticalInefficiency(u_kn[k,:], u_kn[k,0:N_k[k]])
-        print("Correlation time for set %5d is %10.3f" % (k,g_k[k]))
+        print("Correlation time for set {%5d} is {%10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(u_kn[k,0:N_k[k]])
     else:
         chi_radians = chi_kn[k,0:N_k[k]]/(180.0/np.pi)
         g_cos = timeseries.statisticalInefficiency(np.cos(chi_radians))
         g_sin = timeseries.statisticalInefficiency(np.sin(chi_radians))
-        print("g_cos = %.1f | g_sin = %.1f" % (g_cos, g_sin))
+        print("g_cos = {%.1f} | g_sin = {%.1f}".format(g_cos, g_sin)
         g_k[k] = max(g_cos, g_sin)
-        print("Correlation time for set %5d is %10.3f" % (k,g_k[k]))
+        print("Correlation time for set {%5d} is {%10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(chi_radians, g=g_k[k]) 
     # Subsample data.
     N_k[k] = len(indices)
@@ -126,12 +127,12 @@ for i in range(nbins):
     bin_center_i[i] = 0.5*(bin_edges[i] + bin_edges[i+1])
 
 N = np.sum(N_k)
-x_n = np.zeros(N,np.int32)
+chi_n = np.zeros(N,np.int32)
 ntot = 0
 for k in range(K):
     for n in range(N_k[k]):
         # Compute bin assignment.
-        x_n[ntot] = chi_kn[k,n]
+        chi_n[ntot] = chi_kn[k,n]
         ntot +=1
 
 # Evaluate reduced energies in all umbrellas
@@ -152,14 +153,47 @@ pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
 histogram_parameters['bin_edges'] = [bin_edges]
-pmf.generatePMF(u_kn, x_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+pmf.generatePMF(u_kn, chi_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
 results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
-f_i = results['f_i']
-df_i = results['df_i']
+center_f_i = results['f_i']
+center_df_i = results['df_i']
 
 # Write out PMF
 print("PMF (in units of kT)")
-print("%8s %8s %8s" % ('bin', 'f', 'df'))
+print("{%8s} {%8s} {%8s}".format('bin', 'f', 'df'))
 for i in range(nbins):
-    print("%8.1f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i]))
+    print("{%8.1f} {%8.3f} {%8.3f}".format(bin_center_i[i], center_f_i[i], center_df_i[i]))
+
+# NOW KDE:
+kde_parameters = dict()
+kde_parameters['bandwidth'] = 0.5*((chi_max-chi_min)/nbins)
+pmf.generatePMF(u_kn, chi_n, pmf_type = 'kde', kde_parameters=kde_parameters)
+pmf_kde = pmf.copy()
+
+colors = dict()
+colors['sumkldiverge'] = 'k-'
+colors['kde'] = 'm-'
+colors['vFEP'] = 'b-'
+colors['sumkl-newton-1'] = 'g--'
+colors['sumkl-newton-2'] = 'r--'
+colors['sumkl-newton-3'] = 'c--'
+colors['sumkl-newton-4'] = 'm--'
+colors['sumkl-newton-5'] = 'y--'
+colors['kldiverge'] = 'k-'
+colors['kl-newton-1'] = 'g-'
+colors['kl-newton-2'] = 'r-'
+colors['kl-newton-3'] = 'c-'
+colors['kl-newton-4'] = 'm-'
+colors['kl-newton-5'] = 'y-'
+
+# get mbar ready
+mbar = pmf.getMBAR()
+
+# define the bias functions
+def fbias(k,x):
+    dchi = x - chi0_k[k]
+    # vectorize the conditional
+    i = np.fabs(dchi) > 180.0
+    dchi = i*(360.0 - np.fabs(dchi)) + (1-i)*dchi
+    return beta_k[k] * (K_k[k]/2.0) * dchi**2
 

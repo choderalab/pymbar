@@ -196,7 +196,7 @@ class PMF:
         ----------
 
         pmf_type: string
-             options = 'histogram', 'kde', 'maxlikelihood'
+             options = 'histogram', 'kde', 'max_likelihood'
         
         u_n : np.ndarray, float, shape=(N)
             u_n[n] is the reduced potential energy of snapshot n of state for which the PMF is to be computed. 
@@ -229,7 +229,6 @@ class PMF:
         Notes
         -----
         * pmf_type = 'histogram':
-            * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
             * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
             * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states . . . (?)
             * the potential is given by u_n within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
@@ -384,16 +383,153 @@ class PMF:
 
             self.kde = kde
 
-        elif pmf_type == 'maxlikelihood':
+        elif pmf_type == 'max_likelihood':
+            optimize_options = ml_params['optimize_parameters'] 
+            if ml_param['fit_type'] == 'bspline': 
+                kdegree = ml_params['spline_degree']
+                nspline = ml_params['nspline']
+                tol = ml_params['gtol']
+                
+                # first, construct a least squares cubic spline in the free energies to start with, set 2nd derivs zero.
+                # we assume this is decent.
+
+                # t has to be of size nsplines + kdegree + 1
+                t = np.zeros(nspline+kdegree+1)
+                t[0:kdegree] = xrange[0]
+                t[kdegree:nspline+1] = np.linspace(xrange[0], xrange[1], num=nspline+1-kdegree, endpoint=True)
+                t[nspline+1:nspline+kdegree+1] = xrange[1]
+
+                # come up with an initial starting fit
+                # This will be an overfit if the number of splines is too big.  
+                # We'll have to interpolate in some other numbers to set an initial one.
+                
+                # we need a fast initialization.  Use KDE with nsplines points.
+                init_pmf = self.copy()
+                kde_parameters['bandwidth'] = 0.5*(xrange[1]-xrange[0])/nsplines
+                init_pmf.generatePMF(u_kn, x_n, pmf_type='kde', kde_parameters = kde_parameters)
+                centers = np.linspace(xrange[0],xrange[1],nspline)
+                results = init_pmf.getPMF(np.linspace(xrange[0],xrange[1],centers))
+                xinit = centers
+                yinit = results['f_i']
+        
+                # initial fit
+                bfirst = make_lsq_spline(xinit, yinit, t, k=kdegree)
+                xi = bfirst.c  # the bspline coefficients are the variables we care about.
+                xold = xi.copy()
+
+                # The function is \sum_n [\sum_k W_k(x_n)] F(phi(x_n)) + \sum_k ln \int exp(-F(xi) - u_k(xi)) dxi  
+                # if we assume bsplines are of the form f(x) = a*b_i(x), then 
+                # dF/dtheta is simply the basis function that has support over that region of space  
+
+                b = bfirst
+                # we now need the derivative of the function WRT the coefficients. Doesn't change knots or degree.
+                # A vector function that is 
+                db_c = list()
+                for i in range(nspline):
+                    dc = np.zeros(nspline)
+                    dc[i] = 1.0
+                    db_c.append(BSpline(b.t,dc,b.k))
+                    # OK, we've defined the derivatives.  
+
+                # same for the next execution. Not sure if best time to save it.
+                self.bspline_derivatives = db_c
+                
+                # we need the points the function is evaluated at.
+                # define the x_n 
+                x_n = np.zeros(np.sum(N_k))
+                for k in range(K):
+                    nsum = np.sum(N_k[0:k])
+                    x_n[nsum:nsum + N_k[k]] = x_kn[k,0:N_k[k]]
             
-            return 0
-    
+                # we need these numbers for computing the function.
+                if 'sumkl' in method:
+                    w_kn = np.exp(mbar.Log_W_nk) # normalized weights 
+                    w_n = np.sum(w_kn, axis=1) # sum along the w_kn
+                    Ki = K # the K we iterate over; makes it possible to do both in the same
+                else:
+                    # if just kl divergence, we want the normalized probability
+                    log_w_n = mbar._computeUnnormalizedLogWeights(pymbar.utils.kn_to_n(u_kn, N_k = mbar.N_k))
+                    w_n = np.exp(log_w_n)
+                    w_n = w_n/np.sum(w_n)
+                    Ki = 1 # the K we iterate over; makes it possible to do both sum and nonsum in the same.
+
+                # We also construct integration ranges for the derivatives, since no point in integrating when 
+                # the function is zero.
+                xrangei = np.zeros([nspline,2])
+                for i in range(0,nspline):
+                    xrangei[i,0] = t[i]
+                    xrangei[i,1] = t[i+kdegree+1]
+
+                # set integration ranges for derivative products; saves time on integration.
+                xrangeij = np.zeros([nspline,nspline,2])
+                for i in range(0,nspline):
+                    for j in range(0,nspline):
+                        xrangeij[i,j,0] = np.max([xrangei[i,0],xrangei[j,0]])
+                        xrangeij[i,j,1] = np.min([xrangei[i,1],xrangei[j,1]])
+
+                dg2 = tol + 1.0
+                firsttime = True
+
+                while dg2 > tol: # until we reach the tolerance.
+
+                    f, expf, pF = self._bspline_calculate_f(w_n, x_n, b, method, K, xrange)
+
+                    # we need some error handling: if we stepped too far, we should go back
+                    if not firsttime:
+                        count = 0
+                        while f >= fold*(1.0+np.sqrt(tol)) and count < 5:   # we went too far!  Pull back.
+                            f = fold
+                            # let's not step as far:
+                            dx = 0.5*dx
+                            xi[1:nspline] = xold[1:nspline] - dx # step back half of dx.
+                            xold = xi.copy()
+                            print(xi)
+                            b = BSpline(b.t,xi,b.k)
+                            f, expf, pF = self._bspline_calculate_f(w_n, x_n, b, method, K, xrange)
+                            count += 1
+                    else:
+                        firsttime = False
+                    fold = f
+                    xold = xi.copy()
+
+                    g, dg2, gkquad, pE = self._bspline_calculate_g(w_n, x_n, nspline, b, db_c, expf, pF, method, K, xrangei)
+
+                    h = self._bspline_calculate_h(w_n, x_n, nspline, kdegree, b, db_c, expf, pF, pE, method, K, Ki, xrangeij)
+                
+                    # now find the new point.
+                    # x_n+1 = x_n - f''(x_n)^-1 f'(x_n) 
+                    # which we solve more stably as:
+                    # x_n - x_n+1 = f''(x_n)^-1 f'(x_n)
+                    # f''(x_n)(x_n-x_n+1) = f'(x_n)  
+                    # solution is dx = x_n-x_n+1
+
+                    dx = np.linalg.lstsq(h,g)[0]
+                    xi[1:nspline] = xold[1:nspline] - dx
+                    b = BSpline(b.t,xi,b.k)
+
+                self.pmf_function = pmf_final
+                # at this point, we should have a set of spline parameters.
+
+            elif ml_param['fit_type'] == 'kldiverge':
+                w_n = np.exp(log_w_n)
+                w_n = w_n/np.sum(w_n) # nomalize the weighs
+                result = minimize(self._kldiverge,tstart,args=(trialf,x_n,w_n,xrange),options=optimize_options)
+                self.pmf_function  = trialf(result.x)
+
+            elif ml_paramts['fit_type'] = 'vFEP'
+
+
         else:
+            raise ParameterError('pmf_type {:s} is not defined!'.format(pmf_type))
 
-            raise ParameterError("pmf_type '%s' not recognized." % pmf_type)
+        if self.timings:  # we put the timings outside, since the switch / common stuff is really low.
+            end = timer()
+            results_vals['timing'] = end-start 
+
+        return result_vals
 
 
-    def getPMF(self, x, uncertainties = 'from-lowest', pmf_reference = None):
+     def getPMF(self, x, uncertainties = 'from-lowest', pmf_reference = None):
 
         """
         Returns values of the PMF at the specified x points.
@@ -595,7 +731,7 @@ class PMF:
 
         elif self.pmf_type == 'kde':
 
-            #if it's not an array, make it one.
+            # if it's not an array, make it one.
             x = np.array(x)
 
             if len(np.shape(x)) <=1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
@@ -612,11 +748,21 @@ class PMF:
             result_vals['f_i'] = f_i
             # no error method yet. Maybe write a bootstrap class? 
 
-        else:
-            raise ParameterError('pmf_type {:s} is not defined!'.format(pmf_type))
+        elif self.pmf_type == 'max_likelihood':
 
-        return result_vals
+            f_i = self.pmf_function(x)
 
+            if uncertainties == 'from_lowest':
+                fmin = np.min(f_i)
+                f_i =- fmin
+            elif uncertainties == 'from-specified':
+                fmin = -self.kde.score_samples(np.array(pmf_reference).reshape(1, -1))
+                f_i = f_i - fmin
+
+            # uncertainites "from normalization" reference is applied, since the density is normalized.
+            result_vals['f_i'] = f_i
+
+            # no error method yet. Maybe write a bootstrap class? 
 
     def getMBAR(self):
         """return the MBAR object being used by the PMF  
@@ -631,7 +777,7 @@ class PMF:
            raise DataError('MBAR in the PMF object is not initialized, cannot return it.')
 
     def getKDE(self):
-        """ return the KernelDensity object of it exists.
+        """ return the KernelDensity object if it exists.
 
             Parameters: None
      
@@ -644,37 +790,47 @@ class PMF:
             raise ParameterError('Can\'t return the KernelDensity object because pmf_type != kde')
 
 
-    def _kldiverge(t,ft,x_n,w_n,xrange):
+    def _kldiverge(t,ft,x_n,K,w_n,xrange):
 
-        # define the function f based on the current parameters t
+        """ The function that determines the KL divergence over the weighted points
+
+            Parameters: t:        vector of parameters 
+                        ft:       spline object
+                        x_n:      coordinates of the samples.
+                        K:        Number of states from MBAR
+                        w_n:      weights of each point from MBAR
+                        xrange:   low and high points of the range of interest
+            Returns: 
+
+        """
+
         t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
+        # define the function f based on the current parameters t
         feval = ft(t) # current value of the PMF
         # define the exponential of f based on the current parameters t
         expf = lambda x: np.exp(-feval(x))
         pE = np.dot(w_n,feval(x_n))
-        pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #value 0 is the value of quad
+        pF = np.log(quad(expf,xrange[0],xrange[1])[0]) #value 0 is the value of quadrature
         kl = pE + pF 
-    if verbose:
-        print(kl, t)
+
     return kl
 
     def _sumkldiverge(t,ft,x_n,K,w_kn,fbias,xrange):
+
         t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
         feval = ft(t)  # the current value of the PMF
         fx = feval(x_n)  # only need to evaluate this over all points outside(?)      
         kl = 0
-        # figure out the bias
+        # figure out the bias at each point
         for k in range(K):
         # define the exponential of f based on the current parameters t.
             expf = lambda x: np.exp(-feval(x)-fbias[k](x))
             pE = np.dot(w_kn[:,k],fx+fbias(k,x_n))
             pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #value 0 is the value of quad
             kl += (pE + pF)
-        if verbose:
-            print (kl,t)
         return kl
 
-    def vFEP(t,ft,x_kn,K,N_k,fbias,xrange):
+    def _vFEP(t,ft,x_kn,K,N_k,fbias,xrange):
         t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
         feval = ft(t)  # the current value of the PMF
         kl = 0
@@ -687,6 +843,111 @@ class PMF:
             pE = np.sum(feval(x_n)+fbias(k,x_n))/N_k[k]
             pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #0 is the value of quad
             kl += (pE + pF)
-        if verbose:
-            print(kl,t)
         return kl    
+
+    def _bspline_calculate_f(w_n, x_n, b, method, K, xrange):
+
+        # let's compute the value of the current function just to be careful.
+        f = np.dot(w_n,b(x_n))
+        pF = np.zeros(K)
+        if 'sumkl' in method:
+            for k in range(K):
+                # what is the biasing function for this state?
+                # define the biasing function 
+                # define the exponential of f based on the current parameters t.
+                expf = lambda x,k: np.exp(-b(x)-fbias(k,x))
+                # compute the partition function
+                pF[k] = quad(expf,xrange[0],xrange[1],args=(k))[0]  
+                # subtract the free energy (add log partition function)
+            f += np.sum(np.log(pF))
+
+        else: # just KL divergence of the unbiased potential
+            expf = lambda x: np.exp(-b(x))
+            pF[0] = quad(expf,xrange[0],xrange[1])[0]  #0 is the value of quad
+            # subtract the free energy (add log partition function)
+            f += np.log(pF[0]) 
+
+        #print("function value to minimize: {:f}".format(f))
+
+        return f, expf, pF  # return the value and the needed data (eventually move to class)
+
+
+    def _bspline_calculate_g(w_n, x_n, nspline, b, db_c, expf, pF, method, K, xrangei):
+
+        ##### COMPUTE THE GRADIENT #######  
+        # The gradient of the function is \sum_n [\sum_k W_k(x_n)] dF(phi(x_n))/dtheta_i - \sum_k <dF/dtheta>_k 
+        # 
+        # where <O>_k = \int O(xi) exp(-F(xi) - u_k(xi)) dxi / \int exp(-F(xi) - u_k(xi)) dxi  
+
+        g = np.zeros(nspline-1)
+        for i in range(1,nspline):
+            # compute the weighted sum of functions.
+            g[i-1] += np.dot(w_n,db_c[i](x_n))
+
+        # now the second part of the gradient.
+
+        if 'sumkl' in method:
+            gkquad = np.zeros([nspline-1,K])
+            for k in range(K):
+                for i in range(nspline-1):
+                    # Boltzmann weighted derivative with each biasing function
+                    dexpf = lambda x,k: db_c[i+1](x)*expf(x,k)
+                    # now compute the expectation of each derivative
+                    pE = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1],args=(k))[0]
+                    # normalize the expectation
+                    gkquad[i,k] = pE/pF[k] 
+            g -= np.sum(gkquad,axis=1)
+            pE = 0
+
+        else: # just doing a single one.
+            gkquad = 0
+            pE = np.zeros(nspline-1)
+            for i in range(nspline-1):
+                # Boltzmann weighted derivative
+                dexpf = lambda x: db_c[i+1](x)*expf(x)
+                # now compute the expectation of each derivative
+                pE[i] = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1])[0]
+                # normalize the expetation.
+                pE[i] /= pF[0]
+                g[i] -= pE[i]
+
+        dg2 = np.dot(g,g)
+        print("gradient norm: {:.10f}".format(dg2))
+        return g, dg2, gkquad, pE
+
+    def _bspline_calculate_h(w_n, x_n, nspline, kdegree, b, db_c, expf, pF, pE, method, K, Ki, xrangeij):
+
+        # now, compute the Hessian.  First, the first order components
+        h = np.zeros([nspline-1,nspline-1])
+        if 'sumkl' in method:
+            for k in range(K):
+                h += -np.outer(gkquad[:,k],gkquad[:,k])
+        else:
+            h = -np.outer(pE,pE)
+ 
+        # works for both sum and non-sum 
+        
+        if 'sumkl' in method:
+            for i in range(nspline-1):
+                for j in range(0,i+1):
+                    if np.abs(i-j) <= kdegree:
+                        for k in range(Ki):
+                            dexpf = lambda x,k: db_c[i+1](x)*db_c[j+1](x)*expf(x,k)
+                            # now compute the expectation of each derivative
+                            pE = quad(dexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1],args=(k))[0]
+                            h[i,j] += pE/pF[k]
+        else:
+            for i in range(nspline-1):
+                for j in range(0,i+1):
+                    if np.abs(i-j) <= kdegree:
+                        for k in range(Ki):
+                            dexpf = lambda x,k: db_c[i+1](x)*db_c[j+1](x)*expf(x)
+                            # now compute the expectation of each derivative
+                            pE = quad(dexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1],args=(k))[0]
+                            h[i,j] += pE/pF[k]
+  
+        for i in range(nspline-1):  
+            for j in range(i+1,nspline-1):
+                h[i,j] = h[j,i]
+
+    return h
