@@ -185,22 +185,24 @@ print("x0_k = ")
 print(x0_k)
 
 # Compute bias energies in units of kT.
-u_kln = zeros([K,K,N_max], float64) # u_kln[k,l,n] is the reduced (dimensionless) relative potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
+u_kn = zeros([K,sum(N_k)], float64) # u_kn[k,n] is the reduced (dimensionless) relative potential energy of snapshot n evaluated at umbrella l
+print(sum(N_k))
 for k in range(K):
+    sample_index = 0
     for l in range(K):
         # compute relative energy difference from sampled state to each other state
         # U_k(x) = F_k x
         # where F_k is external biasing force
         # (F_k pN) (x nm) (pN / 
-        # u_kln[k,l,0:N_k[k]] = - pN_nm_to_kT * (biasing_force_k[l] - biasing_force_k[k]) * x_kn[k,0:N_k[k]]
-        u_kln[k,l,0:N_k[k]] = - pN_nm_to_kT * biasing_force_k[l] * (x_kn[k,0:N_k[k]] - x0_k[l]) + pN_nm_to_kT * biasing_force_k[k] * (x_kn[k,0:N_k[k]] - x0_k[k])
+        u_kn[k,sample_index:sample_index+N_k[l]] = pN_nm_to_kT * biasing_force_k[k] * (x_kn[l,0:N_k[l]] - x0_k[l])
+        sample_index = sample_index + N_k[l]
 
 # DEBUG
 start_time = time.time()
 
 # Initialize MBAR.
 print("Running MBAR...")
-mbar = pymbar.MBAR(u_kln, N_k, verbose = True, method = 'adaptive', relative_tolerance = 1.0e-10)
+mbar = pymbar.MBAR(u_kn, N_k, verbose = True, method = 'adaptive', relative_tolerance = 1.0e-10)
 
 # Compute unbiased energies (all biasing forces are zero).
 u_kn = zeros([K,N_max], float64) # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
@@ -212,8 +214,8 @@ for k in range(K):
 print("Computing PMF...")
 (f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
 results = mbar.computePMF(u_kn, bin_kn, nbins)
-f_i = results['f_i']
-df_i = results['df_i']
+f_i = results[0]
+df_i = results[1]
 # compute estimate of PMF including Jacobian term
 pmf_i = f_i + numpy.log(bin_width_i)
 # Write out unbiased estimate of PMF
@@ -234,12 +236,19 @@ stop_time = time.time()
 elapsed_time = stop_time - start_time
 print("analysis took %f seconds" % elapsed_time)
 
+sample_index = 0
+bin_kn_old = bin_kn
+bin_kn = zeros([K,sum(N_k)], int32)
+for k in range(K):
+    bin_kn[k,sample_index:sample_index+len(bin_kn_old[k,:])] = bin_kn_old[k,:]
+    sample_index = sample_index + len(bin_kn_old[k,:])
+
 # compute observed and expected histograms at each state
 for l in range(0,K):
     # compute PMF at state l
-    results = mbar.computePMF(u_kln[:,l,:], bin_kn, nbins)
-    f_i = results['f_i']
-    df_i = results['df_i']
+    results = mbar.computePMF(u_kn[l,:], bin_kn[l,:], nbins)
+    f_i = results[0]
+    df_i = results[1]
     # compute estimate of PMF including Jacobian term
     pmf_i = f_i + numpy.log(bin_width_i)
     # center pmf

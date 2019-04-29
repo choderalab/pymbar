@@ -225,8 +225,8 @@ beta_k = 1 / (kB * Temp_k)
 
 print("--Computing reduced energies...")
 
-u_kln = numpy.zeros([K,K,NumIterations], numpy.float64) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
-E_kn_samp = numpy.zeros([K,NumIterations], numpy.float64) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
+u_kn = numpy.zeros([K,sum(Nall_k)], numpy.float64) # u_kn is reduced pot. ener. of segment n evaluated at temp k
+E_kn_samp = numpy.zeros([K,NumIterations], numpy.float64)
 
 nBoots_work = nBoots + 1 # we add +1 to the bootstrap number, as the zeroth bootstrap sample is the original
 
@@ -250,8 +250,10 @@ for n in range(nBoots_work):
             E_kn_samp[k,0:Nall_k[k]] = E_kn[k,booti]
 
     for k in range(K):
+        sample_index = 0
         for l in range(K):
-            u_kln[k,l,0:Nall_k[k]] = beta_k[l] * E_kn_samp[k,0:Nall_k[k]]
+            u_kn[k,sample_index:sample_index+Nall_k[l]] = beta_k[k] * E_kn_samp[l,0:Nall_k[l]]
+            sample_index = sample_index + Nall_k[l]
 
 #------------------------------------------------------------------------
 # Initialize MBAR
@@ -270,7 +272,7 @@ for n in range(nBoots_work):
     else:
         initial_f_k = mbar.f_k # start from the previous final free energies to speed convergence
 
-    mbar = pymbar.MBAR(u_kln, Nall_k, verbose=False, relative_tolerance=1e-12, initial_f_k=initial_f_k)
+    mbar = pymbar.MBAR(u_kn, Nall_k, verbose=False, relative_tolerance=1e-12, initial_f_k=initial_f_k)
 
     #------------------------------------------------------------------------
     # Compute Expectations for E_kt and E2_kt as E_expect and E2_expect
@@ -278,28 +280,28 @@ for n in range(nBoots_work):
 
     print("")
     print("Computing Expectations for E...")
-    E_kln = u_kln  # not a copy, we are going to write over it, but we don't need it any more.
+    E_kn = u_kn  # not a copy, we are going to write over it, but we don't need it any more.
     for k in range(K):
-        E_kln[:,k,:]*=beta_k[k]**(-1)  # get the 'unreduced' potential -- we can't take differences of reduced potentials because the beta is different; math is much more confusing with derivatives of the reduced potentials.
-    results = mbar.computeExpectations(E_kln, state_dependent = True)
-    E_expect = results['mu']
-    dE_expect = results['sigma']
+        E_kn[k,:]*=beta_k[k]**(-1)  # get the 'unreduced' potential -- we can't take differences of reduced potentials because the beta is different; math is much more confusing with derivatives of the reduced potentials.
+    results = mbar.computeExpectations(E_kn, state_dependent = True)
+    E_expect = results[0]
+    dE_expect = results[1]
     allE_expect[:,n] = E_expect[:]
 
     # expectations for the differences, which we need for numerical derivatives
-    results = mbar.computeExpectations(E_kln,output='differences', state_dependent = True)
-    DeltaE_expect = results['mu']
-    dDeltaE_expect = results['sigma']
+    results = mbar.computeExpectations(E_kn,output='differences', state_dependent = True)
+    DeltaE_expect = results[0]
+    dDeltaE_expect = results[1]
     print("Computing Expectations for E^2...")
 
-    results = mbar.computeExpectations(E_kln**2, state_dependent = True)
-    E2_expect = results['mu']
-    dE2_expect = results['sigma']
+    results = mbar.computeExpectations(E_kn**2, state_dependent = True)
+    E2_expect = results[0]
+    dE2_expect = results[1]
     allE2_expect[:,n] = E2_expect[:]
 
     results = mbar.getFreeEnergyDifferences()
-    df_ij = results['Delta_f']
-    ddf_ij = results['dDelta_f']
+    df_ij = results[0]
+    ddf_ij = results[1]
 
     #------------------------------------------------------------------------
     # Compute Cv for NVT simulations as <E^2> - <E>^2 / (RT^2)
@@ -339,7 +341,7 @@ for n in range(nBoots_work):
     # only loop over the points that will be plotted, not the ones that
     for i in range(originalK, K):
 
-        # Now, calculae heat capacity by T-differences
+        # Now, calculate heat capacity by T-differences
         im = i-1
         ip = i+1
         if (i==originalK):
