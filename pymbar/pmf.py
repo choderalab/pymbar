@@ -33,6 +33,9 @@ import numpy.linalg as linalg
 import pymbar
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
+from timeit import default_timer as timer   
+
+import pdb # delete when done
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
@@ -63,7 +66,7 @@ class PMF:
     """
     # =========================================================================
 
-    def __init__(self, u_kn, N_k, verbose = False, mbar_options = None, **kwargs):
+    def __init__(self, u_kn, N_k, verbose = False, mbar_options = None, timings = True, **kwargs):
 
         """Initialize a potential of mean force calculation by performing
         multistate Bennett acceptance ratio (MBAR) on a set of
@@ -153,6 +156,9 @@ class PMF:
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
 
+        if timings == True:
+            self.timings = True
+
         if mbar_options == None:
             pmf_mbar = pymbar.MBAR(u_kn, N_k)
         else:
@@ -226,6 +232,12 @@ class PMF:
             - minimization_parameters - dictionary parameters to pass to the minimizer. 
             - fbiaw: array of functions that return the Kth bias potential for each function
 
+        Returns:
+
+            - result_vals: dictionary of results.
+
+            if 'timings' == True, returns the time taken to construct the model.
+
         Notes
         -----
         * pmf_type = 'histogram':
@@ -263,6 +275,9 @@ class PMF:
         >>> print(N_k) 
 
         """
+
+        result_vals = dict()  # for results we may want to return.
+
         self.pmf_type = pmf_type
 
         # eventually, we just want the desired energy of each sample.  For now, we allow conversion 
@@ -275,6 +290,8 @@ class PMF:
         # Compute unnormalized log weights for the given reduced potential u_n, needed for all methods.
         log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
 
+        if self.timings == True:
+            start = timer()
 
         K = self.mbar.K  # number of states
         
@@ -384,7 +401,16 @@ class PMF:
             self.kde = kde
 
         elif pmf_type == 'max_likelihood':
+
+            pdb.set_trace()
+            # bunch of imports needed for doing max likelihood
+            from scipy.interpolate import BSpline, make_interp_spline, make_lsq_spline
+            from scipy.interpolate import interp1d
+            from scipy.integrate import quad, romb, romberg, quadrature
+            from scipy.optimize import minimize
+            
             optimize_options = ml_params['optimize_parameters'] 
+
             if ml_param['fit_type'] == 'bspline': 
                 kdegree = ml_params['spline_degree']
                 nspline = ml_params['nspline']
@@ -510,26 +536,26 @@ class PMF:
                 self.pmf_function = pmf_final
                 # at this point, we should have a set of spline parameters.
 
-            elif ml_param['fit_type'] == 'kldiverge':
-                w_n = np.exp(log_w_n)
+            elif ml_params['fit_type'] == 'kldiverge':
+                w_n = npexp(log_w_n)
                 w_n = w_n/np.sum(w_n) # nomalize the weighs
                 result = minimize(self._kldiverge,tstart,args=(trialf,x_n,w_n,xrange),options=optimize_options)
                 self.pmf_function  = trialf(result.x)
 
-            elif ml_paramts['fit_type'] = 'vFEP'
-
+            elif ml_params['fit_type'] == 'vFEP':
+                results  = 0
 
         else:
             raise ParameterError('pmf_type {:s} is not defined!'.format(pmf_type))
 
         if self.timings:  # we put the timings outside, since the switch / common stuff is really low.
             end = timer()
-            results_vals['timing'] = end-start 
+            result_vals['timing'] = end-start 
 
-        return result_vals
+        return result_vals  # should we returrn results under some other conditions?
 
 
-     def getPMF(self, x, uncertainties = 'from-lowest', pmf_reference = None):
+    def getPMF(self, x, uncertainties = 'from-lowest', pmf_reference = None):
 
         """
         Returns values of the PMF at the specified x points.
@@ -761,8 +787,10 @@ class PMF:
 
             # uncertainites "from normalization" reference is applied, since the density is normalized.
             result_vals['f_i'] = f_i
-
             # no error method yet. Maybe write a bootstrap class? 
+ 
+        return result_vals
+
 
     def getMBAR(self):
         """return the MBAR object being used by the PMF  
@@ -813,7 +841,7 @@ class PMF:
         pF = np.log(quad(expf,xrange[0],xrange[1])[0]) #value 0 is the value of quadrature
         kl = pE + pF 
 
-    return kl
+        return kl
 
     def _sumkldiverge(t,ft,x_n,K,w_kn,fbias,xrange):
 
@@ -950,4 +978,4 @@ class PMF:
             for j in range(i+1,nspline-1):
                 h[i,j] = h[j,i]
 
-    return h
+        return h

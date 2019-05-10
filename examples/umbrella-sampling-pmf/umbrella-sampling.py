@@ -103,7 +103,7 @@ for k in range(K):
         chi_radians = chi_kn[k,0:N_k[k]]/(180.0/np.pi)
         g_cos = timeseries.statisticalInefficiency(np.cos(chi_radians))
         g_sin = timeseries.statisticalInefficiency(np.sin(chi_radians))
-        print("g_cos = {%.1f} | g_sin = {%.1f}".format(g_cos, g_sin)
+        print("g_cos = {%.1f} | g_sin = {%.1f}".format(g_cos, g_sin))
         g_k[k] = max(g_cos, g_sin)
         print("Correlation time for set {%5d} is {%10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(chi_radians, g=g_k[k]) 
@@ -188,6 +188,7 @@ colors['kl-newton-5'] = 'y-'
 
 # get mbar ready
 mbar = pmf.getMBAR()
+
 
 # define the bias functions
 def fbias(k,x):

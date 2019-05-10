@@ -211,6 +211,13 @@ mbar = pmf.getMBAR()
 # compute KL divergence to the empirical distribution for the trial distribution F
 # convert angles to a single array.
 
+# NOW Maximum likelihood:
+ml_parameters = dict()
+ml_parameters['bandwidth'] = 0.5*((chi_max-chi_min)/nbins)
+pmf.generatePMF(u_kn, chi_n, pmf_type = 'maximum_likelihood', ml_parameters=ml_parameters)
+results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
+f_ik = results['f_i']
+
 ################
 from scipy.interpolate import BSpline, make_interp_spline, make_lsq_spline
 from scipy.interpolate import interp1d
