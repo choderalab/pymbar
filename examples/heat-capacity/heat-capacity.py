@@ -283,25 +283,17 @@ for n in range(nBoots_work):
     E_kn = u_kn  # not a copy, we are going to write over it, but we don't need it any more.
     for k in range(K):
         E_kn[k,:]*=beta_k[k]**(-1)  # get the 'unreduced' potential -- we can't take differences of reduced potentials because the beta is different; math is much more confusing with derivatives of the reduced potentials.
-    results = mbar.computeExpectations(E_kn, state_dependent = True)
-    E_expect = results[0]
-    dE_expect = results[1]
+    (E_expect, dE_expect) = mbar.computeExpectations(E_kn, state_dependent = True)
     allE_expect[:,n] = E_expect[:]
 
     # expectations for the differences, which we need for numerical derivatives
-    results = mbar.computeExpectations(E_kn,output='differences', state_dependent = True)
-    DeltaE_expect = results[0]
-    dDeltaE_expect = results[1]
+    (DeltaE_expect, dDeltaE_expect) = mbar.computeExpectations(E_kn,output='differences', state_dependent = True)
     print("Computing Expectations for E^2...")
 
-    results = mbar.computeExpectations(E_kn**2, state_dependent = True)
-    E2_expect = results[0]
-    dE2_expect = results[1]
+    (E2_expect, dE2_expect) = mbar.computeExpectations(E_kn**2, state_dependent = True)
     allE2_expect[:,n] = E2_expect[:]
 
-    results = mbar.getFreeEnergyDifferences()
-    df_ij = results[0]
-    ddf_ij = results[1]
+    (df_ij,ddf_ij,theta) = mbar.getFreeEnergyDifferences(return_theta=False)
 
     #------------------------------------------------------------------------
     # Compute Cv for NVT simulations as <E^2> - <E>^2 / (RT^2)
