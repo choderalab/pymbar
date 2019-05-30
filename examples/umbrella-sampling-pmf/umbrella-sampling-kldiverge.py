@@ -14,19 +14,21 @@ nplot = 1000
 options = {'disp':True, 'eps':10**(-4), 'gtol':10**(-3)}
 #methods = ['histogram', 'kde', 'kl-scipy', 'sumkl-newton-1', 'kl-newton-1', 'kl-newton-3', 
 #           'sumkl-newton-3', 'sumkl-scipy', 'vFEP-scipy']
-methods = ['histogram','kde','sumkl-scipy','sumkl-newton-1','vFEP','kl-scipy','kl-newton-1']
+#methods = ['histogram','kde','kl-newton-1','sumkl-newton-3','kl-newton-3','kl-scipy-3','sumkl-scipy-3','vFEP-scipy-3']
+methods = ['histogram','kde','vFEP-scipy-3']
 
 colors = dict()
 colors['histogram'] = 'k:'
-colors['sumkl-scipy'] = 'k-'
+colors['sumkl-scipy-3'] = 'k-'
 colors['kde'] = 'm-'
-colors['vFEP-scipy'] = 'b-'
+colors['vFEP-scipy-3'] = 'b-'
 colors['sumkl-newton-1'] = 'g--'
 colors['sumkl-newton-2'] = 'r--'
 colors['sumkl-newton-3'] = 'c--'
 colors['sumkl-newton-4'] = 'm--'
 colors['sumkl-newton-5'] = 'y--'
-colors['kl-scipy'] = 'k-'
+colors['kl-scipy-3'] = 'k-'
+colors['sumkl-scipy-3'] = 'k-'
 colors['kl-newton-1'] = 'g-'
 colors['kl-newton-2'] = 'r-'
 colors['kl-newton-3'] = 'c-'
@@ -58,8 +60,8 @@ T_k = np.ones(K,float)*temperature # inital temperatures are all equal
 beta = 1.0 / (kB * temperature) # inverse temperature of simulations (in 1/(kJ/mol))
 chi_min = -180.0 # min for PMF
 chi_max = +180.0 # max for PMF
-nbins = 12 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
-nsplines = 12
+nbins = 40 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
+nsplines = 40
 
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32) # N_k[k] is the number of snapshots from umbrella simulation k
@@ -194,7 +196,7 @@ def bias_potential(x,k):
     # vectorize the conditional
     i = np.fabs(dchi) > 180.0
     dchi = i*(360.0 - np.fabs(dchi)) + (1-i)*dchi
-    return beta_k[k]* (K_k[k] /2.0) * dchi*2
+    return beta_k[k]* (K_k[k] /2.0) * dchi**2
 
 times = dict() # keep track of times each method takes
 
@@ -241,8 +243,8 @@ for method in methods:
         if 'newton' in method:
 
             spline_parameters['optimization_type'] = 'newton'
-            kdegree = int(method[-1])
             newton_parameters = dict()
+            kdegree = int(method[-1])
             newton_parameters['kdegree'] = kdegree
             newton_parameters['gtol'] = 1e-10
 
@@ -252,10 +254,9 @@ for method in methods:
         if 'scipy' in method:
 
             spline_parameters['optimization_type'] = 'scipy'
-            # define the K bias functions.
-
             scipy_parameters = dict()
-            scipy_parameters['kind'] = 'cubic'
+            kdegree = int(method[-1])
+            scipy_parameters['kdegree'] = kdegree
             spline_parameters['scipy_parameters'] = scipy_parameters
 
         pmf.generatePMF(u_kn, chi_n, pmf_type = 'spline', spline_parameters=spline_parameters)

@@ -32,7 +32,7 @@ from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumex
 # bunch of imports needed for doing newton optimization of B-splines
 from scipy.interpolate import BSpline, make_interp_spline, make_lsq_spline
 # imports needed for scipy minimizations
-from scipy.interpolate import interp1d
+from scipy.interpolate import UnivariateSpline
 from scipy.integrate import quad
 from scipy.optimize import minimize
 
@@ -238,7 +238,7 @@ class PMF:
                 -- 'vFEP': the variational FEP minimization criteria
             - optimization_type: 
                 -- 'newton':  use explicit Newton-Raphsom optimization: uses 1D b-splines
-                -- 'scipy': use scipy optimizers (uses interp1d) 
+                -- 'scipy': use scipy optimizers (uses UnivariateSpline) 
             - optimizization_parameters:
                 -- 
             - fkbias: array of functions that return the Kth bias potential for each function
@@ -444,13 +444,7 @@ class PMF:
                 if 'optimize_options' not in scipy_parameters:
                     optimize_options= {'disp':True, 'eps':10**(-4), 'gtol':10**(-3)}
 
-                interp_kind = scipy_parameters['kind']
-                if interp_kind == 'quadratic':
-                    kdegree = 2
-                elif interp_kind== 'cubic':
-                    kdegree = 3
-                else:
-                    kdegree = 1  # for all the others options; should work?
+                kdegree = scipy_parameters['kdegree']
 
             elif spline_parameters['optimization_type'] == 'newton':
                 if 'newton_parameters' not in spline_parameters:
@@ -548,15 +542,12 @@ class PMF:
                         xrangeij[i,j,0] = np.max([xrangei[i,0],xrangei[j,0]])
                         xrangeij[i,j,1] = np.min([xrangei[i,1],xrangei[j,1]])
 
-                dg2 = tol + 1.0
+                self.bspline_dg2 = tol + 1.0
                 firsttime = True
 
-                while dg2 > tol: # until we reach the tolerance.
+                while self.bspline_dg2 > tol: # until we reach the tolerance.
 
-                    import pdb
-                    pdb.set_trace()
-
-                    f, expf, pF = self._bspline_calculate_f(w_n, x_n, b, spline_weights, spline_parameters['fkbias'], K, xrange)
+                    f = self._bspline_calculate_f(w_n, x_n, b, spline_weights, spline_parameters['fkbias'], K, xrange)
 
                     # we need some error handling: if we stepped too far, we should go back
                     # still not great error handling.  Requires something close.
@@ -571,16 +562,16 @@ class PMF:
                             xold = xi.copy()
                             #print(xi)
                             b = BSpline(b.t,xi,b.k)
-                            f, expf, pF = self._bspline_calculate_f(w_n, x_n, b, spline_weights, spline_parameters['fkbias'],K, xrange)
+                            f = self._bspline_calculate_f(w_n, x_n, b, spline_weights, spline_parameters['fkbias'],K, xrange)
                             count += 1
                     else:
                         firsttime = False
                     fold = f
                     xold = xi.copy()
 
-                    g, dg2, gkquad, pE = self._bspline_calculate_g(w_n, x_n, nspline, b, db_c, expf, pF, spline_weights, K, xrangei)
+                    g = self._bspline_calculate_g(w_n, x_n, nspline, b, db_c, spline_weights, K, xrangei)
 
-                    h = self._bspline_calculate_h(w_n, x_n, nspline, kdegree, b, db_c, expf, gkquad, pF, pE, spline_weights, K, xrangeij)
+                    h = self._bspline_calculate_h(w_n, x_n, nspline, kdegree, b, db_c, spline_weights, K, xrangeij)
                 
                     # now find the new point.
                     # x_n+1 = x_n - f''(x_n)^-1 f'(x_n) 
@@ -600,12 +591,10 @@ class PMF:
 
                 xstart = np.linspace(xrange[0],xrange[1],nspline)
                 def trialf(t):
-                    return interp1d(xstart, t, kind=interp_kind)  
+                    return UnivariateSpline(xstart,t,k=kdegree,ext=0)  
 
-                tstart = interp1d(xinit,yinit,kind=interp_kind,fill_value='extrapolate')(xstart)
+                tstart = UnivariateSpline(xinit,yinit,k=kdegree,ext=0)(xstart)
 
-                import pdb
-                pdb.set_trace()
                 if spline_weights == 'kldivergence':
                     result = minimize(self._kldivergence,tstart,args=(trialf,x_n,w_n,xrange),options=optimize_options)
                 elif spline_weights == 'sumkldivergence':
@@ -910,7 +899,7 @@ class PMF:
         pE = np.dot(w_n,feval(x_n))
         pF = np.log(quad(expf,xrange[0],xrange[1])[0]) #value 0 is the value of quadrature
         kl = pE + pF 
-        print(kl,t)
+        #print(kl,t)
         return kl
 
     def _sumkldivergence(self,t,ft,x_n,w_n,fkbias,xrange):
@@ -923,10 +912,10 @@ class PMF:
         kl = pE
         for k in range(self.K):
         # define the exponential of f based on the current parameters t.
-            expf = lambda x: np.exp(-feval(x)-fkbias[k](x))
+            expf = lambda x, kf=k: np.exp(-feval(x)-fkbias[kf](x))
             pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #value 0 is the value of quadrature
             kl = kl + pF
-        print (kl,t)
+        #print (kl,t)
         return kl
 
     def _vFEP(self,t,ft,x_kn,N_k,fkbias,xrange):
@@ -938,7 +927,7 @@ class PMF:
             x_n = x_kn[k,0:N_k[k]]
             # what is the biasing function for this state?
             # define the exponential of f based on the current parameters t.
-            expf = lambda x: np.exp(-feval(x)-fkbias[k](x))
+            expf = lambda x, kf=k: np.exp(-feval(x)-fkbias[kf](x))
             pE = np.sum(feval(x_n)+fkbias[k](x_n))/N_k[k]
             pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #0 is the value of quad
             kl += (pE + pF)
@@ -955,7 +944,7 @@ class PMF:
                 # what is the biasing function for this state?
                 # define the biasing function 
                 # define the exponential of f based on the current parameters t.
-                expfk = lambda x: np.exp(-b(x)-fkbias[k](x))
+                expfk = lambda x, kf=k: np.exp(-b(x)-fkbias[kf](x))
                 # compute the partition function
                 pF[k] = quad(expfk,xrange[0],xrange[1])[0]  
                 expf.append(expfk)
@@ -971,10 +960,12 @@ class PMF:
 
         #print("function value to minimize: {:f}".format(f))
 
-        return f, expf, pF  # return the value and the needed data (eventually move to class?)
+        self.bspline_expf = expf
+        self.bspline_pF = pF
+        return f 
 
 
-    def _bspline_calculate_g(self, w_n, x_n, nspline, b, db_c, expf, pF, spline_weights, K, xrangei):
+    def _bspline_calculate_g(self, w_n, x_n, nspline, b, db_c, spline_weights, K, xrangei):
 
         ##### COMPUTE THE GRADIENT #######  
         # The gradient of the function is \sum_n [\sum_k W_k(x_n)] dF(phi(x_n))/dtheta_i - \sum_k <dF/dtheta>_k 
@@ -988,12 +979,15 @@ class PMF:
 
         # now the second part of the gradient.
 
+        expf = self.bspline_expf
+        pF = self.bspline_pF
+
         if spline_weights == 'sumkldivergence':
             gkquad = np.zeros([nspline-1,K])
             for k in range(K):
                 for i in range(nspline-1):
                     # Boltzmann weighted derivative with each biasing function
-                    dexpf = lambda x: db_c[i+1](x)*expf[k](x)
+                    dexpf = lambda x, kf=k: db_c[i+1](x)*expf[kf](x)
                     # now compute the expectation of each derivative
                     pE = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1])[0]
                     # normalize the expectation
@@ -1015,9 +1009,19 @@ class PMF:
 
         dg2 = np.dot(g,g)
         #print("gradient norm: {:.10f}".format(dg2))
-        return g, dg2, gkquad, pE
 
-    def _bspline_calculate_h(self, w_n, x_n, nspline, kdegree, b, db_c, expf, gkquad, pF, pE, spline_weights, K, xrangeij):
+        self.bspline_gkquad = gkquad
+        self.bspline_pE = pE
+        self.bspline_dg2 = dg2
+        return g
+
+    def _bspline_calculate_h(self, w_n, x_n, nspline, kdegree, b, db_c, spline_weights, K, xrangeij):
+
+        expf = self.bspline_expf
+        pF = self.bspline_pF        
+        gkquad = self.bspline_gkquad
+        pE = self.bspline_pE
+        dg2 = self.bspline_dg2
 
         # now, compute the Hessian.  First, the first order components
         h = np.zeros([nspline-1,nspline-1])
@@ -1034,7 +1038,7 @@ class PMF:
                 for j in range(0,i+1):
                     if np.abs(i-j) <= kdegree:
                         for k in range(K):
-                            dexpf = lambda x: db_c[i+1](x)*db_c[j+1](x)*expf[k](x)
+                            dexpf = lambda x, kf=k: db_c[i+1](x)*db_c[j+1](x)*expf[kf](x)
                             # now compute the expectation of each derivative
                             pE = quad(dexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1])[0]
                             h[i,j] += pE/pF[k]
