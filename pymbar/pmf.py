@@ -600,7 +600,7 @@ class PMF:
                 elif spline_weights == 'sumkldivergence':
                     result = minimize(self._sumkldivergence,tstart,args=(trialf,x_n,w_n,spline_parameters['fkbias'],xrange),options=optimize_options)
                 elif spline_weights == 'vFEP':
-                    result = minimize(self._vFEP,tstart,args=(trialf,x_kn,w_kn,spline_parameters['fkbias'],xrange),options=optimize_options)
+                    result = minimize(self._vFEP,tstart,args=(trialf,x_kn,N_k,spline_parameters['fkbias'],xrange),options=optimize_options)
 
                 self.pmf_function = trialf(result.x)
 
