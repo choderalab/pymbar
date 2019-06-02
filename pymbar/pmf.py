@@ -507,15 +507,14 @@ class PMF:
                 # initial fit functioin
                 # problem: bin centers might not actually be sorted. Should data getting to here be already sorted?
                 sort_indices = np.argsort(xinit)
-                bfirst = make_lsq_spline(xinit[sort_indices], yinit[sort_indices], t, k=kdegree)
-                xi = bfirst.c  # the bspline coefficients are the variables we care about.
+                b = make_lsq_spline(xinit[sort_indices], yinit[sort_indices], t, k=kdegree)
+                xi = b.c[1:]  # the bspline coefficients are the variables we care about.
                 xold = xi.copy()
 
                 # The function is \sum_n [\sum_k W_k(x_n)] F(phi(x_n)) + \sum_k ln \int exp(-F(xi) - u_k(xi)) dxi  
                 # if we assume bsplines are of the form f(x) = a*b_i(x), then 
                 # dF/dtheta is simply the basis function that has support over that region of space  
 
-                b = bfirst
                 # we now need the derivative of the function WRT the coefficients. Doesn't change knots or degree.
                 # A vector function that is 
                 db_c = list()
@@ -527,6 +526,8 @@ class PMF:
 
                 # same for the next execution. Not sure if best time to save it.
                 self.bspline_derivatives = db_c
+                self.bspline = b
+                self.fkbias = spline_parameters['fkbias']
                 
                 # We also construct integration ranges for the derivatives, since no point in integrating when 
                 # the function is zero.
@@ -547,7 +548,7 @@ class PMF:
 
                 while self.bspline_dg2 > tol: # until we reach the tolerance.
 
-                    f = self._bspline_calculate_f(w_n, x_n, b, spline_weights, spline_parameters['fkbias'], K, xrange)
+                    f = self._bspline_calculate_f(xi, w_n, x_n, spline_weights, K, xrange)
 
                     # we need some error handling: if we stepped too far, we should go back
                     # still not great error handling.  Requires something close.
@@ -562,16 +563,16 @@ class PMF:
                             xold = xi.copy()
                             #print(xi)
                             b = BSpline(b.t,xi,b.k)
-                            f = self._bspline_calculate_f(w_n, x_n, b, spline_weights, spline_parameters['fkbias'],K, xrange)
+                            f = self._bspline_calculate_f(xi, w_n, x_n, spline_weights, K, xrange)
                             count += 1
                     else:
                         firsttime = False
                     fold = f
                     xold = xi.copy()
 
-                    g = self._bspline_calculate_g(w_n, x_n, nspline, b, db_c, spline_weights, K, xrangei)
+                    g = self._bspline_calculate_g(xi,w_n, x_n, nspline, spline_weights, K, xrangei)
 
-                    h = self._bspline_calculate_h(w_n, x_n, nspline, kdegree, b, db_c, spline_weights, K, xrangeij)
+                    h = self._bspline_calculate_h(xi,w_n, x_n, nspline, kdegree, spline_weights, K, xrangeij)
                 
                     # now find the new point.
                     # x_n+1 = x_n - f''(x_n)^-1 f'(x_n) 
@@ -581,10 +582,9 @@ class PMF:
                     # solution is dx = x_n-x_n+1
 
                     dx = np.linalg.lstsq(h,g,rcond=None)[0]
-                    xi[1:nspline] = xold[1:nspline] - dx
-                    b = BSpline(b.t,xi,b.k)
+                    xi = xold - dx
 
-                self.pmf_function = b
+                self.pmf_function = self.bspline
                 # at this point, we should have a set of spline parameters.
 
             elif spline_parameters['optimization_type'] == 'scipy':
@@ -933,10 +933,14 @@ class PMF:
             kl += (pE + pF)
         return kl    
 
-    def _bspline_calculate_f(self, w_n, x_n, b, spline_weights, fkbias, K, xrange):
+    def _bspline_calculate_f(self, xi, w_n, x_n, spline_weights, K, xrange):
 
-        # let's compute the value of the current function just to be careful.
-        f = np.dot(w_n,b(x_n))
+        xinew = np.zeros(len(xi)+1)
+        xinew[0] = (self.bspline).c[0]
+        xinew[1:] = xi
+        bloc = BSpline((self.bspline).t,xinew,(self.bspline).k)  # create new spline with values
+
+        f = np.dot(w_n,bloc(x_n))
         pF = np.zeros(K)
         if spline_weights == 'sumkldivergence': # sum of kl_divergence
             expf = list()
@@ -944,7 +948,7 @@ class PMF:
                 # what is the biasing function for this state?
                 # define the biasing function 
                 # define the exponential of f based on the current parameters t.
-                expfk = lambda x, kf=k: np.exp(-b(x)-fkbias[kf](x))
+                expfk = lambda x, kf=k: np.exp(-bloc(x)-self.fkbias[kf](x))
                 # compute the partition function
                 pF[k] = quad(expfk,xrange[0],xrange[1])[0]  
                 expf.append(expfk)
@@ -952,7 +956,7 @@ class PMF:
             f += np.sum(np.log(pF))
 
         elif spline_weights == 'kldivergence': # just KL divergence of the unbiased potential
-            expf = lambda x: np.exp(-b(x))
+            expf = lambda x: np.exp(-bloc(x))
             # setting limit to try to eliminate errors: hard time because it goes so small.
             pF[0] = quad(expf,xrange[0],xrange[1],limit=200)[0]  #0 is the value of quad 
             # subtract the free energy (add log partition function)
@@ -965,12 +969,19 @@ class PMF:
         return f 
 
 
-    def _bspline_calculate_g(self, w_n, x_n, nspline, b, db_c, spline_weights, K, xrangei):
+    def _bspline_calculate_g(self, xi, w_n, x_n, nspline, spline_weights, K, xrangei):
 
         ##### COMPUTE THE GRADIENT #######  
         # The gradient of the function is \sum_n [\sum_k W_k(x_n)] dF(phi(x_n))/dtheta_i - \sum_k <dF/dtheta>_k 
         # 
         # where <O>_k = \int O(xi) exp(-F(xi) - u_k(xi)) dxi / \int exp(-F(xi) - u_k(xi)) dxi  
+
+        db_c = self.bspline_derivatives
+
+        xinew = np.zeros(len(xi)+1)
+        xinew[0] = (self.bspline).c[0]
+        xinew[1:] = xi
+        bloc = BSpline((self.bspline).t,xinew,(self.bspline).k)  # create new spline with values
 
         g = np.zeros(nspline-1)
         for i in range(1,nspline):
@@ -1015,13 +1026,19 @@ class PMF:
         self.bspline_dg2 = dg2
         return g
 
-    def _bspline_calculate_h(self, w_n, x_n, nspline, kdegree, b, db_c, spline_weights, K, xrangeij):
+    def _bspline_calculate_h(self, xi, w_n, x_n, nspline, kdegree, spline_weights, K, xrangeij):
+
 
         expf = self.bspline_expf
         pF = self.bspline_pF        
         gkquad = self.bspline_gkquad
         pE = self.bspline_pE
         dg2 = self.bspline_dg2
+        db_c = self.bspline_derivatives
+        xinew = np.zeros(len(xi)+1)
+        xinew[0] = (self.bspline).c[0]
+        xinew[1:] = xi
+        bloc = BSpline((self.bspline).t,xinew,(self.bspline).k)  # create new spline with values
 
         # now, compute the Hessian.  First, the first order components
         h = np.zeros([nspline-1,nspline-1])

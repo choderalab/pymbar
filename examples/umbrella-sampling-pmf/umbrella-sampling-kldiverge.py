@@ -15,7 +15,7 @@ options = {'disp':True, 'eps':10**(-4), 'gtol':10**(-3)}
 #methods = ['histogram', 'kde', 'kl-scipy', 'sumkl-newton-1', 'kl-newton-1', 'kl-newton-3', 
 #           'sumkl-newton-3', 'sumkl-scipy', 'vFEP-scipy']
 #methods = ['histogram','kde','kl-newton-1','sumkl-newton-3','kl-newton-3','kl-scipy-3','sumkl-scipy-3','vFEP-scipy-3']
-methods = ['histogram','kde','vFEP-scipy-3']
+methods = ['histogram','kde','kl-newton-3']
 
 colors = dict()
 colors['histogram'] = 'k:'
