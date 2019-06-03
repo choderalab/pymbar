@@ -14,26 +14,24 @@ nplot = 1000
 options = {'disp':True, 'eps':10**(-4), 'gtol':10**(-3)}
 #methods = ['histogram', 'kde', 'kl-scipy', 'sumkl-newton-1', 'kl-newton-1', 'kl-newton-3', 
 #           'sumkl-newton-3', 'sumkl-scipy', 'vFEP-scipy']
-#methods = ['histogram','kde','kl-newton-1','sumkl-newton-3','kl-newton-3','kl-scipy-3','sumkl-scipy-3','vFEP-scipy-3']
-methods = ['histogram','kde','kl-newton-3']
-
+methods = ['histogram','kde','kl-3','weighted-3','sumkl-3','simple-3','weighted-3']
+#optimization_algorithm = 'Newton-CG'
+optimization_algorithm = 'Custom-NR'
 colors = dict()
 colors['histogram'] = 'k:'
-colors['sumkl-scipy-3'] = 'k-'
-colors['kde'] = 'm-'
-colors['vFEP-scipy-3'] = 'b-'
-colors['sumkl-newton-1'] = 'g--'
-colors['sumkl-newton-2'] = 'r--'
-colors['sumkl-newton-3'] = 'c--'
-colors['sumkl-newton-4'] = 'm--'
-colors['sumkl-newton-5'] = 'y--'
-colors['kl-scipy-3'] = 'k-'
-colors['sumkl-scipy-3'] = 'k-'
-colors['kl-newton-1'] = 'g-'
-colors['kl-newton-2'] = 'r-'
-colors['kl-newton-3'] = 'c-'
-colors['kl-newton-4'] = 'm-'
-colors['kl-newton-5'] = 'y-'
+colors['kde'] = 'k-'
+colors['kl-1'] = 'g-'
+colors['kl-3'] = 'm-'
+colors['kl-5'] = 'c-'
+colors['sumkl-1'] = 'g--'
+colors['sumkl-3'] = 'm--'
+colors['sumkl-5'] = 'c--'
+colors['simple-1'] = 'g-.'
+colors['simple-3'] = 'm-.'
+colors['simple-5'] = 'c-.'
+colors['weighted-1'] = 'g:'
+colors['weighted-3'] = 'm:'
+colors['weighted-5'] = 'c:'
 
 # example illustrating the application of MBAR to compute a 1D PMF from an umbrella sampling simulation.
 #
@@ -61,7 +59,7 @@ beta = 1.0 / (kB * temperature) # inverse temperature of simulations (in 1/(kJ/m
 chi_min = -180.0 # min for PMF
 chi_max = +180.0 # max for PMF
 nbins = 40 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
-nsplines = 40
+nsplines = 50
 
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32) # N_k[k] is the number of snapshots from umbrella simulation k
@@ -201,6 +199,8 @@ def bias_potential(x,k):
 times = dict() # keep track of times each method takes
 
 xplot = np.linspace(chi_min,chi_max,nplot)
+f_i_kde = None # We check later if this has been defined or not
+
 for method in methods:
     start = timer()
 
@@ -221,43 +221,34 @@ for method in methods:
         results = pmf.getPMF(xstart, uncertainties = 'from-lowest')
         f_i_kde = results['f_i']  # kde results
 
-    if 'newton' in method or 'scipy' in method:
-
+    if method[:2] == 'kl' or method[:5] == 'sumkl' or  method[:8] == 'weighted' or method[:6] == 'simple':
         spline_parameters = dict()
-        spline_parameters['nspline'] = nsplines
-        spline_parameters['spline_initialize'] = 'explicit'
-        # need to initialize newton
-        spline_parameters['xinit'] = xstart
-        spline_parameters['yinit'] = f_i_kde
-        spline_parameters['xrange'] = [chi_min,chi_max]
-
         if method[:2] == 'kl':
             spline_parameters['spline_weights'] = 'kldivergence'
         if method[:5] == 'sumkl':
             spline_parameters['spline_weights'] = 'sumkldivergence'
-        if method[:4] == 'vFEP':
-            spline_parameters['spline_weights'] = 'vFEP'
-            
+        if method[:8] == 'weighted':
+            spline_parameters['spline_weights'] = 'weightedsum'
+        if method[:6] == 'simple':
+            spline_parameters['spline_weights'] = 'simplesum'
+
+        spline_parameters['nspline'] = nsplines
+        spline_parameters['spline_initialize'] = 'explicit'
+
+        # need to initialize: use KDE results for now (assumes KDE exists)
+        spline_parameters['xinit'] = xstart
+        if f_i_kde is not None:
+            spline_parameters['yinit'] = f_i_kde
+        else:
+            spline_parameters['yinit'] = np.zeros(len(xstart))
+
+        spline_parameters['xrange'] = [chi_min,chi_max]
+
         spline_parameters['fkbias'] = [(lambda x, klocal=k: bias_potential(x,klocal)) for k in range(K)]  # introduce klocal to force K to use local definition of K, otherwise would use global value of k.
 
-        if 'newton' in method:
+        spline_parameters['kdegree'] = int(method[-1])
 
-            spline_parameters['optimization_type'] = 'newton'
-            newton_parameters = dict()
-            kdegree = int(method[-1])
-            newton_parameters['kdegree'] = kdegree
-            newton_parameters['gtol'] = 1e-10
-
-            spline_parameters['newton_parameters'] = newton_parameters 
-
-
-        if 'scipy' in method:
-
-            spline_parameters['optimization_type'] = 'scipy'
-            scipy_parameters = dict()
-            kdegree = int(method[-1])
-            scipy_parameters['kdegree'] = kdegree
-            spline_parameters['scipy_parameters'] = scipy_parameters
+        spline_parameters['optimization_algorithm'] = optimization_algorithm
 
         pmf.generatePMF(u_kn, chi_n, pmf_type = 'spline', spline_parameters=spline_parameters)
 

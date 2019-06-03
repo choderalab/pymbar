@@ -30,9 +30,8 @@ from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
 # bunch of imports needed for doing newton optimization of B-splines
-from scipy.interpolate import BSpline, make_interp_spline, make_lsq_spline
+from scipy.interpolate import BSpline, make_lsq_spline
 # imports needed for scipy minimizations
-from scipy.interpolate import UnivariateSpline
 from scipy.integrate import quad
 from scipy.optimize import minimize
 
@@ -235,14 +234,15 @@ class PMF:
             - 'fit_type': which type of fit to use: 
                 -- 'sumkldivergence' - (sum of KL divergence over all weighted states)
                 -- 'kldivergence' - KL divergence of the single state
-                -- 'vFEP': the variational FEP minimization criteria
-            - optimization_type: 
-                -- 'newton':  use explicit Newton-Raphsom optimization: uses 1D b-splines
-                -- 'scipy': use scipy optimizers (uses UnivariateSpline) 
-            - optimizization_parameters:
-                -- 
-            - fkbias: array of functions that return the Kth bias potential for each function
-            - nspline = number of spline points, use for several methods.
+                -- 'simplesum': sum of log likelihoods from the biased simulation. Essentially equivalent to vFEP (York et al.)
+                -- 'weightedsum': weighted some of log likelhoods from the biased simulations.
+            - 'optimization_algorithm':
+                -- 'Custom-NR': a custom Newton-Raphson that is particularly fast for close data, but can fail
+                -- 'Newton-CG': scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
+                -- '         ': scipy gradient based methods that work, but are generally slow.
+            - 'fkbias': array of functions that return the Kth bias potential for each function
+            - 'nspline': number of spline points
+            - 'kdegree': degree of the spline.  Default is cubic ('3')
 
         Returns:
 
@@ -421,36 +421,26 @@ class PMF:
             if spline_weights == 'sumkldivergence':
                 w_n = np.sum(w_kn, axis=1) # sum along the w_kn for sumkldivergence
 
-            xrange = spline_parameters['xrange']  # need the x-range for all methods, since we need to 
-                                                  # numerically integrate over this range
+            xrange = spline_parameters['xrange']    # need the x-range for all methods, since we need to 
+                                                    # numerically integrate over this range
             nspline = spline_parameters['nspline']  # number of spline points.
-
-            if spline_weights == 'vFEP' :
-                # for some methods, we need to reconstruct which sample is from which state
-                # we can assume this information is in self.mbar.x_kindices
-                N_k = self.mbar.N_k
-                x_kn = np.zeros([K,np.max(N_k)])
-                for k in range(K):
-                    x_kn[k,:N_k[k]] = x_n[self.mbar.x_kindices==k] 
+            kdegree = spline_parameters['kdegree']  # degree of the spline
 
             # we need to intialize our function starting point
 
-            if spline_parameters['optimization_type'] == 'scipy':
-                if 'scipy_parameters' not in spline_parameters:
-                    raise ParameterError('\'optimization_type\' is \'scipy\', but \'scipy_parameters\' is not set') 
-                #figure out what 'degree' should be if it's a scipy optimization
-                scipy_parameters = spline_parameters['scipy_parameters']
-                
-                if 'optimize_options' not in scipy_parameters:
-                    optimize_options= {'disp':True, 'eps':10**(-4), 'gtol':10**(-3)}
+            if spline_parameters['optimization_algorithm'] != 'Custom-NR':
+                # we are passing it on to scipy
 
-                kdegree = scipy_parameters['kdegree']
+                if 'optimize_options' not in spline_parameters:
+                    spline_parameters['optimize_options'] = {'disp':True, 'gtol':10**(-7), 'xtol':10**(-5)}
 
-            elif spline_parameters['optimization_type'] == 'newton':
-                if 'newton_parameters' not in spline_parameters:
-                    raise ParameterError('\'optimization_type\' is \'newton\', but \'newton_parameters\' is not set') 
-                newton_parameters = spline_parameters['newton_parameters']
-                kdegree = newton_parameters['kdegree']
+                if spline_parameters['optimization_algorithm'] not in ['Newton-CG']:
+                    raise "Warning: {:s} will not work with method in ".format(spline_parameters['optimization_algorithm'])
+            else:
+                if 'optimize_options' not in spline_parameters:
+                    spline_parameters['optimize_options'] = dict()
+                if 'gtol' not in spline_parameters['optimize_options']:
+                    spline_parameters['optimize_options']['gtol'] = 10**(-7)
 
             if spline_parameters['spline_initialize'] == 'bias_free_energies':
 
@@ -486,69 +476,76 @@ class PMF:
                     yinit = spline_parameters['yinit']
                 else:
                     raise ParameterError('spline_initialize set as explicit, but no yinit array specified')
+
             elif spline_parameters['spline_initialize'] == 'zeros': # initialize to zero
                 xinit = np.linspace(xrange[0],xrange[1],nspline+kdegree)
                 yinit = np.zeros(len(xinit))
 
-            if spline_parameters['optimization_type'] == 'newton':
-
-                tol = newton_parameters['gtol']
+            # first, construct a least squares cubic spline in the free energies to start with, set 2nd derivs zero.
+            # we assume this is decent.
                 
-                # first, construct a least squares cubic spline in the free energies to start with, set 2nd derivs zero.
-                # we assume this is decent.
+            # this is kind of duplicated: figure out how to simplify.
+            # t has to be of size nsplines + kdegree + 1
+            t = np.zeros(nspline+kdegree+1)
+            t[0:kdegree] = xrange[0]
+            t[kdegree:nspline+1] = np.linspace(xrange[0], xrange[1], num=nspline+1-kdegree, endpoint=True)
+            t[nspline+1:nspline+kdegree+1] = xrange[1]
 
-                # this is kind of duplicated: figure out how to simplify.
-                # t has to be of size nsplines + kdegree + 1
-                t = np.zeros(nspline+kdegree+1)
-                t[0:kdegree] = xrange[0]
-                t[kdegree:nspline+1] = np.linspace(xrange[0], xrange[1], num=nspline+1-kdegree, endpoint=True)
-                t[nspline+1:nspline+kdegree+1] = xrange[1]
+            # initial fit functioin
+            # problem: bin centers might not actually be sorted. Should data getting to here be already sorted?
+            sort_indices = np.argsort(xinit)
+            b = make_lsq_spline(xinit[sort_indices], yinit[sort_indices], t, k=kdegree)
+            xi = b.c[1:]  # the bspline coefficients are the variables we care about.
+            xold = xi.copy()
 
-                # initial fit functioin
-                # problem: bin centers might not actually be sorted. Should data getting to here be already sorted?
-                sort_indices = np.argsort(xinit)
-                b = make_lsq_spline(xinit[sort_indices], yinit[sort_indices], t, k=kdegree)
-                xi = b.c[1:]  # the bspline coefficients are the variables we care about.
-                xold = xi.copy()
+            # The function is \sum_n [\sum_k W_k(x_n)] F(phi(x_n)) + \sum_k ln \int exp(-F(xi) - u_k(xi)) dxi  
+            # if we assume bsplines are of the form f(x) = a*b_i(x), then 
+            # dF/dtheta is simply the basis function that has support over that region of space  
 
-                # The function is \sum_n [\sum_k W_k(x_n)] F(phi(x_n)) + \sum_k ln \int exp(-F(xi) - u_k(xi)) dxi  
-                # if we assume bsplines are of the form f(x) = a*b_i(x), then 
-                # dF/dtheta is simply the basis function that has support over that region of space  
+            # we now need the derivative of the function WRT the coefficients. Doesn't change knots or degree.
+            # A vector function that is 
+            db_c = list()
+            for i in range(nspline):
+                dc = np.zeros(nspline)
+                dc[i] = 1.0
+                db_c.append(BSpline(b.t,dc,b.k))
+                # OK, we've defined the derivatives.  
 
-                # we now need the derivative of the function WRT the coefficients. Doesn't change knots or degree.
-                # A vector function that is 
-                db_c = list()
-                for i in range(nspline):
-                    dc = np.zeros(nspline)
-                    dc[i] = 1.0
-                    db_c.append(BSpline(b.t,dc,b.k))
-                    # OK, we've defined the derivatives.  
-
-                # same for the next execution. Not sure if best time to save it.
-                self.bspline_derivatives = db_c
-                self.bspline = b
-                self.fkbias = spline_parameters['fkbias']
+            # same for the next execution. Not sure if best time to save it.
+            self.bspline_derivatives = db_c
+            self.bspline = b
+            self.fkbias = spline_parameters['fkbias']
                 
-                # We also construct integration ranges for the derivatives, since no point in integrating when 
-                # the function is zero.
-                xrangei = np.zeros([nspline,2])
-                for i in range(0,nspline):
-                    xrangei[i,0] = t[i]
-                    xrangei[i,1] = t[i+kdegree+1]
+            # We also construct integration ranges for the derivatives, since no point in integrating when 
+            # the function is zero.
+            xrangei = np.zeros([nspline,2])
+            for i in range(0,nspline):
+                xrangei[i,0] = t[i]
+                xrangei[i,1] = t[i+kdegree+1]
 
-                # set integration ranges for derivative products; saves time on integration.
-                xrangeij = np.zeros([nspline,nspline,2])
-                for i in range(0,nspline):
-                    for j in range(0,nspline):
-                        xrangeij[i,j,0] = np.max([xrangei[i,0],xrangei[j,0]])
-                        xrangeij[i,j,1] = np.min([xrangei[i,1],xrangei[j,1]])
+            # set integration ranges for derivative products; saves time on integration.
+            xrangeij = np.zeros([nspline,nspline,2])
+            for i in range(0,nspline):
+                for j in range(0,nspline):
+                    xrangeij[i,j,0] = np.max([xrangei[i,0],xrangei[j,0]])
+                    xrangeij[i,j,1] = np.min([xrangei[i,1],xrangei[j,1]])
 
+            if spline_parameters['optimization_algorithm'] != 'Custom-NR':
+                results = minimize(self._bspline_calculate_f,xi,
+                                   args = (w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij), 
+                                   method = 'Newton-CG',jac=self._bspline_calculate_g,
+                                   hess=self._bspline_calculate_h,
+                                   options = spline_parameters['optimize_options'])
+                self.bspline = self._val_to_spline(results['x'])
+
+            else:
+                tol = spline_parameters['optimize_options']['gtol']
                 self.bspline_dg2 = tol + 1.0
                 firsttime = True
 
                 while self.bspline_dg2 > tol: # until we reach the tolerance.
 
-                    f = self._bspline_calculate_f(xi, w_n, x_n, spline_weights, K, xrange)
+                    f = self._bspline_calculate_f(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
 
                     # we need some error handling: if we stepped too far, we should go back
                     # still not great error handling.  Requires something close.
@@ -559,20 +556,17 @@ class PMF:
                             f = fold
                             # let's not step as far:
                             dx = 0.5*dx
-                            xi[1:nspline] = xold[1:nspline] - dx # step back half of dx.
+                            xi = xold - dx # step back half of dx.
                             xold = xi.copy()
-                            #print(xi)
-                            b = BSpline(b.t,xi,b.k)
-                            f = self._bspline_calculate_f(xi, w_n, x_n, spline_weights, K, xrange)
+                            f = self._bspline_calculate_f(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
                             count += 1
                     else:
                         firsttime = False
                     fold = f
                     xold = xi.copy()
 
-                    g = self._bspline_calculate_g(xi,w_n, x_n, nspline, spline_weights, K, xrangei)
-
-                    h = self._bspline_calculate_h(xi,w_n, x_n, nspline, kdegree, spline_weights, K, xrangeij)
+                    g = self._bspline_calculate_g(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                    h = self._bspline_calculate_h(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
                 
                     # now find the new point.
                     # x_n+1 = x_n - f''(x_n)^-1 f'(x_n) 
@@ -583,27 +577,10 @@ class PMF:
 
                     dx = np.linalg.lstsq(h,g,rcond=None)[0]
                     xi = xold - dx
+                self.bspline = self._val_to_spline(xi)
 
-                self.pmf_function = self.bspline
-                # at this point, we should have a set of spline parameters.
 
-            elif spline_parameters['optimization_type'] == 'scipy':
-
-                xstart = np.linspace(xrange[0],xrange[1],nspline)
-                def trialf(t):
-                    return UnivariateSpline(xstart,t,k=kdegree,ext=0)  
-
-                tstart = UnivariateSpline(xinit,yinit,k=kdegree,ext=0)(xstart)
-
-                if spline_weights == 'kldivergence':
-                    result = minimize(self._kldivergence,tstart,args=(trialf,x_n,w_n,xrange),options=optimize_options)
-                elif spline_weights == 'sumkldivergence':
-                    result = minimize(self._sumkldivergence,tstart,args=(trialf,x_n,w_n,spline_parameters['fkbias'],xrange),options=optimize_options)
-                elif spline_weights == 'vFEP':
-                    result = minimize(self._vFEP,tstart,args=(trialf,x_kn,N_k,spline_parameters['fkbias'],xrange),options=optimize_options)
-
-                self.pmf_function = trialf(result.x)
-
+            self.pmf_function = self.bspline
         else:
             raise ParameterError('pmf_type {:s} is not defined!'.format(pmf_type))
 
@@ -876,74 +853,30 @@ class PMF:
         else:
             raise ParameterError('Can\'t return the KernelDensity object because pmf_type != kde')
 
+    def _bspline_calculate_f(self, xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij):
 
-    def _kldivergence(self,t,ft,x_n,w_n,xrange):
+        K = self.mbar.K
+        N_k = self.mbar.N_k
+        N = np.sum(N_k)
 
-        """ The function that determines the KL divergence over the weighted points
-
-            Parameters: t:        vector of parameters 
-                        ft:       spline object
-                        x_n:      coordinates of the samples.
-                        K:        Number of states from MBAR
-                        w_n:      weights of each point from MBAR
-                        xrange:   low and high points of the range of interest
-            Returns: 
-
-        """
-
-        t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
-        # define the function f based on the current parameters t
-        feval = ft(t) # current value of the PMF
-        # define the exponential of f based on the current parameters t
-        expf = lambda x: np.exp(-feval(x))
-        pE = np.dot(w_n,feval(x_n))
-        pF = np.log(quad(expf,xrange[0],xrange[1])[0]) #value 0 is the value of quadrature
-        kl = pE + pF 
-        #print(kl,t)
-        return kl
-
-    def _sumkldivergence(self,t,ft,x_n,w_n,fkbias,xrange):
-
-        t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
-        feval = ft(t)  # the current value of the PMF
-        fx = feval(x_n)  # only need to evaluate this over all points outside(?)      
-        # figure out the bias at each point
-        pE = np.dot(w_n,fx)
-        kl = pE
-        for k in range(self.K):
-        # define the exponential of f based on the current parameters t.
-            expf = lambda x, kf=k: np.exp(-feval(x)-fkbias[kf](x))
-            pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #value 0 is the value of quadrature
-            kl = kl + pF
-        #print (kl,t)
-        return kl
-
-    def _vFEP(self,t,ft,x_kn,N_k,fkbias,xrange):
-        t -= t[0] # set a reference state, may make the minization faster by removing degenerate solutions
-        feval = ft(t)  # the current value of the PMF
-        kl = 0
-        # figure out the bias
-        for k in range(self.K):
-            x_n = x_kn[k,0:N_k[k]]
-            # what is the biasing function for this state?
-            # define the exponential of f based on the current parameters t.
-            expf = lambda x, kf=k: np.exp(-feval(x)-fkbias[kf](x))
-            pE = np.sum(feval(x_n)+fkbias[k](x_n))/N_k[k]
-            pF = np.log(quad(expf,xrange[0],xrange[1])[0])  #0 is the value of quad
-            kl += (pE + pF)
-        return kl    
-
-    def _bspline_calculate_f(self, xi, w_n, x_n, spline_weights, K, xrange):
-
-        xinew = np.zeros(len(xi)+1)
-        xinew[0] = (self.bspline).c[0]
-        xinew[1:] = xi
-        bloc = BSpline((self.bspline).t,xinew,(self.bspline).k)  # create new spline with values
-
-        f = np.dot(w_n,bloc(x_n))
+        bloc = self._val_to_spline(xi)
         pF = np.zeros(K)
-        if spline_weights == 'sumkldivergence': # sum of kl_divergence
+        if spline_weights in ['sumkldivergence','simplesum','weightedsum']:
+            if spline_weights == 'sumkldivergence':
+                f = np.dot(w_n,bloc(x_n))
+            elif spline_weights == 'simplesum':
+                f = 0
+                for k in range(K):
+                    f += np.mean(bloc(x_n[self.mbar.x_kindices==k]))
+            elif spline_weights == 'weightedsum':
+                f = K*np.mean(bloc(x_n))  # multiply by K to get it in the same order of magnitude
+
             expf = list()
+            if spline_weights in ['sumkldivergence','simplesum']:
+                integral_scaling = np.ones(K) 
+            elif spline_weights == 'weightedsum':
+                integral_scaling = K*(N_k/N)
+
             for k in range(K):
                 # what is the biasing function for this state?
                 # define the biasing function 
@@ -953,12 +886,13 @@ class PMF:
                 pF[k] = quad(expfk,xrange[0],xrange[1])[0]  
                 expf.append(expfk)
             # subtract the free energy (add log partition function)
-            f += np.sum(np.log(pF))
+            f += np.sum(np.log(pF)+np.log(integral_scaling))
 
         elif spline_weights == 'kldivergence': # just KL divergence of the unbiased potential
+            f = np.dot(w_n,bloc(x_n))
             expf = lambda x: np.exp(-bloc(x))
             # setting limit to try to eliminate errors: hard time because it goes so small.
-            pF[0] = quad(expf,xrange[0],xrange[1],limit=200)[0]  #0 is the value of quad 
+            pF[0] = quad(expf,xrange[0],xrange[1])[0]  #0 is the value of quad 
             # subtract the free energy (add log partition function)
             f += np.log(pF[0]) 
 
@@ -969,95 +903,115 @@ class PMF:
         return f 
 
 
-    def _bspline_calculate_g(self, xi, w_n, x_n, nspline, spline_weights, K, xrangei):
+    def _bspline_calculate_g(self, xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij):
 
         ##### COMPUTE THE GRADIENT #######  
         # The gradient of the function is \sum_n [\sum_k W_k(x_n)] dF(phi(x_n))/dtheta_i - \sum_k <dF/dtheta>_k 
         # 
         # where <O>_k = \int O(xi) exp(-F(xi) - u_k(xi)) dxi / \int exp(-F(xi) - u_k(xi)) dxi  
 
-        db_c = self.bspline_derivatives
+        K = self.mbar.K
+        N_k = self.mbar.N_k
+        N = np.sum(N_k)
 
-        xinew = np.zeros(len(xi)+1)
-        xinew[0] = (self.bspline).c[0]
-        xinew[1:] = xi
-        bloc = BSpline((self.bspline).t,xinew,(self.bspline).k)  # create new spline with values
+        db_c = self.bspline_derivatives
+        bloc = self._val_to_spline(xi)
+        pF = np.zeros(K)
+
+        if spline_weights in ['sumkldivergence','simplesum']:
+            integral_scaling = np.ones(K)
+        elif spline_weights == 'weightedsum':
+            integral_scaling = K*(N_k/N)
 
         g = np.zeros(nspline-1)
+
         for i in range(1,nspline):
-            # compute the weighted sum of functions.
-            g[i-1] += np.dot(w_n,db_c[i](x_n))
+            if spline_weights in ['sumkldivergence','kldivergence']:
+                g[i-1] = np.dot(w_n,db_c[i](x_n))
+            elif spline_weights == 'simplesum':
+                for k in range(K):
+                    g[i-1] += np.mean(db_c[i](x_n[self.mbar.x_kindices==k]))
+            elif spline_weights == 'weightedsum':
+                g[i-1] = K*np.mean(db_c[i](x_n))  # multiply by K to get it in the same order of magnitude as others
 
         # now the second part of the gradient.
 
-        expf = self.bspline_expf
-        pF = self.bspline_pF
-
-        if spline_weights == 'sumkldivergence':
+        if spline_weights in ['sumkldivergence','simplesum','weightedsum']:
             gkquad = np.zeros([nspline-1,K])
+            expf = lambda x, k: np.exp(-bloc(x)-self.fkbias[k](x))
+            dexpf = lambda x, k: db_c[i+1](x)*expf(x,k)
+
             for k in range(K):
+                # putting this in rather than saving so gradient and f can be called independently
+                pF[k] = quad(expf,xrange[0],xrange[1],args=(k))[0]
                 for i in range(nspline-1):
                     # Boltzmann weighted derivative with each biasing function
-                    dexpf = lambda x, kf=k: db_c[i+1](x)*expf[kf](x)
                     # now compute the expectation of each derivative
-                    pE = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1])[0]
+                    pE = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1],args=(k))[0]
                     # normalize the expectation
-                    gkquad[i,k] = pE/pF[k] 
-            g -= np.sum(gkquad,axis=1)
-            pE = 0
+                    gkquad[i,k] = pE/pF[k]
+            g -= np.dot(gkquad,integral_scaling) # square to account for contribution to pF.
 
         elif spline_weights == 'kldivergence':
-            gkquad = 0
+            gkquad = 0  # not used here, but saved for Hessian calls.
+            expf = lambda x: np.exp(-bloc(x))
+            pF = quad(expf,xrange[0],xrange[1])[0]  # 0 is the value of quad. Recomputed here to avoid problems 
+                                                    # with other scipy solvers
             pE = np.zeros(nspline-1)
+
             for i in range(nspline-1):
                 # Boltzmann weighted derivative
                 dexpf = lambda x: db_c[i+1](x)*expf(x)
                 # now compute the expectation of each derivative
                 pE[i] = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1])[0]
-                # normalize the expetation.
-                pE[i] /= pF[0]
+                # normalize the expectation.
+                pE[i] /= pF
                 g[i] -= pE[i]
 
         dg2 = np.dot(g,g)
-        #print("gradient norm: {:.10f}".format(dg2))
+        print("gradient norm: {:.10f}".format(dg2))
 
         self.bspline_gkquad = gkquad
         self.bspline_pE = pE
         self.bspline_dg2 = dg2
         return g
 
-    def _bspline_calculate_h(self, xi, w_n, x_n, nspline, kdegree, spline_weights, K, xrangeij):
+    def _bspline_calculate_h(self, xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij):
+
+        K = self.mbar.K
+        N_k = self.mbar.N_k
+        N = np.sum(N_k)
 
 
         expf = self.bspline_expf
-        pF = self.bspline_pF        
         gkquad = self.bspline_gkquad
+        pF = self.bspline_pF        
         pE = self.bspline_pE
-        dg2 = self.bspline_dg2
         db_c = self.bspline_derivatives
-        xinew = np.zeros(len(xi)+1)
-        xinew[0] = (self.bspline).c[0]
-        xinew[1:] = xi
-        bloc = BSpline((self.bspline).t,xinew,(self.bspline).k)  # create new spline with values
-
+        
+        if spline_weights in ['sumkldivergence','simplesum']:
+            integral_scaling = np.ones(K)
+        elif spline_weights == 'weightedsum':
+            integral_scaling = K*N_k/N
+        
         # now, compute the Hessian.  First, the first order components
         h = np.zeros([nspline-1,nspline-1])
-        if spline_weights == 'sumkldivergence':
+
+        # below might need to be rescaled.
+        if spline_weights in ['sumkldivergence','simplesum','weightedsum']:  # check this.
             for k in range(K):
-                h += -np.outer(gkquad[:,k],gkquad[:,k])
-        else:
+                h += -integral_scaling[k]*np.outer(gkquad[:,k],gkquad[:,k])
+        elif spline_weights == 'kldivergence':
             h = -np.outer(pE,pE)
  
-        # works for both sum and non-sum 
-        
-        if spline_weights == 'sumkldivergence':
+        if spline_weights in ['sumkldivergence', 'weightedsum','simplesum']:
             for i in range(nspline-1):
                 for j in range(0,i+1):
                     if np.abs(i-j) <= kdegree:
+                        dexpf = lambda x, k: db_c[i+1](x)*db_c[j+1](x)*expf[k](x)
                         for k in range(K):
-                            dexpf = lambda x, kf=k: db_c[i+1](x)*db_c[j+1](x)*expf[kf](x)
                             # now compute the expectation of each derivative
-                            pE = quad(dexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1])[0]
+                            pE = integral_scaling[k]*quad(dexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1],args=(k))[0]
                             h[i,j] += pE/pF[k]
 
         elif spline_weights == 'kldivergence':
@@ -1074,3 +1028,14 @@ class PMF:
                 h[i,j] = h[j,i]
 
         return h
+
+    def _val_to_spline(self,x):
+
+        # create new spline with values
+        xnew = np.zeros(len(x)+1)
+        xnew[0] = (self.bspline).c[0]
+        xnew[1:] = x
+        return BSpline((self.bspline).t,xnew,(self.bspline).k)  
+
+
+
