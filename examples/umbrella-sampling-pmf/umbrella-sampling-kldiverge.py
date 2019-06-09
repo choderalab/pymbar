@@ -9,14 +9,15 @@
 
 from __future__ import print_function
 import matplotlib.pyplot as plt
+from scipy.interpolate import BSpline
 nplot = 1000
 # set minimizer options to display. Apprently does not exist for BFGS. Probably don't need to set eps.
-options = {'disp':True, 'eps':10**(-4), 'gtol':10**(-3)}
-#methods = ['histogram', 'kde', 'kl-scipy', 'sumkl-newton-1', 'kl-newton-1', 'kl-newton-3', 
-#           'sumkl-newton-3', 'sumkl-scipy', 'vFEP-scipy']
-methods = ['histogram','kde','kl-3','weighted-3','sumkl-3','simple-3','weighted-3']
-#optimization_algorithm = 'Newton-CG'
+optimize_options = {'disp':True, 'tol':10**(-3)}
+#methods = ['histogram','kde','sumkl-3','sumkl-3','simple-3','weighted-3']
+methods = ['kde','simple-3']
+#optimization_algorithm = 'L-BFGS-B'
 optimization_algorithm = 'Custom-NR'
+#optimization_algorithm = 'Newton-CG'
 colors = dict()
 colors['histogram'] = 'k:'
 colors['kde'] = 'k-'
@@ -50,6 +51,7 @@ from pymbar import PMF
 # Constants.
 kB = 1.381e-23 * 6.022e23 / 1000.0 # Boltzmann constant in kJ/mol/K
 
+
 temperature = 300 # assume a single temperature -- can be overridden with data from center.dat 
 # Parameters
 K = 26 # number of umbrellas
@@ -59,8 +61,8 @@ beta = 1.0 / (kB * temperature) # inverse temperature of simulations (in 1/(kJ/m
 chi_min = -180.0 # min for PMF
 chi_max = +180.0 # max for PMF
 nbins = 40 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
-nsplines = 50
-
+nsplines = 15
+nbootstraps = 0
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32) # N_k[k] is the number of snapshots from umbrella simulation k
 K_k = np.zeros([K], np.float64) # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
@@ -199,7 +201,8 @@ def bias_potential(x,k):
 times = dict() # keep track of times each method takes
 
 xplot = np.linspace(chi_min,chi_max,nplot)
-f_i_kde = None # We check later if this has been defined or not
+f_i_kde = None # We check later if these have been defined or not
+xstart = np.linspace(chi_min,chi_max,nsplines*2)
 
 for method in methods:
     start = timer()
@@ -208,16 +211,15 @@ for method in methods:
 
         histogram_parameters = dict()
         histogram_parameters['bin_edges'] = [bin_edges]
-        pmf.generatePMF(u_kn, chi_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+        pmf.generatePMF(u_kn, chi_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters, nbootstraps=nbootstraps)
 
     if method == 'kde':
 
         kde_parameters = dict()
         kde_parameters['bandwidth'] = 0.5*((chi_max-chi_min)/nbins)
-        pmf.generatePMF(u_kn, chi_n, pmf_type = 'kde', kde_parameters=kde_parameters)
+        pmf.generatePMF(u_kn, chi_n, pmf_type = 'kde', kde_parameters=kde_parameters, nbootstraps=nbootstraps)
 
         # save this for initializing other types
-        xstart = np.linspace(chi_min,chi_max,nsplines*2)
         results = pmf.getPMF(xstart, uncertainties = 'from-lowest')
         f_i_kde = results['f_i']  # kde results
 
@@ -247,23 +249,33 @@ for method in methods:
         spline_parameters['fkbias'] = [(lambda x, klocal=k: bias_potential(x,klocal)) for k in range(K)]  # introduce klocal to force K to use local definition of K, otherwise would use global value of k.
 
         spline_parameters['kdegree'] = int(method[-1])
-
         spline_parameters['optimization_algorithm'] = optimization_algorithm
-
-        pmf.generatePMF(u_kn, chi_n, pmf_type = 'spline', spline_parameters=spline_parameters)
+        spline_parameters['optimize_options'] = optimize_options
+        pmf.generatePMF(u_kn, chi_n, pmf_type = 'spline', spline_parameters=spline_parameters, nbootstraps=nbootstraps)
 
     end = timer()
     times[method] = end-start
 
+    yout = dict()
+    yerr = dict()
     print("PMF (in units of kT) for {:s}".format(method))
     print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
     results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
     for i in range(nbins):
-        print("{:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i]))
+        if results['df_i'] is not None:
+            print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i], results['df_i'][i]))
+        else:
+            print("{:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i]))
 
     results = pmf.getPMF(xplot, uncertainties = 'from-lowest')
-    yout = results['f_i']
-    plt.plot(xplot,yout,colors[method],label=method)
+    yout[method] = results['f_i']
+    yerr[method] = results['df_i']
+    if len(xplot) <= 50:
+        errorevery = 1
+    else:
+        errorevery = np.floor(len(xplot)/50)
+
+    plt.errorbar(xplot,yout[method],yerr=yerr[method],errorevery=errorevery,label=method,fmt=colors[method])
 
 plt.xlim([chi_min,chi_max])
 plt.legend()
@@ -272,3 +284,34 @@ plt.savefig('compare_pmf_{:d}.pdf'.format(nsplines))
 for method in methods:
     print("time for method {:s} is {:2f} s".format(method,times[method]))
 
+#now, plot these
+mc_parameters = {"niterations":10000, "fraction_change":0.02, "sample_every": 50, 
+                 "prior": lambda x: 1,"print_every":100}
+
+csamples, logposteriors, bspline = pmf.SampleDistribution(chi_n, pmf_type = 'spline', 
+                                                          spline_parameters = spline_parameters, 
+                                                          mc_parameters = mc_parameters)
+plt.clf()
+plt.hist(logposteriors)
+plt.savefig('posterior.pdf')
+
+# determine confidence intervals
+nsamples = len(logposteriors)
+samplevals = np.zeros([nplot,nsamples])
+for n in range(nsamples):
+    pcurve = BSpline(bspline.t,csamples[:,n],bspline.k)
+    samplevals[:,n] = pcurve(xplot)
+
+# now determine 
+ylows = np.zeros(len(xplot))
+yhighs = np.zeros(len(xplot))
+ymedians = np.zeros(len(xplot))
+for n in range(len(xplot)):
+    ylows[n] = np.percentile(samplevals[n,:],17)
+    yhighs[n] = np.percentile(samplevals[n,:],83)
+    ymedians[n] = np.percentile(samplevals[n,:],50)
+plt.clf()
+plt.plot(xplot,yout[method],colors[method],label=method)
+plt.fill_between(xplot,ylows-ymedians+yout[method],yhighs-ymedians+yout[method],color=colors[method][0],alpha=0.3)
+plt.legend()
+plt.savefig('bayesian.pdf')

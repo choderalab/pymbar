@@ -109,7 +109,6 @@ class PMF:
             allow this assumption to be overwritten by parameters passed
             from above, once ``u_kln`` is phased out.
 
-
         mbar_options: dictionary, with the following options supported by mbar (see MBAR documentation)
     
             maximum_iterations : int, optional
@@ -195,7 +194,7 @@ class PMF:
             print("PMF initialized")
 
     
-    def generatePMF(self, u_n, x_n, pmf_type = 'histogram', histogram_parameters = None, kde_parameters = None, spline_parameters = None, uncertainties='from-lowest'):
+    def generatePMF(self, u_n, x_n, pmf_type = 'histogram', histogram_parameters = None, kde_parameters = None, spline_parameters = None, uncertainties='from-lowest', nbootstraps = 0, nseed = -1):
 
         """
         Given an intialized MBAR object, a set of points, 
@@ -239,7 +238,7 @@ class PMF:
             - 'optimization_algorithm':
                 -- 'Custom-NR': a custom Newton-Raphson that is particularly fast for close data, but can fail
                 -- 'Newton-CG': scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
-                -- '         ': scipy gradient based methods that work, but are generally slow.
+                -- '         ': scipy gradient based methods that work, but are generally slower (CG, BFGS, L-LBFGS-B, TNC, SLSQP)
             - 'fkbias': array of functions that return the Kth bias potential for each function
             - 'nspline': number of spline points
             - 'kdegree': degree of the spline.  Default is cubic ('3')
@@ -298,99 +297,42 @@ class PMF:
             u_n = pymbar.mbar.kn_to_n(u_n, N_k = self.N_k)
 
         self.u_n = u_n
-        
-        # Compute unnormalized log weights for the given reduced potential u_n, needed for all methods.
-        log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
-        # calculate a few other things used for multiple methods
-        w_n = np.exp(log_w_n)
-        w_n = w_n/np.sum(w_n) # nomalize the weights 
-        w_kn = np.exp(self.mbar.Log_W_nk) # normalized weights for all states. 
-            
+
+        if nseed >= 0:
+            np.random.seed(nseed)
+
+        self.nbootstraps = nbootstraps # we need to save this for calculating uncertainties.
+
         if self.timings == True:
             start = timer()
 
-        K = self.mbar.K  # number of states
-        
+        self.pmf_function = list()
+
+        # set some variables before bootstrapping loop.    
+
+        N_k = self.mbar.N_k
+        K = self.mbar.K
+        N = np.sum(N_k)
+
         if self.pmf_type == 'histogram':
+
+            self.histogram_datas = list()
+
             if 'bin_edges' not in histogram_parameters:
                 raise ParameterError('histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
-
+            
             self.bins = histogram_parameters['bin_edges']
-
+            
             # First, determine the number of dimensions of the histogram. This can be determined 
             # by the shape of bin_edges
             dims = len(self.bins)
             self.dims = dims  # store the dimensionality for checking later.
-
-            # now create the bins from the data.
-            if len(np.shape(x_n))==1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
-                x_n = x_n.reshape(-1,1)
-
-            bin_n = np.zeros(x_n.shape, np.int64)
-
-            for d in range(dims):
-                bin_n[:,d] = np.digitize(x_n[:,d], self.bins[d])-1 # bins returns 0 as out of bin.  We want to use -1 as out of bin
-            self.bin_n = bin_n
-
             self.histogram_parameters = histogram_parameters
 
-
-            # now we need to loop over the bin_n and identify and label the nonzero bins.
-
-            nonzero_bins = list() # a list of the bins with at least one sample in them.
-            nonzero_bins_index = np.zeros(self.N,dtype=int) # for each sample, the index of the nonzero_bins element it belongs to.
-            for n in range(self.N):
-                if np.any(bin_n[n] < 0):
-                    nonzero_bins_index[n] = -1
-                    continue  # this sample is out of grid
-                if dims == 1:
-                    ind2 = bin_n[n]  # which bin sample n is in
-                else:
-                    ind2 = tuple(bin_n[n]) # which bin (labeled N-d) sample n is in
-                if ind2 not in nonzero_bins:
-                    nonzero_bins.append(ind2)  # this bin has a sample.  Add it to the list 
-                nonzero_bins_index[n] = nonzero_bins.index(ind2)  # the index of the nonzero bins
-
-            self.bin_n = nonzero_bins_index  # store the index of the nonzero bins for each sample. 
-            self.nbins = np.int(np.max(self.bin_n))+1  # the total number of nonzero bins
-
-            # Compute the free energies for these histogram states with samples
-            f_i = np.zeros([self.nbins], np.float64)
-            df_i = np.zeros([self.nbins], np.float64)
-
-            for i in range(self.nbins):
-                # Get linear n-indices of samples that fall in this bin.
-                indices = np.where(self.bin_n == i)
-
-                # Sanity check.
-                if (len(indices) == 0):
-                    raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
-
-                # Compute dimensionless free energy of occupying state i.
-                f_i[i] = - pymbar.mbar.logsumexp(log_w_n[indices])
-
-            self.f = f_i  # store the free energies for this bin  
-
-            # now assign back the free energy from the sample_only bins to all of the bins. 
-
-            # rebuild the graph from the edges.
-            corner_vectors = list()
-            returnsize = list()
-            for d in range(dims):
-                maxv = len(self.bins[d])-1
-                corner_vectors.append(np.arange(0,maxv))
-                returnsize.append(maxv)
-            gridpoints = it.product(*corner_vectors)  # iterator giving all bin locations in N dimensions.
-
-            fbin_index = np.zeros(np.array(returnsize),int) # index in self.f where the free energy for this gridpoint is stored
-            for g in gridpoints:
-                if g in nonzero_bins:
-                    fbin_index[g] = nonzero_bins.index(g)
-                else: 
-                    fbin_index[g] = -1  # no free energy for this index, since there are no points.
-            self.fbin_index = fbin_index
-
         elif pmf_type == 'kde':
+
+            self.kdes = list()
+
             from sklearn.neighbors.kde import KernelDensity
             kde = KernelDensity()
             kde_defaults = kde.get_params()  # get the default params to set them.
@@ -406,20 +348,12 @@ class PMF:
 
             kde.set_params(**kde_defaults) 
 
-            # reshape data if needed.
-            if len(np.shape(x_n))==1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
-                x_n = x_n.reshape(-1,1)
-
-            kde.fit(x_n, sample_weight = np.exp(log_w_n))
-
-            self.kde = kde
-
         elif pmf_type == 'spline':
 
-            spline_weights = spline_parameters['spline_weights']
+            self.bspline = None  # zero this out so we know if we haven't called it yet.
+            self.pmf_functions = list()
 
-            if spline_weights == 'sumkldivergence':
-                w_n = np.sum(w_kn, axis=1) # sum along the w_kn for sumkldivergence
+            spline_weights = spline_parameters['spline_weights']
 
             xrange = spline_parameters['xrange']    # need the x-range for all methods, since we need to 
                                                     # numerically integrate over this range
@@ -432,15 +366,15 @@ class PMF:
                 # we are passing it on to scipy
 
                 if 'optimize_options' not in spline_parameters:
-                    spline_parameters['optimize_options'] = {'disp':True, 'gtol':10**(-7), 'xtol':10**(-5)}
+                    spline_parameters['optimize_options'] = {'disp':True, 'ftol':10**(-7), 'xtol':10**(-7)}
 
-                if spline_parameters['optimization_algorithm'] not in ['Newton-CG']:
-                    raise "Warning: {:s} will not work with method in ".format(spline_parameters['optimization_algorithm'])
+                if spline_parameters['optimization_algorithm'] not in ['Newton-CG','CG', 'BFGS', 'L-BFGS-B', 'TNC', 'SLSQP']:
+                    raise ParameterErrorr('Optimization method {:s} is not supported'.format(spline_parameters['optimization_algorithm']))
             else:
                 if 'optimize_options' not in spline_parameters:
                     spline_parameters['optimize_options'] = dict()
                 if 'gtol' not in spline_parameters['optimize_options']:
-                    spline_parameters['optimize_options']['gtol'] = 10**(-7)
+                    spline_parameters['optimize_options']['tol'] = 10**(-7)
 
             if spline_parameters['spline_initialize'] == 'bias_free_energies':
 
@@ -491,7 +425,7 @@ class PMF:
             t[kdegree:nspline+1] = np.linspace(xrange[0], xrange[1], num=nspline+1-kdegree, endpoint=True)
             t[nspline+1:nspline+kdegree+1] = xrange[1]
 
-            # initial fit functioin
+            # initial fit function
             # problem: bin centers might not actually be sorted. Should data getting to here be already sorted?
             sort_indices = np.argsort(xinit)
             b = make_lsq_spline(xinit[sort_indices], yinit[sort_indices], t, k=kdegree)
@@ -530,59 +464,204 @@ class PMF:
                     xrangeij[i,j,0] = np.max([xrangei[i,0],xrangei[j,0]])
                     xrangeij[i,j,1] = np.min([xrangei[i,1],xrangei[j,1]])
 
-            if spline_parameters['optimization_algorithm'] != 'Custom-NR':
-                results = minimize(self._bspline_calculate_f,xi,
-                                   args = (w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij), 
-                                   method = 'Newton-CG',jac=self._bspline_calculate_g,
-                                   hess=self._bspline_calculate_h,
-                                   options = spline_parameters['optimize_options'])
-                self.bspline = self._val_to_spline(results['x'])
-
-            else:
-                tol = spline_parameters['optimize_options']['gtol']
-                self.bspline_dg2 = tol + 1.0
-                firsttime = True
-
-                while self.bspline_dg2 > tol: # until we reach the tolerance.
-
-                    f = self._bspline_calculate_f(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
-
-                    # we need some error handling: if we stepped too far, we should go back
-                    # still not great error handling.  Requires something close.
-
-                    if not firsttime:
-                        count = 0
-                        while ((f >= fold*(1.0+np.sqrt(tol)) and count < 5) or (np.isinf(f))):   # we went too far!  Pull back.
-                            f = fold
-                            # let's not step as far:
-                            dx = 0.5*dx
-                            xi = xold - dx # step back half of dx.
-                            xold = xi.copy()
-                            f = self._bspline_calculate_f(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
-                            count += 1
-                    else:
-                        firsttime = False
-                    fold = f
-                    xold = xi.copy()
-
-                    g = self._bspline_calculate_g(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
-                    h = self._bspline_calculate_h(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
-                
-                    # now find the new point.
-                    # x_n+1 = x_n - f''(x_n)^-1 f'(x_n) 
-                    # which we solve more stably as:
-                    # x_n - x_n+1 = f''(x_n)^-1 f'(x_n)
-                    # f''(x_n)(x_n-x_n+1) = f'(x_n)  
-                    # solution is dx = x_n-x_n+1
-
-                    dx = np.linalg.lstsq(h,g,rcond=None)[0]
-                    xi = xold - dx
-                self.bspline = self._val_to_spline(xi)
-
-
-            self.pmf_function = self.bspline
         else:
             raise ParameterError('pmf_type {:s} is not defined!'.format(pmf_type))
+
+        for b in range(nbootstraps+1):  #generate bootstrap samples.  
+            # we bootstrap from each simulation separately. 
+            if b == 0: # the default
+                bootstrap_indices = np.arange(0,N)
+                mbar = self.mbar
+                x_nb = x_n 
+            else:
+                index = 0
+                for k in range(K):
+                    bootstrap_indices[index:index+N_k[k]] = index+np.random.randint(0,N_k[k],size=N_k[k])
+                    index += N_k[k]
+                    # recompute MBAR.
+                    mbar = pymbar.MBAR(self.u_kn[:,bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k)
+                    x_nb = x_n[bootstrap_indices]
+
+            # Compute unnormalized log weights for the given reduced potential u_n, needed for all methods.
+            log_w_n = mbar._computeUnnormalizedLogWeights(self.u_n[bootstrap_indices])
+            # calculate a few other things used for multiple methods
+            self.w_n = np.exp(log_w_n)
+            self.w_n = self.w_n/np.sum(self.w_n) # nomalize the weights 
+            self.w_kn = np.exp(mbar.Log_W_nk) # normalized weights for all states. 
+
+            if self.pmf_type == 'histogram':
+
+                # store the data that will be regenerated each time.
+                # We will not try to regenerate the bin locations each time, 
+                # as that would make it hard to calculate uncertainties.  
+                # We will just recalculate the populations.
+                histogram_data = dict()  
+
+                # create the bins from the data.  
+                if len(np.shape(x_nb))==1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
+                    x_nb = x_nb.reshape(-1,1)
+
+                bin_n = np.zeros(x_nb.shape, np.int64)
+
+                for d in range(dims):
+                    bin_n[:,d] = np.digitize(x_nb[:,d], self.bins[d])-1 # bins returns 0 as out of bin.  We want to use -1 as out of bin
+                histogram_data['bin_n'] = bin_n # bin counts
+
+                # now we need to loop over the bin_n and identify and label the nonzero bins.
+
+                nonzero_bins = list() # a list of the bins with at least one sample in them.
+                nonzero_bins_index = np.zeros(self.N,dtype=int) # for each sample, the index of the nonzero_bins element it belongs to.
+                for n in range(self.N):
+                    if np.any(bin_n[n] < 0):
+                        nonzero_bins_index[n] = -1
+                        continue  # this sample is out of grid
+                    if dims == 1:
+                        ind2 = bin_n[n]  # which bin sample n is in
+                    else:
+                        ind2 = tuple(bin_n[n]) # which bin (labeled N-d) sample n is in
+                    if ind2 not in nonzero_bins:
+                        nonzero_bins.append(ind2)  # this bin has a sample.  Add it to the list 
+                    nonzero_bins_index[n] = nonzero_bins.index(ind2)  # the index of the nonzero bins
+
+                histogram_data['bin_n'] = nonzero_bins_index
+                histogram_data['nbins'] = np.int(np.max(bin_n))+1  # the total number of nonzero bins 
+
+                # Compute the free energies for these histogram states with samples
+                f_i = np.zeros([histogram_data['nbins']], np.float64)
+                df_i = np.zeros([histogram_data['nbins']], np.float64)
+
+                for i in range(histogram_data['nbins']):
+                    # Get linear n-indices of samples that fall in this bin.
+                    indices = np.where(histogram_data['bin_n'] == i)
+
+                    # Sanity check.
+                    if (len(indices) == 0):
+                        raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
+
+                    # Compute dimensionless free energy of occupying state i.
+                    f_i[i] = - logsumexp(log_w_n[indices])
+
+                histogram_data['f'] = f_i  # store the free energies for this bin  
+
+                # now assign back the free energy from the sample_only bins to all of the bins. 
+
+                # rebuild the graph from the edges.
+                corner_vectors = list()
+                returnsize = list()
+                for d in range(dims):
+                    maxv = len(self.bins[d])-1
+                    corner_vectors.append(np.arange(0,maxv))
+                    returnsize.append(maxv)
+                gridpoints = it.product(*corner_vectors)  # iterator giving all bin locations in N dimensions.
+                
+                fbin_index = np.zeros(np.array(returnsize),int) # index in self.f where the free energy for this gridpoint is stored
+                for g in gridpoints:
+                    if g in nonzero_bins:
+                        fbin_index[g] = nonzero_bins.index(g)
+                    else: 
+                        fbin_index[g] = -1  # no free energy for this index, since there are no points.
+
+                histogram_data['fbin_index'] = fbin_index
+                if b==0:
+                    self.histogram_data = histogram_data
+                else:
+                    self.histogram_datas.append(histogram_data)
+
+            elif pmf_type == 'kde':
+
+                # reshape data if needed.
+                if len(np.shape(x_nb))==1:  # it's a 1D array, instead of a Nx1 array.  Reshape.
+                    x_nb = x_nb.reshape(-1,1)
+                
+                if b > 0:
+                    kde = KernelDensity()  # need to create a new one so won't get refit
+                    params = self.kde.get_params()
+                    kde.set_params(**params)
+
+                kde.fit(x_nb, sample_weight = self.w_n)  
+
+                if b == 0:
+                    self.kde = kde
+                else:
+                    self.kdes.append(kde) 
+
+            elif pmf_type == 'spline':
+
+                if spline_weights == 'sumkldivergence':
+                    w_n = np.sum(self.w_kn, axis=1) # sum along the w_kn for sumkldivergence
+                else:
+                    w_n = self.w_n
+                if b > 0:
+                    xi = savexi
+                if spline_parameters['optimization_algorithm'] != 'Custom-NR':
+                    if spline_parameters['optimization_algorithm'] == 'Newton-CG':
+                        hess = self._bspline_calculate_h
+                    else:
+                        hess = None
+                    results = minimize(self._bspline_calculate_f,xi,
+                                       args = (w_n, x_nb, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij), 
+                                       method = spline_parameters['optimization_algorithm'],jac=self._bspline_calculate_g,hess=hess,
+                                       options = spline_parameters['optimize_options'])
+                    self.bspline = self._val_to_spline(results['x'])
+                    savexi = results['x']
+                    f = results['fun']
+                else:
+                    if 'gtol' in spline_parameters['optimize_options']:
+                        tol = spline_parameters['optimize_options']['gtol']
+                    elif 'tol' in spline_parameters['optimize_options']:
+                        tol = spline_parameters['optimize_options']['tol']
+
+                    dg = tol * 1e10 # should come up with better way to do this.
+                    firsttime = True
+
+                    while dg > tol: # until we reach the tolerance.
+
+                        f = self._bspline_calculate_f(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+
+                        # we need some error handling: if we stepped too far, we should go back
+                        # still not great error handling.  Requires something close.
+
+                        if not firsttime:
+                            count = 0
+                            while ((f >= fold*(1.0+np.sqrt(tol)) and count < 5) or (np.isinf(f))):   # we went too far!  Pull back.
+                                f = fold
+                                # let's not step as far:
+                                dx = 0.5*dx
+                                xi = xold - dx # step back half of dx.
+                                xold = xi.copy()
+                                f = self._bspline_calculate_f(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                                count += 1
+                        else:
+                            firsttime = False
+                        fold = f
+                        xold = xi.copy()
+
+                        g = self._bspline_calculate_g(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                        h = self._bspline_calculate_h(xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                
+                        # now find the new point.
+                        # x_n+1 = x_n - f''(x_n)^-1 f'(x_n) 
+                        # which we solve more stably as:
+                        # x_n - x_n+1 = f''(x_n)^-1 f'(x_n)
+                        # f''(x_n)(x_n-x_n+1) = f'(x_n)  
+                        # solution is dx = x_n-x_n+1
+                        
+                        dx = np.linalg.lstsq(h,g,rcond=None)[0]
+                        xi = xold - dx
+                        if spline_parameters['optimize_options']['disp']:
+                            dg = np.sqrt(np.dot(g,g))
+                            print("f = {:.10f}. gradient norm = {:.10f}".format(f,np.sqrt(dg)))
+
+                    self.bspline = self._val_to_spline(xi)
+
+                if b==0:    
+                    self.pmf_function = self.bspline
+                    savexi = xi
+                    self.aic = 2*len(self.bspline.c) - 2*f   # calculate the AIC (need to verify the scale of it)
+                    self.bic = 0                             # can't remember BIC formula
+
+                else:
+                    self.pmf_functions.append(self.bspline)
 
         if self.timings:  # we put the timings outside, since the switch / common stuff is really low.
             end = timer()
@@ -628,8 +707,9 @@ class PMF:
         else:   
             coorddim = np.shape(x)[1]
 
-        if self.dims != coorddim:
-            raise DataError('coordinates have inconsistent dimension with the PMF.')
+        if self.pmf_type == 'histogram':
+            if self.dims != coorddim:
+                raise DataError('coordinates have inconsistent dimension with the PMF.')  # later, need to put coordinate check on other methods.
 
         if uncertainties is 'from-specified' and pmf_reference is None:
             raise ParameterError(
@@ -667,47 +747,55 @@ class PMF:
                         raise ParameterError("Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(pmf_ref_grid[d],np.min(bins[d]),np.max(bins[d])))
 
 
-            # Compute uncertainties in free energy at each gridpoint by forming matrix of W_nk.
-            N_k = np.zeros([self.K + self.nbins], np.int64)
-            N_k[0:K] = self.N_k
-            W_nk = np.zeros([self.N, self.K + self.nbins], np.float64)
-            W_nk[:, 0:K] = np.exp(self.mbar.Log_W_nk)
-
-            log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
-            for i in range(self.nbins): # loop over the nonzero bins, internal list numbering
-                # Get indices of samples that fall in this bin.
-                indices = np.where(self.bin_n == i) 
-
-                # Compute normalized weights for this state.
-                W_nk[indices, K + i] = np.exp(log_w_n[indices] + self.f[i])
-
-            # Compute asymptotic covariance matrix using specified method.
-            Theta_ij = self.mbar._computeAsymptoticCovarianceMatrix(W_nk, N_k)
-
-            df_i = np.zeros(len(self.f), np.float64)
-
             if uncertainties == 'from-lowest' or uncertainties == 'from-specified' or uncertainties == 'all-differences':
-                # Report uncertainties in free energy difference from a given point
-                # on PMF.
+                # Report uncertainties in free energy difference from a given point on PMF.
+
+                df_i = np.zeros(len(self.histogram_data['f']), np.float64)
 
                 if (uncertainties == 'from-lowest'):
                     # Determine bin index with lowest free energy.
-                    j = self.f.argmin()
+                    j = self.histogram_data['f'].argmin()
                 elif (uncertainties == 'from-specified'):
-                    j = self.fbin_index[tuple(pmf_ref_grid)]
+                        j = self.histogram_data['fbin_index'][tuple(pmf_ref_grid)]
 
-                # Compute uncertainties with respect to difference in free energy
-                # from this state j.
-                for i in range(self.nbins):
-                    df_i[i] = math.sqrt(
-                    Theta_ij[K + i, K + i] + Theta_ij[K + j, K + j] - 2.0 * Theta_ij[K + i, K + j])
+                if self.nbootstraps == 0:
+                    # Compute uncertainties in free energy at each gridpoint by forming matrix of W_nk.
+                    N_k = np.zeros([self.K + self.nbins], np.int64)
+                    N_k[0:K] = self.N_k
+                    W_nk = np.zeros([self.N, self.K + self.nbins], np.float64)
+                    W_nk[:, 0:K] = np.exp(self.mbar.Log_W_nk)
 
-                # Shift free energies so that state j has zero free energy.
-                f_i = self.f - self.f[j]
+                    log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
+                    for i in range(self.nbins): # loop over the nonzero bins, internal list numbering
+                        # Get indices of samples that fall in this bin.
+                        indices = np.where(self.bin_n == i) 
+
+                        # Compute normalized weights for this state.
+                        W_nk[indices, K + i] = np.exp(log_w_n[indices] + self.f[i])
+
+                    # Compute asymptotic covariance matrix using specified method.
+                        Theta_ij = self.mbar._computeAsymptoticCovarianceMatrix(W_nk, N_k)
+
+                    # Compute uncertainties with respect to difference in free energy
+                    # from this state j.
+                    for i in range(self.nbins):
+                        df_i[i] = math.sqrt(
+                            Theta_ij[K + i, K + i] + Theta_ij[K + j, K + j] - 2.0 * Theta_ij[K + i, K + j])
+                        
+                else:
+                    fall = np.zeros([len(self.histogram_data['f']),self.nbootstraps])
+                    for b in range(self.nbootstraps):
+                        fall[:,b] = self.histogram_datas[b]['f']-self.histogram_datas[b]['f'][j]
+
+                        df_i = np.std(fall,axis=1)
+                    # Shift free energies so that state j has zero free energy.
+                f_i = self.histogram_data['f'] - self.histogram_data['f'][j]
 
             elif (uncertainties == 'from-normalization'):
                 # Determine uncertainties from normalization that \sum_i p_i = 1.
-
+                # need to reimplement this . . . maybe.  
+                raise ParameterError('uncertainty method \'from-normalization\' is not currently supported for histograms')
+            
                 # Compute bin probabilities p_i
                 p_i = np.exp(-self.fbin - logsumexp(-self.fbin))
 
@@ -745,9 +833,9 @@ class PMF:
                     continue
 
                 if dims == 1:
-                    findex = self.fbin_index[l]  
+                    findex = self.histogram_data['fbin_index'][l]  
                 else:
-                    findex = self.fbin_index[tuple(l)] 
+                    findex = self.histogram_data['fbin_index'][tuple(l)] 
                 if findex >= 0:
                     fx_vals[i] = f_i[findex]
                     dfx_vals[i] = df_i[findex]
@@ -760,34 +848,40 @@ class PMF:
                 result_vals['df_i'] = dfx_vals
 
             if uncertainties == 'all-differences':
-                # Report uncertainties in all free energy differences as well.
+                if nbootstraps == 0:
+                    # Report uncertainties in all free energy differences as well.
+                    diag = Theta_ij.diagonal()
+                    dii = diag[K, K + self.nbins]  # appears broken?  Not used?
+                    d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K:K + self.nbins, K:K + self.nbins]
 
-                diag = Theta_ij.diagonal()
-                dii = diag[K, K + self.nbins]  # appears broken?  Not used?
-                d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K:K + self.nbins, K:K + self.nbins]
+                    # unsquare uncertainties
+                    df_ij = np.sqrt(d2f_ij)
 
-                # unsquare uncertainties
-                df_ij = np.sqrt(d2f_ij)
+                    dfxij_vals = np.zeros([len(x),len(x)])
 
-                dfxij_vals = np.zeros([len(x),len(x)])
-
-                findexs = list()
-                for i, l in enumerate(loc_indices):
-                    if dims == 1:
-                        findex = self.fbin_index[l]
-                    else:
-                        findex = self.fbin_index[tuple(l)]
-                    findexs.append(findex)
-
-                for i, vi in enumerate(findexs):
-                    for j,vj in enumerate(findexs):
-                        if vi != -1 and vj != 1:
-                            dfxij_vals[i,j] = df_ij[vi,vj]
+                    findexs = list()
+                    for i, l in enumerate(loc_indices):
+                        if dims == 1:
+                            findex = self.histogram_data['fbin_index'][l]
                         else:
-                            dfxij_vals[i,j] = np.nan
+                            findex = self.histogram_data['fbin_index'][tuple(l)]
+                        findexs.append(findex)
+
+                    for i, vi in enumerate(findexs):
+                        for j,vj in enumerate(findexs):
+                            if vi != -1 and vj != 1:
+                                dfxij_vals[i,j] = df_ij[vi,vj]
+                            else:
+                                dfxij_vals[i,j] = np.nan
+                else:
+                    dfxij_vals = np.zeros([len(self.histogram_data['f']),len(self.histogram_data['f'])])
+                    fall = np.zeros([len(self.histogram_data['f']),len(self.histogram_data['f']),self.nbootstraps])
+                    for b in range(self.nbootstraps):
+                        fall[:,b] = self.histogram_datas[b]['f']-self.histogram_Data[b]['f'].transpose()
+                    dfxij_vals = np.std(fall,axis=2)
 
                 # Return dimensionless free energy and uncertainty.
-                result_vals['df_ij'] = dfxij_vals
+                result_vals['df_ij'] = dfxij_vals 
 
         elif self.pmf_type == 'kde':
 
@@ -805,9 +899,18 @@ class PMF:
             elif uncertainties == 'from-specified':
                 fmin = -self.kde.score_samples(np.array(pmf_reference).reshape(1, -1))
                 f_i = f_i - fmin
+
+            if self.nbootstraps == 0:
+                df_i = None
+            else:
+                fall = np.zeros([len(x),self.nbootstraps])
+                for b in range(self.nbootstraps):
+                    fall[:,b] = -self.kdes[b].score_samples(x)-fmin
+                df_i = np.std(fall,axis=1)
+
             # uncertainites "from normalization" reference is applied, since the density is normalized.
             result_vals['f_i'] = f_i
-            # no error method yet. Maybe write a bootstrap class? 
+            result_vals['df_i'] = df_i
 
         elif self.pmf_type == 'spline':
 
@@ -818,15 +921,22 @@ class PMF:
                 f_i = f_i - fmin
 
             elif uncertainties == 'from-specified':
-                fmin = -self.kde.score_samples(np.array(pmf_reference).reshape(1, -1))
+                fmin = -self.pmf_functions(np.array(pmf_reference).reshape(1, -1))
                 f_i = f_i - fmin
-
+            if self.nbootstraps == 0:
+                df_i = None
+            else:
+                fall = np.zeros([len(x),self.nbootstraps])
+                for b in range(self.nbootstraps):
+                    fall[:,b] = self.pmf_functions[b](x)-fmin
+                df_i = np.std(fall,axis=1)
+                
             # uncertainites "from normalization" reference is applied, since the density is normalized.
             result_vals['f_i'] = f_i
+            result_vals['df_i'] = df_i
             # no error method yet. Maybe write a bootstrap class? 
  
         return result_vals
-
 
     def getMBAR(self):
         """return the MBAR object being used by the PMF  
@@ -853,30 +963,176 @@ class PMF:
         else:
             raise ParameterError('Can\'t return the KernelDensity object because pmf_type != kde')
 
+    def SampleDistribution(self, x_n, pmf_type='spline', spline_parameters = None, mc_parameters = None):
+
+        # determine the range of the bspline at the start of the
+        # process: changes are made as fractions of this
+
+        self.pmf_type = pmf_type
+        K = self.mbar.K
+
+        spline_weights = spline_parameters['spline_weights']
+
+        if spline_parameters == None:
+            ParameterError("Must specify spline_parameters to sample the distributions")
+
+        if spline_weights == 'sumkldivergence':
+            w_n = np.sum(self.w_kn, axis=1) # sum along the w_kn for sumkldivergence
+        else:
+            w_n = self.w_n
+
+        xrange = spline_parameters['xrange']    # need the x-range for all methods, since we need to 
+                                                # numerically integrate over this range
+
+        if pmf_type != 'spline':
+            ParmeterError("Sampling of posterior is only supported for spline type")
+
+        if self.bspline == None:
+            ParameterError("Need to generate a splined PMF before performing MCMC sampling")
+
+        if mc_parameters == None:
+            print('Using default MC parameters')
+            mc_parameters = dict()
+
+        if 'niterations' not in mc_parameters:
+            mc_parameters['niterations'] = 5000
+        if 'fraction_change' not in mc_parameters:
+            mc_parameters['fraction_change'] = 0.01
+        if 'sample_every' not in mc_parameters:
+            mc_parameters['sample_every'] = 50
+        if 'print_every' not in mc_parameters:
+            mc_parameters['print_every'] = 1000
+        if 'prior' not in mc_parameters:
+            mc_parameters['prior'] = lambda x: 1
+
+        niterations = mc_parameters['niterations']
+        fraction_change = mc_parameters['fraction_change']
+        sample_every = mc_parameters['sample_every']
+        print_every = mc_parameters['print_every']
+        prior = mc_parameters['prior']
+
+        c = self.bspline.c
+        crange = np.max(c)-np.min(c)
+        dc = fraction_change*crange 
+
+        self.naccept = 0
+        csamples = np.zeros([len(c),int(niterations)//int(sample_every)])
+        logposteriors = np.zeros(int(niterations)//int(sample_every))
+        self.first_step = False
+        if spline_weights == 'sumkldivergence':
+            w_n = np.sum(self.w_kn, axis=1) # sum along the w_kn for sumkldivergence
+        else:
+            w_n = self.w_n
+        pdb.set_trace()    
+        for n in range(niterations):
+            results  = self._MCStep(x_n,w_n,dc,xrange,spline_weights,prior) 
+            if n%sample_every == 0:
+                csamples[:,n//sample_every] = results['c']
+                logposteriors[n//sample_every] = results['logposterior']
+            if n%print_every == 0:
+                print("MC Step {:d} of {:d}".format(n,niterations))
+                print(self.naccept)
+        # We now have a distribution of samples of parameters sampled according to the posterior.
+        print("Done MC sampling")
+        print("Acceptance rate: {:5.3f}".format(self.naccept/niterations))
+        return csamples, logposteriors, self.bspline
+
+
+    def _get_MC_loglikelihood(self,x_n,w_n,spline_weights,spline):
+
+        N = self.N
+        K = self.K
+
+        if spline_weights in ['sumkldivergence','simplesum','weightedsum']:
+            loglikelihood = 0
+            for k in range(self.K):
+                x_kn = x_n[self.mbar.x_kindices==k]
+                if spline_weights == 'sumkldivergence':
+                    splinek = lambda x,kf=k: spline(x) + self.fkbias[kf](x)
+                    loglikelihood += (N/K)*np.dot(w_n[self.mbar.x_kindices==k],splinek(x_kn,k))
+                elif spline_weights == 'simplesum':
+                    loglikelihood += (N/K)*np.mean(splinek(x_kn))
+                elif spline_weights == 'weightedsum':
+                    loglikelihood += (1/N)*np.sum(splinek(x_kn))  # multiply by K to get it in the same order of magnitude
+        elif spline_weights == 'kldivergence':
+            loglikelihood += N*np.dot(w_n,spline(x_n))
+
+        return loglikelihood
+
+    def _MCStep(self,x_n,w_n,stepsize,xrange,spline_weights,prior):
+
+        if not self.first_step:
+            # ensure normalization
+            prob = lambda x: np.exp(-self.bspline(x))
+            norm = quad(prob,xrange[0],xrange[1])[0]
+            c = self.bspline.c+np.log(norm)
+            self.bspline.c = c
+            self.previous_logposterior = self._get_MC_loglikelihood(x_n,w_n,spline_weights,self.bspline) + prior(c)
+            self.cold = c
+            self.first_step = True
+            self.newspline = BSpline(self.bspline.t,self.bspline.c,self.bspline.k)  # create an extra one we can carry around
+
+        self.cold = self.bspline.c
+        psize = len(self.cold)
+        rchange = stepsize*np.random.normal()
+        cnew = self.cold.copy()
+        ci = np.random.randint(psize)
+        cnew[ci] += rchange
+        self.newspline.c = cnew
+
+        # determine the change in the integral
+        prob = lambda x: np.exp(-self.newspline(x))
+        new_integral = quad(prob,xrange[0],xrange[1])[0]
+        cnew = cnew + np.log(new_integral)
+        self.newspline.c = cnew  # this spline should now be normalized.
+
+        # now calculate the change in log likelihood
+        loglikelihood = self._get_MC_loglikelihood(x_n,w_n,spline_weights,self.newspline)
+
+        newlogposterior = loglikelihood + np.log(prior(cnew))
+        dlogposterior = newlogposterior - (self.previous_logposterior)
+        accept = False
+        if dlogposterior <= 0:
+            accept = True
+        if dlogposterior > 0:
+            if np.random.random() < np.exp(-dlogposterior):
+                accept = True
+
+        if accept:
+            self.bspline.c = self.newspline.c
+            self.cold = self.bspline.c
+            self.previous_logposterior = newlogposterior
+            self.naccept = self.naccept + 1
+        results = dict()
+        results['c'] = self.bspline.c
+        results['logposterior'] = self.previous_logposterior
+        print(results['logposterior'])
+        return results
+    
     def _bspline_calculate_f(self, xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij):
 
         K = self.mbar.K
         N_k = self.mbar.N_k
-        N = np.sum(N_k)
+        N = self.N
 
         bloc = self._val_to_spline(xi)
-        pF = np.zeros(K)
         if spline_weights in ['sumkldivergence','simplesum','weightedsum']:
+            pF = np.zeros(K)
             if spline_weights == 'sumkldivergence':
-                f = np.dot(w_n,bloc(x_n))
+                f = (N/K)*np.dot(w_n,bloc(x_n))                # we rescale so that \sum W_n = N
             elif spline_weights == 'simplesum':
                 f = 0
                 for k in range(K):
-                    f += np.mean(bloc(x_n[self.mbar.x_kindices==k]))
+                    f += (N/K)*np.mean(bloc(x_n[self.mbar.x_kindices==k]))
             elif spline_weights == 'weightedsum':
-                f = K*np.mean(bloc(x_n))  # multiply by K to get it in the same order of magnitude
+                f = N*np.mean(bloc(x_n))  # multiply by K to get it in the same order of magnitude
+
+            if spline_weights in ['sumkldivergence','simplesum']:
+                integral_scaling = (N/K)*np.ones(K)
+            elif spline_weights == 'weightedsum':
+                integral_scaling = N_k
 
             expf = list()
-            if spline_weights in ['sumkldivergence','simplesum']:
-                integral_scaling = np.ones(K) 
-            elif spline_weights == 'weightedsum':
-                integral_scaling = K*(N_k/N)
-
             for k in range(K):
                 # what is the biasing function for this state?
                 # define the biasing function 
@@ -886,22 +1142,19 @@ class PMF:
                 pF[k] = quad(expfk,xrange[0],xrange[1])[0]  
                 expf.append(expfk)
             # subtract the free energy (add log partition function)
-            f += np.sum(np.log(pF)+np.log(integral_scaling))
+            f += np.dot(integral_scaling,np.log(pF))
 
         elif spline_weights == 'kldivergence': # just KL divergence of the unbiased potential
-            f = np.dot(w_n,bloc(x_n))
+            f = N*np.dot(w_n,bloc(x_n))
             expf = lambda x: np.exp(-bloc(x))
             # setting limit to try to eliminate errors: hard time because it goes so small.
-            pF[0] = quad(expf,xrange[0],xrange[1])[0]  #0 is the value of quad 
+            pF = quad(expf,xrange[0],xrange[1])[0]  #0 is the value of quad 
             # subtract the free energy (add log partition function)
-            f += np.log(pF[0]) 
-
-        #print("function value to minimize: {:f}".format(f))
+            f += N*np.log(pF) 
 
         self.bspline_expf = expf
         self.bspline_pF = pF
         return f 
-
 
     def _bspline_calculate_g(self, xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij):
 
@@ -919,20 +1172,22 @@ class PMF:
         pF = np.zeros(K)
 
         if spline_weights in ['sumkldivergence','simplesum']:
-            integral_scaling = np.ones(K)
+            integral_scaling = (N/K)*np.ones(K)
         elif spline_weights == 'weightedsum':
-            integral_scaling = K*(N_k/N)
+            integral_scaling = N_k
 
         g = np.zeros(nspline-1)
 
         for i in range(1,nspline):
-            if spline_weights in ['sumkldivergence','kldivergence']:
-                g[i-1] = np.dot(w_n,db_c[i](x_n))
+            if spline_weights in ['sumkldivergence']:
+                g[i-1] = (N/K)*np.dot(w_n,db_c[i](x_n))
             elif spline_weights == 'simplesum':
                 for k in range(K):
-                    g[i-1] += np.mean(db_c[i](x_n[self.mbar.x_kindices==k]))
+                    g[i-1] += (N/K)*np.mean(db_c[i](x_n[self.mbar.x_kindices==k]))
             elif spline_weights == 'weightedsum':
-                g[i-1] = K*np.mean(db_c[i](x_n))  # multiply by K to get it in the same order of magnitude as others
+                g[i-1] = N*np.mean(db_c[i](x_n))
+            elif spline_weights in ['kldivergence']:
+                g[i-1] = N*np.dot(w_n,db_c[i](x_n))
 
         # now the second part of the gradient.
 
@@ -942,7 +1197,7 @@ class PMF:
             dexpf = lambda x, k: db_c[i+1](x)*expf(x,k)
 
             for k in range(K):
-                # putting this in rather than saving so gradient and f can be called independently
+                # putting this in rather than saving the term so gradient and f can be called independently
                 pF[k] = quad(expf,xrange[0],xrange[1],args=(k))[0]
                 for i in range(nspline-1):
                     # Boltzmann weighted derivative with each biasing function
@@ -950,7 +1205,7 @@ class PMF:
                     pE = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1],args=(k))[0]
                     # normalize the expectation
                     gkquad[i,k] = pE/pF[k]
-            g -= np.dot(gkquad,integral_scaling) # square to account for contribution to pF.
+            g -= np.dot(gkquad,integral_scaling)
 
         elif spline_weights == 'kldivergence':
             gkquad = 0  # not used here, but saved for Hessian calls.
@@ -966,14 +1221,10 @@ class PMF:
                 pE[i] = quad(dexpf,xrangei[i+1,0],xrangei[i+1,1])[0]
                 # normalize the expectation.
                 pE[i] /= pF
-                g[i] -= pE[i]
-
-        dg2 = np.dot(g,g)
-        print("gradient norm: {:.10f}".format(dg2))
+            g -= N*pE
 
         self.bspline_gkquad = gkquad
         self.bspline_pE = pE
-        self.bspline_dg2 = dg2
         return g
 
     def _bspline_calculate_h(self, xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij):
@@ -982,7 +1233,6 @@ class PMF:
         N_k = self.mbar.N_k
         N = np.sum(N_k)
 
-
         expf = self.bspline_expf
         gkquad = self.bspline_gkquad
         pF = self.bspline_pF        
@@ -990,10 +1240,10 @@ class PMF:
         db_c = self.bspline_derivatives
         
         if spline_weights in ['sumkldivergence','simplesum']:
-            integral_scaling = np.ones(K)
+            integral_scaling = N/K*np.ones(K)
         elif spline_weights == 'weightedsum':
-            integral_scaling = K*N_k/N
-        
+            integral_scaling = N_k
+
         # now, compute the Hessian.  First, the first order components
         h = np.zeros([nspline-1,nspline-1])
 
@@ -1002,26 +1252,26 @@ class PMF:
             for k in range(K):
                 h += -integral_scaling[k]*np.outer(gkquad[:,k],gkquad[:,k])
         elif spline_weights == 'kldivergence':
-            h = -np.outer(pE,pE)
+            h = -N*np.outer(pE,pE)
  
         if spline_weights in ['sumkldivergence', 'weightedsum','simplesum']:
             for i in range(nspline-1):
                 for j in range(0,i+1):
                     if np.abs(i-j) <= kdegree:
-                        dexpf = lambda x, k: db_c[i+1](x)*db_c[j+1](x)*expf[k](x)
+                        ddexpf = lambda x, k: db_c[i+1](x)*db_c[j+1](x)*expf[k](x)
                         for k in range(K):
                             # now compute the expectation of each derivative
-                            pE = integral_scaling[k]*quad(dexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1],args=(k))[0]
+                            pE = integral_scaling[k]*quad(ddexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1],args=(k))[0]
                             h[i,j] += pE/pF[k]
 
         elif spline_weights == 'kldivergence':
             for i in range(nspline-1):
                 for j in range(0,i+1):
                     if np.abs(i-j) <= kdegree:
-                        dexpf = lambda x: db_c[i+1](x)*db_c[j+1](x)*expf(x)
+                        ddexpf = lambda x: db_c[i+1](x)*db_c[j+1](x)*expf(x)
                         # now compute the expectation of each derivative
-                        pE = quad(dexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1])[0]
-                        h[i,j] += pE/pF[0]
+                        pE = quad(ddexpf,xrangeij[i+1,j+1,0],xrangeij[i+1,j+1,1])[0]
+                        h[i,j] += N*pE/pF
   
         for i in range(nspline-1):  
             for j in range(i+1,nspline-1):
