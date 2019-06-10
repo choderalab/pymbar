@@ -14,9 +14,9 @@ nplot = 1000
 # set minimizer options to display. Apprently does not exist for BFGS. Probably don't need to set eps.
 optimize_options = {'disp':True, 'tol':10**(-3)}
 #methods = ['histogram','kde','sumkl-3','sumkl-3','simple-3','weighted-3']
-methods = ['kde','simple-3']
-#optimization_algorithm = 'L-BFGS-B'
-optimization_algorithm = 'Custom-NR'
+methods = ['kde','kl-3']
+optimization_algorithm = 'L-BFGS-B'
+#optimization_algorithm = 'Custom-NR'
 #optimization_algorithm = 'Newton-CG'
 colors = dict()
 colors['histogram'] = 'k:'
@@ -285,33 +285,43 @@ for method in methods:
     print("time for method {:s} is {:2f} s".format(method,times[method]))
 
 #now, plot these
-mc_parameters = {"niterations":10000, "fraction_change":0.02, "sample_every": 50, 
-                 "prior": lambda x: 1,"print_every":100}
+mc_parameters = {"niterations":1000, "fraction_change":0.04, "sample_every": 10, 
+                 "prior": lambda x: 1,"print_every":1000}
 
-csamples, logposteriors, bspline = pmf.SampleDistribution(chi_n, pmf_type = 'spline', 
-                                                          spline_parameters = spline_parameters, 
-                                                          mc_parameters = mc_parameters)
+pmf.SampleParameterDistribution(chi_n, pmf_type = 'spline', 
+                                spline_parameters = spline_parameters, 
+                                mc_parameters = mc_parameters)
 plt.clf()
-plt.hist(logposteriors)
-plt.savefig('posterior.pdf')
+plt.hist(pmf.mc_data['logposteriors'])
+plt.savefig('bayes_posterior.pdf')
 
-# determine confidence intervals
-nsamples = len(logposteriors)
-samplevals = np.zeros([nplot,nsamples])
-for n in range(nsamples):
-    pcurve = BSpline(bspline.t,csamples[:,n],bspline.k)
-    samplevals[:,n] = pcurve(xplot)
-
-# now determine 
-ylows = np.zeros(len(xplot))
-yhighs = np.zeros(len(xplot))
-ymedians = np.zeros(len(xplot))
-for n in range(len(xplot)):
-    ylows[n] = np.percentile(samplevals[n,:],17)
-    yhighs[n] = np.percentile(samplevals[n,:],83)
-    ymedians[n] = np.percentile(samplevals[n,:],50)
+CI_results = pmf.GetConfidenceIntervals(xplot,2.5,97.5,reference='zero')
 plt.clf()
-plt.plot(xplot,yout[method],colors[method],label=method)
-plt.fill_between(xplot,ylows-ymedians+yout[method],yhighs-ymedians+yout[method],color=colors[method][0],alpha=0.3)
+#ylow = (CI_results['plow']-CI_results['median'])+CI_results['values']
+#yhigh = (CI_results['phigh']-CI_results['median'])+CI_results['values']
+ylow = CI_results['plow']
+yhigh = CI_results['phigh']
+plt.plot(xplot,CI_results['values'],colors[method],label=method)
+plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
+plt.title('95 percent confidence intervals')
 plt.legend()
-plt.savefig('bayesian.pdf')
+plt.savefig('bayesian_95.pdf')
+
+CI_results = pmf.GetConfidenceIntervals(xplot,16,84)
+plt.clf()
+plt.plot(xplot,CI_results['values'],colors[method],label=method)
+# examine this: why aren't the values in the same places as the medians?
+#ylow = (CI_results['plow']-CI_results['median'])+CI_results['values']
+#yhigh = (CI_results['phigh']-CI_results['median'])+CI_results['values']
+ylow = CI_results['plow']
+yhigh = CI_results['phigh']
+plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
+plt.title('1 sigma percent confidence intervals')
+plt.legend()
+plt.savefig('bayesian_1sigma.pdf')
+
+CI_results = pmf.GetConfidenceIntervals(bin_center_i,16,84)
+df = (CI_results['phigh']-CI_results['plow'])/2
+print("PMF (in units of kT) with 1 sigma errors from posterior sampling for {:s}".format(method))
+for i in range(nbins):
+    print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results['values'][i], df[i]))
