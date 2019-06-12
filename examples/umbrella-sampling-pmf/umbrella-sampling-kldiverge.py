@@ -15,9 +15,9 @@ nplot = 1000
 optimize_options = {'disp':True, 'tol':10**(-3)}
 #methods = ['histogram','kde','sumkl-3','sumkl-3','simple-3','weighted-3']
 methods = ['kde','kl-3']
-optimization_algorithm = 'L-BFGS-B'
+#optimization_algorithm = 'L-BFGS-B'
 #optimization_algorithm = 'Custom-NR'
-#optimization_algorithm = 'Newton-CG'
+optimization_algorithm = 'Newton-CG'
 colors = dict()
 colors['histogram'] = 'k:'
 colors['kde'] = 'k-'
@@ -61,8 +61,8 @@ beta = 1.0 / (kB * temperature) # inverse temperature of simulations (in 1/(kJ/m
 chi_min = -180.0 # min for PMF
 chi_max = +180.0 # max for PMF
 nbins = 40 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
-nsplines = 15
-nbootstraps = 0
+nsplines = 40
+nbootstraps = 40
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32) # N_k[k] is the number of snapshots from umbrella simulation k
 K_k = np.zeros([K], np.float64) # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
@@ -186,11 +186,10 @@ for k in range(K):
         # Compute energy of snapshot n from simulation k in umbrella potential l
         u_kln[k,:,n] = u_kn[k,n] + beta_k[k] * (K_k/2.0) * dchi**2
 
-# Initialize histogram PMF for comparison:
-#initialize PMF with the data collected
+# initialize PMF with the data collected.
 pmf = pymbar.PMF(u_kln, N_k, verbose = True)
 
-# define the bias potentials needed for some method
+# define the bias potentials needed for umbrella sampling.
 def bias_potential(x,k):
     dchi = x - chi0_k[k]
     # vectorize the conditional
@@ -198,11 +197,11 @@ def bias_potential(x,k):
     dchi = i*(360.0 - np.fabs(dchi)) + (1-i)*dchi
     return beta_k[k]* (K_k[k] /2.0) * dchi**2
 
-times = dict() # keep track of times each method takes
+times = dict() # keep track of time elaped each method takes
 
-xplot = np.linspace(chi_min,chi_max,nplot)
+xplot = np.linspace(chi_min,chi_max,nplot)  # number of points we are plotting
 f_i_kde = None # We check later if these have been defined or not
-xstart = np.linspace(chi_min,chi_max,nsplines*2)
+xstart = np.linspace(chi_min,chi_max,nsplines*2) # the data we used initially to parameterize the splines.
 
 for method in methods:
     start = timer()
@@ -234,7 +233,7 @@ for method in methods:
         if method[:6] == 'simple':
             spline_parameters['spline_weights'] = 'simplesum'
 
-        spline_parameters['nspline'] = nsplines
+        spline_parameters['nspline'] = nsplines 
         spline_parameters['spline_initialize'] = 'explicit'
 
         # need to initialize: use KDE results for now (assumes KDE exists)
@@ -284,16 +283,28 @@ plt.savefig('compare_pmf_{:d}.pdf'.format(nsplines))
 for method in methods:
     print("time for method {:s} is {:2f} s".format(method,times[method]))
 
-#now, plot these
-mc_parameters = {"niterations":1000, "fraction_change":0.04, "sample_every": 10, 
-                 "prior": lambda x: 1,"print_every":1000}
+#import this for the prior
+from scipy.stats import multivariate_normal
+def deltag(c,scalef=90,n=nsplines):
+    # we want to impose a smoothness prior. So we want all differences to be chosen from a Gaussian distribution.
+    # looking at the preliminary results, something changing by 15 over 60 degrees is common.  So we want this to have 
+    # reasonable probability. 60 degrees is 1/6 of the range.  So our possible rate of change is 15/(1/6) = 90 over the range
+    # The amount changed per spline coefficient will be roughly 90/nspline.  We want this degree of curvature to have relatively 
+    # little penalty, so we'll make this sigma.  So sigma = 90/nsplines, sigma = 90/nsplines
+    cdiff = np.diff(c)
+    logp = multivariate_normal.logpdf([cdiff],mean=None,cov=(scalef/n)*np.eye(len(cdiff))) # could be made more efficient, not worth it.
+    return logp
 
+mc_parameters = {"niterations":200000, "fraction_change":0.05, "sample_every": 20, 
+                 "prior": lambda x: deltag(x),"print_every":1000}
+
+# 'decorrelate' subsamples the data.
 pmf.SampleParameterDistribution(chi_n, pmf_type = 'spline', 
                                 spline_parameters = spline_parameters, 
-                                mc_parameters = mc_parameters)
+                                mc_parameters = mc_parameters, decorrelate = True)
 plt.clf()
 plt.hist(pmf.mc_data['logposteriors'])
-plt.savefig('bayes_posterior.pdf')
+plt.savefig('bayes_posterior_{:d}.pdf'.format(nsplines))
 
 CI_results = pmf.GetConfidenceIntervals(xplot,2.5,97.5,reference='zero')
 plt.clf()
@@ -305,7 +316,7 @@ plt.plot(xplot,CI_results['values'],colors[method],label=method)
 plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
 plt.title('95 percent confidence intervals')
 plt.legend()
-plt.savefig('bayesian_95.pdf')
+plt.savefig('bayesian_95_{:d}.pdf'.format(nsplines))
 
 CI_results = pmf.GetConfidenceIntervals(xplot,16,84)
 plt.clf()
@@ -317,11 +328,17 @@ ylow = CI_results['plow']
 yhigh = CI_results['phigh']
 plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
 plt.title('1 sigma percent confidence intervals')
-plt.legend()
-plt.savefig('bayesian_1sigma.pdf')
+plt.savefig('bayesian_1sigma_{:d}.pdf'.format(nsplines))
 
 CI_results = pmf.GetConfidenceIntervals(bin_center_i,16,84)
 df = (CI_results['phigh']-CI_results['plow'])/2
 print("PMF (in units of kT) with 1 sigma errors from posterior sampling for {:s}".format(method))
 for i in range(nbins):
     print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results['values'][i], df[i]))
+
+plt.clf()
+samples = pmf.mc_data['samples']
+[lp,lt] = np.shape(samples)
+for p in range(lp):
+    plt.plot(np.arange(lt),samples[p,:],label=p)
+plt.savefig("parameter_time_series_{:d}.pdf".format(nsplines))

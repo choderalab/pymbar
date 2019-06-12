@@ -28,6 +28,7 @@ import numpy.linalg as linalg
 import pymbar
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
+from pymbar import timeseries
 
 # bunch of imports needed for doing newton optimization of B-splines
 from scipy.interpolate import BSpline, make_lsq_spline
@@ -1105,7 +1106,9 @@ class PMF:
             x_n,
             pmf_type='spline',
             spline_parameters=None,
-            mc_parameters=None):
+            mc_parameters=None,
+            decorrelate=True,
+            ):
 
         # determine the range of the bspline at the start of the
         # process: changes are made as fractions of this
@@ -1150,14 +1153,14 @@ class PMF:
             mc_parameters['sample_every'] = 50
         if 'print_every' not in mc_parameters:
             mc_parameters['print_every'] = 1000
-        if 'prior' not in mc_parameters:
-            mc_parameters['prior'] = lambda x: 1
+        if 'logprior' not in mc_parameters:
+            mc_parameters['logprior'] = lambda x: 0
 
         niterations = mc_parameters['niterations']
         fraction_change = mc_parameters['fraction_change']
         sample_every = mc_parameters['sample_every']
         print_every = mc_parameters['print_every']
-        prior = mc_parameters['prior']
+        logprior = mc_parameters['logprior']
 
         # ensure normalization of spline
         def prob(x): return np.exp(-self.bspline(x))
@@ -1183,17 +1186,37 @@ class PMF:
         else:
             w_n = self.w_n
         for n in range(niterations):
-            results = self._MCStep(x_n, w_n, dc, xrange, spline_weights, prior)
+            results = self._MCStep(x_n, w_n, dc, xrange, spline_weights, logprior)
             if n % sample_every == 0:
                 csamples[:, n // sample_every] = results['c']
                 logposteriors[n // sample_every] = results['logposterior']
             if n % print_every == 0:
-                print("MC Step {:d} of {:d}".format(n, niterations))
-                print(self.naccept)
+                #print("MC Step {:d} of {:d}".format(n, niterations))
+                print("MC Step {:d} of {:d}".format(n, niterations),str(results['logposterior']),str(self.bspline.c))
         # We now have a distribution of samples of parameters sampled according
         # to the posterior.
+
+        # decorrelate the data
+        if decorrelate:
+            t_mc, g_mc, Neff = timeseries.detectEquilibration(logposteriors)
+            print("First equilibration sample is {:d} of {:d}".format(t_mc,len(logposteriors)))
+            equil_logp = logposteriors[t_mc:]
+            g_mc = timeseries.statisticalInefficiency(equil_logp)
+            print("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
+            g_c = np.zeros(len(c))
+            for nc in range(len(c)):
+                g_c[nc] = timeseries.statisticalInefficiency(csamples[nc,t_mc:])
+                #g_c[nc] = 1
+            print("Time series for spline parameters are: {:s}",str(g_c)) 
+            #maxgc = np.max(g_c)
+            maxgc = np.mean(g_c)
+            indices = timeseries.subsampleCorrelatedData(equil_logp, g=maxgc)
+            logposteriors = equil_logp[indices]
+            csamples = (csamples[:,t_mc:])[:,indices]
+            print("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
         print("Done MC sampling")
         print("Acceptance rate: {:5.3f}".format(self.naccept / niterations))
+        
         self.mc_data['samples'] = csamples
         self.mc_data['logposteriors'] = logposteriors
 
@@ -1282,12 +1305,12 @@ class PMF:
 
         return loglikelihood
 
-    def _MCStep(self, x_n, w_n, stepsize, xrange, spline_weights, prior):
+    def _MCStep(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
 
         if not self.first_step:
             c = self.bspline.c
             self.previous_logposterior = self._get_MC_loglikelihood(
-                x_n, w_n, spline_weights, self.bspline, xrange) + np.log(prior(c))
+                x_n, w_n, spline_weights, self.bspline, xrange) + logprior(c)
             cold = self.bspline.c
             self.first_step = True
             # create an extra one we can carry around
@@ -1312,7 +1335,7 @@ class PMF:
         loglikelihood = self._get_MC_loglikelihood(
             x_n, w_n, spline_weights, self.newspline, xrange)
 
-        newlogposterior = loglikelihood + np.log(prior(cnew))
+        newlogposterior = loglikelihood + logprior(cnew)
         dlogposterior = newlogposterior - (self.previous_logposterior)
         accept = False
         if dlogposterior <= 0:
@@ -1329,7 +1352,6 @@ class PMF:
         results = dict()
         results['c'] = self.bspline.c
         results['logposterior'] = self.previous_logposterior
-        #print(results['logposterior'])
         return results
 
     def _bspline_calculate_f(
