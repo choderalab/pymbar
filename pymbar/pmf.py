@@ -271,6 +271,7 @@ class PMF:
             - 'fkbias': array of functions that return the Kth bias potential for each function
             - 'nspline': number of spline points
             - 'kdegree': degree of the spline.  Default is cubic ('3')
+            - 'objective': 'probability', 'pmf' # whether to fit the PMF or the probability. Currently only supports pmf.
 
         Returns:
 
@@ -1179,7 +1180,7 @@ class PMF:
         self.naccept = 0
         csamples = np.zeros([len(c), int(niterations) // int(sample_every)])
         logposteriors = np.zeros(int(niterations) // int(sample_every))
-        self.first_step = False
+        self.first_step = True
         if spline_weights == 'sumkldivergence':
             # sum along the w_kn for sumkldivergence. Uses (\sum_N_k w_nk)
             w_n = np.sum(self.w_kn, axis=1)
@@ -1307,10 +1308,10 @@ class PMF:
 
     def _MCStep(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
 
-        if not self.first_step:
+        if self.first_step:
             c = self.bspline.c
             self.previous_logposterior = self._get_MC_loglikelihood(
-                x_n, w_n, spline_weights, self.bspline, xrange) + logprior(c)
+                x_n, w_n, spline_weights, self.bspline, xrange) - logprior(c)
             cold = self.bspline.c
             self.first_step = True
             # create an extra one we can carry around
@@ -1335,7 +1336,7 @@ class PMF:
         loglikelihood = self._get_MC_loglikelihood(
             x_n, w_n, spline_weights, self.newspline, xrange)
 
-        newlogposterior = loglikelihood + logprior(cnew)
+        newlogposterior = loglikelihood - logprior(cnew)
         dlogposterior = newlogposterior - (self.previous_logposterior)
         accept = False
         if dlogposterior <= 0:

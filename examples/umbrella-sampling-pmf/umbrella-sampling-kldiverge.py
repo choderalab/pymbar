@@ -285,18 +285,18 @@ for method in methods:
 
 #import this for the prior
 from scipy.stats import multivariate_normal
-def deltag(c,scalef=90,n=nsplines):
+def deltag(c,scalef=360,n=nsplines):
     # we want to impose a smoothness prior. So we want all differences to be chosen from a Gaussian distribution.
     # looking at the preliminary results, something changing by 15 over 60 degrees is common.  So we want this to have 
     # reasonable probability. 60 degrees is 1/6 of the range.  So our possible rate of change is 15/(1/6) = 90 over the range
     # The amount changed per spline coefficient will be roughly 90/nspline.  We want this degree of curvature to have relatively 
-    # little penalty, so we'll make this sigma.  So sigma = 90/nsplines, sigma = 90/nsplines
+    # little penalty, so we'll make this sigma/4.  So sigma/4 = 90/nsplines, sigma = 360/nsplines
     cdiff = np.diff(c)
     logp = multivariate_normal.logpdf([cdiff],mean=None,cov=(scalef/n)*np.eye(len(cdiff))) # could be made more efficient, not worth it.
     return logp
 
-mc_parameters = {"niterations":200000, "fraction_change":0.05, "sample_every": 20, 
-                 "prior": lambda x: deltag(x),"print_every":1000}
+mc_parameters = {"niterations":100000, "fraction_change":0.05, "sample_every": 20, 
+                 "logprior": lambda x: deltag(x),"print_every":1000}
 
 # 'decorrelate' subsamples the data.
 pmf.SampleParameterDistribution(chi_n, pmf_type = 'spline', 
