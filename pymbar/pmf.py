@@ -98,6 +98,16 @@ class PMF:
            getPMF: given coordinates, generate the PMF at each coordinate (and uncertainty)
 
            getMBAR: return the underlying mbar object.
+           
+           getKDE: return the underlying kde object.
+
+           sampleParameterDistribution: Only works for pmf_type =
+           'spline'. Sample the space of spline parameters according
+           to the likelihood function.
+
+           getConfidenceIntervals: if sampleParameterDistribution has
+           been called, generates confidence intervals for the curves
+           given the posterior distribution.
 
         Parameters
         ----------
@@ -234,7 +244,7 @@ class PMF:
         ----------
 
         pmf_type: string
-             options = 'histogram', 'kde', 'max_likelihood'
+             options = 'histogram', 'kde', 'spline'
 
         u_n : np.ndarray, float, shape=(N)
             u_n[n] is the reduced potential energy of snapshot n of state for which the PMF is to be computed.
@@ -271,7 +281,7 @@ class PMF:
             - 'fkbias': array of functions that return the Kth bias potential for each function
             - 'nspline': number of spline points
             - 'kdegree': degree of the spline.  Default is cubic ('3')
-            - 'objective': 'probability', 'pmf' # whether to fit the PMF or the probability. Currently only supports pmf.
+        objective: 'probability', 'pmf' # whether to fit the PMF or the probability. Currently only supports pmf.
 
         Returns:
 
@@ -1097,12 +1107,16 @@ class PMF:
         """
 
         if self.pmf_type == 'kde':
-            return self.kde
+            if self.kde != None:
+                return self.kde
+            else:
+            raise ParameterError(
+                'Can\'t return the KernelDensity object because kde not yet defined')                
         else:
             raise ParameterError(
                 'Can\'t return the KernelDensity object because pmf_type != kde')
 
-    def SampleParameterDistribution(
+    def sampleParameterDistribution(
             self,
             x_n,
             pmf_type='spline',
@@ -1221,7 +1235,7 @@ class PMF:
         self.mc_data['samples'] = csamples
         self.mc_data['logposteriors'] = logposteriors
 
-    def GetConfidenceIntervals(self, xplot, plow, phigh, reference='zero'):
+    def getConfidenceIntervals(self, xplot, plow, phigh, reference='zero'):
         """
         xplot is the data points we want to plot at
         plow is the lowest percentile
@@ -1306,8 +1320,37 @@ class PMF:
 
         return loglikelihood
 
-    def _MCStep(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
+    def _MCStep(self, 
+                x_n, 
+                w_n, 
+                stepsize, 
+                xrange, 
+                spline_weights, 
+                logprior):
 
+        """ sample over the posterior space of the PMF as splined.
+
+        Parameters:
+        ===========
+
+        x_n: samples from the biased distribution
+        w_n: weights of each sample.
+        stepsize: sigma of the normal distribution used to propose steps
+        xrange: Range the probility distribution is defined o er.
+        spline_weights: Type of weighting used for maximum likelihood for splines.  See class 
+                        definition for description of types.
+        logprior: function describing the prior of the parameters. Default is uniform.
+
+        Outputs:
+        ========
+
+        results dict(), containing:
+            * 'c' the value of the spline constants (len nsplines - we always assume normalized 
+            * 'logposterior': the current value of the logoposterior.
+
+        NOTE: modifies several saved variables saved in the structure.x
+
+        """
         if self.first_step:
             c = self.bspline.c
             self.previous_logposterior = self._get_MC_loglikelihood(
@@ -1367,6 +1410,28 @@ class PMF:
             xrangei,
             xrangeij):
 
+        """ Calculate the maximum likelihood / KL divergence of the PMF represented using B-splines.
+
+        Parameters:
+        ===========
+
+        xi: spline coefficients, array of floats size nspline-1
+        w_n: weights for each sample.
+        x_n: values of each sample.
+        nspline: number of spline points
+        kdegree: degree of spline
+        spline_weights: type of spline weighting (i.e. choice of maximum likelihood)
+        xrange: range the PMF is defined over
+        xrangei: range the ith basis function of the spline is defined over
+        xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.
+
+        Output:
+        =======
+        
+        function value: scalar float
+
+        """
+
         K = self.mbar.K
         N_k = self.mbar.N_k
         N = self.N
@@ -1418,6 +1483,7 @@ class PMF:
         self.bspline_pF = pF
         return f
 
+
     def _bspline_calculate_g(
             self,
             xi,
@@ -1430,6 +1496,30 @@ class PMF:
             xrangei,
             xrangeij):
 
+        """ Calculate the gradient of the maximum likelihood / KL divergence of the PMF represented using B-splines.
+
+        Parameters:
+        ===========
+
+        xi: spline coefficients, array of floats size nspline-1
+        w_n: weights for each sample.
+        x_n: values of each sample.
+        nspline: number of spline points
+        kdegree: degree of spline
+        spline_weights: type of spline weighting (i.e. choice of maximum likelihood)
+        xrange: range the PMF is defined over
+        xrangei: range the ith basis function of the spline is defined over   
+        xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.  
+         
+        xrangeij is not used, but used to keep consistent call arguments among f,g,h calls.
+                                                                                  
+
+        Output:
+        =======
+        
+        gradient: float, size (nspline-1)
+
+        """
         ##### COMPUTE THE GRADIENT #######
         # The gradient of the function is \sum_n [\sum_k W_k(x_n)] dF(phi(x_n))/dtheta_i - \sum_k <dF/dtheta>_k
         #
@@ -1504,6 +1594,7 @@ class PMF:
         self.bspline_pE = pE
         return g
 
+
     def _bspline_calculate_h(
             self,
             xi,
@@ -1516,6 +1607,31 @@ class PMF:
             xrangei,
             xrangeij):
 
+        """ Calculate the Hessian of the maximum likelihood / KL divergence of the PMF represented using B-splines.
+
+        Parameters:
+        ===========
+
+        xi: spline coefficients, array of floats size nspline-1
+        w_n: weights for each sample.
+        x_n: values of each sample.
+        nspline: number of spline points
+        kdegree: degree of spline
+        spline_weights: type of spline weighting (i.e. choice of maximum likelihood)
+        xrange: range the PMF is defined over
+        xrangei: range the ith basis function of the spline is defined over
+        xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.
+
+        Output:
+        =======
+        
+        Hessian: nfloat, size (nspline-1) x (nspline - 1)
+
+        CURRENTLY assumes that the gradient has already been called at
+        the current value of the parameters.  Otherwise, it fails.  This means it only
+        works for certain algorithms.
+
+        """
         K = self.mbar.K
         N_k = self.mbar.N_k
         N = np.sum(N_k)
@@ -1575,6 +1691,17 @@ class PMF:
         return h
 
     def _val_to_spline(self, x):
+        """
+        Convert a set of B-spline coefficients into a BSpline object
+
+        Parameters
+        ==========
+
+        x: the last N-1 coefficients for a bspline; we assume the initial coefficient is set to zero.
+
+        Output: A bspline object
+
+        """
 
         # create new spline with values
         xnew = np.zeros(len(x) + 1)

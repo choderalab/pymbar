@@ -62,7 +62,7 @@ chi_min = -180.0 # min for PMF
 chi_max = +180.0 # max for PMF
 nbins = 40 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
 nsplines = 40
-nbootstraps = 40
+nbootstraps = 0
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32) # N_k[k] is the number of snapshots from umbrella simulation k
 K_k = np.zeros([K], np.float64) # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
