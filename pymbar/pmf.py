@@ -417,6 +417,12 @@ class PMF:
                     spline_parameters['optimize_options'] = {
                         'disp': True, 'ftol': 10**(-7), 'xtol': 10**(-7)}
 
+                if 'tol' in spline_parameters['optimize_options']:
+                    # scipy doesn't like 'tol' within options
+                    scipy_tol = spline_parameters['optimize_options']['tol']
+                    spline_parameters['optimize_options'].pop('tol', None)
+                else:
+                    scipy_tol = None # this is just the default anyway.
                 if spline_parameters['optimization_algorithm'] not in [
                         'Newton-CG', 'CG', 'BFGS', 'L-BFGS-B', 'TNC', 'SLSQP']:
                     raise ParameterErrorr(
@@ -702,6 +708,7 @@ class PMF:
                         args=(w_n,x_nb,nspline,kdegree,spline_weights,xrange,xrangei,xrangeij),
                         method=spline_parameters['optimization_algorithm'],
                         jac=self._bspline_calculate_g,
+                        tol = scipy_tol,
                         hess=hess,
                         options=spline_parameters['optimize_options'])
                     self.bspline = self._val_to_spline(results['x'])
@@ -1110,8 +1117,8 @@ class PMF:
             if self.kde != None:
                 return self.kde
             else:
-            raise ParameterError(
-                'Can\'t return the KernelDensity object because kde not yet defined')                
+                raise ParameterError(
+                    'Can\'t return the KernelDensity object because kde not yet defined')                
         else:
             raise ParameterError(
                 'Can\'t return the KernelDensity object because pmf_type != kde')

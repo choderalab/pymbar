@@ -285,28 +285,29 @@ for method in methods:
 
 #import this for the prior
 from scipy.stats import multivariate_normal
-def deltag(c,scalef=360,n=nsplines):
+def deltag(c,scalef=500,n=nsplines):
     # we want to impose a smoothness prior. So we want all differences to be chosen from a Gaussian distribution.
     # looking at the preliminary results, something changing by 15 over 60 degrees is common.  So we want this to have 
     # reasonable probability. 60 degrees is 1/6 of the range.  So our possible rate of change is 15/(1/6) = 90 over the range
     # The amount changed per spline coefficient will be roughly 90/nspline.  We want this degree of curvature to have relatively 
-    # little penalty, so we'll make this sigma/4.  So sigma/4 = 90/nsplines, sigma = 360/nsplines
+    # little penalty, so we'll make this ~sigma/6.  So sigma/6 = 90/nsplines, sigma \approx 500/nsplines
+    # we twiddled around so that the maximum likelihood was within the range . . . 
     cdiff = np.diff(c)
     logp = multivariate_normal.logpdf([cdiff],mean=None,cov=(scalef/n)*np.eye(len(cdiff))) # could be made more efficient, not worth it.
     return logp
 
-mc_parameters = {"niterations":100000, "fraction_change":0.05, "sample_every": 20, 
-                 "logprior": lambda x: deltag(x),"print_every":1000}
+mc_parameters = {"niterations":10000, "fraction_change":0.05, "sample_every": 10, 
+                 "logprior": lambda x: deltag(x),"print_every":500}
 
 # 'decorrelate' subsamples the data.
-pmf.SampleParameterDistribution(chi_n, pmf_type = 'spline', 
+pmf.sampleParameterDistribution(chi_n, pmf_type = 'spline', 
                                 spline_parameters = spline_parameters, 
                                 mc_parameters = mc_parameters, decorrelate = True)
 plt.clf()
 plt.hist(pmf.mc_data['logposteriors'])
 plt.savefig('bayes_posterior_{:d}.pdf'.format(nsplines))
 
-CI_results = pmf.GetConfidenceIntervals(xplot,2.5,97.5,reference='zero')
+CI_results = pmf.getConfidenceIntervals(xplot,2.5,97.5,reference='zero')
 plt.clf()
 #ylow = (CI_results['plow']-CI_results['median'])+CI_results['values']
 #yhigh = (CI_results['phigh']-CI_results['median'])+CI_results['values']
@@ -318,7 +319,7 @@ plt.title('95 percent confidence intervals')
 plt.legend()
 plt.savefig('bayesian_95_{:d}.pdf'.format(nsplines))
 
-CI_results = pmf.GetConfidenceIntervals(xplot,16,84)
+CI_results = pmf.getConfidenceIntervals(xplot,16,84)
 plt.clf()
 plt.plot(xplot,CI_results['values'],colors[method],label=method)
 # examine this: why aren't the values in the same places as the medians?
@@ -330,7 +331,7 @@ plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
 plt.title('1 sigma percent confidence intervals')
 plt.savefig('bayesian_1sigma_{:d}.pdf'.format(nsplines))
 
-CI_results = pmf.GetConfidenceIntervals(bin_center_i,16,84)
+CI_results = pmf.getConfidenceIntervals(bin_center_i,16,84)
 df = (CI_results['phigh']-CI_results['plow'])/2
 print("PMF (in units of kT) with 1 sigma errors from posterior sampling for {:s}".format(method))
 for i in range(nbins):
