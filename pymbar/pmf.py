@@ -776,9 +776,25 @@ class PMF:
                 if b == 0:
                     self.pmf_function = self.bspline
                     savexi = xi
-                    # calculate the AIC (need to verify the scale of it)
-                    self.aic = 2 * len(self.bspline.c) - 2 * f
-                    self.bic = 0                             # can't remember BIC formula
+
+                    minusloglikelihood = self._bspline_calculate_f(
+                        savexi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+
+                    nparameters = len(savexi)
+
+                    # calculate the AIC
+                    # formula is: 2(number of parameters) - 2 * loglikelihood
+
+                    self.aic = 2*nparameters + 2*minusloglikelihood  
+
+                    # calculate the BIC
+                    # formula is: ln(number of data points) * (number of parameters) - 2 ln (likelihood at maximum)
+
+                    self.bic = 2*np.log(self.N) * len(xi) + 2*minusloglikelihood
+
+                    # potential problems: we don't compute the full log likelihood currently since we 
+                    # exclude the potential energy part - will have to see what this is in reference to. 
+                    # this shouldn't be too much of a problem, since we are interested in choosing BETWEEN models.
 
                 else:
                     self.pmf_functions.append(self.bspline)
@@ -790,6 +806,33 @@ class PMF:
             result_vals['timing'] = end - start
 
         return result_vals  # should we returrn results under some other conditions?
+
+    def getInformationCriteria(self,type='akaike'):
+
+        """
+        returns the Akaike Informatiton Criteria for the model if it exists.
+
+        Parameters:
+        ===========
+
+        type: string, Either 'Akaike' or 'Bayesian'
+
+        Output:
+        =======
+
+        information criteria 
+        """
+
+        if self.pmf_type != 'spline':
+            raise ParameterError(
+                "Information criteria currently only defined for spline approaches, you are currently using {:s}".format(type))
+        if type in ['akaike','Akaike','AIC','aic']:
+            return self.aic
+        elif type in ['bayesian','Bayesian','BIC','bic']:
+            return self.bic
+        else:
+            raise ParameterError(
+                "Information criteria of type \'{:s}\' not defined".format(type))
 
     def getPMF(self, x, uncertainties='from-lowest', pmf_reference=None):
         """
@@ -1127,9 +1170,10 @@ class PMF:
             self,
             x_n,
             pmf_type='spline',
-            spline_parameters=None,
-            mc_parameters=None,
-            decorrelate=True,
+            spline_parameters = None,
+            mc_parameters = None,
+            decorrelate = True,
+            verbose = True,
             ):
 
         # determine the range of the bspline at the start of the
@@ -1212,35 +1256,50 @@ class PMF:
             if n % sample_every == 0:
                 csamples[:, n // sample_every] = results['c']
                 logposteriors[n // sample_every] = results['logposterior']
-            if n % print_every == 0:
-                #print("MC Step {:d} of {:d}".format(n, niterations))
+            if n % print_every == 0 and verbose:
                 print("MC Step {:d} of {:d}".format(n, niterations),str(results['logposterior']),str(self.bspline.c))
+
         # We now have a distribution of samples of parameters sampled according
         # to the posterior.
 
         # decorrelate the data
+        t_mc = 0
+        g_mc = None
+
+        if verbose:
+            print("Done MC sampling")
+
         if decorrelate:
             t_mc, g_mc, Neff = timeseries.detectEquilibration(logposteriors)
             print("First equilibration sample is {:d} of {:d}".format(t_mc,len(logposteriors)))
             equil_logp = logposteriors[t_mc:]
             g_mc = timeseries.statisticalInefficiency(equil_logp)
-            print("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
+            if verbose:
+                print("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
             g_c = np.zeros(len(c))
             for nc in range(len(c)):
                 g_c[nc] = timeseries.statisticalInefficiency(csamples[nc,t_mc:])
-                #g_c[nc] = 1
-            print("Time series for spline parameters are: {:s}",str(g_c)) 
-            #maxgc = np.max(g_c)
-            maxgc = np.mean(g_c)
-            indices = timeseries.subsampleCorrelatedData(equil_logp, g=maxgc)
+            if verbose:
+                print("Time series for spline parameters are: {:s}".format(str(g_c))) 
+            maxgc = np.max(g_c)
+            meangc = np.mean(g_c)
+            guse = meangc
+            indices = timeseries.subsampleCorrelatedData(equil_logp, g=guse)
             logposteriors = equil_logp[indices]
             csamples = (csamples[:,t_mc:])[:,indices]
-            print("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
-        print("Done MC sampling")
-        print("Acceptance rate: {:5.3f}".format(self.naccept / niterations))
-        
+            if verbose:
+                print("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
+
         self.mc_data['samples'] = csamples
         self.mc_data['logposteriors'] = logposteriors
+        self.mc_data['mc_parameters'] = mc_parameters
+        self.mc_data['acceptance ratio'] = self.naccept / niterations
+        if verbose:
+            print("Acceptance rate: {:5.3f}".format(self.mc_data['acceptance ratio']))
+        self.mc_data['nequil'] = t_mc # the start of the "equilibrated" data set
+        self.mc_data['g_logposterior'] = g_mc # statistical efficiency of the log posterior
+        self.mc_data['g_parameters'] = g_c # statistical efficiency of the parametere
+        self.mc_data['g'] = guse # statistical efficiency used for subsampling 
 
     def getConfidenceIntervals(self, xplot, plow, phigh, reference='zero'):
         """
@@ -1293,6 +1352,38 @@ class PMF:
         return_vals['values'] = yvals - ref
 
         return return_vals
+
+    def getMCData(self):
+
+        """ convenience function to get MC data 
+
+        Parameters:
+        ===========
+
+        None
+
+        Outputs:
+        ========
+
+        results data dictionary, with entries:
+
+        mc_data['samples']: samples of the parameters with size [# parameters x # points]
+        mc_data['logposteriors']: log posteriors (which might be defined with respect to some reference) as a time series size [# points]
+        self.mc_data['mc_parameters']: dictionary of parameters that were run with 
+        self.mc_data['acceptance ratio']: acceptance ratio overall of the MC chain
+        self.mc_data['nequil']: the start of the "equilibrated" data set (i.e. nequil-1 is the number that werer thrown out)
+        self.mc_data['g_logposterior']: statistical efficiency of the log posterior
+        self.mc_data['g_parameters']: statistical efficiency of the parametere
+        self.mc_data['g']: statistical efficiency used for subsampling   
+
+        """
+
+        if self.mc_data is None:
+            raise DataError(
+                "No MC sampling has been done, cannot construct confidence intervals")
+        else:
+            return self.mc_data
+
 
     def _get_MC_loglikelihood(self, x_n, w_n, spline_weights, spline, xrange):
 

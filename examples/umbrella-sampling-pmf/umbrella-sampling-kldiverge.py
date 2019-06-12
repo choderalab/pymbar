@@ -15,9 +15,9 @@ nplot = 1000
 optimize_options = {'disp':True, 'tol':10**(-3)}
 #methods = ['histogram','kde','sumkl-3','sumkl-3','simple-3','weighted-3']
 methods = ['kde','kl-3']
-#optimization_algorithm = 'L-BFGS-B'
+optimization_algorithm = 'L-BFGS-B'
 #optimization_algorithm = 'Custom-NR'
-optimization_algorithm = 'Newton-CG'
+#optimization_algorithm = 'Newton-CG'
 colors = dict()
 colors['histogram'] = 'k:'
 colors['kde'] = 'k-'
@@ -276,12 +276,18 @@ for method in methods:
 
     plt.errorbar(xplot,yout[method],yerr=yerr[method],errorevery=errorevery,label=method,fmt=colors[method])
 
+    if method not in ['histogram','kde']:
+        print("AIC for {:s} with {:d} nsplines is: {:f}".format(method, nsplines, pmf.getInformationCriteria(type='AIC')))
+        print("BIC for {:s} with {:d} nsplines is: {:f}".format(method, nsplines, pmf.getInformationCriteria(type='BIC')))
+
 plt.xlim([chi_min,chi_max])
 plt.legend()
 plt.savefig('compare_pmf_{:d}.pdf'.format(nsplines))
 
 for method in methods:
     print("time for method {:s} is {:2f} s".format(method,times[method]))
+
+
 
 #import this for the prior
 from scipy.stats import multivariate_normal
@@ -296,7 +302,7 @@ def deltag(c,scalef=500,n=nsplines):
     logp = multivariate_normal.logpdf([cdiff],mean=None,cov=(scalef/n)*np.eye(len(cdiff))) # could be made more efficient, not worth it.
     return logp
 
-mc_parameters = {"niterations":10000, "fraction_change":0.05, "sample_every": 10, 
+mc_parameters = {"niterations":1000, "fraction_change":0.05, "sample_every": 10, 
                  "logprior": lambda x: deltag(x),"print_every":500}
 
 # 'decorrelate' subsamples the data.
@@ -304,8 +310,10 @@ pmf.sampleParameterDistribution(chi_n, pmf_type = 'spline',
                                 spline_parameters = spline_parameters, 
                                 mc_parameters = mc_parameters, decorrelate = True)
 plt.clf()
-plt.hist(pmf.mc_data['logposteriors'])
-plt.savefig('bayes_posterior_{:d}.pdf'.format(nsplines))
+mc_results = getMCData()
+
+plt.hist(mc_results['logposteriors'])
+plt.savefig('bayes_posterior_histogram_n{:d}.pdf'.format(nsplines))
 
 CI_results = pmf.getConfidenceIntervals(xplot,2.5,97.5,reference='zero')
 plt.clf()
@@ -317,7 +325,7 @@ plt.plot(xplot,CI_results['values'],colors[method],label=method)
 plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
 plt.title('95 percent confidence intervals')
 plt.legend()
-plt.savefig('bayesian_95_{:d}.pdf'.format(nsplines))
+plt.savefig('bayesian_95p_n{:d}.pdf'.format(nsplines))
 
 CI_results = pmf.getConfidenceIntervals(xplot,16,84)
 plt.clf()
@@ -329,7 +337,7 @@ ylow = CI_results['plow']
 yhigh = CI_results['phigh']
 plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
 plt.title('1 sigma percent confidence intervals')
-plt.savefig('bayesian_1sigma_{:d}.pdf'.format(nsplines))
+plt.savefig('bayesian_1sigma_n{:d}.pdf'.format(nsplines))
 
 CI_results = pmf.getConfidenceIntervals(bin_center_i,16,84)
 df = (CI_results['phigh']-CI_results['plow'])/2
@@ -338,8 +346,8 @@ for i in range(nbins):
     print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results['values'][i], df[i]))
 
 plt.clf()
-samples = pmf.mc_data['samples']
+samples = mc_results['samples']
 [lp,lt] = np.shape(samples)
 for p in range(lp):
     plt.plot(np.arange(lt),samples[p,:],label=p)
-plt.savefig("parameter_time_series_{:d}.pdf".format(nsplines))
+plt.savefig("parameter_time_series_n{:d}.pdf".format(nsplines))
