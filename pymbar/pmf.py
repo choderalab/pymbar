@@ -26,6 +26,7 @@ import itertools as it
 import numpy as np
 import numpy.linalg as linalg
 import pymbar
+
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 from pymbar import timeseries
@@ -234,7 +235,11 @@ class PMF:
             spline_parameters=None,
             uncertainties='from-lowest',
             nbootstraps=0,
-            nseed=-1):
+            nseed=-1,
+            objective='pmf' # only relevant for splines, since 'histogram' and 'kde' fit probability.
+                            # I haven't yet found an always nonnegative spline yet for 'probability', 
+                            # though, which is required.
+            ):
         """
         Given an intialized MBAR object, a set of points,
         the desired energies at that point, and a method, generate
@@ -281,8 +286,9 @@ class PMF:
             - 'fkbias': array of functions that return the Kth bias potential for each function
             - 'nspline': number of spline points
             - 'kdegree': degree of the spline.  Default is cubic ('3')
-        objective: 'probability', 'pmf' # whether to fit the PMF or the probability. Currently only supports pmf.
-
+        objective: 'probability', 'pmf' # whether to fit the PMF or the probability.  
+                                        # 'kde' and 'histogram' is automatically probability, 
+                                        #  so only matters for splines.
         Returns:
 
             - result_vals: dictionary of results.
@@ -358,6 +364,11 @@ class PMF:
 
         self.mc_data = None  # we have not sampled MC data yet.
 
+        if objective not in ['pmf','probability']:
+            raise ParameterError(
+                "objective may only be \'pmf\' or \'probability\': you have selected {:s}".format(objective))
+        self.objective = objective # this is static, so can be set here
+
         if self.pmf_type == 'histogram':
 
             self.histogram_datas = list()
@@ -366,11 +377,11 @@ class PMF:
                 raise ParameterError(
                     'histogram_parameters[\'bin_edges\'] cannot be undefined with pmf_type = histogram')
 
-            self.bins = histogram_parameters['bin_edges']
+            bins = histogram_parameters['bin_edges']
 
             # First, determine the number of dimensions of the histogram. This can be determined
             # by the shape of bin_edges
-            dims = len(self.bins)
+            dims = len(bins)
             self.dims = dims  # store the dimensionality for checking later.
             self.histogram_parameters = histogram_parameters
 
@@ -399,6 +410,8 @@ class PMF:
             # zero this out so we know if we haven't called it yet.
             self.bspline = None
             self.pmf_functions = list()
+
+            self.spline_parameters = spline_parameters # save these for later references.
 
             spline_weights = spline_parameters['spline_weights']
 
@@ -439,6 +452,12 @@ class PMF:
                 # initialize to the bias free energies
                 if 'bias_centers' in spline_parameters:  # if we are provided bias center, use them
                     bias_centers = spline_parameters['bias_centers']
+                    sort_indices = np.argsort(bias_centers)
+                    if self.objective is 'pmf':
+                        initivals = self.mbar.f_k
+                    elif self.objective is 'probability':
+                        initivals = np.exp(-self.mbar.f_k)
+
                     K = self.mbar.K
                     if K < 2 * nspline:
                         noverfit = int(np.round(K / 2))
@@ -448,20 +467,19 @@ class PMF:
                             xrange[0], xrange[1], num=noverfit + 1 - kdegree, endpoint=True)
                         tinit[noverfit + 1:noverfit + kdegree + 1] = xrange[1]
                         # problem: bin centers might not actually be sorted.
-                        sort_indices = np.argsort(bias_centers)
                         binit = make_lsq_spline(
-                            bias_centers[sort_indices], self.mbar.f_k[sort_indices],
+                            bias_centers[sort_indices], initvals[sort_indices],
                             tinit, k=kdegree)
                         xinit = np.linspace(xrange[0], xrange[1], num=2 * nspline)
                         yinit = binit(xinit)
                     else:
-                        xinit = bias_centers
-                        yinit = self.mbar.f_k
+                        xinit = bias_centers[sort_indices]
+                        yinit = initvals[sort_indices]
                 else:
                     # assume equally spaced bias scenters
                     xinit = np.linspace(
                         xrange[0], xrange[1], self.mbar.K + 1)[1:-1]
-                    yinit = self.mbar.f_k
+                    yinit = initvals
 
             elif spline_parameters['spline_initialize'] == 'explicit':
                 if 'xinit' in spline_parameters:
@@ -470,7 +488,10 @@ class PMF:
                     raise ParameterError(
                         'spline_initialize set as explicit, but no xinit array specified')
                 if 'yinit' in spline_parameters:
-                    yinit = spline_parameters['yinit']
+                    if self.objective is 'pmf':
+                        yinit = spline_parameters['yinit']
+                    elif self.objective is 'probability':
+                        yinit = np.exp(-spline_parameters['yinit'])
                 else:
                     raise ParameterError(
                         'spline_initialize set as explicit, but no yinit array specified')
@@ -499,13 +520,18 @@ class PMF:
                 yinit[sort_indices],
                 t,
                 k=kdegree)
-            b.c = b.c - b.c[0]  # We zero out the first
-            # one, since the PMF is only determined up to a constant.
+            if self.objective is 'pmf':
+                # one, since the PMF is only determined up to a constant.
+                b.c = b.c - b.c[0]  # We zero out the first
+            elif self.objective is 'probability':
+                b.c = b.c/b.c[0]  # We norm out the first
             # the bspline coefficients are the variables we care about.
             xi = b.c[1:]
             xold = xi.copy()
 
             # The function is \sum_n [\sum_k W_k(x_n)] F(phi(x_n)) + \sum_k ln \int exp(-F(xi) - u_k(xi)) dxi
+            # or, if using a probability objective:
+            # The function is \sum_n [\sum_k W_k(x_n)] -log P(phi(x_n)) + \sum_k ln \int P(xi) exp(-u_k(xi))) dxi 
             # if we assume bsplines are of the form f(x) = a*b_i(x), then
             # dF/dtheta is simply the basis function that has support over that
             # region of space
@@ -578,6 +604,9 @@ class PMF:
                 # We will just recalculate the populations.
                 histogram_data = dict()
 
+                histogram_data['bins'] = bins # save for other functions.  
+                                              # Does not actually vary between bootstraps
+
                 # create the bins from the data.
                 # it's a 1D array, instead of a Nx1 array.  Reshape.
                 if len(np.shape(x_nb)) == 1:
@@ -588,7 +617,7 @@ class PMF:
                 for d in range(dims):
                     # bins returns 0 as out of bin.  We want to use -1 as out
                     # of bin
-                    bin_n[:, d] = np.digitize(x_nb[:, d], self.bins[d]) - 1
+                    bin_n[:, d] = np.digitize(x_nb[:, d], bins[d]) - 1
                 histogram_data['bin_n'] = bin_n  # bin counts
 
                 # now we need to loop over the bin_n and identify and label the
@@ -646,7 +675,7 @@ class PMF:
                 corner_vectors = list()
                 returnsize = list()
                 for d in range(dims):
-                    maxv = len(self.bins[d]) - 1
+                    maxv = len(bins[d]) - 1
                     corner_vectors.append(np.arange(0, maxv))
                     returnsize.append(maxv)
                 # iterator giving all bin locations in N dimensions.
@@ -711,7 +740,7 @@ class PMF:
                         tol = scipy_tol,
                         hess=hess,
                         options=spline_parameters['optimize_options'])
-                    self.bspline = self._val_to_spline(results['x'])
+                    self.bspline = self._val_to_spline(results['x'], form ='log')
                     savexi = results['x']
                     f = results['fun']
                 else:
@@ -770,8 +799,7 @@ class PMF:
                             print(
                                 "f = {:.10f}. gradient norm = {:.10f}".format(
                                     f, np.sqrt(dg)))
-
-                    self.bspline = self._val_to_spline(xi)
+                    self.bspline = self._val_to_spline(xi, form = 'log')
 
                 if b == 0:
                     self.pmf_function = self.bspline
@@ -892,17 +920,19 @@ class PMF:
         if self.pmf_type == 'histogram':
 
             # figure out which bins the values are in.
-            dims = len(self.bins)
+            nbins = self.histogram_data['nbins']
+            bins = self.histogram_data['bins']
+            dims = len(bins)
 
             if dims == 1:
                 # what gridpoint does each x fall into?
                 # -1 and nbinsperdim are out of range
-                loc_indices = np.digitize(x, self.bins[0]) - 1
+                loc_indices = np.digitize(x, bins[0]) - 1
             else:
                 loc_indices = np.zeros([len(x), dims], dtype=int)
                 for d in range(dims):
                     # -1 and nbinsperdim are out of range
-                    loc_indices[:, d] = np.digitize(x[:, d], self.bins[d]) - 1
+                    loc_indices[:, d] = np.digitize(x[:, d], bins[d]) - 1
 
             # figure out which grid point the pmf_reference is at
             if pmf_reference is not None:
@@ -913,9 +943,9 @@ class PMF:
                 for d in range(dims):
                     # -1 and nbins_per_dim are out of range
                     pmf_ref_grid[d] = np.digitize(
-                        pmf_reference[d], self.bins[d]) - 1
+                        pmf_reference[d], bins[d]) - 1
                     if pmf_ref_grid[d] == - \
-                            1 or pmf_ref_grid[d] == len(self.bins[d]):
+                            1 or pmf_ref_grid[d] == len(bins[d]):
                         raise ParameterError(
                             "Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(
                                 pmf_ref_grid[d], np.min(
@@ -927,7 +957,7 @@ class PMF:
                 # point on PMF.
 
                 df_i = np.zeros(len(self.histogram_data['f']), np.float64)
-
+                
                 if (uncertainties == 'from-lowest'):
                     # Determine bin index with lowest free energy.
                     j = self.histogram_data['f'].argmin()
@@ -937,30 +967,28 @@ class PMF:
                 if self.nbootstraps == 0:
                     # Compute uncertainties in free energy at each gridpoint by
                     # forming matrix of W_nk.
-                    N_k = np.zeros([self.K + self.nbins], np.int64)
+                    N_k = np.zeros([self.K + nbins], np.int64)
                     N_k[0:K] = self.N_k
-                    W_nk = np.zeros([self.N, self.K + self.nbins], np.float64)
+                    W_nk = np.zeros([self.N, self.K + nbins], np.float64)
                     W_nk[:, 0:K] = np.exp(self.mbar.Log_W_nk)
 
                     log_w_n = self.mbar._computeUnnormalizedLogWeights(
                         self.u_n)
-                    for i in range(
-                            self.nbins):  # loop over the nonzero bins, internal list numbering
+                    for i in range(nbins):  # loop over the nonzero bins, internal numbering
                         # Get indices of samples that fall in this bin.
-                        indices = np.where(self.bin_n == i)
+                        indices = np.where(self.histogram_data['bin_n'] == i)
 
                         # Compute normalized weights for this state.
                         W_nk[indices,
-                             K + i] = np.exp(log_w_n[indices] + self.f[i])
-
+                             K + i] = np.exp(log_w_n[indices] + self.histogram_data['f'][i])
+                        
                     # Compute asymptotic covariance matrix using specified
                     # method.
-                        Theta_ij = self.mbar._computeAsymptoticCovarianceMatrix(
-                            W_nk, N_k)
+                    Theta_ij = self.mbar._computeAsymptoticCovarianceMatrix(W_nk, N_k)
 
                     # Compute uncertainties with respect to difference in free energy
                     # from this state j.
-                    for i in range(self.nbins):
+                    for i in range(nbins):
                         df_i[i] = math.sqrt(
                             Theta_ij[K + i, K + i] + Theta_ij[K + j, K + j] - 2.0 * Theta_ij[K + i, K + j])
 
@@ -986,10 +1014,10 @@ class PMF:
 
                 # todo -- eliminate triple loop over nbins!
                 # Compute uncertainties in bin probabilities.
-                d2p_i = np.zeros([self.nbins], np.float64)
+                d2p_i = np.zeros([nbins], np.float64)
                 for k in range(nbins):
-                    for i in range(self.nbins):
-                        for j in range(self.nbins):
+                    for i in range(nbins):
+                        for j in range(nbins):
                             delta_ik = 1.0 * (i == k)
                             delta_jk = 1.0 * (j == k)
                             d2p_i[k] += p_i[k] * (p_i[i] - delta_ik) * p_i[k] * (
@@ -1005,7 +1033,7 @@ class PMF:
             # figure out how many grid points in each direction
             maxp = np.zeros(dims, int)
             for d in range(dims):
-                maxp[d] = len(self.bins[d])
+                maxp[d] = len(bins[d])
 
             for i, l in enumerate(loc_indices):
                 # Must be a way to list comprehend this?
@@ -1038,9 +1066,9 @@ class PMF:
                     # Report uncertainties in all free energy differences as
                     # well.
                     diag = Theta_ij.diagonal()
-                    dii = diag[K, K + self.nbins]  # appears broken?  Not used?
+                    dii = diag[K, K + nbins]  # appears broken?  Not used?
                     d2f_ij = dii + dii.transpose() - 2 * \
-                        Theta_ij[K:K + self.nbins, K:K + self.nbins]
+                        Theta_ij[K:K + nbins, K:K + nbins]
 
                     # unsquare uncertainties
                     df_ij = np.sqrt(d2f_ij)
@@ -1069,7 +1097,7 @@ class PMF:
                         self.histogram_data['f']), self.nbootstraps])
                     for b in range(self.nbootstraps):
                         fall[:, b] = self.histogram_datas[b]['f'] - \
-                            self.histogram_Data[b]['f'].transpose()
+                            self.histogram_data[b]['f'].transpose()
                     dfxij_vals = np.std(fall, axis=2)
 
                 # Return dimensionless free energy and uncertainty.
@@ -1083,7 +1111,7 @@ class PMF:
             # it's a 1D array, instead of a Nx1 array.  Reshape.
             if len(np.shape(x)) <= 1:
                 x = x.reshape(-1, 1)
-            f_i = -self.kde.score_samples(x)
+            f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
 
             if uncertainties == 'from-lowest':
                 fmin = np.min(f_i)
@@ -1169,8 +1197,6 @@ class PMF:
     def sampleParameterDistribution(
             self,
             x_n,
-            pmf_type='spline',
-            spline_parameters = None,
             mc_parameters = None,
             decorrelate = True,
             verbose = True,
@@ -1178,6 +1204,10 @@ class PMF:
 
         # determine the range of the bspline at the start of the
         # process: changes are made as fractions of this
+
+        spline_parameters = self.spline_parameters
+
+        pmf_type = self.pmf_type
 
         if pmf_type != 'spline':
             ParameterError("Keyword \'pmf_type\' must be spline")
@@ -1188,6 +1218,8 @@ class PMF:
         if spline_parameters is None:
             ParameterError(
                 "Must specify spline_parameters to sample the distributions")
+
+        spline_weights = spline_parameters['spline_weights']
 
         if spline_weights == 'sumkldivergence':
             # sum along the w_kn for sumkldivergence
@@ -1229,15 +1261,22 @@ class PMF:
         logprior = mc_parameters['logprior']
 
         # ensure normalization of spline
-        def prob(x): return np.exp(-self.bspline(x))
-        norm = quad(prob, xrange[0], xrange[1])[0]
-        self.bspline.c = self.bspline.c + np.log(norm)
-
+        if self.objective is 'pmf':
+            def prob(x): return np.exp(-self.bspline(x))
+        elif self.objective is 'probability':
+            def prob(x): return self.bspline(x)
+        norm = self._integrate(spline_parameters['spline_weights'], prob, xrange[0], xrange[1])
+        if self.objective is 'pmf':
+            self.bspline.c = self.bspline.c + np.log(norm)
+        elif self.objective is 'probability':
+            self.bspline.c = self.bspline.c / np.log(norm)
+            
         self.mc_data = dict()
         # make a copy of the original spline to preserve it.
         self.mc_data['original_spline'] = BSpline(
             self.bspline.t, self.bspline.c, self.bspline.k)
 
+        # this might not work as well for probability
         c = self.bspline.c
         crange = np.max(c) - np.min(c)
         dc = fraction_change * crange
@@ -1283,7 +1322,7 @@ class PMF:
                 print("Time series for spline parameters are: {:s}".format(str(g_c))) 
             maxgc = np.max(g_c)
             meangc = np.mean(g_c)
-            guse = meangc
+            guse = g_mc  # doesn't affect the distribution that much
             indices = timeseries.subsampleCorrelatedData(equil_logp, g=guse)
             logposteriors = equil_logp[indices]
             csamples = (csamples[:,t_mc:])[:,indices]
@@ -1394,14 +1433,14 @@ class PMF:
             loglikelihood = 0
             for k in range(self.K):
                 x_kn = x_n[self.mbar.x_kindices == k]
-                def splinek(x, kf=k): return spline(x) + self.fkbias[kf](x)
+                if self.objective is 'pmf':
+                    def splinek(x, kf=k): return spline(x) + self.fkbias[kf](x)
+                elif self.objective is 'probability':
+                    def splinek(x, kf=k): return -np.log(spline(x)) + self.fkbias[kf](x)
                 def expk(x, kf=k): return np.exp(-splinek(x, kf))
                 normalize = np.log(
-                    quad(
-                        expk,
-                        xrange[0],
-                        xrange[1],
-                        args=(k))[0])
+                    self._integrate(
+                        spline_weights, expk, xrange[0], xrange[1],args=(k)))
                 if spline_weights == 'sumkldivergence':
                     loglikelihood += (N / K) * \
                         np.dot(w_n[self.mbar.x_kindices == k], splinek(x_kn, k))
@@ -1411,7 +1450,7 @@ class PMF:
                     loglikelihood += (N / K) * normalize
                 elif spline_weights == 'weightedsum':
                     loglikelihood += (1 / N) * np.sum(splinek(x_kn))
-                    loglikelihood += self.N_k * normalize
+                    loglikelihood += self.N_k[k] * normalize
 
         elif spline_weights == 'kldivergence':
             loglikelihood = N * np.dot(w_n, spline(x_n))
@@ -1449,6 +1488,7 @@ class PMF:
         NOTE: modifies several saved variables saved in the structure.x
 
         """
+
         if self.first_step:
             c = self.bspline.c
             self.previous_logposterior = self._get_MC_loglikelihood(
@@ -1468,9 +1508,16 @@ class PMF:
         self.newspline.c = cnew
 
         # determine the change in the integral
-        def prob(x): return np.exp(-self.newspline(x))
-        new_integral = quad(prob, xrange[0], xrange[1])[0]
-        cnew = cnew + np.log(new_integral)
+        if self.objective is 'pmf':
+            def prob(x): return np.exp(-self.newspline(x))
+        elif self.objective is 'probability':
+            def prob(x): return self.newspline(x)
+        new_integral = self._integrate(spline_weights, prob, xrange[0], xrange[1])
+
+        if self.objective is 'pmf':
+            cnew = cnew + np.log(new_integral)
+        elif self.objective is 'probability':
+            cnew = cnew / new_integral
         self.newspline.c = cnew  # this spline should now be normalized.
 
         # now calculate the change in log likelihood
@@ -1535,6 +1582,7 @@ class PMF:
         N = self.N
 
         bloc = self._val_to_spline(xi)
+ 
         if spline_weights in ['sumkldivergence', 'simplesum', 'weightedsum']:
             pF = np.zeros(K)
             if spline_weights == 'sumkldivergence':
@@ -1560,10 +1608,9 @@ class PMF:
                 # define the biasing function
                 # define the exponential of f based on the current parameters
                 # t.
-                def expfk(x, kf=k): return np.exp(-bloc(x) -
-                                                  self.fkbias[kf](x))
+                def expfk(x, kf=k): return np.exp(-bloc(x) - self.fkbias[kf](x))
                 # compute the partition function
-                pF[k] = quad(expfk, xrange[0], xrange[1], args=(k))[0]
+                pF[k] = self._integrate(spline_weights, expfk, xrange[0], xrange[1], args=(k))
                 expf.append(expfk)
             # subtract the free energy (add log partition function)
             f += np.dot(integral_scaling, np.log(pF))
@@ -1573,14 +1620,13 @@ class PMF:
             def expf(x): return np.exp(-bloc(x))
             # setting limit to try to eliminate errors: hard time because it
             # goes so small.
-            pF = quad(expf, xrange[0], xrange[1])[0]  # 0 is the value of quad
+            pF = self._integrate(spline_weights, expf, xrange[0], xrange[1])
             # subtract the free energy (add log partition function)
             f += N * np.log(pF)
 
         self.bspline_expf = expf
         self.bspline_pF = pF
         return f
-
 
     def _bspline_calculate_g(
             self,
@@ -1661,12 +1707,14 @@ class PMF:
             for k in range(K):
                 # putting this in rather than saving the term so gradient and f
                 # can be called independently
-                pF[k] = quad(expf, xrange[0], xrange[1], args=(k))[0]
+                pF[k] = self._integrate(spline_weights, expf, xrange[0], xrange[1],args=(k))
+
                 for i in range(nspline - 1):
                     # Boltzmann weighted derivative with each biasing function
                     # now compute the expectation of each derivative
-                    pE = quad(dexpf, xrangei[i + 1, 0],
-                              xrangei[i + 1, 1], args=(k))[0]
+                    pE = self._integrate(
+                        spline_weights, dexpf, xrangei[i+1,0], xrangei[i+1,1], args=(k))
+
                     # normalize the expectation
                     gkquad[i, k] = pE / pF[k]
             g -= np.dot(gkquad, integral_scaling)
@@ -1674,8 +1722,9 @@ class PMF:
         elif spline_weights == 'kldivergence':
             gkquad = 0  # not used here, but saved for Hessian calls.
             def expf(x): return np.exp(-bloc(x))
-            # 0 is the value of quad. Recomputed here to avoid problems
-            pF = quad(expf, xrange[0], xrange[1])[0]
+
+            # 0 is the value of gkquad. Recomputed here to avoid problems
+            pF = self._integrate(spline_weights, expf, xrange[0], xrange[1])
             # with other scipy solvers
             pE = np.zeros(nspline - 1)
 
@@ -1683,7 +1732,7 @@ class PMF:
                 # Boltzmann weighted derivative
                 def dexpf(x): return db_c[i + 1](x) * expf(x)
                 # now compute the expectation of each derivative
-                pE[i] = quad(dexpf, xrangei[i + 1, 0], xrangei[i + 1, 1])[0]
+                pE[i] = self._integrate(spline_weights, dexpf, xrangei[i+1,0], xrangei[i+1,1])
                 # normalize the expectation.
                 pE[i] /= pF
             g -= N * pE
@@ -1752,7 +1801,7 @@ class PMF:
         if spline_weights in [
             'sumkldivergence',
             'simplesum',
-                'weightedsum']:  # check this.
+                'weightedsum']:  
             for k in range(K):
                 h += -integral_scaling[k] * \
                     np.outer(gkquad[:, k], gkquad[:, k])
@@ -1767,8 +1816,8 @@ class PMF:
                             x, k): return db_c[i + 1](x) * db_c[j + 1](x) * expf[k](x)
                         for k in range(K):
                             # now compute the expectation of each derivative
-                            pE = integral_scaling[k] * quad(
-                                ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1], args=(k))[0]
+                            pE = integral_scaling[k] * self._integrate(
+                                spline_weights, ddexpf, xrangeij[i+1, j+1, 0], xrangeij[i+1, j+1, 1], args=(k))
                             h[i, j] += pE / pF[k]
 
         elif spline_weights == 'kldivergence':
@@ -1778,8 +1827,8 @@ class PMF:
                         def ddexpf(
                             x): return db_c[i + 1](x) * db_c[j + 1](x) * expf(x)
                         # now compute the expectation of each derivative
-                        pE = quad(
-                            ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1])[0]
+                        pE = self._integrate(
+                            spline_weights, ddexpf, xrangeij[i+1, j+1, 0], xrangeij[i+1, j+1, 1])
                         h[i, j] += N * pE / pF
 
         for i in range(nspline - 1):
@@ -1788,16 +1837,30 @@ class PMF:
 
         return h
 
-    def _val_to_spline(self, x):
+    def _integrate(self, spline_parameters, func, xlow, xhigh, args = (), method = 'quad'):
+        """ 
+        wrapper for integration in case we decide to replace quad with something analytical
         """
-        Convert a set of B-spline coefficients into a BSpline object
+        if method is 'quad':
+            # just use scipy quadrature
+            results = quad(func,xlow,xhigh,args)[0]
+        else:
+            raise ParameterError(
+                "integration method {:s} not yet implemented".format(method))
+        return results
+
+    def _val_to_spline(self, x, form = None):
+        """
+        Convert a set of B-spline coefficients into a 
+        BSpline object, unless objective is probabillity, in
+        in which case it returns 
 
         Parameters
         ==========
 
         x: the last N-1 coefficients for a bspline; we assume the initial coefficient is set to zero.
 
-        Output: A bspline object
+        Output: A bspline object (or function returniing -log (bspline) object if we need it)
 
         """
 
@@ -1805,4 +1868,31 @@ class PMF:
         xnew = np.zeros(len(x) + 1)
         xnew[0] = (self.bspline).c[0]
         xnew[1:] = x
-        return BSpline((self.bspline).t, xnew, (self.bspline).k)
+        bspline = BSpline((self.bspline).t, xnew, (self.bspline).k)
+        if form is 'exp':
+            return lambda x: -np.log(bspline(x))
+        elif form is 'log':
+            return bspline
+        elif form is None: 
+            if self.objective is 'pmf':
+                return bspline
+            elif self.objective is 'probability':
+                return lambda x: -np.log(bspline(x))
+
+"""
+Integration notes:
+
+If we wanted to integrate the function, can we do it analytically?  
+Let's focus on the likelihood integral, which is what is slowing down
+the MC, which is the slow part.
+
+for k=0, then B_i,0:t = 1 if t_i < x < t_i+i, 0 otherwise
+for k=1, It is a piecewise sum of 2 linear terms, so linear.
+f(x) = \int exp(ax+b)_{t_i}^{t_i+1) = (1/a) e^b (e^a*t2 - e^a t1) 
+for k=2, it is piecewise sum of 3 quadratic terms, which is quadradic 
+f(x) = \int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\pi]] (Erf[1/2 Sqrt[a] (b + c - 2 t1)] - 
+   Erf[1/2 Sqrt[a] (b + c - 2 t2)]))/(2 Sqrt[a]), for a > 0, switch for a<0.
+
+for k=3, piecewise sum of cubic terms, which appears hard in general. 
+
+"""
