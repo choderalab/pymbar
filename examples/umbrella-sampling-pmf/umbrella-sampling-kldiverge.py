@@ -6,35 +6,94 @@
 # 
 # D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
 # http://dx.doi.org/10.1016/j.jmb.2007.06.002
-
 from __future__ import print_function
 import matplotlib.pyplot as plt
-from scipy.interpolate import BSpline
 import copy
-nplot = 1000
+from scipy.interpolate import BSpline
+from timeit import default_timer as timer
+import numpy as np # numerical array library
+import pymbar # multistate Bennett acceptance ratio
+from pymbar import PMF, timeseries # timeseries analysis
+
+import pdb
+
+
+nplot = 1200
 # set minimizer options to display. Apprently does not exist for BFGS. Probably don't need to set eps.
-optimize_options = {'disp':True, 'tol':10**(-3)}
+optimize_options = {'disp':True, 'tol':10**(-8)}
 #methods = ['histogram','kde','kl-1','sumkl-1','simple-1','weighted-1','kl-3','sumkl-3','simple-3','weighted-3']
-methods = ['histogram','kde','kl-3','weighted-3']
-mc_methods = ['kl-3','weighted-3']
-optimization_algorithm = 'L-BFGS-B'
-#optimization_algorithm = 'Custom-NR'
-#optimization_algorithm = 'Newton-CG'
+methods = ['histogram','kde','kl-3','sumkl-3','weighted-3']
+#methods = ['histogram','kde','kl-3','weighted-3']
+mc_methods = ['kl-3']
+suff = 'allboot'
+nsplines = [14]
+nbootstraps = 40
+mc_iterations = 0
+
+scolor = ['r','m','c','b','g']  
+mcolor = ['g','m','c','b']
+
 colors = dict()
+
+# add names for labeling 
+names_weights = ["kl","sumkl","simple","weighted"]
+names_descriptions = ["KL div.","Sum weighted KL div.","Sum KL div.","Count-weighted sum KL div."]
+names_methods = dict()
+names_format = ['-.',':','-','','--']
+names_numbers = ["linear","quadratic","cubic","quartic","quintic"]
+names_integers = [1,2,3,4,5]
+
+descriptions = dict()
+colors = dict()
+
+descriptions['histogram'] = "Histogram"
+descriptions['kde'] = "Kernel density (Gaussian)"
 colors['histogram'] = 'k-'
 colors['kde'] = 'k:'
-colors['kl-1'] = 'g-'
-colors['kl-3'] = 'm-'
-colors['kl-5'] = 'c-'
-colors['sumkl-1'] = 'g--'
-colors['sumkl-3'] = 'm--'
-colors['sumkl-5'] = 'c--'
-colors['simple-1'] = 'g-.'
-colors['simple-3'] = 'm-.'
-colors['simple-5'] = 'c-.'
-colors['weighted-1'] = 'g:'
-colors['weighted-3'] = 'm:'
-colors['weighted-5'] = 'c:'
+
+# how many spline methods are there:
+checksplines_methods = methods.copy()
+
+if 'histogram' in checksplines_methods:
+    checksplines_methods.remove('histogram')
+if 'kde' in  checksplines_methods:
+    checksplines_methods.remove('kde')
+
+if len(checksplines_methods) == 1:
+    # we are doing a scan over number of splines
+    weight = checksplines_methods[0].split('-')[0]
+    number = int(checksplines_methods[0].split('-')[1])
+
+    
+    for w, d in zip(names_weights,names_descriptions):    
+        if w == weight:
+            for i, n, f in zip(names_integers,names_numbers,names_format):
+                if i == number:
+                    for ns, s in zip(nsplines,scolor):
+                        tag = w + '-' + str(i) + '-' + str(ns)
+                        descriptions[tag] = '{:s}, {:d} {:s} B-splines'.format(d,ns,n)
+                        colors[tag] = s+f 
+
+elif len(nsplines) == 1:
+    ns = nsplines[0]
+    for w, d, f, m in zip(names_weights,names_descriptions,names_format, mcolor):    
+        for i, n, f in zip(names_integers,names_numbers,names_format):
+            if w == 'kl': #get rid of this . . .  
+                ns = 16
+            else:
+                ns = 14
+            tag = w + '-' + str(i) + '-' + str(ns)
+            colors[tag] = m+f
+            descriptions[tag] = '{:s}, {:d} {:s} B-splines'.format(d,ns,n)
+
+else:
+    print("Can't do double scan!")
+    exit()
+
+#optimization_algorithm = 'L-BFGS-B'
+#optimization_algorithm = 'Custom-NR'
+optimization_algorithm = 'Newton-CG'
+
 
 # example illustrating the application of MBAR to compute a 1D PMF from an umbrella sampling simulation.
 #
@@ -44,12 +103,6 @@ colors['weighted-5'] = 'c:'
 # 
 # D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
 # http://dx.doi.org/10.1016/j.jmb.2007.06.002
-import pdb
-from timeit import default_timer as timer
-import numpy as np # numerical array library
-import pymbar # multistate Bennett acceptance ratio
-from pymbar import timeseries # timeseries analysis
-from pymbar import PMF
 # Constants.
 kB = 1.381e-23 * 6.022e23 / 1000.0 # Boltzmann constant in kJ/mol/K
 
@@ -62,10 +115,7 @@ T_k = np.ones(K,float)*temperature # inital temperatures are all equal
 beta = 1.0 / (kB * temperature) # inverse temperature of simulations (in 1/(kJ/mol))
 chi_min = -180.0 # min for PMF
 chi_max = +180.0 # max for PMF
-nbins = 40 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
-nsplines = 15
-nbootstraps = 0
-mc_iterations = 1000
+nbins = 30 # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
 
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32) # N_k[k] is the number of snapshots from umbrella simulation k
@@ -205,166 +255,201 @@ times = dict() # keep track of time elaped each method takes
 
 xplot = np.linspace(chi_min,chi_max,nplot)  # number of points we are plotting
 f_i_kde = None # We check later if these have been defined or not
-xstart = np.linspace(chi_min,chi_max,nsplines*2) # the data we used initially to parameterize the splines.
+xstart = np.linspace(chi_min,chi_max,nbins*2) # the data we used initially to parameterize points
 
 pmfs = dict()
 for method in methods:
-    start = timer()
+    for nspline in nsplines:
 
-    # create a fresh copy of the initialized pmf object. Operate on that within the loop.
-    # do the deepcopy here since there seem to be issues if it's done after data is added 
-    # For example, the scikit-learn kde object fails to deepopy.
+        if method =='kl-3':  # just for this one
+            nspline = 16
 
-    pmfs[method] = copy.deepcopy(basepmf)
-    pmf = pmfs[method]
-
-    if method == 'histogram':
-
-        histogram_parameters = dict()
-        histogram_parameters['bin_edges'] = [bin_edges]
-        pmf.generatePMF(u_kn, chi_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters, nbootstraps=nbootstraps)
-
-    if method == 'kde':
-
-        kde_parameters = dict()
-        kde_parameters['bandwidth'] = 0.5*((chi_max-chi_min)/nbins)
-        pmf.generatePMF(u_kn, chi_n, pmf_type = 'kde', kde_parameters=kde_parameters, nbootstraps=nbootstraps)
-
-        # save this for initializing other types
-        results = pmf.getPMF(xstart, uncertainties = 'from-lowest')
-        f_i_kde = results['f_i']  # kde results
-
-    if method[:2] == 'kl' or method[:5] == 'sumkl' or  method[:8] == 'weighted' or method[:6] == 'simple':
-        spline_parameters = dict()
-        if method[:2] == 'kl':
-            spline_parameters['spline_weights'] = 'kldivergence'
-        if method[:5] == 'sumkl':
-            spline_parameters['spline_weights'] = 'sumkldivergence'
-        if method[:8] == 'weighted':
-            spline_parameters['spline_weights'] = 'weightedsum'
-        if method[:6] == 'simple':
-            spline_parameters['spline_weights'] = 'simplesum'
-
-        spline_parameters['nspline'] = nsplines 
-        spline_parameters['spline_initialize'] = 'explicit'
-
-        # need to initialize: use KDE results for now (assumes KDE exists)
-        spline_parameters['xinit'] = xstart
-        if f_i_kde is not None:
-            spline_parameters['yinit'] = f_i_kde
+        start = timer()
+        if method in ['kde','histogram']:
+            tag = method
+            
+            if nspline != nsplines[0]:
+                continue
         else:
-            spline_parameters['yinit'] = np.zeros(len(xstart))
+            tag = method + '-' + str(nspline)
 
-        spline_parameters['xrange'] = [chi_min,chi_max]
+        # create a fresh copy of the initialized pmf object. Operate on that within the loop.
+        # do the deepcopy here since there seem to be issues if it's done after data is added 
+        # For example, the scikit-learn kde object fails to deepopy.
+    
+        pmfs[tag] = copy.deepcopy(basepmf)
+        pmf = pmfs[tag]
 
-        spline_parameters['fkbias'] = [(lambda x, klocal=k: bias_potential(x,klocal)) for k in range(K)]  # introduce klocal to force K to use local definition of K, otherwise would use global value of k.
+        if method == 'histogram':
 
-        spline_parameters['kdegree'] = int(method[-1])
-        spline_parameters['optimization_algorithm'] = optimization_algorithm
-        spline_parameters['optimize_options'] = optimize_options
-        pmf.generatePMF(u_kn, chi_n, pmf_type = 'spline', spline_parameters=spline_parameters, nbootstraps=nbootstraps)
+            histogram_parameters = dict()
+            histogram_parameters['bin_edges'] = [bin_edges]
+            pmf.generatePMF(u_kn, chi_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters, nbootstraps=nbootstraps)
 
-        if method in ['kl-3','weighted-3']:
-            print(pmf.bspline.c)
+        if method == 'kde':
 
-    end = timer()
-    times[method] = end-start
+            kde_parameters = dict()
+            kde_parameters['bandwidth'] = 0.5*((chi_max-chi_min)/nbins)
+            pmf.generatePMF(u_kn, chi_n, pmf_type = 'kde', kde_parameters=kde_parameters, nbootstraps=nbootstraps)
 
-    yout = dict()
-    yerr = dict()
-    print("PMF (in units of kT) for {:s}".format(method))
-    print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
-    results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
-    for i in range(nbins):
-        if results['df_i'] is not None:
-            print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i], results['df_i'][i]))
+            # save this for initializing other types
+            results = pmf.getPMF(xstart, uncertainties = 'from-lowest')
+            f_i_kde = results['f_i']  # kde results
+
+        if method[:2] == 'kl' or method[:5] == 'sumkl' or  method[:8] == 'weighted' or method[:6] == 'simple':
+
+            spline_parameters = dict()
+            if method[:2] == 'kl':
+                spline_parameters['spline_weights'] = 'kldivergence'
+            if method[:5] == 'sumkl':
+                spline_parameters['spline_weights'] = 'sumkldivergence'
+            if method[:8] == 'weighted':
+                spline_parameters['spline_weights'] = 'weightedsum'
+            if method[:6] == 'simple':
+                spline_parameters['spline_weights'] = 'simplesum'
+
+            spline_parameters['nspline'] = nspline 
+            spline_parameters['spline_initialize'] = 'explicit'
+
+            # need to initialize: use KDE results for now (assumes KDE exists)
+            spline_parameters['xinit'] = xstart
+            if f_i_kde is not None:
+                spline_parameters['yinit'] = f_i_kde
+            else:
+                spline_parameters['yinit'] = np.zeros(len(xstart))
+            
+            spline_parameters['xrange'] = [chi_min,chi_max]
+
+            spline_parameters['fkbias'] = [(lambda x, klocal=k: bias_potential(x,klocal)) for k in range(K)]  # introduce klocal to force K to use local definition of K, otherwise would use global value of k.
+
+            spline_parameters['kdegree'] = int(method[-1])
+            spline_parameters['optimization_algorithm'] = optimization_algorithm
+            spline_parameters['optimize_options'] = optimize_options
+            pmf.generatePMF(u_kn, chi_n, pmf_type = 'spline', spline_parameters=spline_parameters, nbootstraps=nbootstraps)
+
+        end = timer()
+        times[tag] = end-start
+
+        yout = dict()
+        yerr = dict()
+        print("PMF (in units of kT) for {:s}".format(tag))
+        print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
+        results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
+        for i in range(nbins):
+            if results['df_i'] is not None:
+                print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i], results['df_i'][i]))
+            else:
+                print("{:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i]))
+
+        results = pmf.getPMF(xplot, uncertainties = 'from-lowest')
+        yout[tag] = results['f_i']
+        yerr[tag] = results['df_i']
+        if len(xplot) <= nbins:
+            errorevery = 1
         else:
-            print("{:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i]))
+            errorevery = np.floor(len(xplot)/nbins)
 
-    results = pmf.getPMF(xplot, uncertainties = 'from-lowest')
-    yout[method] = results['f_i']
-    yerr[method] = results['df_i']
-    if len(xplot) <= 50:
-        errorevery = 1
-    else:
-        errorevery = np.floor(len(xplot)/50)
+        # don't bother to plot if no color
 
-    plt.errorbar(xplot,yout[method],yerr=yerr[method],errorevery=errorevery,label=method,fmt=colors[method])
+        if method == 'histogram':
+            # handle histogram differently
+            perbin = nplot//nbins
+            indices = np.arange(0,nplot,perbin) + int(perbin//2)  # get the errors in the rigtht palce 
+            plt.errorbar(xplot[indices], yout[tag][indices], yerr = yerr[tag][indices], 
+                         fmt = 'none', ecolor = 'k', elinewidth = 1.0, capsize = 3)
+            plt.plot(xplot,yout[tag],colors[tag],label=descriptions[tag])
+        else:
+            #if nspline in nsplines[:len(scolor)]: # only plot the first few. #change this!
+                plt.errorbar(xplot, yout[tag], yerr = yerr[tag], errorevery = errorevery, label = descriptions[tag], 
+                             fmt = colors[tag], elinewidth = 0.8, capsize = 3)
 
-    if method not in ['histogram','kde']:
-        print("AIC for {:s} with {:d} nsplines is: {:f}".format(method, nsplines, pmf.getInformationCriteria(type='AIC')))
-        print("BIC for {:s} with {:d} nsplines is: {:f}".format(method, nsplines, pmf.getInformationCriteria(type='BIC')))
+        if method not in ['histogram','kde']:
+            print("AIC for {:s} with {:d} splines is: {:f}".format(method, nspline, pmf.getInformationCriteria(type='AIC')))
+            print("BIC for {:s} with {:d} splines is: {:f}".format(method, nspline, pmf.getInformationCriteria(type='BIC')))
 
 plt.xlim([chi_min,chi_max])
-plt.legend()
-plt.savefig('compare_pmf_{:d}.pdf'.format(nsplines))
+plt.ylim([0,21])
+plt.xlabel('Torsion angle (degrees)')
+plt.ylabel(r'PMF (units of $k_BT$)')
+plt.legend(fontsize='x-small')
+plt.title('Comparison of PMFs')
+plt.savefig('compare_pmf_{:s}.pdf'.format(suff))
+plt.clf()
 
 for method in methods:
-    print("time for method {:s} is {:2f} s".format(method,times[method]))
+    for nspline in nsplines:
+        if method in ['histogram','kde']:
+            tag = method
+            if nspline != nsplines[0]:
+                continue
+        else:
+            tag = method + '-' + str(nspline)
+            
+        print("time for approach {:s} is {:2f} s".format(tag,times[tag]))
 
-#import this for defining the prior
 from scipy.stats import multivariate_normal
-def deltag(c,scalef=500,n=nsplines):
+def deltag(c,scalef=500,n=nspline):
     # we want to impose a smoothness prior. So we want all differences to be chosen from a Gaussian distribution.
     # looking at the preliminary results, something changing by 15 over 60 degrees is common.  So we want this to have 
     # reasonable probability. 60 degrees is 1/6 of the range.  So our possible rate of change is 15/(1/6) = 90 over the range
-    # The amount changed per spline coefficient will be roughly 90/nspline.  We want this degree of curvature to have relatively 
-    # little penalty, so we'll make this ~sigma/6.  So sigma/6 = 90/nsplines, sigma \approx 500/nsplines
+    # The amount changed per spline coefficient will be roughly 90/nsplin.  We want this degree of curvature to have relatively 
+    # little penalty, so we'll make this ~sigma/6.  So sigma/6 = 90/nspline, sigma \approx 500/nspline
     # we twiddled around so that the maximum likelihood was within the range . . . 
     cdiff = np.diff(c)
     logp = multivariate_normal.logpdf([cdiff],mean=None,cov=(scalef/n)*np.eye(len(cdiff))) # could be made more efficient, not worth it.
     return logp
 
+
 for method in mc_methods:
+    for nspline in nsplines:
+        tag = method + '-' + str(nspline)
+        pmf = pmfs[tag]
+        mc_parameters = {"niterations":mc_iterations, "fraction_change":0.05, "sample_every": 10, 
+                         "logprior": lambda x: deltag(x),"print_every":50}
 
-    pmf = pmfs[method]
-    print(pmf.bspline.c)
-    if mc_iterations == 0:
-        break
-    mc_parameters = {"niterations":mc_iterations, "fraction_change":0.05, "sample_every": 10, 
-                 "logprior": lambda x: deltag(x),"print_every":500}
-    
-    pmf.sampleParameterDistribution(chi_n, mc_parameters = mc_parameters, decorrelate = True) 
+        pmf.sampleParameterDistribution(chi_n, mc_parameters = mc_parameters, decorrelate = True) 
 
-    mc_results = pmf.getMCData()
+        mc_results = pmf.getMCData()
 
-    plt.figure(1)
-    plt.hist(mc_results['logposteriors'])
-    plt.savefig('bayes_posterior_histogram_n{:d}.pdf'.format(nsplines))
+        plt.figure(1)
+        plt.hist(mc_results['logposteriors'],label=descriptions[tag])
 
-    plt.figure(2)
-    CI_results = pmf.getConfidenceIntervals(xplot,2.5,97.5,reference='zero')
-    ylow = CI_results['plow']
-    yhigh = CI_results['phigh']
-    plt.plot(xplot,CI_results['values'],colors[method],label=method)
-    plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
-    plt.title('95 percent confidence intervals')
-    plt.legend()
-    plt.savefig('bayesian_95p_n{:d}.pdf'.format(nsplines))
+        plt.figure(2)
+        plt.xlim([chi_min,chi_max])
+        CI_results = pmf.getConfidenceIntervals(xplot,2.5,97.5,reference='zero')
+        ylow = CI_results['plow']
+        yhigh = CI_results['phigh']
+        plt.plot(xplot,CI_results['values'],colors[tag],label=descriptions[tag])
+        plt.fill_between(xplot,ylow,yhigh,color=colors[tag][0],alpha = 0.3)
+        plt.title('PMF with 95% confidence intervals')
+        plt.xlabel('Torsion angle (degrees)')
+        plt.ylabel(r'PMF (units of $k_BT$)')
 
-    plt.figure(3)
-    CI_results = pmf.getConfidenceIntervals(xplot,16,84)
-    plt.clf()
-    plt.plot(xplot,CI_results['values'],colors[method],label=method)
-    ylow = CI_results['plow']
-    yhigh = CI_results['phigh']
-    plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
-    plt.title('1 sigma percent confidence intervals')
-    plt.savefig('bayesian_1sigma_n{:d}.pdf'.format(nsplines))
+        plt.figure(3)
+        plt.xlim([chi_min,chi_max])
+        CI_results = pmf.getConfidenceIntervals(xplot,16,84)
+        plt.plot(xplot,CI_results['values'],colors[tag],label=descriptions[tag])
+        ylow = CI_results['plow']
+        yhigh = CI_results['phigh']
+        plt.fill_between(xplot,ylow,yhigh,color=colors[tag][0],alpha=0.3)
+        plt.xlabel('Torsion angle (degrees)')
+        plt.ylabel(r'PMF (units of $k_BT$)')
+        plt.title('PMF (in units of kT) with 1 sigma percent confidence intervals')
 
-    CI_results = pmf.getConfidenceIntervals(bin_center_i,16,84)
-    df = (CI_results['phigh']-CI_results['plow'])/2
-    print("PMF (in units of kT) with 1 sigma errors from posterior sampling for {:s}".format(method))
-    for i in range(nbins):
-        print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results['values'][i], df[i]))
+        plt.figure(4)
+        samples = mc_results['samples']
+        [lp,lt] = np.shape(samples)
+        for p in range(lp):
+            plt.plot(np.arange(lt),samples[p,:],label="{:d}_{:s}".format(p,tag))
 
-    plt.figure(4)
-    plt.clf()
-    samples = mc_results['samples']
-    [lp,lt] = np.shape(samples)
-    for p in range(lp):
-        plt.plot(np.arange(lt),samples[p,:],label="{:d}_{:s}".format(p,method))
-        plt.savefig("parameter_time_series_n{:d}.pdf".format(nsplines))
+        CI_results = pmf.getConfidenceIntervals(bin_center_i,16,84)
+        df = (CI_results['phigh']-CI_results['plow'])/2
+        print("PMF (in units of kT) with 1 sigma errors from posterior sampling")
+        for i in range(nbins):
+            print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results['values'][i], df[i]))
 
-
-
+pltname = ["bayes_posterior_histogram","bayesian_95p","bayesian_1sigma","parameter_time_series"]
+for i in range(len(pltname)):
+    plt.figure(i+1)
+    plt.legend(fontsize='x-small')
+    plt.savefig('{:s}_{:s}.pdf'.format(pltname[i],suff))

@@ -765,12 +765,12 @@ class PMF:
                         if not firsttime:
                             count = 0
                             # we went too far!  Pull back.
-                            while ((f >= fold * (1.0 + np.sqrt(tol))
+                            while ((f >= fold * (1.1)
                                     and count < 5) or (np.isinf(f))):
                                 f = fold
                                 # let's not step as far:
-                                dx = 0.5 * dx
-                                xi = xold - dx  # step back half of dx.
+                                dx = 0.9 * dx
+                                xi = xold - dx  # step back 90% of dx
                                 xold = xi.copy()
                                 f = self._bspline_calculate_f(
                                     xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
@@ -1449,7 +1449,7 @@ class PMF:
                     loglikelihood += (N / K) * np.mean(splinek(x_kn))
                     loglikelihood += (N / K) * normalize
                 elif spline_weights == 'weightedsum':
-                    loglikelihood += (1 / N) * np.sum(splinek(x_kn))
+                    loglikelihood += np.sum(splinek(x_kn))
                     loglikelihood += self.N_k[k] * normalize
 
         elif spline_weights == 'kldivergence':
@@ -1894,5 +1894,8 @@ f(x) = \int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\pi]] 
    Erf[1/2 Sqrt[a] (b + c - 2 t2)]))/(2 Sqrt[a]), for a > 0, switch for a<0.
 
 for k=3, piecewise sum of cubic terms, which appears hard in general. 
+
+Of course, even with linear, we need to be able to integrate with the
+bias functions.  If it's a Gaussian bias, then linear and quadratic should integrate fine.
 
 """
