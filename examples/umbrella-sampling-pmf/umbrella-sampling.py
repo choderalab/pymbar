@@ -55,8 +55,8 @@ if (min(T_k) == max(T_k)):
 # Read the simulation data
 for k in range(K):
     # Read torsion angle data.
-    filename = 'data/prod%d_dihed.xvg'.format(k)
-    print("Reading {%s}...".format(filename))
+    filename = 'data/prod{:d}_dihed.xvg'.format(k)
+    print("Reading {:s}...".format(filename))
     infile = open(filename, 'r')
     lines = infile.readlines()
     infile.close()
@@ -79,8 +79,8 @@ for k in range(K):
     if (DifferentTemperatures):  # if different temperatures are specified the metadata file, 
                                  # then we need the energies to compute the PMF
         # Read energies
-        filename = 'data/prod%d_energies.xvg' % k
-        print("Reading {%s}...".format(filename))
+        filename = 'data/prod{:d}_energies.xvg'.format(k)
+        print('Reading {:s}...'.format(filename))
         infile = open(filename, 'r')
         lines = infile.readlines()
         infile.close()
@@ -97,15 +97,15 @@ for k in range(K):
             
     if (DifferentTemperatures):        
         g_k[k] = timeseries.statisticalInefficiency(u_kn[k,:], u_kn[k,0:N_k[k]])
-        print("Correlation time for set {%5d} is {%10.3f}".format(k,g_k[k]))
+        print("Correlation time for set {:5d} is {:10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(u_kn[k,0:N_k[k]])
     else:
         chi_radians = chi_kn[k,0:N_k[k]]/(180.0/np.pi)
         g_cos = timeseries.statisticalInefficiency(np.cos(chi_radians))
         g_sin = timeseries.statisticalInefficiency(np.sin(chi_radians))
-        print("g_cos = {%.1f} | g_sin = {%.1f}".format(g_cos, g_sin))
+        print("g_cos = {:.1f} | g_sin = {:.1f}".format(g_cos, g_sin))
         g_k[k] = max(g_cos, g_sin)
-        print("Correlation time for set {%5d} is {%10.3f}".format(k,g_k[k]))
+        print("Correlation time for set {:5d} is {:10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(chi_radians, g=g_k[k]) 
     # Subsample data.
     N_k[k] = len(indices)
@@ -160,41 +160,18 @@ center_df_i = results['df_i']
 
 # Write out PMF
 print("PMF (in units of kT)")
-print("{%8s} {%8s} {%8s}".format('bin', 'f', 'df'))
+print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
 for i in range(nbins):
-    print("{%8.1f} {%8.3f} {%8.3f}".format(bin_center_i[i], center_f_i[i], center_df_i[i]))
+    print("{:8.1f} {:8.3f} {:8.3f}".format(bin_center_i[i], center_f_i[i], center_df_i[i]))
 
 # NOW KDE:
 kde_parameters = dict()
 kde_parameters['bandwidth'] = 0.5*((chi_max-chi_min)/nbins)
 pmf.generatePMF(u_kn, chi_n, pmf_type = 'kde', kde_parameters=kde_parameters)
-pmf_kde = pmf.copy()
-
-colors = dict()
-colors['sumkldiverge'] = 'k-'
-colors['kde'] = 'm-'
-colors['vFEP'] = 'b-'
-colors['sumkl-newton-1'] = 'g--'
-colors['sumkl-newton-2'] = 'r--'
-colors['sumkl-newton-3'] = 'c--'
-colors['sumkl-newton-4'] = 'm--'
-colors['sumkl-newton-5'] = 'y--'
-colors['kldiverge'] = 'k-'
-colors['kl-newton-1'] = 'g-'
-colors['kl-newton-2'] = 'r-'
-colors['kl-newton-3'] = 'c-'
-colors['kl-newton-4'] = 'm-'
-colors['kl-newton-5'] = 'y-'
-
-# get mbar ready
-mbar = pmf.getMBAR()
-
-
-# define the bias functions
-def fbias(k,x):
-    dchi = x - chi0_k[k]
-    # vectorize the conditional
-    i = np.fabs(dchi) > 180.0
-    dchi = i*(360.0 - np.fabs(dchi)) + (1-i)*dchi
-    return beta_k[k] * (K_k[k]/2.0) * dchi**2
-
+results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
+# Write out PMF for KDE
+center_f_i = results['f_i']
+print("PMF (in units of kT)")
+print("{:8s} {:8s}".format('bin', 'f', 'df'))
+for i in range(nbins):
+    print("{:8.1f} {:8.3f}".format(bin_center_i[i], center_f_i[i]))

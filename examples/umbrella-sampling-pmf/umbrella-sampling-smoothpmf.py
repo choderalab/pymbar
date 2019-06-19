@@ -28,7 +28,8 @@ mc_methods = ['kl'] # which methods to run MCMC sampling on (much slower).
 # Just replace '3' with the desired degree below. 1-5 suggested.
 spline_degree = 3
 nspline = 20 # number of spline knots used for the fit.
-nbootstraps = 0  # should increase to ~50 for good statistics
+nbootstraps = 5  # should increase to ~50 for good statistics
+mc_iterations = 5000 # could take a while.
 fig_suffix = "example1" # figure suffix for identifiability of the output!
 
 colors = dict()
@@ -86,8 +87,8 @@ if (min(T_k) == max(T_k)):
 # Read the simulation data
 for k in range(K):
     # Read torsion angle data.
-    filename = 'data/prod%d_dihed.xvg' % k
-    print("Reading {:s}...".format(filename))
+    filename = 'data/prod{:d}_dihed.xvg'.format(k)
+    print('Reading {:s}...'.format(filename))
     infile = open(filename, 'r')
     lines = infile.readlines()
     infile.close()
@@ -110,7 +111,7 @@ for k in range(K):
     if (DifferentTemperatures):  # if different temperatures are specified the metadata file, 
                                  # then we need the energies to compute the PMF
         # Read energies
-        filename = 'data/prod%d_energies.xvg' % k
+        filename = 'data/prod{:d}_energies.xvg'.format(k)
         print("Reading {:s}...".format(filename))
         infile = open(filename, 'r')
         lines = infile.readlines()
