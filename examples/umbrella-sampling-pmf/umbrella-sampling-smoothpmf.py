@@ -302,6 +302,7 @@ plt.title('Comparison of PMFs')
 plt.savefig('compare_pmf_{:s}.pdf'.format(fig_suffix))
 plt.clf()
 
+
 from scipy.stats import multivariate_normal
 def deltag(c,scalef=500,n=nspline):
     # we want to impose a smoothness prior. So we want all differences to be chosen from a Gaussian distribution.
@@ -313,7 +314,6 @@ def deltag(c,scalef=500,n=nspline):
     cdiff = np.diff(c)
     logp = multivariate_normal.logpdf([cdiff],mean=None,cov=(scalef/n)*np.eye(len(cdiff))) # could be made more efficient, not worth it.
     return logp
-
 
 #now perform MC sampling in parameter space
 for method in mc_methods:
