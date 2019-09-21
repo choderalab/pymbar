@@ -15,6 +15,7 @@ import numpy as np # numerical array library
 import pymbar # multistate Bennett acceptance ratio
 from pymbar import PMF, timeseries # timeseries analysis
 
+import pdb
 kB = 1.381e-23 * 6.022e23 / 1000.0 # Boltzmann constant in kJ/mol/K
 nplot = 1200
 # set minimizer options to display. 
@@ -22,32 +23,39 @@ optimize_options = {'disp':True, 'tol':10**(-8)}
 #histogram is self explanatory.  'kde' is a kernel density approximation. Currently it uses a 
 # Gaussian kernel, but this can be adjusted in the kde_parameters section below.
 
-methods = ['histogram','kde','kl','sumkl','weighted']  
-mc_methods = ['kl'] # which methods to run MCMC sampling on (much slower).
+#methods = ['histogram','kde','unbiased','biased']  
+#methods = ['histogram','kde','unbiased-ml','unbiased-map']  
+#methods = ['histogram','kde','biased-ml','biased-map']  
+#mc_methods = ['biased-map'] # which methods to run MCMC sampling on (much slower).
+methods = ['histogram','kde','unbiased-ml','unbiased-map']  
+mc_methods = ['unbiased-map'] # which methods to run MCMC sampling on (much slower).
 # The code supports arbitrary powers of of B-splines (that are supported by scipy
 # Just replace '3' with the desired degree below. 1-5 suggested.
 spline_degree = 3
-nspline = 20 # number of spline knots used for the fit.
-nbootstraps = 5  # should increase to ~50 for good statistics
-mc_iterations = 5000 # could take a while.
-fig_suffix = "example1" # figure suffix for identifiability of the output!
+nspline = 10 # number of spline knots used for the fit.
+nbootstraps = 0  # should increase to ~50 for good statistics
+mc_iterations = 200000 # could take a while.
+smoothness_scalefac = 0.001
+fig_suffix = "mc200K" # figure suffix for identifiability of the output!
 
 colors = dict()
 descriptions = dict()
 colors['histogram'] = 'k-'
 colors['kde'] = 'k:'  
-colors['kl'] = 'g-'
-colors['sumkl'] = 'm-'
-colors['weighted'] = 'c-'
+colors['biased-ml'] = 'g-'
+colors['biased-map'] = 'g--'
+colors['unbiased-ml'] = 'b-'
+colors['unbiased-map'] = 'b--'
 descriptions['histogram'] = 'Histogram'
 descriptions['kde'] = 'Kernel density (Gaussian)'
-descriptions['kl'] = 'KL divergence'
-descriptions['sumkl'] = 'Sum weighted KL divergence'
-descriptions['simple'] = 'Sum KL divergence'
-descriptions['weighted'] = 'Count-weighted sum KL divergence'
+descriptions['unbiased-ml'] = 'Unbiased state maximum likelihood'
+descriptions['unbiased-map'] = 'Unbiased state maximum a posteriori'
+descriptions['simple'] = 'vFEP'
+descriptions['biased-ml'] = 'biased states maximum likelihood'
+descriptions['biased-map'] = 'biased states maximum a posteriori'
 
-optimization_algorithm = 'Newton-CG'  #other good options are 'L-BFGS-B' and 'Custom-NR'
-
+#optimization_algorithm = 'Newton-CG'  #other good options are 'L-BFGS-B' and 'Custom-NR'
+optimization_algorithm = 'Custom-NR'  #other good options are 'L-BFGS-B' and 'Custom-NR'
 # below - information to load the data.
 temperature = 300 # assume a single temperature -- can be overridden with data from center.dat 
 # Parameters
@@ -136,7 +144,8 @@ for k in range(K):
         g_cos = timeseries.statisticalInefficiency(np.cos(chi_radians))
         g_sin = timeseries.statisticalInefficiency(np.sin(chi_radians))
         print("g_cos = {:.1f} | g_sin = {:.1f}".format(g_cos, g_sin))
-        g_k[k] = max(g_cos, g_sin)
+        #g_k[k] = max(g_cos, g_sin)
+        g_k[k] = 1
         print("Correlation time for set {:5d} is {:10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(chi_radians, g=g_k[k]) 
     # Subsample data.
@@ -193,6 +202,54 @@ def bias_potential(x,k):
     dchi = i*(360.0 - np.fabs(dchi)) + (1-i)*dchi
     return beta_k[k]* (K_k[k] /2.0) * dchi**2
 
+from scipy.stats import multivariate_normal
+def deltag(c,scalef=1,n=nspline):
+    # bias on the smoothness, including periodicity. Normalization is indepednent of parameters, so we ignore. 
+    # consider periodicity later!!
+    cdiff = np.diff(c)
+    logp = -scalef/n*(np.sum(cdiff**2))
+    return logp
+
+def ddeltag(c,scalef=1,n=nspline):
+    # derivative of the log prior above
+    # The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
+    # this is unnormalized.  However, the normalization is independent of the values of the parameters, it only 
+    # depends on the hyperparameter a, so we can omit it in the normalization.
+    # 
+    # However, we fix c[1] to be zero.  So we are actually minimizing -scalef (c1)^2 + \sum_{i=1}^{C-1} - scalef*(c_{i+1} - c_{i})^2 
+    # So the derivative is  -2*scalef*[c[1]-c[2],c[1]+2*c[2]-c[3],c[2]+2*c[3]-c[4], . . ., c[C-1]-c[C]]
+    # 
+    # Finally, for the minimization, we are the first coefficient to zero, and it's not allowed to move.
+    # so we shift everything over by 
+    cdiff = np.diff(c)
+    lenc = len(c)
+    dlogp = np.zeros(lenc)
+    dlogp[0:lenc-1] = cdiff
+    dlogp[1:lenc] -= cdiff  
+    # c[0] only occurs in the first two entries. We ignore the 0th (no derivative) and in the second, it's: 2a*(c[0]-2c[1]+c[2]), so 
+    # settting it zero is equal to ignoring it.
+    dlogp = (2*scalef/n)*dlogp
+    return dlogp[1:]
+
+def dddeltag(c,scalef=1,n=nspline):
+    # Hessian of the log prior above
+    # The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
+    # this is unnormalized.  However, the normalization is independent of the values of the parameters, it only 
+    # depends on the hyperparameter a, so we can omit it in the normalization
+    # The derivative is -2*scalef*[c[1]-c[2],c[1]+2*c[2]-c[3],c[2]+2*c[3]-c[4], . . ., c[C-1]-c[C]]
+    # so the hessian willl be a constant matrix.  Will have -2 down diagonal, 1 on off diagonal, except for 
+    # first and last rows
+    cdiff = np.diff(c)
+    lenc = len(c)
+    ddlogp = np.zeros([lenc,lenc])
+    np.fill_diagonal(ddlogp,-2.0)
+    np.fill_diagonal(ddlogp[1:], 1.0)
+    np.fill_diagonal(ddlogp[:,1:], 1.0)
+    ddlogp[0,0] = -1
+    ddlogp[lenc-1,lenc-1] = -1
+    ddlogp = (2*scalef/n)*ddlogp
+    return ddlogp[1:,1:,] # the first variable is set to zero in the MAP. 
+
 times = dict() # keep track of time elaped each method takes
 
 xplot = np.linspace(chi_min,chi_max,nplot)  # number of points we are plotting
@@ -200,15 +257,20 @@ f_i_kde = None # We check later if these have been defined or not
 xstart = np.linspace(chi_min,chi_max,nbins*3) # the data we used initially to parameterize points, from the KDE
 
 pmfs = dict()
-for method in methods:
+for methodfull in methods:
 
     # create a fresh copy of the initialized pmf object. Operate on that within the loop.
     # do the deepcopy here since there seem to be issues if it's done after data is added 
     # For example, the scikit-learn kde object fails to deepopy.
     
-    pmfs[method] = copy.deepcopy(basepmf)
-    pmf = pmfs[method]
+    pmfs[methodfull] = copy.deepcopy(basepmf)
+    pmf = pmfs[methodfull]
     start = timer()
+    if '-' in methodfull:
+        method, tominimize = methodfull.split('-')
+    else:
+        method = methodfull
+
     if method == 'histogram':
         
         histogram_parameters = dict()
@@ -225,15 +287,13 @@ for method in methods:
         results = pmf.getPMF(xstart, uncertainties = 'from-lowest')
         f_i_kde = results['f_i']  # kde results
 
-    if method in ['kl','sumkl','weighted','simple']:
+    if method in ['unbiased','biased','simple']:
 
         spline_parameters = dict()
-        if method == 'kl':
-            spline_parameters['spline_weights'] = 'kldivergence'
-        elif method == 'sumkl':
-            spline_parameters['spline_weights'] = 'sumkldivergence'
-        elif method == 'weighted':
-            spline_parameters['spline_weights'] = 'weightedsum'
+        if method == 'unbiased':
+            spline_parameters['spline_weights'] = 'unbiasedstate'
+        elif method == 'biased':
+            spline_parameters['spline_weights'] = 'biasedstates'
         elif method == 'simple':
             spline_parameters['spline_weights'] = 'simplesum'
 
@@ -248,20 +308,30 @@ for method in methods:
             spline_parameters['yinit'] = np.zeros(len(xstart))
             
         spline_parameters['xrange'] = [chi_min,chi_max]
-        
         spline_parameters['fkbias'] = [(lambda x, klocal=k: bias_potential(x,klocal)) for k in range(K)]  # introduce klocal to force K to use local definition of K, otherwise would use global value of k.
 
         spline_parameters['kdegree'] = spline_degree
         spline_parameters['optimization_algorithm'] = optimization_algorithm
         spline_parameters['optimize_options'] = optimize_options
+
+        if tominimize == 'map':
+            spline_parameters['objective'] = 'map'
+            spline_parameters['map_data'] = dict()
+            spline_parameters['map_data']['logprior'] = lambda x: deltag(x,scalef=smoothness_scalefac)
+            spline_parameters['map_data']['dlogprior'] = lambda x: ddeltag(x,scalef=smoothness_scalefac)
+            spline_parameters['map_data']['ddlogprior'] = lambda x: dddeltag(x,scalef=smoothness_scalefac)
+        else:
+            spline_parameters['objective'] = 'ml'
+            spline_parameters['map_data'] = None
+
         pmf.generatePMF(u_kn, chi_n, pmf_type = 'spline', spline_parameters=spline_parameters, nbootstraps=nbootstraps)
 
     end = timer()
-    times[method] = end-start
+    times[methodfull] = end-start
 
     yout = dict()
     yerr = dict()
-    print("PMF (in units of kT) for {:s}".format(method))
+    print("PMF (in units of kT) for {:s}".format(methodfull))
     print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
     results = pmf.getPMF(bin_center_i, uncertainties = 'from-lowest')
     for i in range(nbins):
@@ -271,8 +341,8 @@ for method in methods:
             print("{:8.1f} {:8.1f}".format(bin_center_i[i], results['f_i'][i]))
             
     results = pmf.getPMF(xplot, uncertainties = 'from-lowest')
-    yout[method] = results['f_i']
-    yerr[method] = results['df_i']
+    yout[methodfull] = results['f_i']
+    yerr[methodfull] = results['df_i']
     if len(xplot) <= nbins:
         errorevery = 1
     else:
@@ -286,10 +356,10 @@ for method in methods:
                      fmt = 'none', ecolor = 'k', elinewidth = 1.0, capsize = 3)
         plt.plot(xplot,yout[method],colors[method],label=descriptions[method])
     else:
-        plt.errorbar(xplot, yout[method], yerr = yerr[method], errorevery = errorevery, label = descriptions[method], 
-                     fmt = colors[method], elinewidth = 0.8, capsize = 3)
+        plt.errorbar(xplot, yout[methodfull], yerr = yerr[methodfull], errorevery = errorevery, 
+                     label = descriptions[methodfull], fmt = colors[methodfull], elinewidth = 0.8, capsize = 3)
         
-        if method not in ['histogram','kde']:
+        if '-ml' in methodfull:
             print("AIC for {:s} with {:d} splines is: {:f}".format(method, nspline, pmf.getInformationCriteria(type='AIC')))
             print("BIC for {:s} with {:d} splines is: {:f}".format(method, nspline, pmf.getInformationCriteria(type='BIC')))
 
@@ -303,23 +373,11 @@ plt.savefig('compare_pmf_{:s}.pdf'.format(fig_suffix))
 plt.clf()
 
 
-from scipy.stats import multivariate_normal
-def deltag(c,scalef=500,n=nspline):
-    # we want to impose a smoothness prior. So we want all differences to be chosen from a Gaussian distribution.
-    # looking at the preliminary results, something changing by 15 over 60 degrees is common.  So we want this to have 
-    # reasonable probability. 60 degrees is 1/6 of the range.  So our possible rate of change is 15/(1/6) = 90 over the range
-    # The amount changed per spline coefficient will be roughly 90/nsplin.  We want this degree of curvature to have relatively 
-    # little penalty, so we'll make this ~sigma/6.  So sigma/6 = 90/nspline, sigma \approx 500/nspline
-    # we twiddled around so that the maximum likelihood was within the range . . . 
-    cdiff = np.diff(c)
-    logp = multivariate_normal.logpdf([cdiff],mean=None,cov=(scalef/n)*np.eye(len(cdiff))) # could be made more efficient, not worth it.
-    return logp
-
 #now perform MC sampling in parameter space
 for method in mc_methods:
     pmf = pmfs[method]
     mc_parameters = {"niterations":mc_iterations, "fraction_change":0.05, "sample_every": 10, 
-                     "logprior": lambda x: deltag(x),"print_every":50}
+                     "logprior": lambda x: deltag(x,scalef=smoothness_scalefac),"print_every":50}
     
     pmf.sampleParameterDistribution(chi_n, mc_parameters = mc_parameters, decorrelate = True) 
     
@@ -328,12 +386,18 @@ for method in mc_methods:
     plt.figure(1)
     plt.hist(mc_results['logposteriors'],label=descriptions[method])
     
+    # plot maximum likelihood as well
+    method_ml = method.replace('map','ml')
+    pmf_ml = pmfs[method_ml]
+    results_ml = pmf_ml.getPMF(xplot, uncertainties = 'from-lowest')
+
     plt.figure(2)
     plt.xlim([chi_min,chi_max])
     CI_results = pmf.getConfidenceIntervals(xplot,2.5,97.5,reference='zero')
     ylow = CI_results['plow']
     yhigh = CI_results['phigh']
     plt.plot(xplot,CI_results['values'],colors[method],label=descriptions[method])
+    plt.plot(xplot,results_ml['f_i'],colors[method_ml],label=descriptions[method_ml])
     plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha = 0.3)
     plt.title('PMF with 95% confidence intervals')
     plt.xlabel('Torsion angle (degrees)')
@@ -343,6 +407,7 @@ for method in mc_methods:
     plt.xlim([chi_min,chi_max])
     CI_results = pmf.getConfidenceIntervals(xplot,16,84)
     plt.plot(xplot,CI_results['values'],colors[method],label=descriptions[method])
+    plt.plot(xplot,results_ml['f_i'],colors[method_ml],label=descriptions[method_ml])
     ylow = CI_results['plow']
     yhigh = CI_results['phigh']
     plt.fill_between(xplot,ylow,yhigh,color=colors[method][0],alpha=0.3)
@@ -366,6 +431,7 @@ for method in mc_methods:
         print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results['values'][i], df[i]))
         
 pltname = ["bayes_posterior_histogram","bayesian_95percent","bayesian_1sigma","parameter_time_series"]
+
 for i in range(len(pltname)):
     plt.figure(i+1)
     plt.legend(fontsize='x-small')

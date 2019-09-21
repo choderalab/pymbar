@@ -236,9 +236,6 @@ class PMF:
             uncertainties='from-lowest',
             nbootstraps=0,
             nseed=-1,
-            objective='pmf' # only relevant for splines, since 'histogram' and 'kde' fit probability.
-                            # I haven't yet found an always nonnegative spline yet for 'probability', 
-                            # though, which is required.
             ):
         """
         Given an intialized MBAR object, a set of points,
@@ -275,10 +272,9 @@ class PMF:
 
         spline_parameters:
             - 'fit_type': which type of fit to use:
-                -- 'sumkldivergence' - (sum of KL divergence over all weighted states)
-                -- 'kldivergence' - KL divergence of the single state
+                -- 'biasedstates' - sum of log likelihood over all weighted states 
+                -- 'unbiasedstate' - log likelihood of the single unbiased state
                 -- 'simplesum': sum of log likelihoods from the biased simulation. Essentially equivalent to vFEP (York et al.)
-                -- 'weightedsum': weighted some of log likelhoods from the biased simulations.
             - 'optimization_algorithm':
                 -- 'Custom-NR': a custom Newton-Raphson that is particularly fast for close data, but can fail
                 -- 'Newton-CG': scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
@@ -286,9 +282,8 @@ class PMF:
             - 'fkbias': array of functions that return the Kth bias potential for each function
             - 'nspline': number of spline points
             - 'kdegree': degree of the spline.  Default is cubic ('3')
-        objective: 'probability', 'pmf' # whether to fit the PMF or the probability.  
-                                        # 'kde' and 'histogram' is automatically probability, 
-                                        #  so only matters for splines.
+            - 'objective': - 'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
+        
         Returns:
 
             - result_vals: dictionary of results.
@@ -364,11 +359,6 @@ class PMF:
 
         self.mc_data = None  # we have not sampled MC data yet.
 
-        if objective not in ['pmf','probability']:
-            raise ParameterError(
-                "objective may only be \'pmf\' or \'probability\': you have selected {:s}".format(objective))
-        self.objective = objective # this is static, so can be set here
-
         if self.pmf_type == 'histogram':
 
             self.histogram_datas = list()
@@ -413,6 +403,45 @@ class PMF:
 
             self.spline_parameters = spline_parameters # save these for later references.
 
+            if 'objective' not in spline_parameters:
+                spline_parameters['objective'] = 'ml' # default
+
+            objective = spline_parameters['objective']
+
+            if objective not in ['ml','map']:
+                raise ParameterError(
+                    "objective may only be \'ml\' or '\map\': you have selected {:s}".format(objective))
+
+            if objective == 'ml': # we are doing maximum likelihood minimization
+                logprior = None
+                dlogprior = None
+                ddlogprior = None
+
+            elif objective == 'map':
+                if 'map_data' not in spline_parameters:
+                    raise ParameterError(
+                        "if 'objective' is '\map\' you must include 'map_data' structure")
+                elif spline_parameters['map_data'] == None:
+                    raise ParameterError(
+                        "MAP data must be defined if objective is MAP")
+                else:
+                    map_data = spline_parameters['map_data']
+                    if map_data['logprior'] == None:
+                        raise ParameterError(
+                            "log prior must be included if objective is MAP")
+                    else:
+                        logprior = map_data['logprior']
+                    if map_data['dlogprior'] == None:
+                        raise ParameterError(
+                            "d(log prior) must be included if objective is MAP")
+                    else:
+                        dlogprior = map_data['dlogprior']
+                    if map_data['ddlogprior'] == None:
+                        raise ParameterError(
+                            "d^2(log prior) must be included if objective is MAP")
+                    else:
+                        ddlogprior = map_data['ddlogprior']
+
             spline_weights = spline_parameters['spline_weights']
 
             # need the x-range for all methods, since we need to
@@ -453,10 +482,7 @@ class PMF:
                 if 'bias_centers' in spline_parameters:  # if we are provided bias center, use them
                     bias_centers = spline_parameters['bias_centers']
                     sort_indices = np.argsort(bias_centers)
-                    if self.objective is 'pmf':
-                        initivals = self.mbar.f_k
-                    elif self.objective is 'probability':
-                        initivals = np.exp(-self.mbar.f_k)
+                    initivals = self.mbar.f_k
 
                     K = self.mbar.K
                     if K < 2 * nspline:
@@ -488,10 +514,7 @@ class PMF:
                     raise ParameterError(
                         'spline_initialize set as explicit, but no xinit array specified')
                 if 'yinit' in spline_parameters:
-                    if self.objective is 'pmf':
-                        yinit = spline_parameters['yinit']
-                    elif self.objective is 'probability':
-                        yinit = np.exp(-spline_parameters['yinit'])
+                    yinit = spline_parameters['yinit']
                 else:
                     raise ParameterError(
                         'spline_initialize set as explicit, but no yinit array specified')
@@ -520,18 +543,13 @@ class PMF:
                 yinit[sort_indices],
                 t,
                 k=kdegree)
-            if self.objective is 'pmf':
-                # one, since the PMF is only determined up to a constant.
-                b.c = b.c - b.c[0]  # We zero out the first
-            elif self.objective is 'probability':
-                b.c = b.c/b.c[0]  # We norm out the first
+            # one, since the PMF is only determined up to a constant.
+            b.c = b.c - b.c[0]  # We zero out the first
             # the bspline coefficients are the variables we care about.
             xi = b.c[1:]
             xold = xi.copy()
 
-            # The function is \sum_n [\sum_k W_k(x_n)] F(phi(x_n)) + \sum_k ln \int exp(-F(xi) - u_k(xi)) dxi
-            # or, if using a probability objective:
-            # The function is \sum_n [\sum_k W_k(x_n)] -log P(phi(x_n)) + \sum_k ln \int P(xi) exp(-u_k(xi))) dxi 
+            # The function is \sum_n F(phi(x_n)) + \sum_k ln \int exp(-F(xi) - u_k(xi)) dxi
             # if we assume bsplines are of the form f(x) = a*b_i(x), then
             # dF/dtheta is simply the basis function that has support over that
             # region of space
@@ -719,11 +737,7 @@ class PMF:
 
             elif pmf_type == 'spline':
 
-                if spline_weights == 'sumkldivergence':
-                    # sum along the w_kn for sumkldivergence
-                    w_n = np.sum(self.w_kn, axis=1)
-                else:
-                    w_n = self.w_n
+                w_n = self.w_n
                 if b > 0:
                     xi = savexi
                 if spline_parameters['optimization_algorithm'] != 'Custom-NR':
@@ -734,7 +748,7 @@ class PMF:
                     results = minimize(
                         self._bspline_calculate_f,
                         xi,
-                        args=(w_n,x_nb,nspline,kdegree,spline_weights,xrange,xrangei,xrangeij),
+                        args=(w_n,x_nb,nspline,kdegree,spline_weights,xrange,xrangei,xrangeij,logprior,dlogprior,ddlogprior),
                         method=spline_parameters['optimization_algorithm'],
                         jac=self._bspline_calculate_g,
                         tol = scipy_tol,
@@ -756,7 +770,8 @@ class PMF:
                     while dg > tol:  # until we reach the tolerance.
 
                         f = self._bspline_calculate_f(
-                            xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                            xi, w_n, x_n, nspline, kdegree, spline_weights, 
+                            xrange, xrangei, xrangeij, logprior, dlogprior, ddlogprior)
 
                         # we need some error handling: if we stepped too far, we should go back
                         # still not great error handling.  Requires something
@@ -773,7 +788,8 @@ class PMF:
                                 xi = xold - dx  # step back 90% of dx
                                 xold = xi.copy()
                                 f = self._bspline_calculate_f(
-                                    xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                                    xi, w_n, x_n, nspline, kdegree, spline_weights, 
+                                    xrange, xrangei, xrangeij, logprior, dlogprior, ddlogprior)
                                 count += 1
                         else:
                             firsttime = False
@@ -781,9 +797,11 @@ class PMF:
                         xold = xi.copy()
 
                         g = self._bspline_calculate_g(
-                            xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                            xi, w_n, x_n, nspline, kdegree, spline_weights, 
+                            xrange, xrangei, xrangeij, logprior, dlogprior, ddlogprior)
                         h = self._bspline_calculate_h(
-                            xi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                            xi, w_n, x_n, nspline, kdegree, spline_weights, 
+                            xrange, xrangei, xrangeij, logprior, dlogprior, ddlogprior)
 
                         # now find the new point.
                         # x_n+1 = x_n - f''(x_n)^-1 f'(x_n)
@@ -806,7 +824,8 @@ class PMF:
                     savexi = xi
 
                     minusloglikelihood = self._bspline_calculate_f(
-                        savexi, w_n, x_n, nspline, kdegree, spline_weights, xrange, xrangei, xrangeij)
+                        savexi, w_n, x_n, nspline, kdegree, spline_weights, 
+                        xrange, xrangei, xrangeij, logprior, dlogprior, ddlogprior)
 
                     nparameters = len(savexi)
 
@@ -1221,18 +1240,14 @@ class PMF:
 
         spline_weights = spline_parameters['spline_weights']
 
-        if spline_weights == 'sumkldivergence':
-            # sum along the w_kn for sumkldivergence
-            w_n = np.sum(self.w_kn, axis=1)
-        else:
-            w_n = self.w_n
+        w_n = self.w_n
 
         # need the x-range for all methods, since we need to
         xrange = spline_parameters['xrange']
         # numerically integrate over this range
 
         if pmf_type != 'spline':
-            ParmeterError(
+            ParameterError(
                 "Sampling of posterior is only supported for spline type")
 
         if self.bspline is None:
@@ -1261,15 +1276,9 @@ class PMF:
         logprior = mc_parameters['logprior']
 
         # ensure normalization of spline
-        if self.objective is 'pmf':
-            def prob(x): return np.exp(-self.bspline(x))
-        elif self.objective is 'probability':
-            def prob(x): return self.bspline(x)
+        def prob(x): return np.exp(-self.bspline(x))
         norm = self._integrate(spline_parameters['spline_weights'], prob, xrange[0], xrange[1])
-        if self.objective is 'pmf':
-            self.bspline.c = self.bspline.c + np.log(norm)
-        elif self.objective is 'probability':
-            self.bspline.c = self.bspline.c / np.log(norm)
+        self.bspline.c = self.bspline.c + np.log(norm)
             
         self.mc_data = dict()
         # make a copy of the original spline to preserve it.
@@ -1285,11 +1294,8 @@ class PMF:
         csamples = np.zeros([len(c), int(niterations) // int(sample_every)])
         logposteriors = np.zeros(int(niterations) // int(sample_every))
         self.first_step = True
-        if spline_weights == 'sumkldivergence':
-            # sum along the w_kn for sumkldivergence. Uses (\sum_N_k w_nk)
-            w_n = np.sum(self.w_kn, axis=1)
-        else:
-            w_n = self.w_n
+
+        w_n = self.w_n
         for n in range(niterations):
             results = self._MCStep(x_n, w_n, dc, xrange, spline_weights, logprior)
             if n % sample_every == 0:
@@ -1429,31 +1435,26 @@ class PMF:
         N = self.N
         K = self.K
 
-        if spline_weights in ['sumkldivergence', 'simplesum', 'weightedsum']:
+        if spline_weights in ['simplesum', 'biasedstates']:
             loglikelihood = 0
+
             for k in range(self.K):
                 x_kn = x_n[self.mbar.x_kindices == k]
-                if self.objective is 'pmf':
-                    def splinek(x, kf=k): return spline(x) + self.fkbias[kf](x)
-                elif self.objective is 'probability':
-                    def splinek(x, kf=k): return -np.log(spline(x)) + self.fkbias[kf](x)
+                def splinek(x, kf=k): return spline(x) + self.fkbias[kf](x)
                 def expk(x, kf=k): return np.exp(-splinek(x, kf))
                 normalize = np.log(
                     self._integrate(
                         spline_weights, expk, xrange[0], xrange[1],args=(k)))
-                if spline_weights == 'sumkldivergence':
-                    loglikelihood += (N / K) * \
-                        np.dot(w_n[self.mbar.x_kindices == k], splinek(x_kn, k))
-                    loglikelihood += (N / K) * normalize
-                elif spline_weights == 'simplesum':
+                if spline_weights == 'simplesum':
                     loglikelihood += (N / K) * np.mean(splinek(x_kn))
                     loglikelihood += (N / K) * normalize
-                elif spline_weights == 'weightedsum':
+                elif spline_weights == 'biasedstates':
                     loglikelihood += np.sum(splinek(x_kn))
                     loglikelihood += self.N_k[k] * normalize
 
-        elif spline_weights == 'kldivergence':
+        elif spline_weights == 'unbiasedstate':
             loglikelihood = N * np.dot(w_n, spline(x_n))
+            # no need to add normalization, should be normalized.
 
         return loglikelihood
 
@@ -1508,16 +1509,11 @@ class PMF:
         self.newspline.c = cnew
 
         # determine the change in the integral
-        if self.objective is 'pmf':
-            def prob(x): return np.exp(-self.newspline(x))
-        elif self.objective is 'probability':
-            def prob(x): return self.newspline(x)
+        def prob(x): return np.exp(-self.newspline(x))
         new_integral = self._integrate(spline_weights, prob, xrange[0], xrange[1])
 
-        if self.objective is 'pmf':
-            cnew = cnew + np.log(new_integral)
-        elif self.objective is 'probability':
-            cnew = cnew / new_integral
+        cnew = cnew + np.log(new_integral)
+
         self.newspline.c = cnew  # this spline should now be normalized.
 
         # now calculate the change in log likelihood
@@ -1553,7 +1549,11 @@ class PMF:
             spline_weights,
             xrange,
             xrangei,
-            xrangeij):
+            xrangeij,
+            logprior,
+            dlogprior,
+            ddlogprior
+):
 
         """ Calculate the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
@@ -1569,6 +1569,9 @@ class PMF:
         xrange: range the PMF is defined over
         xrangei: range the ith basis function of the spline is defined over
         xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.
+        logprior: log of the prior for MAP
+        dlogprior: d(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
+        ddlogprior: d^2(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
 
         Output:
         =======
@@ -1582,24 +1585,21 @@ class PMF:
         N = self.N
 
         bloc = self._val_to_spline(xi)
- 
-        if spline_weights in ['sumkldivergence', 'simplesum', 'weightedsum']:
+
+        if spline_weights in ['simplesum', 'biasedstates']:
             pF = np.zeros(K)
-            if spline_weights == 'sumkldivergence':
-                # we rescale so that \sum W_n = N
-                f = (N / K) * np.dot(w_n, bloc(x_n))
-            elif spline_weights == 'simplesum':
+            if spline_weights == 'simplesum':
                 f = 0
                 for k in range(K):
                     f += (N / K) * \
                         np.mean(bloc(x_n[self.mbar.x_kindices == k]))
-            elif spline_weights == 'weightedsum':
+            elif spline_weights == 'biasedstates':
                 # multiply by K to get it in the same order of magnitude
-                f = N * np.mean(bloc(x_n))
+                f = np.sum(bloc(x_n))
 
-            if spline_weights in ['sumkldivergence', 'simplesum']:
+            if spline_weights == 'simplesum':
                 integral_scaling = (N / K) * np.ones(K)
-            elif spline_weights == 'weightedsum':
+            elif spline_weights == 'biasedstates':
                 integral_scaling = N_k
 
             expf = list()
@@ -1615,7 +1615,7 @@ class PMF:
             # subtract the free energy (add log partition function)
             f += np.dot(integral_scaling, np.log(pF))
 
-        elif spline_weights == 'kldivergence':  # just KL divergence of the unbiased potential
+        elif spline_weights == 'unbiasedstate':  # just KL divergence of the unbiased potential
             f = N * np.dot(w_n, bloc(x_n))
             def expf(x): return np.exp(-bloc(x))
             # setting limit to try to eliminate errors: hard time because it
@@ -1626,6 +1626,11 @@ class PMF:
 
         self.bspline_expf = expf
         self.bspline_pF = pF
+
+        # need to add the zero explicitly to the front
+        if logprior != None:
+            f -= logprior(np.concatenate([[0],xi],axis=None))
+        
         return f
 
     def _bspline_calculate_g(
@@ -1638,7 +1643,11 @@ class PMF:
             spline_weights,
             xrange,
             xrangei,
-            xrangeij):
+            xrangeij,
+            logprior,
+            dlogprior,
+            ddlogprior
+            ):
 
         """ Calculate the gradient of the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
@@ -1651,12 +1660,15 @@ class PMF:
         nspline: number of spline points
         kdegree: degree of spline
         spline_weights: type of spline weighting (i.e. choice of maximum likelihood)
+        dlogprior: derivative of logprior with respect to the parameters, for use with MAP estimates
         xrange: range the PMF is defined over
         xrangei: range the ith basis function of the spline is defined over   
         xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.  
          
         xrangeij is not used, but used to keep consistent call arguments among f,g,h calls.
-                                                                                  
+        logprior: log of the prior for MAP   Not needed here, but included for consistent arguments
+        dlogprior: d(log prior)/xi for MAP.  
+        ddlogprior: d^2(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
 
         Output:
         =======
@@ -1678,28 +1690,26 @@ class PMF:
         bloc = self._val_to_spline(xi)
         pF = np.zeros(K)
 
-        if spline_weights in ['sumkldivergence', 'simplesum']:
+        if spline_weights == 'simplesum':
             integral_scaling = (N / K) * np.ones(K)
-        elif spline_weights == 'weightedsum':
+        elif spline_weights == 'biasedstates':
             integral_scaling = N_k
 
         g = np.zeros(nspline - 1)
 
         for i in range(1, nspline):
-            if spline_weights in ['sumkldivergence']:
-                g[i - 1] = (N / K) * np.dot(w_n, db_c[i](x_n))
-            elif spline_weights == 'simplesum':
+            if spline_weights == 'simplesum':
                 for k in range(K):
                     g[i - 1] += (N / K) * np.mean(db_c[i]
                                                   (x_n[self.mbar.x_kindices == k]))
-            elif spline_weights == 'weightedsum':
+            elif spline_weights == 'biasedstates':
                 g[i - 1] = N * np.mean(db_c[i](x_n))
-            elif spline_weights in ['kldivergence']:
+            elif spline_weights == 'unbiasedstate':
                 g[i - 1] = N * np.dot(w_n, db_c[i](x_n))
 
         # now the second part of the gradient.
 
-        if spline_weights in ['sumkldivergence', 'simplesum', 'weightedsum']:
+        if spline_weights in ['biasedstates', 'simplesum']:
             gkquad = np.zeros([nspline - 1, K])
             def expf(x, k): return np.exp(-bloc(x) - self.fkbias[k](x))
             def dexpf(x, k): return db_c[i + 1](x) * expf(x, k)
@@ -1719,7 +1729,7 @@ class PMF:
                     gkquad[i, k] = pE / pF[k]
             g -= np.dot(gkquad, integral_scaling)
 
-        elif spline_weights == 'kldivergence':
+        elif spline_weights == 'unbiasedstate':
             gkquad = 0  # not used here, but saved for Hessian calls.
             def expf(x): return np.exp(-bloc(x))
 
@@ -1737,10 +1747,13 @@ class PMF:
                 pE[i] /= pF
             g -= N * pE
 
+        # need to add the zero explicitly to the front    
+        if dlogprior != None:
+            g -= dlogprior(np.concatenate([[0],xi],axis=None))
+
         self.bspline_gkquad = gkquad
         self.bspline_pE = pE
         return g
-
 
     def _bspline_calculate_h(
             self,
@@ -1752,7 +1765,12 @@ class PMF:
             spline_weights,
             xrange,
             xrangei,
-            xrangeij):
+            xrangeij,
+            logprior, 
+            dlogprior,
+            ddlogprior
+            ):
+
 
         """ Calculate the Hessian of the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
@@ -1768,6 +1786,9 @@ class PMF:
         xrange: range the PMF is defined over
         xrangei: range the ith basis function of the spline is defined over
         xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.
+        logprior: log of the prior for MAP  Not needed here, but included for consistent arguments 
+        dlogprior: d(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
+        ddlogprior: d^2(log prior)/xi for MAP.  
 
         Output:
         =======
@@ -1789,26 +1810,22 @@ class PMF:
         pE = self.bspline_pE
         db_c = self.bspline_derivatives
 
-        if spline_weights in ['sumkldivergence', 'simplesum']:
+        if spline_weights == 'simplesum':
             integral_scaling = N / K * np.ones(K)
-        elif spline_weights == 'weightedsum':
+        elif spline_weights == 'biasedstates':
             integral_scaling = N_k
 
         # now, compute the Hessian.  First, the first order components
         h = np.zeros([nspline - 1, nspline - 1])
 
-        # below might need to be rescaled.
-        if spline_weights in [
-            'sumkldivergence',
-            'simplesum',
-                'weightedsum']:  
+        if spline_weights in ['simplesum', 'biasedstates']:  
             for k in range(K):
                 h += -integral_scaling[k] * \
                     np.outer(gkquad[:, k], gkquad[:, k])
-        elif spline_weights == 'kldivergence':
+        elif spline_weights == 'unbiasedstate':
             h = -N * np.outer(pE, pE)
 
-        if spline_weights in ['sumkldivergence', 'weightedsum', 'simplesum']:
+        if spline_weights in ['simplesum','biasedstates']:
             for i in range(nspline - 1):
                 for j in range(0, i + 1):
                     if np.abs(i - j) <= kdegree:
@@ -1820,7 +1837,7 @@ class PMF:
                                 spline_weights, ddexpf, xrangeij[i+1, j+1, 0], xrangeij[i+1, j+1, 1], args=(k))
                             h[i, j] += pE / pF[k]
 
-        elif spline_weights == 'kldivergence':
+        elif spline_weights == 'unbiasedstate':
             for i in range(nspline - 1):
                 for j in range(0, i + 1):
                     if np.abs(i - j) <= kdegree:
@@ -1834,6 +1851,10 @@ class PMF:
         for i in range(nspline - 1):
             for j in range(i + 1, nspline - 1):
                 h[i, j] = h[j, i]
+
+        # need to add the zero explicitly to the front        
+        if ddlogprior != None: # add hessian of prior
+            h -= ddlogprior(np.concatenate([[0],xi],axis=None))
 
         return h
 
@@ -1851,9 +1872,7 @@ class PMF:
 
     def _val_to_spline(self, x, form = None):
         """
-        Convert a set of B-spline coefficients into a 
-        BSpline object, unless objective is probabillity, in
-        in which case it returns 
+        Convert a set of B-spline coefficients into a BSpline object
 
         Parameters
         ==========
@@ -1874,10 +1893,7 @@ class PMF:
         elif form is 'log':
             return bspline
         elif form is None: 
-            if self.objective is 'pmf':
-                return bspline
-            elif self.objective is 'probability':
-                return lambda x: -np.log(bspline(x))
+            return bspline
 
 """
 Integration notes:
