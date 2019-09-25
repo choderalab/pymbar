@@ -1703,7 +1703,7 @@ class PMF:
                     g[i - 1] += (N / K) * np.mean(db_c[i]
                                                   (x_n[self.mbar.x_kindices == k]))
             elif spline_weights == 'biasedstates':
-                g[i - 1] = N * np.mean(db_c[i](x_n))
+                g[i - 1] = np.sum(db_c[i](x_n))
             elif spline_weights == 'unbiasedstate':
                 g[i - 1] = N * np.dot(w_n, db_c[i](x_n))
 

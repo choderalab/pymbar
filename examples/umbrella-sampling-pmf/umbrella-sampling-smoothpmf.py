@@ -15,7 +15,6 @@ import numpy as np # numerical array library
 import pymbar # multistate Bennett acceptance ratio
 from pymbar import PMF, timeseries # timeseries analysis
 
-import pdb
 kB = 1.381e-23 * 6.022e23 / 1000.0 # Boltzmann constant in kJ/mol/K
 nplot = 1200
 # set minimizer options to display. 
@@ -23,20 +22,17 @@ optimize_options = {'disp':True, 'tol':10**(-8)}
 #histogram is self explanatory.  'kde' is a kernel density approximation. Currently it uses a 
 # Gaussian kernel, but this can be adjusted in the kde_parameters section below.
 
-#methods = ['histogram','kde','unbiased','biased']  
-#methods = ['histogram','kde','unbiased-ml','unbiased-map']  
-#methods = ['histogram','kde','biased-ml','biased-map']  
-#mc_methods = ['biased-map'] # which methods to run MCMC sampling on (much slower).
-methods = ['histogram','kde','unbiased-ml','unbiased-map']  
-mc_methods = ['unbiased-map'] # which methods to run MCMC sampling on (much slower).
+methods = ['histogram','kde','unbiased-ml','biased-ml']  
+#mc_methods = ['unbiased-map'] # which methods to run MCMC sampling on (much slower).
+mc_methods = [] # which methods to run MCMC sampling on (much slower).
 # The code supports arbitrary powers of of B-splines (that are supported by scipy
 # Just replace '3' with the desired degree below. 1-5 suggested.
 spline_degree = 3
-nspline = 10 # number of spline knots used for the fit.
-nbootstraps = 0  # should increase to ~50 for good statistics
-mc_iterations = 200000 # could take a while.
-smoothness_scalefac = 0.001
-fig_suffix = "mc200K" # figure suffix for identifiability of the output!
+nspline = 16 # number of spline knots used for the fit.
+nbootstraps = 5  # should increase to ~50 for good statistics
+mc_iterations = 50000 # could take a while.
+smoothness_scalefac = 0.01
+fig_suffix = "test1" # figure suffix for identifiability of the output!
 
 colors = dict()
 descriptions = dict()
@@ -54,8 +50,8 @@ descriptions['simple'] = 'vFEP'
 descriptions['biased-ml'] = 'biased states maximum likelihood'
 descriptions['biased-map'] = 'biased states maximum a posteriori'
 
-#optimization_algorithm = 'Newton-CG'  #other good options are 'L-BFGS-B' and 'Custom-NR'
-optimization_algorithm = 'Custom-NR'  #other good options are 'L-BFGS-B' and 'Custom-NR'
+optimization_algorithm = 'Newton-CG'  #other good options are 'L-BFGS-B' and 'Custom-NR'
+#optimization_algorithm = 'Custom-NR'  #other good options are 'L-BFGS-B' and 'Custom-NR'
 # below - information to load the data.
 temperature = 300 # assume a single temperature -- can be overridden with data from center.dat 
 # Parameters
@@ -374,6 +370,7 @@ plt.clf()
 
 
 #now perform MC sampling in parameter space
+pltname = ["bayes_posterior_histogram","bayesian_95percent","bayesian_1sigma","parameter_time_series"]
 for method in mc_methods:
     pmf = pmfs[method]
     mc_parameters = {"niterations":mc_iterations, "fraction_change":0.05, "sample_every": 10, 
@@ -430,9 +427,7 @@ for method in mc_methods:
     for i in range(nbins):
         print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results['values'][i], df[i]))
         
-pltname = ["bayes_posterior_histogram","bayesian_95percent","bayesian_1sigma","parameter_time_series"]
-
-for i in range(len(pltname)):
-    plt.figure(i+1)
-    plt.legend(fontsize='x-small')
-    plt.savefig('{:s}_{:s}.pdf'.format(pltname[i],fig_suffix))
+    for i in range(len(pltname)):
+        plt.figure(i+1)
+        plt.legend(fontsize='x-small')
+        plt.savefig('{:s}_{:s}.pdf'.format(pltname[i],fig_suffix))
