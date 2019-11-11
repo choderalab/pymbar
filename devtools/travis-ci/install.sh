@@ -3,6 +3,7 @@ pushd .
 cd $HOME
 
 # Install Miniconda
+MINICONDA=Miniconda3-latest-Linux-x86_64.sh
 # Sed cuts out everything before the first digit, then traps the first digit and everything after
 MINICONDA_HOME=$HOME/miniconda
 MINICONDA_MD5=$(curl -s https://repo.continuum.io/miniconda/ | grep -A3 $MINICONDA | sed -n '4p' | sed -n 's/ *<td>\(.*\)<\/td> */\1/p')
