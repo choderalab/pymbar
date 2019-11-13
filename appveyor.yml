@@ -30,7 +30,7 @@ install:
   - ps: . ".\\devtools\\appveyor\\install.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda config --add channels conda-forge
-  - conda install conda-build jinja2
+  - conda install --yes conda-build jinja2
 
 build: false
 
