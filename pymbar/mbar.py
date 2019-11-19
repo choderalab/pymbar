@@ -1741,8 +1741,9 @@ class MBAR:
                     # BAR solution doesn't need to be incredibly accurate to
                     # kickstart NR.
                     import pymbar.bar
-                    self.f_k[l] = self.f_k[k] + pymbar.bar.BAR(
+                    results = pymbar.bar.BAR(
                         w_F, w_R, relative_tolerance=0.000001, verbose=False, compute_uncertainty=False)
+                    self.f_k[l] = self.f_k[k] + results['Delta_f']
                 else:
                     # no states observed, so we don't need to initialize this free energy anyway, as
                     # the solution is noniterative.
