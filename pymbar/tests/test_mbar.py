@@ -337,3 +337,13 @@ def test_mbar_computeExpectationsInner():
         u_n = u_kn[:2,:]
         state_map = np.array([[0,0],[1,0],[2,0],[2,1]],int)
         results = mbar.computeExpectationsInner(A_in, u_n, state_map)
+
+ def test_mbar_initializeBAR():
+
+    """Can MBAR initialize with BAR"""
+
+    for system_generator in system_generators:
+        name, test = system_generator()
+        x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+        eq(N_k, N_k_output)
+        mbar = MBAR(u_kn, N_k, initialize='BAR')
