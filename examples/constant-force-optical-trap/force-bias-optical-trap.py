@@ -211,9 +211,6 @@ for k in range(K):
 # Compute PMF in unbiased potential (in units of kT).
 print("Computing PMF...")
 (f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
-results = mbar.computePMF(u_kn, bin_kn, nbins)
-f_i = results['f_i']
-df_i = results['df_i']
 # compute estimate of PMF including Jacobian term
 pmf_i = f_i + numpy.log(bin_width_i)
 # Write out unbiased estimate of PMF
@@ -237,7 +234,7 @@ print("analysis took %f seconds" % elapsed_time)
 # compute observed and expected histograms at each state
 for l in range(0,K):
     # compute PMF at state l
-    results = mbar.computePMF(u_kln[:,l,:], bin_kn, nbins)
+    results = mbar.computePMF(u_kln[:,l,:], bin_kn, nbins, return_dict=True)
     f_i = results['f_i']
     df_i = results['df_i']
     # compute estimate of PMF including Jacobian term

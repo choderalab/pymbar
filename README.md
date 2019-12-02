@@ -45,14 +45,15 @@ To analyze this data, we first initialize the `MBAR` object:
 ```
 Estimating dimensionless free energy differences between the sampled thermodynamic states and their associated uncertainties (standard errors) simply requires a call to `getFreeEnergyDifferences()`:
 ```python
->>>  results = mbar.getFreeEnergyDifferences()
+>>>  results = mbar.getFreeEnergyDifferences(return_dict=True)
 ```
 Here `results` is a dictionary with keys `Deltaf_ij`, `dDeltaf`, and `Theta`. `Deltaf_ij[i,j]` is the matrix of dimensionless free energy differences `f_j - f_i`, `dDeltaf_ij[i,j]` is the matrix of standard errors in this matrices estimate, and `Theta` is a covariance matrix that can be used to propagate error into quantities derived from the free energies.
+By default, `return_dict` is `False` and the return will be a tuple.
 
 Expectations and associated uncertainties can easily be estimated for observables `A(x)` for all states:
 ```python
 >>> A_kn = x_kn # use position of harmonic oscillator as observable
->>> results = mbar.computeExpectations(A_kn)
+>>> results = mbar.computeExpectations(A_kn, return_dict=True)
 ```
 where `results` is a dictionary with keys `mu`, `sigma`, and `Theta`, where `mu[i]` is the array of the estimate for the average of the observable for in state i, `sigma[i]` is the estimated standard deviation of the `mu` estimates,  and `Theta[i,j]` is the covarinace matrix of the log weights. 
 
