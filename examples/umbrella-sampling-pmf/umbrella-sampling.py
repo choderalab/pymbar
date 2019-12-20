@@ -131,9 +131,6 @@ for k in range(K):
 
 # Evaluate reduced energies in all umbrellas
 print("Evaluating reduced potential energies...")
-import pdb
-pdb.set_trace()
-
 for k in range(K):
     for n in range(N_k[k]):
         # Compute minimum-image torsion deviation from umbrella center l
