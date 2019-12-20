@@ -281,23 +281,23 @@ for n in range(nBoots_work):
     E_kln = u_kln  # not a copy, we are going to write over it, but we don't need it any more.
     for k in range(K):
         E_kln[:,k,:]*=beta_k[k]**(-1)  # get the 'unreduced' potential -- we can't take differences of reduced potentials because the beta is different; math is much more confusing with derivatives of the reduced potentials.
-    results = mbar.computeExpectations(E_kln, state_dependent = True)
+    results = mbar.computeExpectations(E_kln, state_dependent = True, return_dict=True)
     E_expect = results['mu']
     dE_expect = results['sigma']
     allE_expect[:,n] = E_expect[:]
 
     # expectations for the differences, which we need for numerical derivatives
-    results = mbar.computeExpectations(E_kln,output='differences', state_dependent = True)
+    results = mbar.computeExpectations(E_kln,output='differences', state_dependent = True, return_dict=True)
     DeltaE_expect = results['mu']
     dDeltaE_expect = results['sigma']
     print("Computing Expectations for E^2...")
 
-    results = mbar.computeExpectations(E_kln**2, state_dependent = True)
+    results = mbar.computeExpectations(E_kln**2, state_dependent = True, return_dict=True)
     E2_expect = results['mu']
     dE2_expect = results['sigma']
     allE2_expect[:,n] = E2_expect[:]
 
-    results = mbar.getFreeEnergyDifferences()
+    results = mbar.getFreeEnergyDifferences(return_dict=True)
     df_ij = results['Delta_f']
     ddf_ij = results['dDelta_f']
 
