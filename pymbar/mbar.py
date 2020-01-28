@@ -1473,7 +1473,7 @@ class MBAR:
             indices = np.where(bin_n == i)
 
             # Sanity check.
-            if (len(indices) == 0):
+            if (len(indices[0]) == 0):
                 raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
 
             # Compute dimensionless free energy of occupying state i.
