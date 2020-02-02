@@ -40,6 +40,7 @@ This module contains implementations of
 import math
 import numpy as np
 import numpy.linalg as linalg
+import warnings
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
@@ -182,6 +183,9 @@ class MBAR:
         """
         for key, val in kwargs.items():
             print("Warning: parameter {}={} is unrecognized and unused.".format(key, val))
+
+        # string for warning about deprecated return values
+        self.return_value_warn = "Returning values as a tuple is deprecated, and will be removed in a future version."
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
@@ -410,7 +414,7 @@ class MBAR:
 
         Parameters
         ----------
-        return_dict : bool, Default False
+        return_dict : bool, Default True
             If true, results are a dict, else a tuple
 
         Returns
@@ -462,10 +466,12 @@ class MBAR:
 
         if return_dict:
             return results_vals
-        return overlap_scalar, eigenvals, O
+        else:
+            warnings.warn(self.return_value_warn,UserWarning)
+            return overlap_scalar, eigenvals, O
 
     #=========================================================================
-    def getFreeEnergyDifferences(self, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False, return_dict=False):
+    def getFreeEnergyDifferences(self, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False, return_dict=True):
         """Get the dimensionless free energy differences and uncertainties among all thermodynamic states.
 
 
@@ -482,8 +488,8 @@ class MBAR:
             than this number (default: 1.0e-10)
         return_theta : bool, optional
             Whether or not to return the theta matrix.  Can be useful for complicated differences.
-        return_dict: bool, default False
-            If true, returns are in a dictionary otherwise a tuple is returned
+        return_dict: bool, default True
+            If true, returns are in a dictionary, otherwise a tuple is returned
 
         Returns
         -------
@@ -516,7 +522,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.getFreeEnergyDifferences(return_dict=True)
+        >>> results = mbar.getFreeEnergyDifferences()
 
         """
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
@@ -556,7 +562,9 @@ class MBAR:
 
         if return_dict:
             return result_vals
-        return tuple(return_list)
+        else:
+            warnings.warn(self.return_value_warn,UserWarning)
+            return tuple(return_list)
 
     # =========================================================================
     def computeExpectationsInner(self, A_n, u_ln, state_map,
@@ -889,7 +897,7 @@ class MBAR:
     def computeExpectations(self, A_n, u_kn=None, output='averages', state_dependent=False,
                             compute_uncertainty=True, uncertainty_method=None,
                             warning_cutoff=1.0e-10, return_theta=False,
-                            return_dict=False):
+                            return_dict=True):
         """Compute the expectation of an observable of a phase space function.
 
         Compute the expectation of an observable of a single phase space
@@ -921,8 +929,8 @@ class MBAR:
 
         state_dependent: bool, whether the expectations are state-dependent.
 
-        return_dict: bool, default False
-            If true, return is a dictionary, else its a tuple
+        return_dict: bool, default True
+            If True, is a dictionary, else its a tuple
 
         Returns
         -------
@@ -952,9 +960,9 @@ class MBAR:
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_n = x_n
-        >>> results = mbar.computeExpectations(A_n, return_dict=True)
+        >>> results = mbar.computeExpectations(A_n)
         >>> A_n = u_kn[0,:]
-        >>> results = mbar.computeExpectations(A_n, output='differences', return_dict=True)
+        >>> results = mbar.computeExpectations(A_n, output='differences')
         """
 
         dims = len(np.shape(A_n))
@@ -1043,12 +1051,14 @@ class MBAR:
 
         if return_dict:
             return result_vals
-        return tuple(result_list)
+        else:
+            warnings.warn(self.return_value_warn,UserWarning)
+            return tuple(result_list)
 
     #=========================================================================
     def computeMultipleExpectations(self, A_in, u_n, compute_uncertainty=True, compute_covariance=False,
                                     uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False,
-                                    return_dict=False):
+                                    return_dict=True):
         """Compute the expectations of multiple observables of phase space functions.
 
         Compute the expectations of multiple observables of phase
@@ -1075,8 +1085,8 @@ class MBAR:
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        return_dict: bool, default False
-            If true, return is a dictionary, else its a tuple
+        return_dict: bool, default True
+            If True, return is a dictionary, else its a tuple
 
         Returns
         -------------
@@ -1102,7 +1112,7 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_in = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[0,:]
-        >>> results = mbar.computeMultipleExpectations(A_in, u_kn, return_dict=True)
+        >>> results = mbar.computeMultipleExpectations(A_in, u_kn)
 
         """
 
@@ -1156,11 +1166,12 @@ class MBAR:
 
         if return_dict:
             return result_vals
-        return tuple(return_list)
-
+        else:
+            warnings.warn(self.return_value_warn,UserWarning)
+            return tuple(return_list)
 
     #=========================================================================
-    def computePerturbedFreeEnergies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_dict=False):
+    def computePerturbedFreeEnergies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_dict=True):
         """Compute the free energies for a new set of states.
 
         Here, we desire the free energy differences among a set of new states, as well as the uncertainty estimates in these differences.
@@ -1177,25 +1188,25 @@ class MBAR:
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        return_dict: bool, default False
+        return_dict: bool, default True
             If true, return is a dictionary, else its a tuple
 
         Returns
         -------
         'Delta_f' : np.ndarray, float, shape=(L, L)
             result_vals['Delta_f'] = f_j - f_i, the dimensionless free energy difference between new states i and j
-            If return_dict, ket is 'Delta_f'
+            If return_dict, key is 'Delta_f'
         'dDelta_f' : np.ndarray, float, shape=(L, L)
             result_vals['dDelta_f'] is the estimated statistical uncertainty in result_vals['Delta_f']
             or not included if `compute_uncertainty` is False
-            If return_dict, ket is 'dDelta_f'
+            If return_dict, key is 'dDelta_f'
 
         Examples
         --------
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computePerturbedFreeEnergies(u_kn, return_dict=True)
+        >>> results = mbar.computePerturbedFreeEnergies(u_kn)
         """
 
         # Convert to np matrix.
@@ -1234,11 +1245,13 @@ class MBAR:
         # Return matrix of free energy differences and uncertainties.
         if return_dict:
             return result_vals
-        return tuple(results_list)
+        else:
+            print("Warning: returning values as a tuple is deprecated")
+            return tuple(results_list)
 
     #=====================================================================
 
-    def computeEntropyAndEnthalpy(self, u_kn=None, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10, return_dict=False):
+    def computeEntropyAndEnthalpy(self, u_kn=None, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10, return_dict=True):
         """Decompose free energy differences into enthalpy and entropy differences.
 
         Compute the decomposition of the free energy difference between
@@ -1254,7 +1267,7 @@ class MBAR:
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        return_dict: bool, default False
+        return_dict: bool, default True
             If true, return is a dictionary, else its a tuple
 
         Returns
@@ -1284,7 +1297,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computeEntropyAndEnthalpy(return_dict=True)
+        >>> results = mbar.computeEntropyAndEnthalpy()
 
         """
         if verbose:
@@ -1372,11 +1385,13 @@ class MBAR:
 
         if return_dict:
             return result_vals
-        return tuple(results_list)
+        else:
+            warnings.warn(self.return_value_warn,UserWarning)
+            return tuple(results_list)
 
     #=====================================================================
 
-    def computePMF(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None, return_dict=False):
+    def computePMF(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None, return_dict=True):
         """
         Compute the free energy of occupying a number of bins.
 
@@ -1401,8 +1416,8 @@ class MBAR:
         pmf_reference : int, optional
             the reference state that is zeroed when uncertainty = 'from-specified'
 
-        return_dict : bool, default False
-            Changes the return from a Tuple to a Dict
+        return_dict : bool, default True
+            False returns as a Tuple rather than a dict
 
         Returns
         -------
@@ -1441,7 +1456,7 @@ class MBAR:
         >>> bin_n = np.zeros(x_n.shape, np.int64)
         >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
-        >>> results = mbar.computePMF(u_n, bin_n, nbins, return_dict=True)
+        >>> results = mbar.computePMF(u_n, bin_n, nbins)
         >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
         >>> f_i_corrected = results['f_i'] - np.log(bin_widths)
 
@@ -1562,7 +1577,9 @@ class MBAR:
             else:
                 result_vals['df_i'] = df_i
             return result_vals
-        return f_i, df_i
+        else:
+            warnings.warn(self.return_value_warn,UserWarning)
+            return f_i, df_i
 
 
     #=========================================================================
