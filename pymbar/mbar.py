@@ -1013,7 +1013,6 @@ class MBAR:
             A_ij = A_im - A_im.transpose()
 
             result_vals['mu'] = np.array(A_ij)
-            result_list.append(result_vals['mu'])
             if compute_uncertainty:
                 result_vals['sigma'] = self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff)
 

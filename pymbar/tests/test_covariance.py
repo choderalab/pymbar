@@ -25,9 +25,9 @@ def _test(data_generator):
     name, U, N_k, s_n = data_generator()
     print(name)
     mbar = pymbar.MBAR(U, N_k)
-    results1 = mbar.getFreeEnergyDifferences(uncertainty_method="svd", return_dict=True)
-    fij1_t, dfij1_t = mbar.getFreeEnergyDifferences(uncertainty_method="svd", return_dict=False)
-    results2 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew", return_dict=True)
+    results1 = mbar.getFreeEnergyDifferences(uncertainty_method="svd")
+    fij1_t, dfij1_t = mbar.getFreeEnergyDifferences(uncertainty_method="svd")
+    results2 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew")
     fij1 = results1['Delta_f']
     dfij1 = results1['dDelta_f']
     fij2 = results2['Delta_f']
