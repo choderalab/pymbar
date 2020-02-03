@@ -147,7 +147,7 @@ def BARzero(w_F, w_R, DeltaF):
     return fzero
 
 
-def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True, return_dict=True):
+def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True):
     """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
     Parameters
@@ -176,17 +176,15 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     iterated_solution : bool, optional, default=True
         whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be 
         equivalent to transition matrix sampling.
-    return_dict : bool, default True
-        If true, returns are a dict, else they are a tuple
 
     Returns
     -------
+    Results dictionary with the following keys:
+
     'Delta_f' : float
         Free energy difference
-        If return_dict, key is 'Delta_f'
     'dDelta_f': float
         Estimated standard deviation of free energy difference
-        If return_dict, key is 'dDelta_f'
 
 
     References
@@ -244,21 +242,11 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if compute_uncertainty:
                 result_vals['Delta_f'] = 0.0 
                 result_vals['dDelta_f'] = 0.0
-                if return_dict:
-                    return result_vals
-                else:
-                    warnings.warn("Returning values as a tuple is deprecated, and will be removed in a future version.",
-                                  UserWarning)
-                    return 0.0, 0.0
+                return result_vals
 
             else:
                 result_vals['Delta_f'] = 0.0
-                if return_dict:
-                    return result_vals
-                else:
-                    warnings.warn("Returning values as a tuple is deprecated, and will be removed in a future version.",
-                                  UserWarning)
-                    return 0.0
+                return result_vals
             
         while FUpperB * FLowerB > 0:
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
@@ -502,22 +490,13 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             print("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
         result_vals['Delta_f'] = DeltaF
         result_vals['dDelta_f'] = dDeltaF
-        if return_dict:
-            return result_vals
-        else:
-            warnings.warn("Returning values as a tuple is deprecated, and will be removed in a future version.",
-                          UserWarning)
-            return DeltaF, dDeltaF
+        return result_vals
+
     else:
         if verbose:
             print("DeltaF = {:8.3f}".format(DeltaF))
         result_vals['Delta_f'] = DeltaF
-        if return_dict:
-            return result_vals
-        else:
-            warnings.warn("Returning values as a tuple is deprecated, and will be removed in a future version.",
-                          UserWarning)
-            return DeltaF
+        return result_vals
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta

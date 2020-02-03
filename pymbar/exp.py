@@ -51,8 +51,8 @@ from pymbar.utils import logsumexp
 # One-sided exponential averaging (EXP).
 #=============================================================================================
 
-def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=True):
-    """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
+def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
+    """Estimate free energy difference using one-sided (unsidirectional) exponential averaging (EXP).
 
     Parameters
     ----------
@@ -63,17 +63,13 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=True):
     is_timeseries : bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
         Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
-    return_dict : bool, default True
-        If true, returns are a dictionary, else they are a tuple
 
     Returns
     -------
     'Delta_f' : float
         Free energy difference
-        If return_dict, key is 'Delta_f'
     'dDelta_f': float
         Estimated standard deviation of free energy difference
-        If return_dict, key is 'dDelta_f'
 
     Notes
     -----
@@ -96,7 +92,6 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=True):
     """
 
     result_vals = dict()
-    result_list = []
 
     # Get number of work measurements.
     T = float(np.size(w_F))  # number of work measurements
@@ -128,17 +123,10 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=True):
         # Return estimate of free energy difference and uncertainty.
         result_vals['Delta_f'] = DeltaF
         result_vals['dDelta_f'] = dDeltaF
-        result_list.append(DeltaF)
-        result_list.append(dDeltaF)
     else:
         result_vals['Delta_f'] = DeltaF
-        result_list.append(DeltaF)
-    if return_dict:
-        return result_vals
-    else:
-        warnings.warn("Returning values as a tuple is deprecated, and will be removed in a future version.",
-                      UserWarning)
-        return tuple(result_list)
+
+    return result_vals
 
 #=============================================================================================
 # Gaussian approximation to exponential averaging (Gauss).
@@ -156,17 +144,15 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     is_timeseries : bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
         Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
-    return_dict : bool, default True
-        If true, returns are a dictionary, else they are a tuple
 
     Returns
     -------
+    Results dictionary with keys:
     'Delta_f' : float
         Free energy difference between the two states
-        If return_dict, key is 'Delta_f'
     'dDelta_f': float
         Estimated standard deviation of free energy difference between the two states.
-        If return_dict, key is 'dDelta_f'
+
 
     Notes
     -----
@@ -195,7 +181,6 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     DeltaF = np.average(w_F) - 0.5 * var
 
     result_vals = dict()
-    result_list = []
     if compute_uncertainty:
         # Compute effective number of uncorrelated samples.
         g = 1.0  # statistical inefficiency
@@ -213,17 +198,9 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
         # Return estimate of free energy difference and uncertainty.
         result_vals['Delta_f'] = DeltaF
         result_vals['dDelta_f'] = dDeltaF
-        result_list.append(DeltaF)
-        result_list.append(dDeltaF)
     else:
         result_vals['Delta_f'] = DeltaF
-        result_list.append(DeltaF)
-    if return_dict:
-        return result_vals
-    else:
-        warnings.warn("Returning values as a tuple is deprecated, and will be removed in a future version.",
-                      UserWarning)
-        return tuple(result_list)
+    return result_vals
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta
