@@ -12,7 +12,7 @@ import subprocess
 import six
 
 ##########################
-VERSION = "3.0.4"
+VERSION = "3.0.5"
 ISRELEASED = False
 __version__ = VERSION
 ##########################
