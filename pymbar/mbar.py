@@ -482,7 +482,7 @@ class MBAR:
 
         Returns
         -------
-        Results dictionary with the folowing keys:
+        Results dictionary with the following keys:
 
         'Delta_f' : np.ndarray, float, shape=(K, K)
             Deltaf_ij[i,j] is the estimated free energy difference

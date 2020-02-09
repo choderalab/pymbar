@@ -52,7 +52,7 @@ from pymbar.utils import logsumexp
 #=============================================================================================
 
 def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
-    """Estimate free energy difference using one-sided (unsidirectional) exponential averaging (EXP).
+    """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
 
     Parameters
     ----------
