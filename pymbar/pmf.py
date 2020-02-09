@@ -51,7 +51,7 @@ DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 class PMF:
     """
 
-    generating potentials of mean force with statistics.
+    Methods for generating potentials of mean force with statistical uncertainties. 
 
     Notes
     -----
@@ -66,7 +66,10 @@ class PMF:
     J. Chem. Phys. 129:124105, 2008
     http://dx.doi.org/10.1063/1.2978177
 
-    [2] Some paper.
+    [2] Shirts MR and Ferguson AF. Statistically optimal continuous
+    potentials of mean force from umbrella sampling and multistate
+    reweighting 
+    https://arxiv.org/abs/2001.01170
 
     """
     # =========================================================================
