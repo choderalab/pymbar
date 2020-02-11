@@ -43,12 +43,12 @@ jobs:
         python devtools/scripts/create_conda_env.py -n=test -p=$PYVER devtools/conda-envs/test_env.yaml
 
     - name: Install package
-        shell: bash
-        run: |
-          . devtools/github-actions/initialize_conda.sh
-          conda activate test
-          python -m pip install . --no-deps
-          conda list --show-channel-urls
+      shell: bash
+      run: |
+        . devtools/github-actions/initialize_conda.sh
+        conda activate test
+        python -m pip install . --no-deps
+        conda list --show-channel-urls
 
 #    - name: Run tests (pytest)
 #        shell: bash
@@ -58,8 +58,8 @@ jobs:
 #          pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
 
     - name: Run tests (nose)
-        shell: bash
-        run: |
-          . devtools/github-actions/initialize_conda.sh
-          conda activate test
-          nosetests $PACKAGE --nocapture --verbosity=2 --with-doctest --with-timer
+      shell: bash
+      run: |
+        . devtools/github-actions/initialize_conda.sh
+        conda activate test
+        nosetests $PACKAGE --nocapture --verbosity=2 --with-doctest --with-timer
