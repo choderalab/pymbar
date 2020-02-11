@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'pymbar4'
+  pull_request:
+    branches:
+      - 'master'
+      - 'pymbar4'
+
+jobs:
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-latest, ubuntu-latest, windows-latest]
+        python-version: [3.6, 3.7]
+    env:
+      PYVER: ${{ matrix.python-version }}
+      CI_OS: ${{ matrix.os }}
+      PACKAGE: "pymbar"
+
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v1
+
+    - name: Additional info about the build
+      shell: bash
+      run: |
+        uname -a
+        df -h
+        ulimit -a
+
+    - name: Create environment for package
+      shell: bash
+      run: |
+        . devtools/github-actions/initialize_conda.sh
+        conda activate
+        conda info
+        python devtools/scripts/create_conda_env.py -n=test -p=$PYVER devtools/conda-envs/test_env.yaml
+
+    - name: Install package
+        shell: bash
+        run: |
+          . devtools/github-actions/initialize_conda.sh
+          conda activate test
+          python -m pip install . --no-deps
+          conda list --show-channel-urls
+
+#    - name: Run tests (pytest)
+#        shell: bash
+#        run: |
+#          . devtools/github-actions/initialize_conda.sh
+#          conda activate test
+#          pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
+
+    - name: Run tests (nose)
+        shell: bash
+        run: |
+          . devtools/github-actions/initialize_conda.sh
+          conda activate test
+          nosetests $PACKAGE --nocapture --verbosity=2 --with-doctest --with-timer
