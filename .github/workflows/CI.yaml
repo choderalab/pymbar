@@ -11,6 +11,9 @@ on:
       - 'master'
       - 'pymbar4'
       - 'gha'
+  schedule:
+    # Nightly Tests
+    - cron: '0 0 * * *'
 
 jobs:
 
