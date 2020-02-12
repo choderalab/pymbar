@@ -19,7 +19,8 @@ jobs:
     strategy:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
-        python-version: [3.6, 3.7]
+        python-version: [3.7, 3.8]
+      # fail-fast: false # Un-comment once finalized
     env:
       PYVER: ${{ matrix.python-version }}
       CI_OS: ${{ matrix.os }}
@@ -64,4 +65,6 @@ jobs:
       run: |
         . devtools/github-actions/initialize_conda.sh
         conda activate test
+        cd devtools
         nosetests $PACKAGE --nocapture --verbosity=2 --with-doctest --with-timer
+        cd ..
