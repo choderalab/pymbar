@@ -135,7 +135,7 @@ for replicate_index in range(0,nreplicates):
 
   # Initialize the MBAR class, determining the free energies.
   mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10,verbose=False) # use fast Newton-Raphson solver
-  results = mbar.getFreeEnergyDifferences(return_dict=True)
+  results = mbar.getFreeEnergyDifferences()
   Deltaf_ij_estimated = results['Delta_f']
   dDeltaf_ij_estimated = results['dDelta_f']
 

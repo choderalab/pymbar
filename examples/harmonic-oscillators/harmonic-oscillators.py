@@ -143,7 +143,7 @@ print("=============================================")
 print("      Testing getFreeEnergyDifferences       ")
 print("=============================================")
 
-results = mbar.getFreeEnergyDifferences(return_dict=True)
+results = mbar.getFreeEnergyDifferences()
 Delta_f_ij_estimated = results['Delta_f']
 dDelta_f_ij_estimated = results['dDelta_f']
 
@@ -175,7 +175,7 @@ for i in range(Knon-1):
   k1 = nonzero_indices[i+1]
   w_F = u_kln[k, k1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
   w_R = u_kln[k1, k, 0:N_k[k1]] - u_kln[k1, k1, 0:N_k[k1]]    # reverse work                                  
-  results = BAR(w_F, w_R, return_dict=True)
+  results = BAR(w_F, w_R)
   df_bar = results['Delta_f']
   ddf_bar = results['dDelta_f']
   bar_analytical = (f_k_analytical[k1]-f_k_analytical[k]) 
@@ -191,7 +191,7 @@ print("EXP forward free energy")
 for k in range(K-1):
   if N_k[k] != 0:
     w_F = u_kln[k, k+1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work
-    results = EXP(w_F, return_dict=True)
+    results = EXP(w_F)
     df_exp = results['Delta_f']
     ddf_exp = results['dDelta_f']
     exp_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
@@ -203,7 +203,7 @@ print("EXP reverse free energy")
 for k in range(1,K):
   if N_k[k] != 0:
     w_R = u_kln[k, k-1, 0:N_k[k]] - u_kln[k, k, 0:N_k[k]]         # reverse work                                  
-    (df_exp,ddf_exp) = EXP(w_R, return_dict=True)
+    (df_exp,ddf_exp) = EXP(w_R)
     df_exp = -results['Delta_f']
     ddf_exp = results['dDelta_f']
     exp_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
@@ -219,7 +219,7 @@ print("Gaussian forward estimate")
 for k in range(K-1):
   if N_k[k] != 0:
     w_F = u_kln[k, k+1, 0:N_k[k]]   - u_kln[k, k, 0:N_k[k]]       # forward work                                  
-    results = EXPGauss(w_F, return_dict=True)
+    results = EXPGauss(w_F)
     df_gauss = results['Delta_f']
     ddf_gauss = results['dDelta_f']
     gauss_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
@@ -231,7 +231,7 @@ print("Gaussian reverse estimate")
 for k in range(1,K):
   if N_k[k] != 0:
     w_R = u_kln[k, k-1, 0:N_k[k]] - u_kln[k, k, 0:N_k[k]]         # reverse work                                  
-    results = EXPGauss(w_R, return_dict=True)
+    results = EXPGauss(w_R)
     df_gauss = results['Delta_f']
     ddf_gauss = results['dDelta_f']
     gauss_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
@@ -287,7 +287,7 @@ for observe in observables:
     for k in range(0,K):
       A_kn[k,0:N_k[k]] = x_kn[k,0:N_k[k]]**2
 
-  results = mbar.computeExpectations(A_kn, state_dependent = state_dependent, return_dict=True)
+  results = mbar.computeExpectations(A_kn, state_dependent = state_dependent)
   A_k_estimated = results['mu']
   dA_k_estimated = results['sigma']
 
@@ -341,7 +341,7 @@ for observe in observables:
   stdevs = numpy.abs(As_k_error[Nk_ne_zero]/dAs_k_estimated[Nk_ne_zero])
   print(stdevs)
 
-  results = mbar.computeExpectations(A_kn, state_dependent = state_dependent, output = 'differences', return_dict=True)
+  results = mbar.computeExpectations(A_kn, state_dependent = state_dependent, output = 'differences')
   A_kl_estimated = results['mu']  
   dA_kl_estimated = results['sigma']
 
@@ -384,7 +384,7 @@ A_ikn = numpy.zeros([len(observables_single), K, N_k.max()], numpy.float64)
 for i,observe in enumerate(observables_single):
   A_ikn[i,:,:] = A_kn_all[observe]
 for i in range(K):
-  results = mbar.computeMultipleExpectations(A_ikn, u_kln[:,i,:], compute_covariance=True, return_dict=True)
+  results = mbar.computeMultipleExpectations(A_ikn, u_kln[:,i,:], compute_covariance=True)
   A_i = results['mu']
   dA_ij = results['sigma']
   Ca_ij = results['covariances']
@@ -399,7 +399,7 @@ print("============================================")
 print("      Testing computeEntropyAndEnthalpy")
 print("============================================")
 
-results = mbar.computeEntropyAndEnthalpy(u_kn = u_kln, verbose = True, return_dict=True)
+results = mbar.computeEntropyAndEnthalpy(u_kn = u_kln, verbose = True)
 Delta_f_ij = results['Delta_f']
 dDelta_f_ij = results['dDelta_f']
 Delta_u_ij = results['Delta_u']
@@ -468,7 +468,7 @@ for k in range(K):
     for l in range(L):
       unew_kln[k,l,0:N_k[k]] = (K_extra[l]/2.0) * (x_kn[k,0:N_k[k]]-O_extra[l])**2
 
-results = mbar.computePerturbedFreeEnergies(unew_kln, return_dict=True)
+results = mbar.computePerturbedFreeEnergies(unew_kln)
 Delta_f_ij_estimated = results['Delta_f']
 dDelta_f_ij_estimated = results['dDelta_f']
 
@@ -520,7 +520,7 @@ for observe in observables:
     A_kn = A_kn_all['position^2']
 
   A_k_estimated, dA_k_estimated 
-  results = mbar.computeExpectations(A_kn,unew_kln[:,[nth],:],state_dependent=state_dependent, return_dict=True)
+  results = mbar.computeExpectations(A_kn,unew_kln[:,[nth],:],state_dependent=state_dependent)
   A_k_estimated = results['mu'] 
   dA_k_estimated = results['sigma']
   # need to additionally transform to get the square root
@@ -544,7 +544,7 @@ print("============================================")
 print("      Testing computeOverlap   ")
 print("============================================")
 
-results = mbar.computeOverlap(return_dict=True)
+results = mbar.computeOverlap()
 O = results['scalar']
 O_i = results['eigenvalues']
 O_ij = results['matrix']
@@ -578,7 +578,7 @@ print("We should have that with MBAR, err_MBAR = sqrt(N_k/N_eff)*err_standard,")
 print("so standard (scaled) results should be very close to MBAR results.")
 print("No standard estimate exists for states that are not sampled.")
 A_kn = x_kn
-results = mbar.computeExpectations(A_kn, return_dict=True)
+results = mbar.computeExpectations(A_kn)
 val_mbar = results['mu']
 err_mbar = results['sigma']
 err_standard = numpy.zeros([K],dtype = numpy.float64)
@@ -850,7 +850,6 @@ pmf.generatePMF(u_n, x_n, pmf_type = 'histogram', histogram_parameters = histogr
 delta = 0.0001  # to break ties in things being too close.
 
 results = pmf.getPMF(bin_centers+delta, uncertainties = 'from-specified', pmf_reference = [0,0])
-
 f_i = results['f_i']
 df_i = results['df_i']
 

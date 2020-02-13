@@ -147,7 +147,7 @@ def BARzero(w_F, w_R, DeltaF):
     return fzero
 
 
-def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True, return_dict=False):
+def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True):
     """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
     Parameters
@@ -176,17 +176,15 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     iterated_solution : bool, optional, default=True
         whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be 
         equivalent to transition matrix sampling.
-    return_dict : bool, default False
-        If true, returns are a dict, else they are a tuple
 
     Returns
     -------
+    Results dictionary with the following keys:
+
     'Delta_f' : float
         Free energy difference
-        If return_dict, key is 'Delta_f'
     'dDelta_f': float
         Estimated standard deviation of free energy difference
-        If return_dict, key is 'dDelta_f'
 
 
     References
@@ -205,15 +203,15 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = BAR(w_F, w_R, return_dict=True)
+    >>> results = BAR(w_F, w_R)
     >>> print('Free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Free energy difference is 1.088 +- 0.050 kT
 
     Test completion of various other schemes.
 
-    >>> results = BAR(w_F, w_R, method='self-consistent-iteration', return_dict=True)
-    >>> results = BAR(w_F, w_R, method='false-position', return_dict=True)
-    >>> results = BAR(w_F, w_R, method='bisection', return_dict=True)
+    >>> results = BAR(w_F, w_R, method='self-consistent-iteration')
+    >>> results = BAR(w_F, w_R, method='false-position')
+    >>> results = BAR(w_F, w_R, method='bisection')
 
     """
 
@@ -230,8 +228,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         nfunc = 0
 
     if method == 'bisection' or method == 'false-position':
-        UpperB = EXP(w_F, return_dict=True)['Delta_f']
-        LowerB = -EXP(w_R, return_dict=True)['Delta_f']
+        UpperB = EXP(w_F)['Delta_f']
+        LowerB = -EXP(w_R)['Delta_f']
 
         FUpperB = BARzero(w_F, w_R, UpperB)
         FLowerB = BARzero(w_F, w_R, LowerB)
@@ -244,15 +242,12 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if compute_uncertainty:
                 result_vals['Delta_f'] = 0.0 
                 result_vals['dDelta_f'] = 0.0
-                if return_dict:
-                    return result_vals
-                return 0.0, 0.0
+                return result_vals
+
             else:
                 result_vals['Delta_f'] = 0.0
-                if return_dict:
-                    return result_vals
-                return 0.0
-
+                return result_vals
+            
         while FUpperB * FLowerB > 0:
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
             # There may be a better way to do this, and the above bracket should rarely fail.
@@ -347,7 +342,9 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
         Compute asymptotic variance estimate using Eq. 10a of Bennett,
         1976 (except with n_1<f>_1^2 in the second denominator, it is
-        an error in the original NOTE: The 'BAR' and 'MBAR' estimators
+        an error in the original.
+
+        NOTE: The 'BAR' and 'MBAR' estimators
         do not agree for poor overlap. This is not because of
         numerical precision, but because they are fundamentally
         different estimators. For poor overlap, 'MBAR' diverges high,
@@ -493,16 +490,13 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             print("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
         result_vals['Delta_f'] = DeltaF
         result_vals['dDelta_f'] = dDeltaF
-        if return_dict:
-            return result_vals
-        return DeltaF, dDeltaF
+        return result_vals
+
     else:
         if verbose:
             print("DeltaF = {:8.3f}".format(DeltaF))
         result_vals['Delta_f'] = DeltaF
-        if return_dict:
-            return result_vals
-        return DeltaF
+        return result_vals
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta

@@ -234,7 +234,7 @@ print("analysis took %f seconds" % elapsed_time)
 # compute observed and expected histograms at each state
 for l in range(0,K):
     # compute PMF at state l
-    results = mbar.computePMF(u_kln[:,l,:], bin_kn, nbins, return_dict=True)
+    results = mbar.computePMF(u_kln[:,l,:], bin_kn, nbins)
     f_i = results['f_i']
     df_i = results['df_i']
     # compute estimate of PMF including Jacobian term
