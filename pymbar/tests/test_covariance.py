@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 import pymbar
-from pymbar.utils_for_testing import (suppress_derivative_warnings_for_tests, assert_almost_equal,
+from pymbar.utils_for_testing import (suppress_derivative_warnings_for_tests, suppress_matrix_warnings_for_tests,
+                                      assert_almost_equal,
                                       oscillators, exponentials)
 
 
@@ -29,7 +30,8 @@ def _test(statesa, statesb, test_system):
 
     # Test against old MBAR code.
     with suppress_derivative_warnings_for_tests():
-        mbar0 = pymbar.old_mbar.MBAR(U, N_k)
+        with suppress_matrix_warnings_for_tests():
+            mbar0 = pymbar.old_mbar.MBAR(U, N_k)
     fij0, dfij0 = mbar0.getFreeEnergyDifferences(uncertainty_method="svd")
     assert_almost_equal(mbar.f_k, mbar0.f_k, decimal=8)
     assert_almost_equal(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)

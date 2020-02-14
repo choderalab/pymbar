@@ -6,7 +6,7 @@ dependencies:
     # Base depends
   - python
   - pip
-  - numpy >=1.11
+  - numpy >=1.12
   - scipy
   - numexpr
   - six
