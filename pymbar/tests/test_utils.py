@@ -1,6 +1,6 @@
 import numpy as np
 import pymbar
-from pymbar.utils_for_testing import eq
+from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 try:
     from scipy.special import logsumexp
 except ImportError:
@@ -14,8 +14,9 @@ def test_logsumexp():
         ans_ne = pymbar.utils.logsumexp(a, axis=axis)
         ans_no_ne = pymbar.utils.logsumexp(a, axis=axis, use_numexpr=False)
         ans_scipy = logsumexp(a, axis=axis)
-        eq(ans_ne, ans_no_ne)
-        eq(ans_ne, ans_scipy)
+        assert_equal(ans_ne, ans_no_ne)
+        assert_equal(ans_ne, ans_scipy)
+
 
 def test_logsumexp_b():
     a = np.random.normal(size=(200, 500, 5))
@@ -25,11 +26,12 @@ def test_logsumexp_b():
         ans_ne = pymbar.utils.logsumexp(a, b=b, axis=axis)
         ans_no_ne = pymbar.utils.logsumexp(a, b=b, axis=axis, use_numexpr=False)
         ans_scipy = logsumexp(a, b=b, axis=axis)
-        eq(ans_ne, ans_no_ne)
-        eq(ans_ne, ans_scipy)
+        assert_equal(ans_ne, ans_no_ne)
+        assert_equal(ans_ne, ans_scipy)
+
 
 def test_logsum():
     u = np.random.normal(size=(200))
     y1 = pymbar.utils.logsumexp(u)
     y2 = pymbar.utils._logsum(u)
-    eq(y1, y2, decimal=12)
+    assert_almost_equal(y1, y2, decimal=12)

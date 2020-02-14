@@ -56,18 +56,9 @@ jobs:
         python -m pip install . --no-deps
         conda list --show-channel-urls
 
-#    - name: Run tests (pytest)
-#        shell: bash
-#        run: |
-#          . devtools/github-actions/initialize_conda.sh
-#          conda activate test
-#          pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
-
-    - name: Run tests (nose)
+    - name: Run tests (pytest)
       shell: bash
       run: |
         . devtools/github-actions/initialize_conda.sh
         conda activate test
-        cd devtools
-        nosetests $PACKAGE --nocapture --verbosity=2 --with-doctest --with-timer
-        cd ..
+        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
