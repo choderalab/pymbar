@@ -57,8 +57,8 @@ jobs:
         conda list --show-channel-urls
 
     - name: Run tests (pytest)
-        shell: bash
-        run: |
-          . devtools/github-actions/initialize_conda.sh
-          conda activate test
-          pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
+      shell: bash
+      run: |
+        . devtools/github-actions/initialize_conda.sh
+        conda activate test
+        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
