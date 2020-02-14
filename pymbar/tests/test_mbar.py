@@ -236,7 +236,7 @@ def test_mbar_computeOverlap_analytical():
     eigenval = results['eigenvalues']
     O = results['matrix']
 
-    reference_matrix = np.matrix((1.0/d)*np.ones([d,d]))
+    reference_matrix = (1.0/d)*np.ones([d,d])
     reference_eigenvalues = np.zeros(d)
     reference_eigenvalues[0] = 1.0
     reference_scalar = np.float64(1.0)
