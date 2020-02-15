@@ -1156,9 +1156,6 @@ class MBAR:
         >>> results = mbar.computePerturbedFreeEnergies(u_kn)
         """
 
-        # Convert to np matrix.
-        u_ln = np.array(u_ln, dtype=np.float64)
-
         # Get the dimensions of the matrix of reduced potential energies, and convert if necessary
         if len(np.shape(u_ln)) == 3:
             u_ln = kln_to_kn(u_ln, N_k=self.N_k)
