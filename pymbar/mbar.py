@@ -200,7 +200,7 @@ class MBAR:
         K, N = np.shape(u_kn)
 
         if verbose:
-            print("K (total states) = {:d}, total samples = {:d}",format(K, N))
+            print("K (total states) = {:d}, total samples = {:d}".format(K, N))
 
         if np.sum(self.N_k) != N:
             raise ParameterError(
@@ -276,7 +276,7 @@ class MBAR:
             # Check shape
             if initial_f_k.shape != self.f_k.shape:
                 raise ParameterError(
-                    "initial_f_k must be a {:d}-dimensional np array.",format(self.K))
+                    "initial_f_k must be a {:d}-dimensional np array.".format(self.K))
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
             if self.verbose:
@@ -400,7 +400,7 @@ class MBAR:
             N_eff[k] = 1/np.sum(w**2)
             if verbose:
                 print("Effective number of sample in state {:d} is {:10.3f}".format(k,N_eff[k]))
-                print("Efficiency for state {:d} is {:d}/{:d} = {:10.4f}".format(k,N_eff[k],len(w),N_eff[k]/len(w)))
+                print("Efficiency for state {:d} is {:6f}/{:d} = {:10.4f}".format(k,N_eff[k],len(w),N_eff[k]/len(w)))
 
         return N_eff
 
