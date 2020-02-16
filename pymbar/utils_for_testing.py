@@ -20,37 +20,23 @@
 ##############################################################################
 
 import os
-import functools
 import numpy as np
 from numpy.testing import (assert_allclose, assert_almost_equal,
                            assert_approx_equal, assert_array_almost_equal, assert_array_almost_equal_nulp,
                            assert_array_equal, assert_array_less, assert_array_max_ulp, assert_equal,
                            assert_raises, assert_string_equal, assert_warns)
-from nose.tools import ok_, eq_, raises
-from nose import SkipTest
 from pkg_resources import resource_filename
 import warnings
 import contextlib
-import collections.abc as collections_abc  # Temporary until conversion to PyTest
 
-
-# if the system doesn't have scipy, we'd like
-# this package to still work:
-# we'll just redefine isspmatrix as a function that always returns
-# false
-try:
-    from scipy.sparse import isspmatrix
-except ImportError:
-    isspmatrix = lambda x: False
-
+from pymbar.testsystems import HarmonicOscillatorsTestCase, ExponentialTestCase
 
 __all__ = ['assert_allclose', 'assert_almost_equal', 'assert_approx_equal',
            'assert_array_almost_equal', 'assert_array_almost_equal_nulp',
            'assert_array_equal', 'assert_array_less', 'assert_array_max_ulp',
            'assert_equal', 'assert_raises', 'assert_string_equal', 'assert_warns',
-           'get_fn', 'eq', 'assert_dict_equal', 'assert_sparse_matrix_equal',
-           'expected_failure', 'skip', 'ok_', 'eq_', 'raises', 'skipif',
-           'suppress_derivative_warnings_for_tests']
+           'get_fn', 'suppress_derivative_warnings_for_tests',
+           'oscillators', 'exponentials']
 
 ##############################################################################
 # functions
@@ -94,194 +80,26 @@ def get_fn(name):
     return fn
 
 
-def eq(o1, o2, decimal=6, err_msg=''):
-    """Convenience function for asserting that two objects are equal to one another
-
-    If the objects are both arrays or sparse matrices, this method will
-    dispatch to an appropriate handler, which makes it a little bit more
-    useful than just calling ``assert o1 == o2`` (which wont work for numpy
-    arrays -- it returns an array of bools, not a single True or False)
-
-    Parameters
-    ----------
-    o1 : object
-        The first object
-    o2 : object
-        The second object
-    decimal : int
-        If the two objects are floats or arrays of floats, they'll be checked for
-        equality up to this decimal place.
-    err_msg : str
-        Custom error message
-
-    Returns
-    -------
-    passed : bool
-        True if the tests pass. If the tests doesn't pass, since the AssertionError will be raised
-
-    Raises
-    ------
-    AssertionError
-        If the tests fail
-    """
-    assert (type(o1) is type(o2)), 'o1 and o2 not the same type: %s %s' % (type(o1), type(o2))
-
-    if isinstance(o1, dict):
-        assert_dict_equal(o1, o1, decimal)
-    elif isinstance(o1, float):
-        np.testing.assert_almost_equal(o1, o2, decimal)
-    elif isspmatrix(o1):
-        assert_sparse_matrix_equal(o1, o1, decimal)
-    elif isinstance(o1, np.ndarray):
-        if o1.dtype.kind == 'f' or o2.dtype.kind == 'f':
-            # compare floats for almost equality
-            assert_array_almost_equal(o1, o2, decimal, err_msg=err_msg)
-        elif o1.dtype.type == np.core.records.record:
-            # if its a record array, we need to comparse each term
-            assert o1.dtype.names == o2.dtype.names
-            for name in o1.dtype.names:
-                eq(o1[name], o2[name], decimal=decimal, err_msg=err_msg)
-        else:
-            # compare everything else (ints, bools) for absolute equality
-            assert_array_equal(o1, o2, err_msg=err_msg)
-    # probably these are other specialized types
-    # that need a special check?
-    else:
-        eq_(o1, o2)
-
-    return True
+def oscillators(n_states, n_samples, provide_test=False):
+    name = f"{n_states}x{n_samples} oscillators"
+    O_k = np.linspace(1, 5, n_states)
+    k_k = np.linspace(1, 3, n_states)
+    N_k = (np.ones(n_states) * n_samples).astype('int')
+    test = HarmonicOscillatorsTestCase(O_k, k_k)
+    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+    returns = [name, u_kn, N_k_output, s_n]
+    if provide_test:
+        returns.append(test)
+    return returns
 
 
-def assert_dict_equal(t1, t2, decimal=6):
-    """
-    Assert two dicts are equal.
-    This method should actually
-    work for any dict of numpy arrays/objects
-    """
-
-    # make sure the keys are the same
-    eq_(t1.keys(), t2.keys())
-
-    for key, val in t1.iteritems():
-        # compare numpy arrays using numpy.testing
-        if isinstance(val, np.ndarray):
-            if val.dtype.kind == 'f':
-                # compare floats for almost equality
-                assert_array_almost_equal(val, t2[key], decimal)
-            else:
-                # compare everything else (ints, bools) for absolute equality
-                assert_array_equal(val, t2[key])
-        else:
-            eq_(val, t2[key])
-
-
-def assert_sparse_matrix_equal(m1, m2, decimal=6):
-    """Assert two scipy.sparse matrices are equal."""
-    # both are sparse matricies
-    assert isspmatrix(m1)
-    assert isspmatrix(m1)
-
-    # make sure they have the same format
-    eq_(m1.format, m2.format)
-
-    # even though its called assert_array_almost_equal, it will
-    # work for scalars
-    assert_array_almost_equal((m1 - m2).sum(), 0, decimal=decimal)
-
-
-# decorator to mark tests as expected failure
-def expected_failure(test):
-    @functools.wraps(test)
-    def inner(*args, **kwargs):
-        try:
-            test(*args, **kwargs)
-        except BaseException:
-            raise SkipTest
-        else:
-            raise AssertionError('Failure expected')
-    return inner
-
-
-# decorator to skip tests
-def skip(reason):
-    def wrap(test):
-        @functools.wraps(test)
-        def inner(*args, **kwargs):
-            raise SkipTest
-            print("After f(*args)")
-        return inner
-    return wrap
-
-
-# Addition of the old NumPy 1.15 skipif function which was removed from numpy.testing.decorators in newer versions
-# Will be removed on conversion to PyTest
-def skipif(skip_condition, msg=None):
-    """
-    Make function raise SkipTest exception if a given condition is true.
-    If the condition is a callable, it is used at runtime to dynamically
-    make the decision. This is useful for tests that may require costly
-    imports, to delay the cost until the test suite is actually executed.
-    Parameters
-    ----------
-    skip_condition : bool or callable
-        Flag to determine whether to skip the decorated test.
-    msg : str, optional
-        Message to give on raising a SkipTest exception. Default is None.
-    Returns
-    -------
-    decorator : function
-        Decorator which, when applied to a function, causes SkipTest
-        to be raised when `skip_condition` is True, and the function
-        to be called normally otherwise.
-    Notes
-    -----
-    The decorator itself is decorated with the ``nose.tools.make_decorator``
-    function in order to transmit function name, and various other metadata.
-    """
-
-    def skip_decorator(f):
-        # Local import to avoid a hard nose dependency and only incur the
-        # import time overhead at actual test-time.
-        import nose
-
-        # Allow for both boolean or callable skip conditions.
-        if isinstance(skip_condition, collections_abc.Callable):
-            skip_val = lambda: skip_condition()
-        else:
-            skip_val = lambda: skip_condition
-
-        def get_msg(func,msg=None):
-            """Skip message with information about function being skipped."""
-            if msg is None:
-                out = 'Test skipped due to test condition'
-            else:
-                out = msg
-
-            return "Skipping test: %s: %s" % (func.__name__, out)
-
-        # We need to define *two* skippers because Python doesn't allow both
-        # return with value and yield inside the same function.
-        def skipper_func(*args, **kwargs):
-            """Skipper for normal test functions."""
-            if skip_val():
-                raise SkipTest(get_msg(f, msg))
-            else:
-                return f(*args, **kwargs)
-
-        def skipper_gen(*args, **kwargs):
-            """Skipper for test generators."""
-            if skip_val():
-                raise SkipTest(get_msg(f, msg))
-            else:
-                for x in f(*args, **kwargs):
-                    yield x
-
-        # Choose the right skipper to use when building the actual decorator.
-        if nose.util.isgenerator(f):
-            skipper = skipper_gen
-        else:
-            skipper = skipper_func
-
-        return nose.tools.make_decorator(f)(skipper)
-
-    return skip_decorator
+def exponentials(n_states, n_samples, provide_test=False):
+    name = f"{n_states}x{n_samples} exponentials"
+    rates = np.linspace(1, 3, n_states)
+    N_k = (np.ones(n_states) * n_samples).astype('int')
+    test = ExponentialTestCase(rates)
+    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+    returns = [name, u_kn, N_k_output, s_n]
+    if provide_test:
+        returns.append(test)
+    return returns
