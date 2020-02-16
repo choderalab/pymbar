@@ -12,10 +12,8 @@ dependencies:
   - six
 
     # Testing
-#  - pytest
-#  - pytest-cov
+  - pytest
+  - pytest-cov
   - codecov
-  - nose
-  - nose-timer
   - statsmodels
 
