@@ -226,16 +226,30 @@ class MBAR:
 
         # perform consistency checks on the data.
 
-        # if, for any set of data, all reduced potential energies are the same,
-        # they are probably the same state.  We check to within
-        # relative_tolerance.
-
         self.samestates = []
         if self.verbose:
+
+            # if, for any set of data, all reduced potential energies are the same,
+            # they are probably the same state.
+            #
+            # This can take quite a while, so we do it on just
+            # the first few data points.
+            #
+            # determine if there are less than 50 points to compare energies.
+            # (the number 50 is pretty arbitrary)
+            # If so, use that number instead of 50.
+
+            maxpoint = 50
+            if np.sum(self.N_k) < maxpoint:
+                maxpoint = np.sum(self.N_k[k])
+
+            # this could possibly be made faster with np.unique(axis=0,return_indices=True)
+            # but not clear if needed.
+
             for k in range(K):
                 for l in range(k):
                     diffsum = 0
-                    uzero = u_kn[k, :] - u_kn[l, :]
+                    uzero = u_kn[k, :maxpoint] - u_kn[l, :maxpoint]
                     diffsum += np.dot(uzero, uzero)
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
