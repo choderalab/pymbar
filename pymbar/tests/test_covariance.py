@@ -26,16 +26,15 @@ def _test(data_generator):
     print(name)
     mbar = pymbar.MBAR(U, N_k)
     results1 = mbar.getFreeEnergyDifferences(uncertainty_method="svd")
-    fij1_t, dfij1_t = mbar.getFreeEnergyDifferences(uncertainty_method="svd")
     results2 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew")
     fij1 = results1['Delta_f']
     dfij1 = results1['dDelta_f']
     fij2 = results2['Delta_f']
     dfij2 = results2['dDelta_f']
 
-    # Check to make sure the returns from with and w/o dict are the same
-    eq(fij1, fij1_t)
-    eq(dfij1, dfij1_t)
+    # Check to make sure the returns with 'svd' and 'svd-ew' are the same.
+    eq(fij1, fij2)
+    eq(dfij1, dfij2)
 
     eq(pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8)
     eq(np.exp(mbar.Log_W_nk).sum(0), np.ones(len(N_k)), decimal=10)
