@@ -333,7 +333,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if verbose:
                 print('Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)'.format(relative_change, iteration, nfunc))
         else:
-            message = 'WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = %d'.format(relative_change, relative_tolerance, maximum_iterations)
+            message = 'WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = {:d}'.format(relative_change, relative_tolerance, maximum_iterations)
             raise ConvergenceError(message)
 
     if compute_uncertainty:

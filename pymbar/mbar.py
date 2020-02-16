@@ -200,7 +200,7 @@ class MBAR:
         K, N = np.shape(u_kn)
 
         if verbose:
-            print("K (total states) = %d, total samples = %d" % (K, N))
+            print("K (total states) = {:d}, total samples = {:d}",format(K, N))
 
         if np.sum(self.N_k) != N:
             raise ParameterError(
@@ -241,7 +241,7 @@ class MBAR:
                         self.samestates.append([k, l])
                         self.samestates.append([l, k])
                         print('')
-                        print('Warning: states %d and %d have the same energies on the dataset.' % (l, k))
+                        print('Warning: states {:d} and {:d} have the same energies on the dataset.'.format(l, k))
                         print('They are therefore likely to to be the same thermodynamic state.  This can occasionally cause')
                         print('numerical problems with computing the covariance of their energy difference, which must be')
                         print('identically zero in any case. Consider combining them into a single state.')
@@ -259,7 +259,7 @@ class MBAR:
         # Number of states with samples.
         self.K_nonzero = self.states_with_samples.size
         if verbose:
-            print("There are %d states with samples." % self.K_nonzero)
+            print("There are {:d} states with samples.".format(self.K_nonzero))
 
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
@@ -276,7 +276,7 @@ class MBAR:
             # Check shape
             if initial_f_k.shape != self.f_k.shape:
                 raise ParameterError(
-                    "initial_f_k must be a %d-dimensional np array." % self.K)
+                    "initial_f_k must be a {:d}-dimensional np array.",format(self.K))
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
             if self.verbose:
@@ -288,7 +288,7 @@ class MBAR:
             self._initializeFreeEnergies(verbose, method=initialize)
 
             if self.verbose:
-                print("Initial dimensionless free energies with method %s" % (initialize))
+                print("Initial dimensionless free energies with method {}".format(initialize))
                 print("f_k = ")
                 print(self.f_k)
 
@@ -399,8 +399,8 @@ class MBAR:
             w = np.exp(self.Log_W_nk[:,k])
             N_eff[k] = 1/np.sum(w**2)
             if verbose:
-                print("Effective number of sample in state %d is %10.3f" % (k,N_eff[k]))
-                print("Efficiency for state %d is %d/%d = %10.4f" % (k,N_eff[k],len(w),N_eff[k]/len(w)))
+                print("Effective number of sample in state {:d} is {:10.3f}".format(k,N_eff[k]))
+                print("Efficiency for state {:d} is {:d}/{:d} = {:10.4f}".format(k,N_eff[k],len(w),N_eff[k]/len(w)))
 
         return N_eff
 
@@ -1411,7 +1411,7 @@ class MBAR:
 
             # Sanity check.
             if (len(indices[0]) == 0):
-                raise DataError("WARNING: bin %d has no samples -- all bins must have at least one sample." % i)
+                raise DataError("WARNING: bin {:d} has no samples -- all bins must have at least one sample.".format(i))
 
             # Compute dimensionless free energy of occupying state i.
             f_i[i] = - logsumexp(log_w_n[indices])
@@ -1488,7 +1488,7 @@ class MBAR:
             df_i = np.sqrt(d2f_i)
 
         else:
-            raise ParameterError("Uncertainty method '%s' not recognized." % uncertainties)
+            raise ParameterError("Uncertainty method '{}' not recognized.".format(uncertainties))
 
         # return free energy and uncertainty
         # Return dimensionless free energy and uncertainty.
