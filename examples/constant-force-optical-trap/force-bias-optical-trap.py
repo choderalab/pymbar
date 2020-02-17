@@ -95,12 +95,7 @@ def construct_nonuniform_bins(x_n, nbins):
         bin_center_i[bin_index] = (bin_left_boundary_i[bin_index] + bin_left_boundary_i[bin_index+1]) / 2.0
         bin_width_i[bin_index] = (bin_left_boundary_i[bin_index+1] - bin_left_boundary_i[bin_index])
 
-    # DEBUG
-#    outfile = open('states.out', 'w')
-#    for n in range(N):
-#        outfile.write('%8f %8d\n' % (x_n[n], bin_n[n]))
-#    outfile.close()
-        
+                
     return (bin_left_boundary_i, bin_center_i, bin_width_i, bin_n)
 
 #=============================================================================================
@@ -129,7 +124,7 @@ x_kt = zeros([K,T_max], float64) # x_kt[k,t] is the position of snapshot t from 
 
 # Read the trajectories.
 filename = os.path.join(directory, prefix + '.trajectories')
-print("Reading %s..." % filename)
+print("Reading {}...".format(filename))
 infile = open(filename, 'r')
 lines = infile.readlines()
 infile.close()
@@ -162,7 +157,7 @@ for k in range(K):
     g = timeseries.statisticalInefficiency(x_kt[k,0:T_k[k]], x_kt[k,0:T_k[k]])
     # store statistical inefficiency
     g_k[k] = g
-    print("timeseries %d : g = %.1f, %.0f uncorrelated samples (of %d total samples)" % (k+1, g, floor(T_k[k] / g), T_k[k]))
+    print("timeseries {:d} : g = {:.1f}, {:.0f} uncorrelated samples (of {:d} total samples)".format(k+1, g, floor(T_k[k] / g), T_k[k]))
     N_max = max(N_max, ceil(T_k[k] / g) + 1)
 
 # Subsample trajectory position data.
@@ -210,26 +205,28 @@ for k in range(K):
 
 # Compute PMF in unbiased potential (in units of kT).
 print("Computing PMF...")
-(f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
+results = mbar.computePMF(u_kn, bin_kn, nbins)
+f_i = results['f_i']
+df_i = results['df_i']
 # compute estimate of PMF including Jacobian term
 pmf_i = f_i + numpy.log(bin_width_i)
 # Write out unbiased estimate of PMF
 print("Unbiased PMF (in units of kT)")
-print("%8s %8s %8s %8s %8s" % ('bin', 'f', 'df', 'pmf', 'width'))
+print("{:8s} {:8s} {:8s} {:8s} {:8s}".format('bin', 'f', 'df', 'pmf', 'width'))
 for i in range(nbins):
-    print("%8.3f %8.3f %8.3f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i], pmf_i[i], bin_width_i[i]))
+    print("{:8.3f} {:8.3f} {:8.3f} {:8.3f} {:8.3f}".format(bin_center_i[i], f_i[i], df_i[i], pmf_i[i], bin_width_i[i]))
 
 filename = os.path.join(output_directory, 'pmf-unbiased.out')
 outfile = open(filename, 'w')
 for i in range(nbins):
-    outfile.write("%8.3f %8.3f %8.3f\n" % (bin_center_i[i], pmf_i[i], df_i[i]))
+    outfile.write("{:8.3f} {:8.3f} {:8.3f}\n".format(bin_center_i[i], pmf_i[i], df_i[i]))
 
 outfile.close()
 
 # DEBUG
 stop_time = time.time()
 elapsed_time = stop_time - start_time
-print("analysis took %f seconds" % elapsed_time)
+print("analysis took {:f} seconds".format(elapsed_time))
 
 # compute observed and expected histograms at each state
 for l in range(0,K):
@@ -258,22 +255,22 @@ for l in range(0,K):
     N_i_expected = float(N) * p_i
     dN_i_expected = numpy.sqrt(float(N) * p_i * (1.0 - p_i)) # only approximate, since correlations df_i df_j are neglected
     # plot
-    print("state %d (%f pN)" % (l, biasing_force_k[l]))
+    print("state {:d} ({:f} pN)".format(l, biasing_force_k[l]))
     for bin_index in range(nbins):
-        print("%8.3f %10f %10f +- %10f" % (bin_center_i[bin_index], N_i_expected[bin_index], N_i_observed[bin_index], dN_i_observed[bin_index]))        
+        print("{:8.3f} {:10f} {:10f} +- {:10f}".format(bin_center_i[bin_index], N_i_expected[bin_index], N_i_observed[bin_index], dN_i_observed[bin_index]))        
 
     # Write out observed bin counts
-    filename = os.path.join(output_directory, 'counts-observed-%d.out' % l)    
+    filename = os.path.join(output_directory, 'counts-observed-{:d}.out'.format(l))    
     outfile = open(filename, 'w')
     for i in range(nbins):
-        outfile.write("%8.3f %16f %16f\n" % (bin_center_i[i], N_i_observed[i], dN_i_observed[i]))
+        outfile.write("{:8.3f} {:16f} {:16f}\n".format(bin_center_i[i], N_i_observed[i], dN_i_observed[i]))
         
     outfile.close()    
     # write out expected bin counts
-    filename = os.path.join(output_directory, 'counts-expected-%d.out' % l)
+    filename = os.path.join(output_directory, 'counts-expected-{:d}.out'.format(l))
     outfile = open(filename, 'w')
     for i in range(nbins):
-        outfile.write("%8.3f %16f %16f\n" % (bin_center_i[i], N_i_expected[i], dN_i_expected[i]))
+        outfile.write("{:8.3f} {:16f} {:16f}\n".format(bin_center_i[i], N_i_expected[i], dN_i_expected[i]))
         
     outfile.close()    
 
@@ -285,25 +282,25 @@ for l in range(0,K):
     pmf_i_observed[indices] -= pmf_i_observed[indices].mean() # shift observed PMF
     dpmf_i_observed[indices] = dN_i_observed[indices] / N_i_observed[indices]
     # write out observed PMF
-    filename = os.path.join(output_directory, 'pmf-observed-%d.out' % l)    
+    filename = os.path.join(output_directory, 'pmf-observed-{:d}.out'.format(l))    
     outfile = open(filename, 'w')
     for i in indices:
-        outfile.write("%8.3f %8.3f %8.3f\n" % (bin_center_i[i], pmf_i_observed[i], dpmf_i_observed[i]))
+        outfile.write("{:8.3f} {:8.3f} {:8.3f}\n".format(bin_center_i[i], pmf_i_observed[i], dpmf_i_observed[i]))
         
     outfile.close()    
 
     # Write out unbiased estimate of PMF
     pmf_i -= pmf_i[indices].mean() # shift to align with observed
-    filename = os.path.join(output_directory, 'pmf-expected-%d.out' % l)
+    filename = os.path.join(output_directory, 'pmf-expected-{:d}.out'.format(l))
     outfile = open(filename, 'w')
     for i in range(nbins):
-        outfile.write("%8.3f %8.3f %8.3f\n" % (bin_center_i[i], pmf_i[i], df_i[i]))
+        outfile.write("{:8.3f} {:8.3f} {:8.3f}\n".format(bin_center_i[i], pmf_i[i], df_i[i]))
         
     outfile.close()    
 
     # make gnuplot plots
     biasing_force = biasing_force_k[l]
-    filename = os.path.join(plot_directory, 'pmf-comparison-%d.eps' % l)
+    filename = os.path.join(plot_directory, 'pmf-comparison-{:d}.eps'.format(l))
     gnuplot_input = """
 set term postscript color solid
 set output "%(filename)s"
@@ -316,7 +313,7 @@ plot "%(output_directory)s/pmf-expected-%(l)d.out" u 1:2:3 with yerrorbars t "MB
     outfile = open(gnuplot_input_filename, 'w')
     outfile.write(gnuplot_input)
     outfile.close()
-    output = subprocess.getoutput('gnuplot < %(gnuplot_input_filename)s' % vars())
+    output = subprocess.getoutput('gnuplot < %(gnuplot_input_filename)s'.format(vars()))
     output = subprocess.getoutput('epstopdf %(filename)s' % vars())    
     
 
