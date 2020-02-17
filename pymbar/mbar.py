@@ -236,20 +236,23 @@ class MBAR:
             # the first few data points.
             #
             # determine if there are less than 50 points to compare energies.
-            # (the number 50 is pretty arbitrary)
             # If so, use that number instead of 50.
+            # (the number 50 is pretty arbitrary)
 
             maxpoint = 50
-            if np.sum(self.N_k) < maxpoint:
-                maxpoint = np.sum(self.N_k[k])
+            if self.N < maxpoint:
+                maxpoint = self.N
 
             # this could possibly be made faster with np.unique(axis=0,return_indices=True)
             # but not clear if needed.
 
+            # pick random indices
+            indices = np.random.choice(np.arange(self.N),maxpoint)
+
             for k in range(K):
                 for l in range(k):
                     diffsum = 0
-                    uzero = u_kn[k, :maxpoint] - u_kn[l, :maxpoint]
+                    uzero = u_kn[k, indices] - u_kn[l, indices]
                     diffsum += np.dot(uzero, uzero)
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
