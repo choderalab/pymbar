@@ -44,6 +44,7 @@ import warnings
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
+import pdb
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
 # =========================================================================
@@ -447,7 +448,7 @@ class MBAR:
 
         """
 
-        W = np.asarray(self.getWeights(), dtype=np.float64)
+        W = self.getWeights()
         O = self.N_k * (W.T @ W)
         (eigenvals, eigevec) = linalg.eig(O)
         # sort in descending order
@@ -516,8 +517,7 @@ class MBAR:
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
 
         # Compute free energy differences.
-        f_i = np.asarray(self.f_k)
-        Deltaf_ij = f_i - np.atleast_2d(f_i).transpose()
+        Deltaf_ij = self.f_k - np.vstack(self.f_k)
 
         # zero out numerical error for thermodynamically identical states
         self._zerosamestates(Deltaf_ij)
@@ -1008,7 +1008,7 @@ class MBAR:
 
         if output == 'differences':
             A_im = inner_results['observables']
-            result_vals['mu'] = A_im - np.atleast_2d(A_im).transpose()  # Cast to A_ij
+            result_vals['mu'] = A_im - np.vstack(A_im)  # Cast to A_ij
 
             if compute_uncertainty:
                 result_vals['sigma'] = self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff)
@@ -1156,9 +1156,6 @@ class MBAR:
         >>> results = mbar.computePerturbedFreeEnergies(u_kn)
         """
 
-        # Convert to np matrix.
-        u_ln = np.array(u_ln, dtype=np.float64)
-
         # Get the dimensions of the matrix of reduced potential energies, and convert if necessary
         if len(np.shape(u_ln)) == 3:
             u_ln = kln_to_kn(u_ln, N_k=self.N_k)
@@ -1181,7 +1178,7 @@ class MBAR:
         f_k = inner_results['f']
 
         result_vals = dict()
-        result_vals['Delta_f'] = f_k - np.atleast_2d(f_k).transpose()
+        result_vals['Delta_f'] = f_k - np.vstack(f_k)
 
         if (compute_uncertainty):
             result_vals['dDelta_f'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
@@ -1270,21 +1267,21 @@ class MBAR:
 
         # Compute reduced free energy difference.
         f_k = inner_results['f']
-        Delta_f_ij = f_k - np.atleast_2d(f_k).transpose()
+        Delta_f_ij = f_k - np.vstack(f_k)
         # compute uncertainty matrix in free energies:
         covf = Theta[2*K:3*K, 2*K:3*K]
         dDelta_f_ij = self._ErrorOfDifferences(covf, warning_cutoff=warning_cutoff)
 
         # Compute reduced enthalpy difference.
         u_k = inner_results['observables']
-        Delta_u_ij = u_k - np.atleast_2d(u_k).transpose()
+        Delta_u_ij = u_k - np.vstack(u_k)
         # compute uncertainty matrix in energies:
         covu = Theta[0:K,0:K] + Theta[K:2*K, K:2*K] - Theta[0:K, K:2*K] - Theta[K:2*K, 0:K]
         dDelta_u_ij = self._ErrorOfDifferences(covu, warning_cutoff=warning_cutoff)
 
         # Compute reduced entropy difference
         s_k = u_k - f_k
-        Delta_s_ij = s_k - np.atleast_2d(s_k).transpose()
+        Delta_s_ij = s_k - np.vstack(s_k)
         # compute uncertainty matrix in entropies
         #s_i = u_i - f_i
         #cov(s_i) =   cov(u_i - f_i)
@@ -1511,7 +1508,7 @@ class MBAR:
         """
 
         diag = cov.diagonal()
-        d2 = diag + np.atleast_2d(diag).transpose() - 2 * cov
+        d2 = diag + np.vstack(diag) - 2 * cov
 
         # Cast warning_cutoff to compare a negative number
         cutoff = -abs(warning_cutoff)
@@ -1616,25 +1613,21 @@ class MBAR:
             # Use fast approximate expression from Kong et al. -- this underestimates the true covariance, but may be a good approximation in some cases and requires no matrix inversions
             # Theta = P'P
 
-            # Construct matrices
-            W = np.asarray(W, dtype=np.float64)
-
             # Compute covariance
-            Theta = np.atleast_2d(W).T @ W
+            Theta = W.T @ W
 
         elif method == 'svd':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
             # See Appendix D.1, Eq. D4 in [1].
 
             # Construct matrices
-            Ndiag = np.asarray(np.diag(N_k), dtype=np.float64)
-            W = np.asarray(W, dtype=np.float64)
+            Ndiag = np.diag(N_k)
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
             [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
             Sigma = np.diag(S)
-            V = np.atleast_2d(Vt).T
+            V = Vt.T
 
             # Compute covariance
             Theta = V @ Sigma * self._pseudoinverse(
@@ -1646,8 +1639,7 @@ class MBAR:
             # See Appendix D.1, Eqs. D4 and D5 of [1].
 
             # Construct matrices
-            Ndiag = np.asarray(np.diag(N_k), dtype=np.float64)
-            W = np.asarray(W, dtype=np.float64)
+            Ndiag = np.diag(N_k)
             I = np.identity(K, dtype=np.float64)
 
             # Compute singular values and right singular vectors of W without using SVD
