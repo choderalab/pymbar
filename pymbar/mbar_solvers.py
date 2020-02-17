@@ -287,8 +287,13 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     f_nr = np.zeros(len(f_k), dtype=np.float64)
 
     # Perform Newton-Raphson iterations (with sci computed on the way)
+
+    # usually calculated at the end of the loop and saved, but we need
+    # to calculate the first time.
+    g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient.
+
     for iteration in range(0, options['maximum_iterations']):
-        g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
+
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
         Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
         Hinvg -= Hinvg[0]
@@ -313,6 +318,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         f_old = f_k
         if (gnorm_sci < gnorm_nr or sci_iter < 2):
             f_k = f_sci
+            g = g_sci
             sci_iter += 1
             if options['verbose']:
                 if sci_iter < 2:
@@ -321,6 +327,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
                     print("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
         else:
             f_k = f_nr
+            g = g_nr
             nr_iter += 1
             if options['verbose']:
                 print("Newton-Raphson used on iteration %d" % iteration)
