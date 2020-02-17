@@ -243,11 +243,11 @@ def _logsum(a_n):
     Notes
     -----
 
-    _logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
+    _logsum a_n = max_arg + \\log \\sum_{n=1}^N \\exp[a_n - max_arg]
 
     where max_arg = max_n a_n.  This is mathematically (but not numerically) equivalent to
 
-    _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
+    _logsum a_n = \\log \\sum_{n=1}^N \\exp[a_n]
 
 
     Example
@@ -356,7 +356,7 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
         which_badcolumns = np.arange(K)[badcolumns]
         firstbad = which_badcolumns[0]
         raise ParameterError(
-            'Warning: Should have \sum_n W_nk = 1. Actual column sum for state {:d} was {:f}. {:d} other columns have similar problems'.format(firstbad, column_sums[firstbad], np.sum(badcolumns)))
+            'Warning: Should have \\sum_n W_nk = 1. Actual column sum for state {:d} was {:f}. {:d} other columns have similar problems'.format(firstbad, column_sums[firstbad], np.sum(badcolumns)))
 
     row_sums = np.sum(W * N_k, axis=1)
     badrows = (np.abs(row_sums - 1) > tolerance)
@@ -364,7 +364,7 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
         which_badrows = np.arange(N)[badrows]
         firstbad = which_badrows[0]
         raise ParameterError(
-            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample {:d} was {:f}. {:d} other rows have similar problems'.format(firstbad, row_sums[firstbad], np.sum(badrows)))
+            'Warning: Should have \\sum_k N_k W_nk = 1.  Actual row sum for sample {:d} was {:f}. {:d} other rows have similar problems'.format(firstbad, row_sums[firstbad], np.sum(badrows)))
 
     return
 
