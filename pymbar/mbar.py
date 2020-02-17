@@ -44,7 +44,6 @@ import warnings
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
-import pdb
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
 # =========================================================================
@@ -1645,7 +1644,7 @@ class MBAR:
             # Compute singular values and right singular vectors of W without using SVD
             # Instead, we compute eigenvalues and eigenvectors of W'W.
             # Note W'W = (U S V')'(U S V') = V S' U' U S V' = V (S'S) V'
-            [S2, V] = linalg.eigh(np.atleast_2d(W).T @ W)
+            [S2, V] = linalg.eigh(W.T @ W)
             # Set any slightly negative eigenvalues to zero.
             S2[np.where(S2 < 0.0)] = 0.0
             # Form matrix of singular values Sigma, and V.
