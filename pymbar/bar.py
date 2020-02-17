@@ -60,9 +60,9 @@ def BARzero(w_F, w_R, DeltaF):
     D_R = M + w_R - Delta F
 
     we want:
-    \sum_N_F (1+exp(D_F))^-1 = \sum N_R N_R <(1+exp(-D_R))^-1>
-    ln \sum N_F (1+exp(D_F))^-1>_F = \ln \sum N_R exp((1+exp(-D_R))^(-1)>_R
-    ln \sum N_F (1+exp(D_F))^-1>_F - \ln \sum N_R exp((1+exp(-D_R))^(-1)>_R = 0
+    \\sum_N_F (1+exp(D_F))^-1 = \\sum N_R N_R <(1+exp(-D_R))^-1>
+    ln \\sum N_F (1+exp(D_F))^-1>_F = \\ln \\sum N_R exp((1+exp(-D_R))^(-1)>_R
+    ln \\sum N_F (1+exp(D_F))^-1>_F - \\ln \\sum N_R exp((1+exp(-D_R))^(-1)>_R = 0
 
     Parameters
     ----------
@@ -333,7 +333,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if verbose:
                 print('Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)'.format(relative_change, iteration, nfunc))
         else:
-            message = 'WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = %d'.format(relative_change, relative_tolerance, maximum_iterations)
+            message = 'WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = {:d}'.format(relative_change, relative_tolerance, maximum_iterations)
             raise ConvergenceError(message)
 
     if compute_uncertainty:

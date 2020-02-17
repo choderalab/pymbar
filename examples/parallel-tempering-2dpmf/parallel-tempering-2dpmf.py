@@ -105,7 +105,7 @@ T = trajectory_segment_length * niterations # total number of snapshots per temp
 print("Reading potential energies...")
 U_kt = numpy.zeros([K,T]) # U_kn[k,t] is the potential energy (in kcal/mol) for snapshot t of temperature index k
 lines = read_file(potential_energies_filename)
-print("%d lines read, processing %d snapshots" % (len(lines), T))
+print("{:d} lines read, processing {:d} snapshots".format(len(lines), T))
 for t in range(T):
    # Get line containing the energies for snapshot t of trajectory segment n
    line = lines[t]
@@ -122,11 +122,11 @@ print("Reading phi, psi trajectories...")
 phi_kt = numpy.zeros([K,T]) # phi_kt[k,n,t] is phi angle (in degrees) for snapshot t of temperature k
 psi_kt = numpy.zeros([K,T]) # psi_kt[k,n,t] is psi angle (in degrees) for snapshot t of temperature k
 for k in range(K):
-   phi_filename = os.path.join(data_directory, 'backbone-torsions', '%d.phi' % (k))
-   psi_filename = os.path.join(data_directory, 'backbone-torsions', '%d.psi' % (k))
+   phi_filename = os.path.join(data_directory, 'backbone-torsions', '{:d}.phi'.format(k))
+   psi_filename = os.path.join(data_directory, 'backbone-torsions', '{:d}.psi'.format(k))
    phi_lines = read_file(phi_filename)
    psi_lines = read_file(psi_filename)
-   print("k = %d, %d phi lines read, %d psi lines read" % (k, len(phi_lines), len(psi_lines)))
+   print("k = {:d}, {:d} phi lines read, {:d} psi lines read".format(k, len(phi_lines), len(psi_lines)))
    for t in range(T):
       # Extract phi and psi
       phi_kt[k,t] = float(phi_lines[t])
@@ -144,7 +144,7 @@ for i in range(niterations):
    elements = lines[i].split()
    for k in range(K):
       replica_ik[i,k] = int(elements[k])
-print("Replica indices for %d iterations processed." % niterations)
+print("Replica indices for {:d} iterations processed.".format(niterations))
 
 #===================================================================================================
 # Permute data by replica and subsample to generate an uncorrelated subset of data by temperature
@@ -181,18 +181,18 @@ else:
    # The 
    print("Computing statistical inefficiencies...")
    g_cosphi = timeseries.statisticalInefficiencyMultiple(numpy.cos(phi_kt_replica * numpy.pi / 180.0))
-   print("g_cos(phi) = %.1f" % g_cosphi)
+   print("g_cos(phi) = {:.1f}".format(g_cosphi))
    g_sinphi = timeseries.statisticalInefficiencyMultiple(numpy.sin(phi_kt_replica * numpy.pi / 180.0))
-   print("g_sin(phi) = %.1f" % g_sinphi)
+   print("g_sin(phi) = {:.1f}".format(g_sinphi))
    g_cospsi = timeseries.statisticalInefficiencyMultiple(numpy.cos(psi_kt_replica * numpy.pi / 180.0))
-   print("g_cos(psi) = %.1f" % g_cospsi)
+   print("g_cos(psi) = {:.1f}".format(g_cospsi))
    g_sinpsi = timeseries.statisticalInefficiencyMultiple(numpy.sin(psi_kt_replica * numpy.pi / 180.0))
-   print("g_sin(psi) = %.1f" % g_sinpsi)
+   print("g_sin(psi) = {:.1f}".format(g_sinpsi))
    # Subsample data with maximum of all correlation times.
    print("Subsampling data...")
    g = numpy.max(numpy.array([g_cosphi, g_sinphi, g_cospsi, g_sinpsi]))
    indices = timeseries.subsampleCorrelatedData(U_kt[k,:], g = g)
-   print("Using g = %.1f to obtain %d uncorrelated samples per temperature" % (g, len(indices)))
+   print("Using g = {:.1f} to obtain {:d} uncorrelated samples per temperature".format(g, len(indices)))
    N_max = int(numpy.ceil(T / g)) # max number of samples per temperature
    U_kn = numpy.zeros([K, N_max], numpy.float64)
    phi_kn = numpy.zeros([K, N_max], numpy.float64)
@@ -202,7 +202,7 @@ else:
       U_kn[k,:] = U_kt[k,indices]
       phi_kn[k,:] = phi_kt[k,indices]
       psi_kn[k,:] = psi_kt[k,indices]
-   print("%d uncorrelated samples per temperature" % N_max)
+   print("{:d} uncorrelated samples per temperature".format(N_max))
 
 #===================================================================================================
 # Generate a list of indices of all configurations in kn-indexing
@@ -269,9 +269,9 @@ for i in range(nbins_per_torsion):
          # increment number of bins
          nbins += 1
 
-print("%d bins were populated:" % nbins)
+print("{:d} bins were populated:".format(nbins))
 for i in range(nbins):
-   print("bin %5d (%6.1f, %6.1f) %12d conformations" % (i, bin_centers[i][0], bin_centers[i][1], bin_counts[i]))
+   print("bin {:5d} ({:6.1f}, {:6.1f}) {:12d} conformations".format(i, bin_centers[i][0], bin_centers[i][1], bin_counts[i]))
 
 #===================================================================================================
 # Initialize MBAR.
@@ -300,8 +300,8 @@ df_i = results['df_i']
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF")
 print("")
-print("%8s %6s %6s %8s %10s %10s" % ('bin', 'phi', 'psi', 'N', 'f', 'df'))
+print("{:8s} {:6s} {:6s} {:8s} {:10s} {:10s}".format('bin', 'phi', 'psi', 'N', 'f', 'df'))
 
 for i in range(nbins):
-   print('%8d %6.1f %6.1f %8d %10.3f %10.3f' % (i, bin_centers[i][0], bin_centers[i][1], bin_counts[i], f_i[i], df_i[i]))
+   print('{:8d} {:6.1f} {:6.1f} {:8d} {:10.3f} {:10.3f}'.format(i, bin_centers[i][0], bin_centers[i][1], bin_counts[i], f_i[i], df_i[i]))
 

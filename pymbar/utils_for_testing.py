@@ -86,8 +86,8 @@ def get_fn(name):
     fn = resource_filename('mdtraj', os.path.join('testing/reference', name))
 
     if not os.path.exists(fn):
-        raise ValueError('Sorry! %s does not exists. If you just '
-                         'added it, you\'ll have to re install' % fn)
+        raise ValueError('Sorry! {} does not exists. If you just '
+                         'added it, you\'ll have to re install'.format(fn))
 
     return fn
 

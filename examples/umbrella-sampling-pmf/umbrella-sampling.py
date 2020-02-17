@@ -52,8 +52,8 @@ if (min(T_k) == max(T_k)):
 # Read the simulation data
 for k in range(K):
     # Read torsion angle data.
-    filename = 'data/prod%d_dihed.xvg' % k
-    print("Reading %s..." % filename)
+    filename = "data/prod{:d}_dihed.xvg".format(k)
+    print("Reading {}...".format(filename))
     infile = open(filename, 'r')
     lines = infile.readlines()
     infile.close()
@@ -76,8 +76,8 @@ for k in range(K):
     if (DifferentTemperatures):  # if different temperatures are specified the metadata file, 
                                  # then we need the energies to compute the PMF
         # Read energies
-        filename = 'data/prod%d_energies.xvg' % k
-        print("Reading %s..." % filename)
+        filename = "data/prod{:d}_energies.xvg".format(k)
+        print("Reading {}...".format(filename))
         infile = open(filename, 'r')
         lines = infile.readlines()
         infile.close()
@@ -94,15 +94,15 @@ for k in range(K):
             
     if (DifferentTemperatures):        
         g_k[k] = timeseries.statisticalInefficiency(u_kn[k,:], u_kn[k,0:N_k[k]])
-        print("Correlation time for set %5d is %10.3f" % (k,g_k[k]))
+        print("Correlation time for set {:5d} is {:10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(u_kn[k,0:N_k[k]])
     else:
         chi_radians = chi_kn[k,0:N_k[k]]/(180.0/numpy.pi)
         g_cos = timeseries.statisticalInefficiency(numpy.cos(chi_radians))
         g_sin = timeseries.statisticalInefficiency(numpy.sin(chi_radians))
-        print("g_cos = %.1f | g_sin = %.1f" % (g_cos, g_sin))
+        print("g_cos = {:.1f} | g_sin = {:.1f}".format(g_cos, g_sin))
         g_k[k] = max(g_cos, g_sin)
-        print("Correlation time for set %5d is %10.3f" % (k,g_k[k]))
+        print("Correlation time for set {:5d} is {:10.3f}".format(k,g_k[k]))
         indices = timeseries.subsampleCorrelatedData(chi_radians, g=g_k[k]) 
     # Subsample data.
     N_k[k] = len(indices)
@@ -153,7 +153,7 @@ df_i = results['df_i']
 
 # Write out PMF
 print("PMF (in units of kT)")
-print("%8s %8s %8s" % ('bin', 'f', 'df'))
+print("{:8s} {:8s} {:8s}".format('bin', 'f', 'df'))
 for i in range(nbins):
-    print("%8.1f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i]))
+    print("{:8.1f} {:8.3f} {:8.3f}".format(bin_center_i[i], f_i[i], df_i[i]))
 

@@ -83,10 +83,10 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
     >>> results = EXP(w_F)
-    >>> print('Forward free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
+    >>> print('Forward free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Forward free energy difference is 1.088 +- 0.076 kT
     >>> results = EXP(w_R)
-    >>> print('Reverse free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
+    >>> print('Reverse free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Reverse free energy difference is -1.073 +- 0.082 kT
 
     """
@@ -165,10 +165,10 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
     >>> results = EXPGauss(w_F)
-    >>> print('Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
+    >>> print('Forward Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
     >>> results = EXPGauss(w_R)
-    >>> print('Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
+    >>> print('Reverse Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
 
     """
