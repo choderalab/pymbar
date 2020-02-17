@@ -7,6 +7,7 @@ import pytest
 from pymbar import MBAR
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
+from pymbar.utils import ParameterError
 
 precision = 8  # the precision for systems that do have analytical results that should be matched.
 # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
@@ -44,7 +45,7 @@ def mbar_and_test(request):
     name, test = request.param()
     x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
     assert_equal(N_k, N_k_output)
-    mbar = MBAR(u_kn, N_k)
+    mbar = MBAR(u_kn, N_k, verbose=True)
     yield_bundle = {
         'mbar': mbar,
         'test': test,
@@ -52,6 +53,99 @@ def mbar_and_test(request):
         'u_kn': u_kn,
     }
     yield yield_bundle
+
+
+@pytest.fixture(scope="module")
+def mbar_and_test_harmonic():
+    name, test = generate_ho()
+    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
+    assert_equal(N_k, N_k_output)
+    mbar = MBAR(u_kn, N_k, verbose=True)
+    yield_bundle = {
+        'mbar': mbar,
+        'test': test,
+        'x_n': x_n,
+        'u_kn': u_kn,
+    }
+    yield yield_bundle
+
+
+@pytest.fixture(scope="module")
+def mbar_and_test_kln():
+    name, test = generate_ho()
+    x_n, u_kn, N_k_output = test.sample(N_k, mode='u_kln')
+    assert_equal(N_k, N_k_output)
+    mbar = MBAR(u_kn, N_k, verbose=True)
+    yield_bundle = {
+        'mbar': mbar,
+        'test': test,
+        'x_n': x_n,
+        'u_kn': u_kn,
+    }
+    yield yield_bundle
+
+
+@pytest.fixture()  # Function  level scope
+def fixed_harmonic_sample():
+    _, test = generate_ho()
+    return test
+
+
+def free_energies_almost_equal(mbar_fe, err_fe, analytical_fe):
+    """Helper to test if MBAR vs Analytical free energies are almost equal"""
+    mbar_fe, err_fe = mbar_fe[0, 1:], err_fe[0, 1:]
+    analytical_fe = analytical_fe[1:] - analytical_fe[0]
+
+    z = (mbar_fe - analytical_fe) / err_fe
+    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+
+
+def test_ukln(mbar_and_test_kln):
+    """Test that MBAR's u_kln->u_kn works correctly"""
+    mbar, test = mbar_and_test_kln['mbar'], mbar_and_test_kln['test']
+    results = mbar.getFreeEnergyDifferences()
+    fe = results['Delta_f']
+    fe_sigma = results['dDelta_f']
+    free_energies_almost_equal(fe, fe_sigma, test.analytical_free_energies())
+
+
+def test_duplicate_state(fixed_harmonic_sample, capsys):
+    """Test that MBAR's duplicate state check is working"""
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode='u_kn')
+    u_kn_dup = np.append(u_kn, u_kn[[0], :], axis=0)
+    N_k_dup = np.append(N_k, [0])
+    mbar = MBAR(u_kn_dup, N_k_dup, verbose=True)
+    captured = capsys.readouterr()
+    assert "likely to to be the same thermodynamic state" in captured.out
+    results = mbar.getFreeEnergyDifferences()
+    fe = results['Delta_f']
+    assert np.allclose(fe[0], fe[-1])
+
+
+def test_x_kindices(fixed_harmonic_sample):
+    """Test that setting x_kindices results in the same calculation"""
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode='u_kn')
+    flat_x_indices = np.concatenate([[k]*n for k, n in enumerate(N_k)]).astype(int)
+    mbar = MBAR(u_kn, N_k)
+    mbar_indices = MBAR(u_kn, N_k, x_kindices=flat_x_indices)
+    fe = mbar.getFreeEnergyDifferences()['Delta_f']
+    fes = mbar_indices.getFreeEnergyDifferences()['Delta_f']
+    assert np.allclose(fe, fes)
+
+
+@pytest.mark.xfail(raises=ParameterError)
+def test_bad_inital_f_k(fixed_harmonic_sample):
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode='u_kn')
+    MBAR(u_kn, N_k, initial_f_k=[0]*(N_k.size + 1))
+
+
+def test_covariance_of_sums_runs(mbar_and_test_kln):
+    """Test that CovarianceOfSums function runs"""
+    # TODO: Is this function still needed? And what would be a better test?
+    mbar = mbar_and_test_kln['mbar']
+    results = mbar.getFreeEnergyDifferences(return_theta=True)
+    theta = results['Theta']
+    mbar.computeCovarianceOfSums(theta, 1, np.array([1, -1]))
 
 
 @pytest.mark.parametrize("system_generator", system_generators)
@@ -84,21 +178,29 @@ def test_sample(system_generator):
     x_kn, u_kln, N_k = test.sample([10, 0, 8, 0], mode='u_kln')
 
 
-def test_mbar_free_energies(mbar_and_test):
+@pytest.mark.parametrize("uncertainty_method",
+                         [None, 'approximate', 'svd', 'svd-ew', pytest.param('waffles', marks=pytest.mark.xfail)]
+                         )
+def test_mbar_free_energies(mbar_and_test, uncertainty_method):
 
     """Can MBAR calculate moderately correct free energy differences?"""
     mbar, test = mbar_and_test['mbar'], mbar_and_test['test']
+    results = mbar.getFreeEnergyDifferences(return_theta=True, uncertainty_method=uncertainty_method)
+    fe = results['Delta_f']
+    fe_sigma = results['dDelta_f']
+    free_energies_almost_equal(fe, fe_sigma, test.analytical_free_energies())
+
+
+@pytest.mark.parametrize("method",
+                         ['zeros', 'mean-reduced-potential', 'BAR', pytest.param("waffles", marks=pytest.mark.xfail)])
+def test_mbar_initialization(fixed_harmonic_sample, method):
+    """Do the MBAR initialization methods work?"""
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode='u_kn')
+    mbar = MBAR(u_kn, N_k, initialize=method, verbose=True)
     results = mbar.getFreeEnergyDifferences()
     fe = results['Delta_f']
     fe_sigma = results['dDelta_f']
-
-    fe, fe_sigma = fe[0, 1:], fe_sigma[0, 1:]
-
-    fe0 = test.analytical_free_energies()
-    fe0 = fe0[1:] - fe0[0]
-
-    z = (fe - fe0) / fe_sigma
-    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+    free_energies_almost_equal(fe, fe_sigma, fixed_harmonic_sample.analytical_free_energies())
 
 
 def test_mbar_computeExpectations_position_averages(mbar_and_test):
@@ -149,14 +251,61 @@ def test_mbar_computeExpectations_potential(mbar_and_test):
     """Can MBAR calculate E(u_kn)??"""
 
     mbar, test, u_kn = mbar_and_test['mbar'], mbar_and_test['test'], mbar_and_test['u_kn']
-    results = mbar.computeExpectations(u_kn, state_dependent = True)
+    results = mbar.computeExpectations(u_kn, state_dependent=True)
     mu = results['mu']
     sigma = results['sigma']
     mu0 = test.analytical_observable(observable='potential energy')
-    print(mu)
-    print(mu0)
     z = (mu0 - mu) / sigma
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+
+
+@pytest.mark.parametrize("observable,state_dependent,sample_mode,single_dim,with_uxx",
+                         [
+                             ('position', False, 'u_kln', False, False),
+                             ('position', False, 'u_kln', False, True),
+                             ('position', False, 'u_kn',  False, False),
+                             ('position', False, 'u_kn',  False, True),
+                             ('position', False, 'u_kn',  True, False),
+
+                             ('potential energy', True, 'u_kln', False, False),
+                             ('potential energy', True, 'u_kln', False, True),
+                             ('potential energy', True, 'u_kn', False, False),
+                             ('potential energy', True, 'u_kn', False, True),
+                             ('potential energy', True, 'u_kn', True, False),
+                          ])
+def test_mbar_computeExpectations_edges(mbar_and_test_harmonic, mbar_and_test_kln,
+                                        observable, state_dependent, sample_mode, single_dim, with_uxx):
+    if sample_mode == 'u_kln':
+        payload = mbar_and_test_kln
+    else:
+        payload = mbar_and_test_harmonic
+    mbar = payload['mbar']
+    test = payload['test']
+    u_xxx = payload['u_kn']
+    if state_dependent:
+        obs = payload['u_kn']
+    else:
+        obs = payload['x_n']
+    if single_dim:
+        u_xxx = u_xxx[0]
+    results = mbar.computeExpectations(obs, state_dependent=state_dependent, u_kn=u_xxx if with_uxx else None,
+                                       return_theta=True)
+    mu = results['mu']
+    sigma = results['sigma']
+    mu0 = test.analytical_observable(observable=observable)
+    z = (mu0 - mu) / sigma
+    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+
+
+def multiExpectationAssertion(results, test, state=1):
+    mu = results['mu']
+    sigma = results['sigma']
+    mu0 = test.analytical_observable(observable='position')[state]
+    mu1 = test.analytical_observable(observable='position^2')[state]
+    z = (mu0 - mu[0]) / sigma[0]
+    assert_almost_equal(z / z_scale_factor, 0*z, decimal=0)
+    z = (mu1 - mu[1]) / sigma[1]
+    assert_almost_equal(z / z_scale_factor, 0*z, decimal=0)
 
 
 def test_mbar_computeMultipleExpectations(mbar_and_test):
@@ -168,24 +317,30 @@ def test_mbar_computeMultipleExpectations(mbar_and_test):
     A[0, :] = x_n
     A[1, :] = x_n**2
     state = 1
-    results = mbar.computeMultipleExpectations(A, u_kn[state,:])
-    mu = results['mu']
-    sigma = results['sigma']
-
-    mu0 = test.analytical_observable(observable='position')[state]
-    mu1 = test.analytical_observable(observable='position^2')[state]
-    z = (mu0 - mu[0]) / sigma[0]
-    assert_almost_equal(z / z_scale_factor, 0*z, decimal=0)
-    z = (mu1 - mu[1]) / sigma[1]
-    assert_almost_equal(z / z_scale_factor, 0*z, decimal=0)
+    results = mbar.computeMultipleExpectations(A, u_kn[state, :])
+    multiExpectationAssertion(results, test, state=state)
 
 
-def test_mbar_computeEntropyAndEnthalpy(mbar_and_test):
+def test_mbar_computeMultipleExpectations_more_dims(mbar_and_test_kln):
+
+    """Can MBAR calculate E(u_kn) with 3 dimensions??"""
+
+    mbar, test, x_n, u_kn = \
+        mbar_and_test_kln['mbar'], mbar_and_test_kln['test'], mbar_and_test_kln['x_n'], mbar_and_test_kln['u_kn']
+    A = np.zeros([2, x_n.shape[0], x_n.shape[1]])
+    A[0, :, :] = x_n
+    A[1, :, :] = x_n**2
+    state = 1
+    results = mbar.computeMultipleExpectations(A, u_kn[:, state, :], compute_covariance=True, return_theta=True)
+    multiExpectationAssertion(results, test, state=state)
+
+
+def test_mbar_computeEntropyAndEnthalpy(mbar_and_test, with_uxx=True):
 
     """Can MBAR calculate f_k, <u_k> and s_k ??"""
 
     mbar, test, x_n, u_kn = mbar_and_test['mbar'], mbar_and_test['test'], mbar_and_test['x_n'], mbar_and_test['u_kn']
-    results = mbar.computeEntropyAndEnthalpy(u_kn)
+    results = mbar.computeEntropyAndEnthalpy(u_kn if with_uxx else None, verbose=True)
     f_ij = results['Delta_f']
     df_ij = results['dDelta_f']
     u_ij = results['Delta_u']
@@ -207,6 +362,20 @@ def test_mbar_computeEntropyAndEnthalpy(mbar_and_test):
     assert_almost_equal(z / z_scale_factor, np.zeros(np.shape(z)), decimal=0)
     z = convert_to_differences(s_ij, ds_ij, sa)
     assert_almost_equal(z / z_scale_factor, np.zeros(np.shape(z)), decimal=0)
+
+
+@pytest.mark.parametrize("as_kln,with_uxx",
+                         [(True, True),
+                          (True, False),
+                          (False, False)
+                          # False True handled by main test
+                          ])
+def test_mbar_computeEntropyAndEnthalpy_edges(mbar_and_test_harmonic, mbar_and_test_kln, as_kln, with_uxx):
+    if as_kln:
+        payload = mbar_and_test_kln
+    else:
+        payload = mbar_and_test_harmonic
+    test_mbar_computeEntropyAndEnthalpy(payload, with_uxx=with_uxx)
 
 
 def test_mbar_computeEffectiveSampleNumber(mbar_and_test):
@@ -271,24 +440,40 @@ def test_mbar_getWeights(mbar_and_test):
     assert_almost_equal(sumrows, np.ones(len(sumrows)), decimal=precision)
 
 
-@pytest.mark.parametrize("system_generator", system_generators)
-def test_mbar_computePerturbedFreeEnergeies(system_generator):
+@pytest.mark.parametrize("system_generator,mode,bad_n",
+                         [(generate_ho, 'u_kn', False),
+                          (generate_exp, 'u_kn', False),
+                          (generate_ho, 'u_kln', False),
+                          pytest.param(generate_ho, 'u_kn', True, marks=pytest.mark.xfail(strict=True))
+                          ])
+def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
 
     """ testing computePerturbedFreeEnergies """
 
     # only do MBAR with the first and last set
 
     name, test = system_generator()
-    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
-    numN = np.sum(N_k[:2])
-    mbar = MBAR(u_kn[:2, :numN], N_k[:2])
-    results = mbar.computePerturbedFreeEnergies(u_kn[2:, :numN])
+    if mode == 'u_kln':
+        x_n, u_kn, N_k_output = test.sample(N_k, mode=mode)
+        numN = max(N_k[:2])
+        if bad_n:
+            numN = numN - 1
+        mslice = np.s_[:2, :2, :numN]
+        pslice = np.s_[:2, 2:, :numN]
+    else:
+        x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode=mode)
+        numN = np.sum(N_k[:2])
+        if bad_n:
+            numN = numN - 1
+        mslice = np.s_[:2, :numN]
+        pslice = np.s_[2:, :numN]
+
+    mbar = MBAR(u_kn[mslice], N_k[:2])
+    results = mbar.computePerturbedFreeEnergies(u_kn[pslice])
     fe = results['Delta_f']
     fe_sigma = results['dDelta_f']
 
-    fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
-
-    print(fe, fe_sigma)
+    fe, fe_sigma = fe[0, 1:], fe_sigma[0, 1:]
     fe0 = test.analytical_free_energies()[2:]
     fe0 = fe0[1:] - fe0[0]
 
