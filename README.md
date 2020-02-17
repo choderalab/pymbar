@@ -63,8 +63,8 @@ Authors
 -------
 * Kyle A. Beauchamp <kyle.beauchamp@choderalab.org>
 * John D. Chodera <john.chodera@choderalab.org>
-* Levi N. Naden <levi.naden@choderalab.org>
-* Michael R. Shirts <michael.shirts@virginia.edu>
+* Levi N. Naden <lnaden@vt.edu>
+* Michael R. Shirts <michael.shirts@colorado.edu>
 
 References
 ----------
