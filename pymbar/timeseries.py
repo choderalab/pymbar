@@ -1,8 +1,8 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2016-2017 University of Colorado Boulder
-# Copyright 2010-2017 Memorial Sloan-Kettering Cancer Center
+# Copyright 2016-2020 University of Colorado Boulder
+# Copyright 2010-2020 Memorial Sloan-Kettering Cancer Center
 # Portions of this software are Copyright (c) 2010-2016 University of Virginia
 # Portions of this software are Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
 # Portions of this software are Copyright (c) 2007-2008 Stanford University and Columbia University.
@@ -56,9 +56,7 @@ __license__ = "MIT"
 # IMPORTS
 # =============================================================================================
 import math
-import warnings
 import numpy as np
-import numpy.linalg
 from pymbar.utils import ParameterError
 
 # =============================================================================================
@@ -321,7 +319,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
 
         # compute normalized fluctuation correlation function at time t
         C = C / sigma2
-        # print "C[%5d] = %16f (%16f / %16f)" % (t, C, numerator, denominator)
+        # print("C[{:5d}] = {:16f} ({:16f} / {:16f})".format(t, C, numerator, denominator))
 
         # Store estimate of correlation function.
         Ct.append((t, C))
@@ -703,13 +701,13 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
             print("Computing statistical inefficiency...")
         g = statisticalInefficiency(A_t, A_t, fast=fast)
         if verbose:
-            print("g = %f" % g)
+            print("g = {:f}".format(g))
 
     if conservative:
         # Round g up to determine the stride we can use to pick out regularly-spaced uncorrelated samples.
         stride = int(math.ceil(g))
         if verbose:
-            print("conservative subsampling: using stride of %d" % stride)
+            print("conservative subsampling: using stride of {:d}".format(stride))
 
         # Assemble list of indices of uncorrelated snapshots.
         indices = range(0, T, stride)
@@ -724,13 +722,13 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
                 indices.append(t)
             n += 1
         if verbose:
-            print("standard subsampling: using average stride of %f" % g)
+            print("standard subsampling: using average stride of {:f}".format(g))
 
     # Number of samples in subsampled timeseries.
     N = len(indices)
 
     if verbose:
-        print("The resulting subsampled set has %d samples (original timeseries had %d)." % (N, T))
+        print("The resulting subsampled set has {:d} samples (original timeseries had {:d}).".format(N, T))
 
     # Return the list of indices of uncorrelated snapshots.
     return indices
@@ -804,7 +802,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     return (t, g, Neff_max)
 
 
-def statisticalInefficiency_fft(A_n, mintime=3, memsafe=None):
+def statisticalInefficiency_fft(A_n, mintime=3):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
@@ -816,10 +814,6 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=None):
         The algorithm terminates after computing the correlation time out to mintime when the
         correlation function first goes negative.  Note that this time may need to be increased
         if there is a strong initial negative peak in the correlation function.
-    memsafe: bool, optional, default=None (in depreciation)
-        If this function is used several times on arrays of comparable size then one might benefit 
-        from setting this option to False. If set to True then clear np.fft cache to avoid a fast 
-        increase in memory consumption when this function is called on many arrays of different sizes.
 
     Returns
     -------
@@ -854,25 +848,6 @@ def statisticalInefficiency_fft(A_n, mintime=3, memsafe=None):
     C_t = sm.tsa.stattools.acf(A_n, fft=True, unbiased=True, nlags=N)
     t_grid = np.arange(N).astype('float')
     g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
-
-    """
-    LNN Note:
-    Numpy 1.12 fft.fftpack swiched from using a Python dict for the cache to a LRU cache which auto prunes.
-    This makes the .clear() method undefined since the LRU does not have such a method.
-
-    Since the LRU *should* remove the problems which this code resolved (GH issue #168), I am removing this code from
-    execution. However, there may still be a problem with the LRU cache so I am leaving the code in case we need to
-    further test it
-    """
-    #make function memory safe by clearing np.fft cache
-    #this assumes that statsmodels uses np.fft
-    #if memsafe:
-    #    np.fft.fftpack._fft_cache.clear()
-    #    np.fft.fftpack._real_fft_cache.clear()
-    if memsafe is not None:
-        warnings.warn("NumPy's FFT pack now uses an LRU cache to fix the very problem that the memsafe keyword "
-                      "was protecting. This argument no longer changes the code and will be removed in a future "
-                      "version.", FutureWarning)
     
     try:
         ind = np.where((C_t <= 0) & (t_grid > mintime))[0][0]
@@ -931,7 +906,7 @@ def detectEquilibration_binary_search(A_t, bs_nodes=10):
         
         for k, t in enumerate(time_grid):
             if t < T-1:
-                g_t[k] = statisticalInefficiency_fft(A_t[t:], memsafe=True)
+                g_t[k] = statisticalInefficiency_fft(A_t[t:])
                 Neff_t[k] = (T - t + 1) / g_t[k]
 
         Neff_max = Neff_t.max()
