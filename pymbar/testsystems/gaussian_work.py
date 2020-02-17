@@ -34,12 +34,12 @@ def gaussian_work_example(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, 
 
     If the forward distribution is Gaussian with mean \\mu_F and std dev \\sigma_F, then
 
-    P_F(w) = (2 \\pi)^{-1/2} \\sigma_F^{-1} \\exp[-(w - \mu_F)^2 / (2 \\sigma_F^2)]
+    P_F(w) = (2 \\pi)^{-1/2} \\sigma_F^{-1} \\exp[-(w - \\mu_F)^2 / (2 \\sigma_F^2)]
 
     With some algebra, we then find the corresponding mean and std dev of the reverse distribution are
 
     \\mu_R = - \\mu_F + \\sigma_F^2
-    \\sigma_R = \\sigma_F \\exp[\mu_F - \\sigma_F^2 / 2 + \\Delta F]
+    \\sigma_R = \\sigma_F \\exp[\\mu_F - \\sigma_F^2 / 2 + \\Delta F]
 
     where all quantities are in reduced units (e.g. divided by kT).
 

@@ -430,7 +430,7 @@ class MBAR:
 
         .. code-block:: none
 
-            W.T * W \\approx \int (p_i p_j /\\sum_k N_k p_k)^2 \\sum_k N_k p_k dq^N
+            W.T * W \\approx \\int (p_i p_j /\\sum_k N_k p_k)^2 \\sum_k N_k p_k dq^N
                 = \\int (p_i p_j /\\sum_k N_k p_k) dq^N
 
         Multiplying elementwise by N_i, the elements of row i give the probability
