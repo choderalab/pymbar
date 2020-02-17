@@ -24,7 +24,7 @@ def generate_exp(rates=np.array([1.0, 2.0, 3.0, 4.0])):  # Rates, e.g. Lambda
 
 
 def convert_to_differences(x_ij, dx_ij, xa):
-    xa_ij = xa - np.atleast_2d(xa).T  # Safe, non-matrix conversion of np.matrix(...) and still do x-x.T correctly
+    xa_ij = xa - np.vstack(xa)
 
     # add ones to the diagonal of the uncertainties, because they are zero
     for i in range(len(N_k)):
@@ -236,7 +236,7 @@ def test_mbar_computeOverlap_analytical():
     eigenval = results['eigenvalues']
     O = results['matrix']
 
-    reference_matrix = np.matrix((1.0/d)*np.ones([d,d]))
+    reference_matrix = (1.0/d)*np.ones([d,d])
     reference_eigenvalues = np.zeros(d)
     reference_eigenvalues[0] = 1.0
     reference_scalar = np.float64(1.0)
