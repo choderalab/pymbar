@@ -14,7 +14,7 @@ requirements:
     - toolchain
   run:
     - python
-    - numpy >=1.11
+    - numpy >=1.12
     - scipy
     - numexpr
     - six

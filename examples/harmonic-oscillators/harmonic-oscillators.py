@@ -51,7 +51,7 @@ def GetAnalytical(beta,K,O,observables):
   sigma = (beta * K)**-0.5
   f_k_analytical = - numpy.log(numpy.sqrt(2 * numpy.pi) * sigma )
 
-  Delta_f_ij_analytical = numpy.matrix(f_k_analytical) - numpy.matrix(f_k_analytical).transpose()
+  Delta_f_ij_analytical = f_k_analytical - numpy.vstack(f_k_analytical)
 
   A_k_analytical = dict()
   A_ij_analytical = dict()
@@ -66,7 +66,7 @@ def GetAnalytical(beta,K,O,observables):
     if observe == 'position^2':    
       A_k_analytical[observe]  = (1+ beta*K*O**2)/(beta*K)        # observable is the position^2
 
-    A_ij_analytical[observe] = A_k_analytical[observe] - numpy.transpose(numpy.matrix(A_k_analytical[observe]))
+    A_ij_analytical[observe] = A_k_analytical[observe] - numpy.vstack(A_k_analytical[observe])
 
   return f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical
 
@@ -353,7 +353,7 @@ for observe in observables:
   if 'RMS displacement' != observe: # can't test this, because we're actually computing the expectation of
                                     # the mean square displacement, and so the differences are <a_i^2> - <a_j^2>,
                                     # not sqrt<a_i>^2 - sqrt<a_j>^2
-    A_kl_analytical = numpy.matrix(A_k_analytical[observe]) - numpy.matrix(A_k_analytical[observe]).transpose()
+    A_kl_analytical = A_k_analytical[observe] - numpy.vstack(A_k_analytical[observe])
     A_kl_error = A_kl_estimated - A_kl_analytical
     
     print("Analytical estimator of differences of {} is".format(observe))
@@ -424,8 +424,8 @@ if (numpy.max(numpy.abs(diffs2)) > 1.0e-10):
 print("Energies")
 print(Delta_u_ij)
 print(dDelta_u_ij)
-U_k = numpy.matrix(A_k_estimated_all['potential energy'])
-expectations = U_k - U_k.transpose()
+U_k = A_k_estimated_all['potential energy']
+expectations = U_k - numpy.vstack(U_k)
 diffs1 = Delta_u_ij - expectations
 print("maximum difference between values computed here and in computeExpectations is {:g}".format(numpy.max(diffs1)))
 if (numpy.max(numpy.abs(diffs1)) > 1.0e-10):
@@ -437,8 +437,8 @@ print(Delta_s_ij)
 print(dDelta_s_ij)
 
 #analytical entropy estimate
-s_k_analytical = numpy.matrix(0.5 / beta - f_k_analytical)
-Delta_s_ij_analytical = s_k_analytical - s_k_analytical.transpose()
+s_k_analytical = 0.5 / beta - f_k_analytical
+Delta_s_ij_analytical = s_k_analytical - numpy.vstack(s_k_analytical)
 
 Delta_s_ij_error = Delta_s_ij_analytical - Delta_s_ij
 print("Error in entropies is:")
