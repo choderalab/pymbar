@@ -218,7 +218,7 @@ def generateConfidenceIntervals(replicates, K):
             # We only count differences where the analytical difference is larger than a cutoff, so that the results will not be limited by machine precision.
             if (dim == 0):
                 if np.isnan(replicate['error']) or np.isnan(replicate['destimated']):
-                    print("replicate %d" % replicate_index)
+                    print("replicate {:d}".format(replicate_index))
                     print("error")
                     print(replicate['error'])
                     print("destimated")
@@ -233,7 +233,7 @@ def generateConfidenceIntervals(replicates, K):
             elif (dim == 1):
                 for i in range(0, K):
                     if np.isnan(replicate['error'][i]) or np.isnan(replicate['destimated'][i]):
-                        print("replicate %d" % replicate_index)
+                        print("replicate {:d}".format(replicate_index))
                         print("error")
                         print(replicate['error'])
                         print("destimated")
@@ -249,7 +249,7 @@ def generateConfidenceIntervals(replicates, K):
                 for i in range(0, K):
                     for j in range(0, i):
                         if np.isnan(replicate['error'][i, j]) or np.isnan(replicate['destimated'][i, j]):
-                            print("replicate %d" % replicate_index)
+                            print("replicate {:d}".format(replicate_index))
                             print("ij_error")
                             print(replicate['error'])
                             print("ij_estimated")
@@ -268,11 +268,11 @@ def generateConfidenceIntervals(replicates, K):
 
     # Write error as a function of sigma.
     print("Error vs. alpha")
-    print("%5s %10s %10s %16s %17s" % ('alpha', 'cheby', 'obs', 'obs err', 'normal'))
+    print("{:5s} {:10s} {:10s} {:16s} {:17s}".format('alpha', 'cheby', 'obs', 'obs err', 'normal'))
     Pnorm = scipy.special.erf(alpha_values / np.sqrt(2.))
     for alpha_index in range(0, nalpha):
         alpha = alpha_values[alpha_index]
-        print("%5.1f %10.6f %10.6f (%10.6f,%10.6f) %10.6f" % (alpha, 1. - 1. / alpha ** 2, Pobs[alpha_index], Plow[alpha_index], Phigh[alpha_index], Pnorm[alpha_index]))
+        print("{:5.1f} {:10.6f} {:10.6f} ({:10.6f},{:10.6f}) {:10.6f}".format(alpha, 1. - 1. / alpha ** 2, Pobs[alpha_index], Plow[alpha_index], Phigh[alpha_index], Pnorm[alpha_index]))
 
     # compute bias, average, etc - do it by replicate, not by bias
     if dim == 0:
@@ -333,7 +333,7 @@ def generateConfidenceIntervals(replicates, K):
             prms = rms_error[i]
             pstdev = standarddev[i]
             pavestd = ave_std[i]
-            print("%7d %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (i, pave, pbias, prms, pstdev, pavestd))
+            print("{:7d} {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(i, pave, pbias, prms, pstdev, pavestd))
     elif dim == 2:
         for i in range(0, K):
             pave = aveval[0, i]
@@ -341,8 +341,8 @@ def generateConfidenceIntervals(replicates, K):
             prms = rms_error[0, i]
             pstdev = standarddev[0, i]
             pavestd = ave_std[0, i]
-            print("%7d %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (i, pave, pbias, prms, pstdev, pavestd))
+            print("{:7d} {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(i, pave, pbias, prms, pstdev, pavestd))
 
-    print("Totals: %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (pave, pbias, prms, pstdev, pavestd))
+    print("Totals: {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(pave, pbias, prms, pstdev, pavestd))
 
     return alpha_values, Pobs, Plow, Phigh, dPobs, Pnorm

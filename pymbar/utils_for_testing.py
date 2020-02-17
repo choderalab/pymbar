@@ -35,7 +35,7 @@ __all__ = ['assert_allclose', 'assert_almost_equal', 'assert_approx_equal',
            'assert_array_almost_equal', 'assert_array_almost_equal_nulp',
            'assert_array_equal', 'assert_array_less', 'assert_array_max_ulp',
            'assert_equal', 'assert_raises', 'assert_string_equal', 'assert_warns',
-           'get_fn', 'suppress_derivative_warnings_for_tests',
+           'get_fn', 'suppress_derivative_warnings_for_tests', 'suppress_matrix_warnings_for_tests',
            'oscillators', 'exponentials']
 
 ##############################################################################
@@ -52,6 +52,18 @@ def suppress_derivative_warnings_for_tests():
     warnings.filterwarnings('ignore', '.*does not use the Jacobian.*')
     warnings.filterwarnings('ignore', '.*does not use Hessian.*')
     warnings.filterwarnings('ignore', '.*parameter will change to the default of machine precision.*')
+    yield
+    # Clear warning filters
+    warnings.resetwarnings()
+
+
+@contextlib.contextmanager
+def suppress_matrix_warnings_for_tests():
+    """
+    Suppress specific warnings and then reset when done, used as a with suppress_warnings():
+    """
+    # Supress the numpy matrix warnings
+    warnings.filterwarnings('ignore', '.*the matrix subclass is not*')
     yield
     # Clear warning filters
     warnings.resetwarnings()
@@ -74,8 +86,8 @@ def get_fn(name):
     fn = resource_filename('mdtraj', os.path.join('testing/reference', name))
 
     if not os.path.exists(fn):
-        raise ValueError('Sorry! %s does not exists. If you just '
-                         'added it, you\'ll have to re install' % fn)
+        raise ValueError('Sorry! {} does not exists. If you just '
+                         'added it, you\'ll have to re install'.format(fn))
 
     return fn
 

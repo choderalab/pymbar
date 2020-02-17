@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 
 """
@@ -105,7 +106,7 @@ T = trajectory_segment_length * niterations # total number of snapshots per temp
 print("Reading potential energies...")
 U_kt = np.zeros([K,T]) # U_kn[k,t] is the potential energy (in kcal/mol) for snapshot t of temperature index k
 lines = read_file(potential_energies_filename)
-print("%d lines read, processing %d snapshots" % (len(lines), T))
+print("{:d} lines read, processing {:d} snapshots".format(len(lines), T))
 for t in range(T):
    # Get line containing the energies for snapshot t of trajectory segment n
    line = lines[t]
@@ -122,11 +123,11 @@ print("Reading phi, psi trajectories...")
 phi_kt = np.zeros([K,T]) # phi_kt[k,n,t] is phi angle (in degrees) for snapshot t of temperature k
 psi_kt = np.zeros([K,T]) # psi_kt[k,n,t] is psi angle (in degrees) for snapshot t of temperature k
 for k in range(K):
-   phi_filename = os.path.join(data_directory, 'backbone-torsions', '%d.phi' % (k))
-   psi_filename = os.path.join(data_directory, 'backbone-torsions', '%d.psi' % (k))
+   phi_filename = os.path.join(data_directory, 'backbone-torsions', '{:d}.phi'.format(k))
+   psi_filename = os.path.join(data_directory, 'backbone-torsions', '{:d}.psi'.format(k))
    phi_lines = read_file(phi_filename)
    psi_lines = read_file(psi_filename)
-   print("k = %d, %d phi lines read, %d psi lines read" % (k, len(phi_lines), len(psi_lines)))
+   print("k = {:d}, {:d} phi lines read, {:d} psi lines read".format(k, len(phi_lines), len(psi_lines)))
    for t in range(T):
       # Extract phi and psi
       phi_kt[k,t] = float(phi_lines[t])
@@ -144,7 +145,7 @@ for i in range(niterations):
    elements = lines[i].split()
    for k in range(K):
       replica_ik[i,k] = int(elements[k])
-print("Replica indices for %d iterations processed." % niterations)
+print("Replica indices for {:d} iterations processed.".format(niterations))
 
 #===================================================================================================
 # Permute data by replica and subsample to generate an uncorrelated subset of data by temperature
@@ -188,10 +189,12 @@ else:
    print("g_cos(psi) = %.1f" % g_cospsi)
    g_sinpsi = timeseries.statisticalInefficiencyMultiple(np.sin(psi_kt_replica * np.pi / 180.0))
    print("g_sin(psi) = %.1f" % g_sinpsi)
+
    # Subsample data with maximum of all correlation times.
    print("Subsampling data...")
    g = np.max(np.array([g_cosphi, g_sinphi, g_cospsi, g_sinpsi]))
    indices = timeseries.subsampleCorrelatedData(U_kt[k,:], g = g)
+
    print("Using g = %.1f to obtain %d uncorrelated samples per temperature" % (g, len(indices)))
    N_max = int(np.ceil(T / g)) # max number of samples per temperature
    U_kn = np.zeros([K, N_max], np.float64)
@@ -202,7 +205,7 @@ else:
       U_kn[k,:] = U_kt[k,indices]
       phi_kn[k,:] = phi_kt[k,indices]
       psi_kn[k,:] = psi_kt[k,indices]
-   print("%d uncorrelated samples per temperature" % N_max)
+   print("{:d} uncorrelated samples per temperature".format(N_max))
 
 #===================================================================================================
 # Generate a list of indices of all configurations in kn-indexing
@@ -303,6 +306,8 @@ u_kn = target_beta * U_kn
 histogram_parameters = dict()
 histogram_parameters['bin_edges'] = bin_edges
 pmf.generatePMF(u_kn, x_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+import pdb
+pdb.set_trace()
 results = pmf.getPMF(np.array(centers_nonzero), uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
@@ -310,8 +315,8 @@ df_i = results['df_i']
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF")
 print("")
-print("%8s %6s %6s %8s %10s %10s" % ('bin', 'phi', 'psi', 'N', 'f', 'df'))
+print("{:8s} {:6s} {:6s} {:8s} {:10s} {:10s}".format('bin', 'phi', 'psi', 'N', 'f', 'df'))
 
 for i in range(bin_nonzero):
-   print('%8d %6.1f %6.1f %8d %10.3f %10.3f' % (i, centers_nonzero[i][0], centers_nonzero[i][1], count_nonzero[i], f_i[i], df_i[i]))
+   print('{:d} {:6.1f} {:6.1f} {:8d} {:10.3f} {:10.3f}'.format(i, centers_nonzero[i][0], centers_nonzero[i][1], count_nonzero[i], f_i[i], df_i[i]))
 

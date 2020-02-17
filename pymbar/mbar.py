@@ -200,7 +200,7 @@ class MBAR:
         K, N = np.shape(u_kn)
 
         if verbose:
-            print("K (total states) = %d, total samples = %d" % (K, N))
+            print("K (total states) = {:d}, total samples = {:d}".format(K, N))
 
         if np.sum(self.N_k) != N:
             raise ParameterError(
@@ -226,22 +226,39 @@ class MBAR:
 
         # perform consistency checks on the data.
 
-        # if, for any set of data, all reduced potential energies are the same,
-        # they are probably the same state.  We check to within
-        # relative_tolerance.
-
         self.samestates = []
         if self.verbose:
+
+            # if, for any set of data, all reduced potential energies are the same,
+            # they are probably the same state.
+            #
+            # This can take quite a while, so we do it on just
+            # the first few data points.
+            #
+            # determine if there are less than 50 points to compare energies.
+            # If so, use that number instead of 50.
+            # (the number 50 is pretty arbitrary)
+
+            maxpoint = 50
+            if self.N < maxpoint:
+                maxpoint = self.N
+
+            # this could possibly be made faster with np.unique(axis=0,return_indices=True)
+            # but not clear if needed.
+
+            # pick random indices
+            indices = np.random.choice(np.arange(self.N),maxpoint)
+
             for k in range(K):
                 for l in range(k):
                     diffsum = 0
-                    uzero = u_kn[k, :] - u_kn[l, :]
+                    uzero = u_kn[k, indices] - u_kn[l, indices]
                     diffsum += np.dot(uzero, uzero)
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
                         self.samestates.append([l, k])
                         print('')
-                        print('Warning: states %d and %d have the same energies on the dataset.' % (l, k))
+                        print('Warning: states {:d} and {:d} have the same energies on the dataset.'.format(l, k))
                         print('They are therefore likely to to be the same thermodynamic state.  This can occasionally cause')
                         print('numerical problems with computing the covariance of their energy difference, which must be')
                         print('identically zero in any case. Consider combining them into a single state.')
@@ -259,7 +276,7 @@ class MBAR:
         # Number of states with samples.
         self.K_nonzero = self.states_with_samples.size
         if verbose:
-            print("There are %d states with samples." % self.K_nonzero)
+            print("There are {:d} states with samples.".format(self.K_nonzero))
 
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
@@ -276,7 +293,7 @@ class MBAR:
             # Check shape
             if initial_f_k.shape != self.f_k.shape:
                 raise ParameterError(
-                    "initial_f_k must be a %d-dimensional np array." % self.K)
+                    "initial_f_k must be a {:d}-dimensional np array.".format(self.K))
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
             if self.verbose:
@@ -288,7 +305,7 @@ class MBAR:
             self._initializeFreeEnergies(verbose, method=initialize)
 
             if self.verbose:
-                print("Initial dimensionless free energies with method %s" % (initialize))
+                print("Initial dimensionless free energies with method {}".format(initialize))
                 print("f_k = ")
                 print(self.f_k)
 
@@ -379,8 +396,8 @@ class MBAR:
         .. code-block:: none
 
             effective number of samples contributing to averages carried out at state i
-                =  (\sum_{n=1}^N w_in)^2 / \sum_{n=1}^N w_in^2
-                =  (\sum_{n=1}^N w_in^2)^-1
+                =  (\\sum_{n=1}^N w_in)^2 / \\sum_{n=1}^N w_in^2
+                =  (\\sum_{n=1}^N w_in^2)^-1
 
         the effective sample number is most useful to diagnose when there are only a few samples
         contributing to the averages.
@@ -399,8 +416,8 @@ class MBAR:
             w = np.exp(self.Log_W_nk[:,k])
             N_eff[k] = 1/np.sum(w**2)
             if verbose:
-                print("Effective number of sample in state %d is %10.3f" % (k,N_eff[k]))
-                print("Efficiency for state %d is %d/%d = %10.4f" % (k,N_eff[k],len(w),N_eff[k]/len(w)))
+                print("Effective number of sample in state {:d} is {:10.3f}".format(k,N_eff[k]))
+                print("Efficiency for state {:d} is {:6f}/{:d} = {:10.4f}".format(k,N_eff[k],len(w),N_eff[k]/len(w)))
 
         return N_eff
 
@@ -430,8 +447,8 @@ class MBAR:
 
         .. code-block:: none
 
-            W.T * W \approx \int (p_i p_j /\sum_k N_k p_k)^2 \sum_k N_k p_k dq^N
-                = \int (p_i p_j /\sum_k N_k p_k) dq^N
+            W.T * W \\approx \\int (p_i p_j /\\sum_k N_k p_k)^2 \\sum_k N_k p_k dq^N
+                = \\int (p_i p_j /\\sum_k N_k p_k) dq^N
 
         Multiplying elementwise by N_i, the elements of row i give the probability
         for a sample from state i being observed in state j.
@@ -447,12 +464,12 @@ class MBAR:
 
         """
 
-        W = np.matrix(self.getWeights(), np.float64)
-        O = np.multiply(self.N_k, W.T * W)
+        W = self.getWeights()
+        O = self.N_k * (W.T @ W)
         (eigenvals, eigevec) = linalg.eig(O)
         # sort in descending order
         eigenvals = np.sort(eigenvals)[::-1]
-        overlap_scalar = 1 - eigenvals[1] # 1 minus the second largest eigenvalue
+        overlap_scalar = 1 - eigenvals[1]  # 1 minus the second largest eigenvalue
 
         results_vals = dict()
         results_vals['scalar'] = overlap_scalar
@@ -516,13 +533,10 @@ class MBAR:
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
 
         # Compute free energy differences.
-        f_i = np.matrix(self.f_k)
-        Deltaf_ij = f_i - f_i.transpose()
+        Deltaf_ij = self.f_k - np.vstack(self.f_k)
 
         # zero out numerical error for thermodynamically identical states
         self._zerosamestates(Deltaf_ij)
-
-        Deltaf_ij = np.array(Deltaf_ij)  # Convert from np.matrix to np.array
 
         result_vals = dict()
 
@@ -795,7 +809,7 @@ class MBAR:
 
         """
         We wish to calculate the variance of a weighted sum of free energy differences.
-        for example ``var(\sum a_i df_i)``.
+        for example ``var(\\sum a_i df_i)``.
 
         We explicitly lay out the calculations for four variables (where each variable
         is a logarithm of a partition function), then generalize.
@@ -850,14 +864,14 @@ class MBAR:
             = a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + a1 a2 [-var(f_i1 - f_i2) + var(f_i1 - f_j2) + var(f_j1-f_i2) - var(f_j1 - f_j2)]
 
         assume two arrays of free energy differences, and and array of constant vectors a.
-        we want the variance ``var(\sum_k a_k (f_i,k - f_j,k))`` Each set is separated from the other by an offset K
+        we want the variance ``var(\\sum_k a_k (f_i,k - f_j,k))`` Each set is separated from the other by an offset K
         same process applies with the sum, with the single var terms and the pair terms
 
         Parameters
         ----------
         d_ij : a matrix of standard deviations of the quantities f_i - f_j
         K : The number of states in each 'chunk', has to be constant
-        outputs : KxK variance matrix for the sums or differences ``\sum a_i df_i``
+        outputs : KxK variance matrix for the sums or differences ``\\sum a_i df_i``
         """
 
         # todo: vectorize this.
@@ -1009,10 +1023,9 @@ class MBAR:
                 result_vals['sigma'] = np.sqrt(covA_ij[0:K,0:K].diagonal())
 
         if output == 'differences':
-            A_im = np.matrix(inner_results['observables'])
-            A_ij = A_im - A_im.transpose()
+            A_im = inner_results['observables']
+            result_vals['mu'] = A_im - np.vstack(A_im)  # Cast to A_ij
 
-            result_vals['mu'] = np.array(A_ij)
             if compute_uncertainty:
                 result_vals['sigma'] = self._ErrorOfDifferences(covA_ij,warning_cutoff=warning_cutoff)
 
@@ -1159,9 +1172,6 @@ class MBAR:
         >>> results = mbar.computePerturbedFreeEnergies(u_kn)
         """
 
-        # Convert to np matrix.
-        u_ln = np.array(u_ln, dtype=np.float64)
-
         # Get the dimensions of the matrix of reduced potential energies, and convert if necessary
         if len(np.shape(u_ln)) == 3:
             u_ln = kln_to_kn(u_ln, N_k=self.N_k)
@@ -1181,10 +1191,10 @@ class MBAR:
 
         Deltaf_ij, dDeltaf_ij = None, None
 
-        f_k = np.matrix(inner_results['f'])
+        f_k = inner_results['f']
 
         result_vals = dict()
-        result_vals['Delta_f'] = np.array(f_k - f_k.transpose())
+        result_vals['Delta_f'] = f_k - np.vstack(f_k)
 
         if (compute_uncertainty):
             result_vals['dDelta_f'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
@@ -1267,27 +1277,27 @@ class MBAR:
         Theta[:,2*K:3*K] = Theta[:,K:2*K]
         diag = np.ones(3*K,dtype=np.float64)
         diag[0:K] = diag[K:2*K] = inner_results['observables']-inner_results['Amin']
-        Adiag = np.matrix(np.zeros([3*K,3*K],dtype=np.float64))
-        np.fill_diagonal(Adiag,diag)
-        Theta = Adiag*Theta*Adiag
+        Adiag = np.zeros([3*K, 3*K], dtype=np.float64)
+        np.fill_diagonal(Adiag, diag)
+        Theta = Adiag @ Theta @ Adiag
 
         # Compute reduced free energy difference.
-        f_k = np.matrix(inner_results['f'])
-        Delta_f_ij = np.array(f_k - f_k.transpose())
+        f_k = inner_results['f']
+        Delta_f_ij = f_k - np.vstack(f_k)
         # compute uncertainty matrix in free energies:
-        covf = Theta[2*K:3*K,2*K:3*K]
-        dDelta_f_ij = self._ErrorOfDifferences(covf,warning_cutoff=warning_cutoff)
+        covf = Theta[2*K:3*K, 2*K:3*K]
+        dDelta_f_ij = self._ErrorOfDifferences(covf, warning_cutoff=warning_cutoff)
 
         # Compute reduced enthalpy difference.
-        u_k = np.matrix(inner_results['observables'])
-        Delta_u_ij = np.array(u_k - u_k.transpose())
+        u_k = inner_results['observables']
+        Delta_u_ij = u_k - np.vstack(u_k)
         # compute uncertainty matrix in energies:
-        covu = Theta[0:K,0:K]+Theta[K:2*K,K:2*K]-Theta[0:K,K:2*K]-Theta[K:2*K,0:K]
-        dDelta_u_ij = self._ErrorOfDifferences(covu,warning_cutoff=warning_cutoff)
+        covu = Theta[0:K,0:K] + Theta[K:2*K, K:2*K] - Theta[0:K, K:2*K] - Theta[K:2*K, 0:K]
+        dDelta_u_ij = self._ErrorOfDifferences(covu, warning_cutoff=warning_cutoff)
 
         # Compute reduced entropy difference
         s_k = u_k - f_k
-        Delta_s_ij = np.array(s_k - s_k.transpose())
+        Delta_s_ij = s_k - np.vstack(s_k)
         # compute uncertainty matrix in entropies
         #s_i = u_i - f_i
         #cov(s_i) =   cov(u_i - f_i)
@@ -1326,8 +1336,8 @@ class MBAR:
         returns the statistical error matrix of A_i - A_j
         """
 
-        diag = np.matrix(cov.diagonal())
-        d2 = diag + diag.transpose() - 2 * cov
+        diag = cov.diagonal()
+        d2 = diag + np.vstack(diag) - 2 * cov
 
         # Cast warning_cutoff to compare a negative number
         cutoff = -abs(warning_cutoff)
@@ -1432,29 +1442,25 @@ class MBAR:
             # Use fast approximate expression from Kong et al. -- this underestimates the true covariance, but may be a good approximation in some cases and requires no matrix inversions
             # Theta = P'P
 
-            # Construct matrices
-            W = np.matrix(W, dtype=np.float64)
-
             # Compute covariance
-            Theta = W.T * W
+            Theta = W.T @ W
 
         elif method == 'svd':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
             # See Appendix D.1, Eq. D4 in [1].
 
             # Construct matrices
-            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
-            W = np.matrix(W, dtype=np.float64)
+            Ndiag = np.diag(N_k)
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
             [U, S, Vt] = linalg.svd(W, full_matrices=False)  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
-            Sigma = np.matrix(np.diag(S))
-            V = np.matrix(Vt).T
+            Sigma = np.diag(S)
+            V = Vt.T
 
             # Compute covariance
-            Theta = V * Sigma * self._pseudoinverse(
-                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
+            Theta = V @ Sigma * self._pseudoinverse(
+                I - Sigma @ V.T @ Ndiag @ V @ Sigma) @ Sigma @ V.T
 
         elif method == 'svd-ew':
             # Use singular value decomposition based approach given in supplementary material to efficiently compute uncertainty
@@ -1462,23 +1468,21 @@ class MBAR:
             # See Appendix D.1, Eqs. D4 and D5 of [1].
 
             # Construct matrices
-            Ndiag = np.matrix(np.diag(N_k), dtype=np.float64)
-            W = np.matrix(W, dtype=np.float64)
+            Ndiag = np.diag(N_k)
             I = np.identity(K, dtype=np.float64)
 
             # Compute singular values and right singular vectors of W without using SVD
             # Instead, we compute eigenvalues and eigenvectors of W'W.
             # Note W'W = (U S V')'(U S V') = V S' U' U S V' = V (S'S) V'
-            [S2, V] = linalg.eigh(W.T * W)
+            [S2, V] = linalg.eigh(W.T @ W)
             # Set any slightly negative eigenvalues to zero.
             S2[np.where(S2 < 0.0)] = 0.0
             # Form matrix of singular values Sigma, and V.
-            Sigma = np.matrix(np.diag(np.sqrt(S2)))
-            V = np.matrix(V)
+            Sigma = np.diag(np.sqrt(S2))
 
             # Compute covariance
-            Theta = V * Sigma * self._pseudoinverse(
-                I - Sigma * V.T * Ndiag * V * Sigma) * Sigma * V.T
+            Theta = V @ Sigma @ self._pseudoinverse(
+                I - Sigma @ V.T @ Ndiag @ V @ Sigma) @ Sigma @ V.T
 
         else:
             # Raise an exception.
@@ -1568,6 +1572,6 @@ class MBAR:
           log_w_n (N array) - unnormalized log weights of each of a number of states
 
         REFERENCE
-          'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
+          'log weights' here refers to \\log [ \\sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
         """
         return -1. * logsumexp(self.f_k + u_n[:, np.newaxis] - self.u_kn.T, b=self.N_k, axis=1)

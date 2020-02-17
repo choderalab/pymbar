@@ -55,8 +55,8 @@ if (min(T_k) == max(T_k)):
 # Read the simulation data
 for k in range(K):
     # Read torsion angle data.
-    filename = 'data/prod{:d}_dihed.xvg'.format(k)
-    print("Reading {:s}...".format(filename))
+    filename = "data/prod{:d}_dihed.xvg".format(k)
+    print("Reading {}...".format(filename))
     infile = open(filename, 'r')
     lines = infile.readlines()
     infile.close()
@@ -79,8 +79,8 @@ for k in range(K):
     if (DifferentTemperatures):  # if different temperatures are specified the metadata file, 
                                  # then we need the energies to compute the PMF
         # Read energies
-        filename = 'data/prod{:d}_energies.xvg'.format(k)
-        print('Reading {:s}...'.format(filename))
+        filename = "data/prod{:d}_energies.xvg".format(k)
+        print("Reading {}...".format(filename))
         infile = open(filename, 'r')
         lines = infile.readlines()
         infile.close()

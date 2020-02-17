@@ -35,9 +35,9 @@ from pymbar.utils import ParameterError
 def stddev_away(namex,errorx,dx):
 
   if dx > 0:
-    print("%s differs by %.3f standard deviations from analytical" % (namex,errorx/dx))
+    print("{} differs by {:.3f} standard deviations from analytical".format(namex,errorx/dx))
   else:
-    print("%s differs by an undefined number of standard deviations" % (namex))
+    print("{} differs by an undefined number of standard deviations".format(namex))
 
 def GetAnalytical(beta,K,O,observables):
 
@@ -51,7 +51,7 @@ def GetAnalytical(beta,K,O,observables):
   sigma = (beta * K)**-0.5
   f_k_analytical = - numpy.log(numpy.sqrt(2 * numpy.pi) * sigma )
 
-  Delta_f_ij_analytical = numpy.matrix(f_k_analytical) - numpy.matrix(f_k_analytical).transpose()
+  Delta_f_ij_analytical = f_k_analytical - numpy.vstack(f_k_analytical)
 
   A_k_analytical = dict()
   A_ij_analytical = dict()
@@ -66,7 +66,7 @@ def GetAnalytical(beta,K,O,observables):
     if observe == 'position^2':    
       A_k_analytical[observe]  = (1+ beta*K*O**2)/(beta*K)        # observable is the position^2
 
-    A_ij_analytical[observe] = A_k_analytical[observe] - numpy.transpose(numpy.matrix(A_k_analytical[observe]))
+    A_ij_analytical[observe] = A_k_analytical[observe] - numpy.vstack(A_k_analytical[observe])
 
   return f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical
 
@@ -95,16 +95,16 @@ numpy.random.seed(seed)
 # Determine number of simulations.
 K = numpy.size(N_k)
 if numpy.shape(K_k) != numpy.shape(N_k): 
-  raise ParameterError("K_k (%d) and N_k (%d) must have same dimensions." % (numpy.shape(K_k), numpy.shape(N_k)))
+  raise ParameterError("K_k ({:d}) and N_k ({:d}) must have same dimensions.".format(numpy.shape(K_k), numpy.shape(N_k)))
 if numpy.shape(O_k) != numpy.shape(N_k): 
-  raise ParameterError("O_k (%d) and N_k (%d) must have same dimensions." % (numpy.shape(K_k), numpy.shape(N_k)))
+  raise ParameterError("O_k ({:d}) and N_k ({:d}) must have same dimensions.".format(numpy.shape(K_k), numpy.shape(N_k)))
 
 # Determine maximum number of samples to be drawn for any state.
 N_max = numpy.max(N_k)
 
 (f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical) = GetAnalytical(beta,K_k,O_k,observables)
 
-print("This script will draw samples from %d harmonic oscillators." % (K))
+print("This script will draw samples from {:d} harmonic oscillators.".format(K))
 print("The harmonic oscillators have equilibrium positions")
 print(O_k)
 print("and spring constants")
@@ -180,7 +180,7 @@ for i in range(Knon-1):
   ddf_bar = results['dDelta_f']
   bar_analytical = (f_k_analytical[k1]-f_k_analytical[k]) 
   bar_error = bar_analytical - df_bar
-  print("BAR estimator for reduced free energy from states %d to %d is %f +/- %f" % (k,k1,df_bar,ddf_bar)) 
+  print("BAR estimator for reduced free energy from states {:d} to {:d} is {:f} +/- {:f}".format(k,k1,df_bar,ddf_bar)) 
   stddev_away("BAR estimator",bar_error,ddf_bar)
 
 print("==============================================")
@@ -196,7 +196,7 @@ for k in range(K-1):
     ddf_exp = results['dDelta_f']
     exp_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
     exp_error = exp_analytical - df_exp
-    print("df from states %d to %d is %f +/- %f" % (k,k+1,df_exp,ddf_exp)) 
+    print("df from states {:d} to {:d} is {:f} +/- {:f}".format(k,k+1,df_exp,ddf_exp)) 
     stddev_away("df",exp_error,ddf_exp)
 
 print("EXP reverse free energy")
@@ -208,7 +208,7 @@ for k in range(1,K):
     ddf_exp = results['dDelta_f']
     exp_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
     exp_error = exp_analytical - df_exp
-    print("df from states %d to %d is %f +/- %f" % (k,k-1,df_exp,ddf_exp)) 
+    print("df from states {:d} to {:d} is {:f} +/- {:f}".format(k,k-1,df_exp,ddf_exp)) 
     stddev_away("df",exp_error,ddf_exp)
 
 print("==============================================")
@@ -224,7 +224,7 @@ for k in range(K-1):
     ddf_gauss = results['dDelta_f']
     gauss_analytical = (f_k_analytical[k+1]-f_k_analytical[k]) 
     gauss_error = gauss_analytical - df_gauss
-    print("df for reduced free energy from states %d to %d is %f +/- %f" % (k,k+1,df_gauss,ddf_gauss)) 
+    print("df for reduced free energy from states {:d} to {:d} is {:f} +/- {:f}".format(k,k+1,df_gauss,ddf_gauss)) 
     stddev_away("df",gauss_error,ddf_gauss)
 
 print("Gaussian reverse estimate")
@@ -236,7 +236,7 @@ for k in range(1,K):
     ddf_gauss = results['dDelta_f']
     gauss_analytical = (f_k_analytical[k]-f_k_analytical[k-1]) 
     gauss_error = gauss_analytical - df_gauss
-    print("df for reduced free energy from states %d to %d is %f +/- %f" % (k,k-1,df_gauss,ddf_gauss)) 
+    print("df for reduced free energy from states {:d} to {:d} is {:f} +/- {:f}".format(k,k-1,df_gauss,ddf_gauss)) 
     stddev_away("df",gauss_error,ddf_gauss)
     
 print("======================================")
@@ -250,7 +250,7 @@ N = numpy.sum(N_k)
 
 for observe in observables:
   print("============================================")
-  print("      Testing observable %s" % (observe))
+  print("      Testing observable {}".format(observe))
   print("============================================")
 
   if observe == 'RMS displacement':
@@ -324,17 +324,17 @@ for observe in observables:
   print("Now testing 'averages' mode")
   print("------------------------------")
 
-  print("Analytical estimator of %s is" % (observe))
+  print("Analytical estimator of {} is".format(observe))
   print(A_k_analytical[observe])
 
-  print("MBAR estimator of the %s is" % (observe))
+  print("MBAR estimator of the {} is".format(observe))
   print(A_k_estimated)
 
   print("MBAR estimators differ by X standard deviations")
   stdevs = numpy.abs(A_k_error/dA_k_estimated)
   print(stdevs)
 
-  print("Standard estimator of %s is (states with samples):" % (observe))
+  print("Standard estimator of {} is (states with samples):".format(observe))
   print(As_k_estimated[Nk_ne_zero])
 
   print("Standard estimators differ by X standard deviations (states with samples)")
@@ -353,13 +353,13 @@ for observe in observables:
   if 'RMS displacement' != observe: # can't test this, because we're actually computing the expectation of
                                     # the mean square displacement, and so the differences are <a_i^2> - <a_j^2>,
                                     # not sqrt<a_i>^2 - sqrt<a_j>^2
-    A_kl_analytical = numpy.matrix(A_k_analytical[observe]) - numpy.matrix(A_k_analytical[observe]).transpose()
+    A_kl_analytical = A_k_analytical[observe] - numpy.vstack(A_k_analytical[observe])
     A_kl_error = A_kl_estimated - A_kl_analytical
     
-    print("Analytical estimator of differences of %s is" % (observe))
+    print("Analytical estimator of differences of {} is".format(observe))
     print(A_kl_analytical)
     
-    print("MBAR estimator of the differences of %s is" % (observe))
+    print("MBAR estimator of the differences of {} is".format(observe))
     print(A_kl_estimated)
     
     print("MBAR estimators differ by X standard deviations")
@@ -388,11 +388,11 @@ for i in range(K):
   A_i = results['mu']
   dA_ij = results['sigma']
   Ca_ij = results['covariances']
-  print("Averages for state %d" % (i))
+  print("Averages for state {:d}".format(i))
   print(A_i)
-  print("Uncertainties for state %d" % (i))
+  print("Uncertainties for state {:d}".format(i))
   print(dA_ij)
-  print("Correlation matrix between observables for state %d" % (i))
+  print("Correlation matrix between observables for state {:d}".format(i))
   print(Ca_ij)
 
 print("============================================")
@@ -411,12 +411,12 @@ print("Free energies")
 print(Delta_f_ij)
 print(dDelta_f_ij)
 diffs1 = Delta_f_ij - Delta_f_ij_estimated
-print("maximum difference between values computed here and in computeFreeEnergies is %g" % (numpy.max(diffs1)))
+print("maximum difference between values computed here and in computeFreeEnergies is {:g}".format(numpy.max(diffs1)))
 if (numpy.max(numpy.abs(diffs1)) > 1.0e-10):
   print("Difference in values from computeFreeEnergies")
   print(diffs1)
 diffs2 = dDelta_f_ij - dDelta_f_ij_estimated
-print("maximum difference between uncertainties computed here and in computeFreeEnergies is %g" % (numpy.max(diffs2)))
+print("maximum difference between uncertainties computed here and in computeFreeEnergies is {:g}".format(numpy.max(diffs2)))
 if (numpy.max(numpy.abs(diffs2)) > 1.0e-10):
   print("Difference in expectations from computeFreeEnergies")
   print(diffs2)
@@ -424,10 +424,10 @@ if (numpy.max(numpy.abs(diffs2)) > 1.0e-10):
 print("Energies")
 print(Delta_u_ij)
 print(dDelta_u_ij)
-U_k = numpy.matrix(A_k_estimated_all['potential energy'])
-expectations = U_k - U_k.transpose()
+U_k = A_k_estimated_all['potential energy']
+expectations = U_k - numpy.vstack(U_k)
 diffs1 = Delta_u_ij - expectations
-print("maximum difference between values computed here and in computeExpectations is %g" % (numpy.max(diffs1)))
+print("maximum difference between values computed here and in computeExpectations is {:g}".format(numpy.max(diffs1)))
 if (numpy.max(numpy.abs(diffs1)) > 1.0e-10):
   print("Difference in values from computeExpectations")
   print(diffs1)
@@ -437,8 +437,8 @@ print(Delta_s_ij)
 print(dDelta_s_ij)
 
 #analytical entropy estimate
-s_k_analytical = numpy.matrix(0.5 / beta - f_k_analytical)
-Delta_s_ij_analytical = s_k_analytical - s_k_analytical.transpose()
+s_k_analytical = 0.5 / beta - f_k_analytical
+Delta_s_ij_analytical = s_k_analytical - numpy.vstack(s_k_analytical)
 
 Delta_s_ij_error = Delta_s_ij_analytical - Delta_s_ij
 print("Error in entropies is:")
@@ -461,7 +461,7 @@ L = numpy.size(K_extra)
 (f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical) = GetAnalytical(beta,K_extra,O_extra,observables)
 
 if numpy.size(O_extra) != numpy.size(K_extra):
-  raise ParameterError("O_extra (%d) and K_extra (%d) must have the same dimensions." % (numpy.shape(K_k), numpy.shape(N_k)))
+  raise ParameterError("O_extra ({:d}) and K_extra ({:d}) must have the same dimensions.".format(numpy.shape(K_k), numpy.shape(N_k)))
 
 unew_kln = numpy.zeros([K,L,numpy.max(N_k)],numpy.float64)
 for k in range(K):
@@ -494,7 +494,7 @@ nth = 3
 # test the nth "extra" states, O_extra[nth] & K_extra[nth]
 for observe in observables:
   print("============================================")
-  print("      Testing observable %s" % (observe))
+  print("      Testing observable {}".format(observe))
   print("============================================")
 
   if observe == 'RMS displacement':
@@ -530,10 +530,10 @@ for observe in observables:
 
   A_k_error = A_k_estimated - A_k_analytical[observe][nth]
 
-  print("Analytical estimator of %s is" % (observe))
+  print("Analytical estimator of {} is".format(observe))
   print(A_k_analytical[observe][nth])
 
-  print("MBAR estimator of the %s is" % (observe))
+  print("MBAR estimator of the {} is".format(observe))
   print(A_k_estimated)
 
   print("MBAR estimators differ by X standard deviations")
@@ -553,7 +553,7 @@ print("Overlap matrix output")
 print(O_ij)
 
 for k in range(K):
-  print("Sum of row %d is %f (should be 1)," % (k,numpy.sum(O_ij[k,:])), end=' ')
+  print("Sum of row {:d} is {:f} (should be 1),".format(k,numpy.sum(O_ij[k,:])), end=' ')
   if (numpy.abs(numpy.sum(O_ij[k,:])-1)<1.0e-10):
     print("looks like it is.")
   else:
@@ -592,7 +592,7 @@ for k in range(K):
 
 print("                    ", end=' ')
 for k in range(K):
-  print("       %d   " %(k), end=' ')
+  print("       {:d}   ",format(k), end=' ')
 print("")
 print("MBAR             :", end=' ')
 print(err_mbar)
@@ -635,7 +635,7 @@ def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100
     nperdim[d] = xrange[d][1] - xrange[d][0] + 1
     numbrellas *= nperdim[d]
 
-  print("There are a total of %d umbrellas." % numbrellas)
+  print("There are a total of {:d} umbrellas.".format(numbrellas))
 
   # Enumerate umbrella centers, and compute the analytical free energy of that umbrella
   print("Constructing umbrellas...")
@@ -664,7 +664,7 @@ def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100
     i += 1
     f_k_analytical -= f_k_analytical[umbrella_zero]
 
-  print("Generating %d samples for each of %d umbrellas..." % (nsamples, numbrellas))
+  print("Generating {:d} samples for each of {:d} umbrellas...".format(nsamples, numbrellas))
   x_n = numpy.zeros([numbrellas * nsamples, ndim], numpy.float64)
 
   for i in range(numbrellas):
@@ -768,7 +768,7 @@ for i in range(0,nbins):
     stdevs = numpy.abs(error)/df_i[i]
   else:
     stdevs = 0
-  print('%8d %6.2f %8d %10.3f %10.3f %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
+  print('{:8d} {:6.2f} {:8d} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:8.2f}'.format(i, bin_centers[i,0], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
 
 print("============================================")
 print("      Test 2: 2D PMF   ")
@@ -861,15 +861,15 @@ f_ik = results_kde['f_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF:")
-print("%d counts out of %d counts not in any bin" % (numpy.sum(numpy.any(bin_n==-1,axis=1)),Ntot))
-print("%8s %6s %6s %8s %10s %10s %10s %10s %10s %10s %8s" % ('bin', 'x', 'y', 'N', 'f_hist', 'f_kde','true','err_h','err_kde','df','sigmas'))
+print("{:d} counts out of {:d} counts not in any bin".format(numpy.sum(numpy.any(bin_n==-1,axis=1)),Ntot))
+print("{:8s} {:6s} {:6s} {:8s} {:10s} {:10s} {:10s} {:10s} {:8s}".format('bin', 'x', 'y', 'N', 'f', 'true','error','df','sigmas'))
 for i in range(0,nbins):
   if df_i[i] == 0:
     stdevs = 0
   else:
     error = pmf_analytical[i]-f_i[i]
     stdevs = numpy.abs(error)/df_i[i]
-  print('%8d %6.2f %6.2f %8d %10.3f %10.3f %10.3f %10.3f %10.3f %10.3f %8.2f' % (i, bin_centers[i,0], bin_centers[i,1], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
+  print('{:8d} {:6.2f} {:6.2f} {:8d} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:8.2f}'.format(i, bin_centers[i,0], bin_centers[i,1], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
 
 #=============================================================================================
 # TERMINATE
@@ -877,4 +877,3 @@ for i in range(0,nbins):
 
 # Signal successful execution.
 sys.exit(0)
-

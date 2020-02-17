@@ -184,33 +184,33 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
         if add_newaxis_on_deficient_ndim and ndim == 1 and np.isscalar(val):
             val = np.array([val])
         else:
-            raise TypeError(("%s must be numpy array. "
-                             " You supplied type %s" % (name, type(val))))
+            raise TypeError(("{} must be numpy array. "
+                             " You supplied type {}".format(name, type(val))))
 
     if warn_on_cast and val.dtype != dtype:
-        warnings.warn("Casting %s dtype=%s to %s " % (name, val.dtype, dtype),
+        warnings.warn("Casting {} dtype={} to {} ".format(name, val.dtype, dtype),
                       TypeCastPerformanceWarning)
 
     if not val.ndim == ndim:
         if add_newaxis_on_deficient_ndim and val.ndim + 1 == ndim:
             val = val[np.newaxis, ...]
         else:
-            raise ValueError(("%s must be ndim %s. "
-                              "You supplied %s" % (name, ndim, val.ndim)))
+            raise ValueError(("{} must be ndim {}. "
+                              "You supplied {}".format(name, ndim, val.ndim)))
 
     val = np.ascontiguousarray(val, dtype=dtype)
 
     if length is not None and len(val) != length:
-        raise ValueError(("%s must be length %s. "
-                          "You supplied %s" % (name, length, len(val))))
+        raise ValueError(("{} must be length {}. "
+                          "You supplied {}.".format(name, length, len(val))))
 
     if shape is not None:
         # the shape specified given by the user can look like (None, None 3)
         # which indicates that ANY length is accepted in dimension 0 or
         # dimension 1
         sentenel = object()
-        error = ValueError(("%s must be shape %s. You supplied  "
-                            "%s" % (name, str(shape).replace('None', 'Any'), val.shape)))
+        error = ValueError(("{} must be shape {}. You supplied  "
+                            "{}".format(name, str(shape).replace('None', 'Any'), val.shape)))
         for a, b in zip_longest(val.shape, shape, fillvalue=sentenel):
             if a is sentenel or b is sentenel:
                 # if the sentenel was reached, it means that the ndim didn't
@@ -243,17 +243,17 @@ def _logsum(a_n):
     Notes
     -----
 
-    _logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
+    _logsum a_n = max_arg + \\log \\sum_{n=1}^N \\exp[a_n - max_arg]
 
     where max_arg = max_n a_n.  This is mathematically (but not numerically) equivalent to
 
-    _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
+    _logsum a_n = \\log \\sum_{n=1}^N \\exp[a_n]
 
 
     Example
     -------
     >>> a_n = np.array([0.0, 1.0, 1.2], np.float64)
-    >>> print('%.3e' % _logsum(a_n))
+    >>> print('{:.3e}'.format(_logsum(a_n)))
     1.951e+00
     """
 
@@ -356,8 +356,7 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
         which_badcolumns = np.arange(K)[badcolumns]
         firstbad = which_badcolumns[0]
         raise ParameterError(
-            'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
-            (firstbad, column_sums[firstbad], np.sum(badcolumns)))
+            'Warning: Should have \\sum_n W_nk = 1. Actual column sum for state {:d} was {:f}. {:d} other columns have similar problems'.format(firstbad, column_sums[firstbad], np.sum(badcolumns)))
 
     row_sums = np.sum(W * N_k, axis=1)
     badrows = (np.abs(row_sums - 1) > tolerance)
@@ -365,8 +364,7 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
         which_badrows = np.arange(N)[badrows]
         firstbad = which_badrows[0]
         raise ParameterError(
-            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
-            (firstbad, row_sums[firstbad], np.sum(badrows)))
+            'Warning: Should have \\sum_k N_k W_nk = 1.  Actual row sum for sample {:d} was {:f}. {:d} other rows have similar problems'.format(firstbad, row_sums[firstbad], np.sum(badrows)))
 
     return
 
