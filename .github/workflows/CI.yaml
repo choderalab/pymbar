@@ -62,3 +62,11 @@ jobs:
         . devtools/github-actions/initialize_conda.sh
         conda activate test
         pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
+
+    - name: CodeCov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+      file: ./coverage.xml
+      flags: unittests
+      yml: ./.codecov.yml
