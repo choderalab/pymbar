@@ -28,7 +28,7 @@ except ImportError:
 
 original_data_directory = 'original-data' # location of original data (.xls files)
 processed_data_directory = 'processed-data' # location for where processed data is to be stored
-datasets = ['20R55_4T'] # prefixes of datasets to process (filenames are ',format((prefix)_data.xls')
+datasets = ['20R55_4T'] # prefixes of datasets to process (filenames are '.format((prefix)_data.xls')
 
 #=============================================================================================
 # SUBROUTINES
@@ -47,7 +47,7 @@ for dataset in datasets:
     workbook = xlrd.open_workbook(workbook_filename)
 
     # DEBUG
-    print("Workbook contains {:d} worksheets:",format(workbook.nsheets))
+    print("Workbook contains {:d} worksheets:".format(workbook.nsheets))
     print(workbook.sheet_names())
 
     # Get the first worksheet.
