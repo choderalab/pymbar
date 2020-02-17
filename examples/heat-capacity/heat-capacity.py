@@ -80,7 +80,7 @@ def read_total_energies(pathname,colnum):
 	colnum (integer) column the energy is found in
     """
 
-    print("--Reading total energies from %s/..." % pathname)
+    print("--Reading total energies from {}/...".format(pathname))
 
     # Initialize Return variables
     E_kn = numpy.zeros([NumTemps, NumIterations], numpy.float64)
@@ -112,7 +112,7 @@ def read_simulation_temps(pathname,NumTemps):
         beforehand the total number of temperatures (parameter at top)
     """
 
-    print("--Reading temperatures from %s/..." % pathname)
+    print("--Reading temperatures from {}/...".format(pathname))
 
     # Initialize return variable
     temps_from_file = numpy.zeros(NumTemps, numpy.float64)
@@ -135,16 +135,16 @@ def PrintResults(string,E,dE,Cv,dCv,types):
     print(string)
     print("Temperature    dA        <E> +/- d<E>  ", end=' ')
     for t in types:
-        print("    Cv +/- dCv (%s)" % (t), end=' ')    
+        print("    Cv +/- dCv ({})".format(t), end=' ')    
     print("")
     print("------------------------------------------------------------------------------------------------------")
     for k in range(originalK,K):
-        print("%8.3f %8.3f %9.3f +/- %5.3f" % (Temp_k[k],mbar.f_k[k]/beta_k[k],E[k],dE[k]), end=' ')
+        print("{:8.3f} {:8.3f} {:9.3f} +/- {:5.3f}".format(Temp_k[k],mbar.f_k[k]/beta_k[k],E[k],dE[k]), end=' ')
         for i in range(len(types)):
             if Cv[k,i,0] < -100000.0:
                 print("         N/A          ", end=' ')
             else:
-                print("    %7.4f +/- %6.4f" % (Cv[k,i,0],dCv[k,i]), end=' ')
+                print("    {:7.4f} +/- {:6.4f}".format(Cv[k,i,0],dCv[k,i]), end=' ')
         print("")
 
 #========================================================================
@@ -239,7 +239,7 @@ dE_expect = numpy.zeros([K],numpy.float64)
 
 for n in range(nBoots_work):
     if (n > 0):
-        print("Bootstrap: %d/%d" % (n,nBoots))
+        print("Bootstrap: {:d}/{:d}".format(n,nBoots))
     for k in range(K):
     # resample the results:
         if Nall_k[k] > 0:
@@ -261,9 +261,9 @@ for n in range(nBoots_work):
     if (n==0):  # only print this information the first time
         print("")
         print("Initializing MBAR:")
-        print("--K = number of Temperatures with data = %d" % (originalK))
-        print("--L = number of total Temperatures = %d" % (K))
-        print("--N = number of Energies per Temperature = %d" % (numpy.max(Nall_k)))
+        print("--K = number of Temperatures with data = {:d}".format(originalK))
+        print("--L = number of total Temperatures = {:d}".format(K))
+        print("--N = number of Energies per Temperature = {:d}".format(numpy.max(Nall_k)))
 
     if (n==0):
         initial_f_k = None # start from zero 
