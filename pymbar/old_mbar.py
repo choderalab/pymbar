@@ -971,8 +971,8 @@ class MBAR:
         Notes
         -----
 
-        W.T * W \approx \int (p_i p_j /\sum_k N_k p_k)^2 \sum_k N_k p_k dq^N
-                      = \int (p_i p_j /\sum_k N_k p_k) dq^N
+        W.T * W \\approx \\int (p_i p_j /\\sum_k N_k p_k)^2 \\sum_k N_k p_k dq^N
+                      = \\int (p_i p_j /\\sum_k N_k p_k) dq^N
 
         Multiplying elementwise by N_i, the elements of row i give the probability
         for a sample from state i being observed in state j.
@@ -1389,7 +1389,7 @@ class MBAR:
             Method for reporting uncertainties (default: 'from-lowest')
             'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
             'from-reference' - same as from lowest, but from a user specified point
-            'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         Returns
@@ -1861,7 +1861,7 @@ class MBAR:
             which_badcolumns = np.arange(K)[badcolumns]
             firstbad = which_badcolumns[0]
             raise ParameterError(
-                'Warning: Should have \sum_n W_nk = 1. Actual column sum for state {:d} was {:f}. {:d} other columns have similar problems'.format(firstbad, column_sums[firstbad], np.sum(badcolumns)))
+                'Warning: Should have \\sum_n W_nk = 1. Actual column sum for state {:d} was {:f}. {:d} other columns have similar problems'.format(firstbad, column_sums[firstbad], np.sum(badcolumns)))
 
         row_sums = np.sum(W * N_k, axis=1)
         badrows = (np.abs(row_sums - 1) > tolerance)
@@ -1869,7 +1869,7 @@ class MBAR:
             which_badrows = np.arange(N)[badrows]
             firstbad = which_badrows[0]
             raise ParameterError(
-                'Warning: Should have \sum_k N_k W_nk = 1. Actual row sum for sample {:d} was {:f}. {:d} other rows have similar problems'.format(firstbad, row_sums[firstbad], np.sum(badrows)))
+                'Warning: Should have \\sum_k N_k W_nk = 1. Actual row sum for sample {:d} was {:f}. {:d} other rows have similar problems'.format(firstbad, row_sums[firstbad], np.sum(badrows)))
 
         # Compute estimate of asymptotic covariance matrix using specified
         # method.
@@ -2085,7 +2085,7 @@ class MBAR:
           log_w_n (N array) - unnormalized log weights of each of a number of states
 
         REFERENCE
-          'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
+          'log weights' here refers to \\log [ \\sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
         """
 
         if (self.use_embedded_helper_code):

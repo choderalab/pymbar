@@ -379,8 +379,8 @@ class MBAR:
         .. code-block:: none
 
             effective number of samples contributing to averages carried out at state i
-                =  (\sum_{n=1}^N w_in)^2 / \sum_{n=1}^N w_in^2
-                =  (\sum_{n=1}^N w_in^2)^-1
+                =  (\\sum_{n=1}^N w_in)^2 / \\sum_{n=1}^N w_in^2
+                =  (\\sum_{n=1}^N w_in^2)^-1
 
         the effective sample number is most useful to diagnose when there are only a few samples
         contributing to the averages.
@@ -430,8 +430,8 @@ class MBAR:
 
         .. code-block:: none
 
-            W.T * W \approx \int (p_i p_j /\sum_k N_k p_k)^2 \sum_k N_k p_k dq^N
-                = \int (p_i p_j /\sum_k N_k p_k) dq^N
+            W.T * W \\approx \int (p_i p_j /\\sum_k N_k p_k)^2 \\sum_k N_k p_k dq^N
+                = \int (p_i p_j /\\sum_k N_k p_k) dq^N
 
         Multiplying elementwise by N_i, the elements of row i give the probability
         for a sample from state i being observed in state j.
@@ -795,7 +795,7 @@ class MBAR:
 
         """
         We wish to calculate the variance of a weighted sum of free energy differences.
-        for example ``var(\sum a_i df_i)``.
+        for example ``var(\\sum a_i df_i)``.
 
         We explicitly lay out the calculations for four variables (where each variable
         is a logarithm of a partition function), then generalize.
@@ -850,14 +850,14 @@ class MBAR:
             = a1^2 var(f_i1 - f_j1) + a2^2 var(f_i2 - f_j2) + a1 a2 [-var(f_i1 - f_i2) + var(f_i1 - f_j2) + var(f_j1-f_i2) - var(f_j1 - f_j2)]
 
         assume two arrays of free energy differences, and and array of constant vectors a.
-        we want the variance ``var(\sum_k a_k (f_i,k - f_j,k))`` Each set is separated from the other by an offset K
+        we want the variance ``var(\\sum_k a_k (f_i,k - f_j,k))`` Each set is separated from the other by an offset K
         same process applies with the sum, with the single var terms and the pair terms
 
         Parameters
         ----------
         d_ij : a matrix of standard deviations of the quantities f_i - f_j
         K : The number of states in each 'chunk', has to be constant
-        outputs : KxK variance matrix for the sums or differences ``\sum a_i df_i``
+        outputs : KxK variance matrix for the sums or differences ``\\sum a_i df_i``
         """
 
         # todo: vectorize this.
@@ -1335,7 +1335,7 @@ class MBAR:
 
             * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
             * 'from-specified' - same as from lowest, but from a user specified point
-            * 'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         pmf_reference : int, optional
@@ -1755,6 +1755,6 @@ class MBAR:
           log_w_n (N array) - unnormalized log weights of each of a number of states
 
         REFERENCE
-          'log weights' here refers to \log [ \sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
+          'log weights' here refers to \\log [ \\sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
         """
         return -1. * logsumexp(self.f_k + u_n[:, np.newaxis] - self.u_kn.T, b=self.N_k, axis=1)
