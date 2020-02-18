@@ -35,6 +35,7 @@ class HarmonicOscillatorsTestCase(object):
 
     >>> (x_kn, u_kln, N_k) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
     >>> (x_n, u_kn, N_k, s_n) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> (w_F, w_R, N_k) = testcase.sample(N_k=[40, 50], mode='wFwR')
 
     """
 
@@ -108,6 +109,7 @@ class HarmonicOscillatorsTestCase(object):
         mode : str, optional, default='u_kn'
             If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
             If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
+            If 'wFwR', check that len(N_k) involves only two states, and calculate the forward and reverse work distributions.
 
         seed: int, optional, default=None.  Provides control over the random seed for replicability.
 
@@ -131,13 +133,26 @@ class HarmonicOscillatorsTestCase(object):
         N_k : np.ndarray, shape=(n_states), dtype=int32
            N_k[k] is the number of samples generated from state k
 
+        if mode == 'wFwR':
+
+        w_F : np.ndarray, shape=(N_k[0]), dtype=float   
+            Work generated switching from state 0 to 1
+        w_R : np.ndaarry, shape=(N_k[1]), dtype=float
+            Work generated switching from state 1 to 0
+        N_k : np.ndarray, shape=(2), dtype=float
+           N_k[k] is the number of samples generated from state k
+
         """
 
         np.random.seed(seed)
 
         N_k = np.array(N_k, np.int32)
         if len(N_k) != self.n_states:
-            raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))
+            raise Exception("N_k has {:d} states while self.n_states has {:d} states.".format(len(N_k), self.n_states))
+
+        if mode == 'wFwR':
+            if len(N_k) != 2:
+                raise Exception("N_k has {:d} states instead of 2, we cannot generate forward and reverse work distributions".format(len(N_k)))
 
         N_max = N_k.max()  # maximum number of samples per state
         N_tot = N_k.sum()  # total number of samples
@@ -165,8 +180,10 @@ class HarmonicOscillatorsTestCase(object):
             return x_n, u_kn, N_k, s_n
         elif (mode == 'u_kln'):
             return x_kn, u_kln, N_k
+        elif (mode == 'wFwR'):
+            return u_kln[0,1,:]-u_kln[0,0,:], u_kln[1,0,:]-u_kln[1,1,:], N_k
         else:
-            raise Exception("Unknown mode '%s'" % mode)
+            raise Exception("Unknown mode '{}'".format(mode))
 
         return
 
@@ -205,7 +222,7 @@ class HarmonicOscillatorsTestCase(object):
         s_n : np.ndarray, shape=(n_samples)
             State of origin of each sample
         """
-        name = "%dx%d oscillators" % (n_states, n_samples_per_state)
+        name = "{:d}x{:d} oscillators",format(n_states, n_samples_per_state)
 
         O_k = np.linspace(lower_O_k, upper_O_k, n_states)
         k_k = np.linspace(lower_k_k, upper_k_k, n_states)

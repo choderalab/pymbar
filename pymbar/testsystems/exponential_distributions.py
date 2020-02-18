@@ -35,6 +35,7 @@ class ExponentialTestCase(object):
 
     >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
     >>> [x_n, u_kn, N_k, s_n] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> [w_F, w_R, N_k] = testcase.sample(N_k=[40, 50], mode='wFwR')
 
     """
 
@@ -101,6 +102,8 @@ class ExponentialTestCase(object):
         mode : str, optional, default='u_kln'
             If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
             If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
+            If 'wFwR', check that len(N_k) involves only two states, and calculate the forward and reverse work distributions.
+
         seed: int, optional, default=None.  Provides control over the random seed for replicability.
 
         Returns
@@ -116,11 +119,23 @@ class ExponentialTestCase(object):
         s_n : np.ndarray, shape=(n_samples), dtype='int'
             s_n is the state of origin of x_n           
 
+        if mode == 'u_kln':     
+
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
             1D harmonic oscillator positions
         u_kln : np.ndarray, shape=(n_states, n_states, n_samples), dytpe=float, only if mode='u_kln'
            u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
         N_k : np.ndarray, shape=(n_states), dtype=float
+           N_k[k] is the number of samples generated from state k
+
+
+        if mode == 'wFwR':
+
+        w_F : np.ndarray, shape=(N_k[0]), dtype=float   
+            Work generated switching from state 0 to 1
+        w_R : np.ndaarry, shape=(N_k[1]), dtype=float
+            Work generated switching from state 1 to 0
+        N_k : np.ndarray, shape=(2), dtype=float
            N_k[k] is the number of samples generated from state k
 
         """
@@ -129,9 +144,11 @@ class ExponentialTestCase(object):
 
         N_k = np.array(N_k, np.int32)
         if len(N_k) != self.n_states:
-            raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))
+            raise Exception("N_k has {:d} states while self.n_states has {:d} states.".format(len(N_k), self.n_states))
 
-        states = ["state %d" % k for k in range(self.n_states)]
+        if mode == 'wFwR':
+            if len(N_k) != 2:
+                raise Exception("N_k has {:d} states instead of 2, we cannot generate forward and reverse work distributions".format(len(N_k)))
 
         N_max = N_k.max()  # maximum number of samples per state
         N_tot = N_k.sum()  # total number of samples
@@ -156,6 +173,8 @@ class ExponentialTestCase(object):
             return x_n, u_kn, N_k, s_n
         elif mode == 'u_kln':
             return x_kn, u_kln, N_k
+        elif mode == 'wFwR':
+            return u_kln[0,1,:]-u_kln[0,0,:], u_kln[1,0,:]-u_kln[1,1,:], N_k
         else:
             raise Exception("Unknown mode '{}'".format(mode))
 
@@ -197,7 +216,7 @@ class ExponentialTestCase(object):
             State of origin of each sample
         """
                 
-        name = "%dx%d exponentials" % (n_states, n_samples_per_state)
+        name = "{:d}x{:d} exponentials".format(n_states, n_samples_per_state)
 
         rates = np.linspace(lower_rate, upper_rate, n_states)
         N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
