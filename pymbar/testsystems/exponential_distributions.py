@@ -174,7 +174,7 @@ class ExponentialTestCase(object):
         elif mode == 'u_kln':
             return x_kn, u_kln, N_k
         elif mode == 'wFwR':
-            return u_kln[0,1,:]-u_kln[0,0,:], u_kln[1,0,:]-u_kln[1,1,:], N_k
+            return u_kln[0,1,:N_k[0]]-u_kln[0,0,:N_k[0]], u_kln[1,0,:N_k[1]]-u_kln[1,1,:N_k[1]], N_k
         else:
             raise Exception("Unknown mode '{}'".format(mode))
 
