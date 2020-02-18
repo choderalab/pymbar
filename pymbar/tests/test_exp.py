@@ -12,7 +12,7 @@ precision = 8  # the precision for systems that do have analytical results that 
 # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
 z_scale_factor = 12.0
 # 0.5 is rounded to 1, so this says they must be within 3.0 sigma
-N_k = np.array([150000, 100000])
+N_k = np.array([50000, 100000])
 
 
 def generate_ho(O_k = np.array([1.0, 2.0]), K_k = np.array([0.5, 1.0])):
@@ -95,5 +95,3 @@ def test_EXP_free_energies(exp_and_test):
     # make sure the different methods are nearly equal for these systems (within uncertainty)
     z = np.abs(fe_R - fe_F) / np.sqrt(dfe_R**2 + dfe_F**2)
     assert_almost_equal(z / z_scale_factor, 0.0, decimal=0)
-
-
