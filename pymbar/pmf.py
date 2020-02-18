@@ -382,7 +382,7 @@ class PMF:
 
             self.kdes = list()
 
-            from sklearn.neighbors.kde import KernelDensity
+            from sklearn.neighbors import KernelDensity
             kde = KernelDensity()
             # get the default params to set them.
             kde_defaults = kde.get_params()
