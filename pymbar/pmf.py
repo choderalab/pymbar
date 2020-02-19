@@ -612,7 +612,8 @@ class PMF:
             log_w_n = mbar._computeUnnormalizedLogWeights(
                 self.u_n[bootstrap_indices])
             # calculate a few other things used for multiple methods
-            self.w_n = np.exp(log_w_n)
+            max_log_w_n = np.max(log_w_n) # we need to solve underflow.
+            self.w_n = np.exp(log_w_n-max_log_w_n)
             self.w_n = self.w_n / np.sum(self.w_n)  # nomalize the weights
             # normalized weights for all states.
             self.w_kn = np.exp(mbar.Log_W_nk)
@@ -664,9 +665,9 @@ class PMF:
                     nonzero_bins_index[n] = nonzero_bins.index(
                         ind2)  # the index of the nonzero bins
 
-                histogram_data['bin_n'] = nonzero_bins_index
                 histogram_data['nbins'] = np.int(
-                    np.max(bin_n)) + 1  # the total number of nonzero bins
+                    np.max(nonzero_bins_index)) + 1  # the total number of nonzero bins
+                histogram_data['bin_n'] = nonzero_bins_index
 
                 # Compute the free energies for these histogram states with
                 # samples

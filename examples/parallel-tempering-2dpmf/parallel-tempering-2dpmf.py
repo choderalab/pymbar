@@ -306,8 +306,6 @@ u_kn = target_beta * U_kn
 histogram_parameters = dict()
 histogram_parameters['bin_edges'] = bin_edges
 pmf.generatePMF(u_kn, x_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
-import pdb
-pdb.set_trace()
 results = pmf.getPMF(np.array(centers_nonzero), uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
