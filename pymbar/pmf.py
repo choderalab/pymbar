@@ -413,7 +413,7 @@ class PMF:
 
             if objective not in ['ml','map']:
                 raise ParameterError(
-                    "objective may only be \'ml\' or '\map\': you have selected {:s}".format(objective))
+                    "objective may only be \'ml\' or \'map\': you have selected {:s}".format(objective))
 
             if objective == 'ml': # we are doing maximum likelihood minimization
                 logprior = None
@@ -423,7 +423,7 @@ class PMF:
             elif objective == 'map':
                 if 'map_data' not in spline_parameters:
                     raise ParameterError(
-                        "if 'objective' is '\map\' you must include 'map_data' structure")
+                        "if 'objective' is \'map\' you must include 'map_data' structure")
                 elif spline_parameters['map_data'] == None:
                     raise ParameterError(
                         "MAP data must be defined if objective is MAP")
@@ -599,8 +599,7 @@ class PMF:
             else:
                 index = 0
                 for k in range(K):
-                    bootstrap_indices[index:index + N_k[k]] = index + \
-                        np.random.randint(0, N_k[k], size=N_k[k])
+                    bootstrap_indices[index:index + N_k[k]] = index + np.random.randint(0, N_k[k], size=N_k[k])
                     index += N_k[k]
                     # recompute MBAR.
                     mbar = pymbar.MBAR(
@@ -899,7 +898,7 @@ class PMF:
 
             * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
             * 'from-specified' - same as from lowest, but from a user specified point
-            * 'from-normalization' - the normalization \sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         pmf_reference : an N-d point specifying the reference state. Ignored except with uncertainty method 'from_specified''
@@ -967,8 +966,7 @@ class PMF:
                     # -1 and nbins_per_dim are out of range
                     pmf_ref_grid[d] = np.digitize(
                         pmf_reference[d], bins[d]) - 1
-                    if pmf_ref_grid[d] == - \
-                            1 or pmf_ref_grid[d] == len(bins[d]):
+                    if pmf_ref_grid[d] == - 1 or pmf_ref_grid[d] == len(bins[d]):
                         raise ParameterError(
                             "Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(
                                 pmf_ref_grid[d], np.min(
@@ -1019,8 +1017,7 @@ class PMF:
                     fall = np.zeros(
                         [len(self.histogram_data['f']), self.nbootstraps])
                     for b in range(self.nbootstraps):
-                        fall[:, b] = self.histogram_datas[b]['f'] - \
-                            self.histogram_datas[b]['f'][j]
+                        fall[:, b] = self.histogram_datas[b]['f'] - self.histogram_datas[b]['f'][j]
 
                         df_i = np.std(fall, axis=1)
                     # Shift free energies so that state j has zero free energy.
@@ -1908,9 +1905,9 @@ the MC, which is the slow part.
 
 for k=0, then B_i,0:t = 1 if t_i < x < t_i+i, 0 otherwise
 for k=1, It is a piecewise sum of 2 linear terms, so linear.
-f(x) = \int exp(ax+b)_{t_i}^{t_i+1) = (1/a) e^b (e^a*t2 - e^a t1) 
+f(x) = \\int exp(ax+b)_{t_i}^{t_i+1) = (1/a) e^b (e^a*t2 - e^a t1) 
 for k=2, it is piecewise sum of 3 quadratic terms, which is quadradic 
-f(x) = \int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\pi]] (Erf[1/2 Sqrt[a] (b + c - 2 t1)] - 
+f(x) = \\int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\pi]] (Erf[1/2 Sqrt[a] (b + c - 2 t1)] - 
    Erf[1/2 Sqrt[a] (b + c - 2 t2)]))/(2 Sqrt[a]), for a > 0, switch for a<0.
 
 for k=3, piecewise sum of cubic terms, which appears hard in general. 
