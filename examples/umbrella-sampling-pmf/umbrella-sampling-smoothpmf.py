@@ -3,10 +3,12 @@
 # The data represents an umbrella sampling simulation for the chi torsion of a valine sidechain in lysozyme L99A with benzene bound in the cavity.
 # 
 # REFERENCE
+#
+# M. R. Shirts and Andrew L. Ferguson, "Statistically optimal continuous potentials of mean force from umbrella sampling and multistate reweighting" https://arxiv.org/abs/2001.01170
 # 
 # D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
 # http://dx.doi.org/10.1016/j.jmb.2007.06.002
-from __future__ import print_function
+
 import matplotlib.pyplot as plt
 import copy
 from scipy.interpolate import BSpline
@@ -19,7 +21,7 @@ kB = 1.381e-23 * 6.022e23 / 1000.0 # Boltzmann constant in kJ/mol/K
 nplot = 1200
 # set minimizer options to display. 
 optimize_options = {'disp':True, 'tol':10**(-8)}
-#histogram is self explanatory.  'kde' is a kernel density approximation. Currently it uses a 
+# histogram is self explanatory.  'kde' is a kernel density approximation. Currently it uses a
 # Gaussian kernel, but this can be adjusted in the kde_parameters section below.
 
 methods = ['histogram','kde','unbiased-ml','biased-ml']  
