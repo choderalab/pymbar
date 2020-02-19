@@ -504,32 +504,3 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         result_vals['Delta_f'] = DeltaF
         return result_vals
 
-#=============================================================================================
-# For compatibility with 2.0.1-beta
-#=============================================================================================
-
-deprecation_warning = """
-Warning
--------
-This method name is deprecated, and provided for backward-compatibility only.
-It may be removed in future versions.
-"""
-
-def computeBARzero(*args, **kwargs):
-    return BARzero(*args, **kwargs)
-computeBARzero.__doc__ = BARzero.__doc__ + deprecation_warning
-
-def computeBAR(*args, **kwargs):
-    return BAR(*args, **kwargs)
-computeBAR.__doc__ = BAR.__doc__ + deprecation_warning
-
-def _compatibilityDoctests():
-    """
-    Backwards-compatibility doctests.
-
-    >>> from pymbar import testsystems
-    >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> DeltaF = BARzero(w_F, w_R, 0.0)
-    >>> [DeltaF, dDeltaF] = computeBAR(w_F, w_R)
-    """
-    pass
