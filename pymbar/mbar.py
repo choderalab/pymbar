@@ -72,7 +72,7 @@ class MBAR:
     # =========================================================================
 
     def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None,
-                 solver_protocol=None, initialize='zeros', x_kindices=None, **kwargs):
+                 solver_protocol=None, initialize='zeros', x_kindices=None):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -181,8 +181,6 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
 
         """
-        for key, val in kwargs.items():
-            print("Warning: parameter {}={} is unrecognized and unused.".format(key, val))
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
@@ -1459,7 +1457,7 @@ class MBAR:
             V = Vt.T
 
             # Compute covariance
-            Theta = V @ Sigma * self._pseudoinverse(
+            Theta = V @ Sigma @ self._pseudoinverse(
                 I - Sigma @ V.T @ Ndiag @ V @ Sigma) @ Sigma @ V.T
 
         elif method == 'svd-ew':
@@ -1544,7 +1542,7 @@ class MBAR:
                     # kickstart NR.
                     import pymbar.bar
                     self.f_k[l] = self.f_k[k] + pymbar.bar.BAR(
-                        w_F, w_R, relative_tolerance=0.000001, verbose=False, compute_uncertainty=False)
+                        w_F, w_R, relative_tolerance=0.000001, verbose=False, compute_uncertainty=False)['Delta_f']
                 else:
                     # no states observed, so we don't need to initialize this free energy anyway, as
                     # the solution is noniterative.

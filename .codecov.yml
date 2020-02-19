@@ -1,5 +1,11 @@
 # Codecov configuration to make it a bit less noisy
 coverage:
+  ignore:
+    - pymbar/tests/.*
+    - pymbar/testsystems/.*
+    - setup.py
+    - pymbar/version.py
+    - pymbar/old_mbar.py
   status:
     patch: false
     project:
