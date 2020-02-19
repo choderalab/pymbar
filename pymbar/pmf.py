@@ -1907,7 +1907,7 @@ for k=0, then B_i,0:t = 1 if t_i < x < t_i+i, 0 otherwise
 for k=1, It is a piecewise sum of 2 linear terms, so linear.
 f(x) = \\int exp(ax+b)_{t_i}^{t_i+1) = (1/a) e^b (e^a*t2 - e^a t1) 
 for k=2, it is piecewise sum of 3 quadratic terms, which is quadradic 
-f(x) = \\int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\pi]] (Erf[1/2 Sqrt[a] (b + c - 2 t1)] - 
+f(x) = \\int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\\pi]] (Erf[1/2 Sqrt[a] (b + c - 2 t1)] - 
    Erf[1/2 Sqrt[a] (b + c - 2 t2)]))/(2 Sqrt[a]), for a > 0, switch for a<0.
 
 for k=3, piecewise sum of cubic terms, which appears hard in general. 

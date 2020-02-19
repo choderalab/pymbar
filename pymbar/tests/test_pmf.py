@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from pymbar import MBAR
-from pmf import PMF
+from pymbar import PMF
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 import pdb
