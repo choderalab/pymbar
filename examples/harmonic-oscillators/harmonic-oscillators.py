@@ -24,8 +24,8 @@
 #=============================================================================================
 from __future__ import print_function
 import sys
-import numpy
-from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR, utils, PMF
+import numpy as np
+from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR
 from pymbar.utils import ParameterError
 
 #=============================================================================================
@@ -49,9 +49,9 @@ def GetAnalytical(beta,K,O,observables):
   print('Computing dimensionless free energies analytically...')
 
   sigma = (beta * K)**-0.5
-  f_k_analytical = - numpy.log(numpy.sqrt(2 * numpy.pi) * sigma )
+  f_k_analytical = - np.log(np.sqrt(2 * np.pi) * sigma )
 
-  Delta_f_ij_analytical = f_k_analytical - numpy.vstack(f_k_analytical)
+  Delta_f_ij_analytical = f_k_analytical - np.vstack(f_k_analytical)
 
   A_k_analytical = dict()
   A_ij_analytical = dict()
@@ -60,13 +60,13 @@ def GetAnalytical(beta,K,O,observables):
     if observe == 'RMS displacement':
       A_k_analytical[observe] = sigma                           # mean square displacement
     if observe == 'potential energy':
-      A_k_analytical[observe] = 1/(2*beta)*numpy.ones(len(K),float)  # By equipartition
+      A_k_analytical[observe] = 1/(2*beta)*np.ones(len(K),float)  # By equipartition
     if observe == 'position':  
       A_k_analytical[observe] = O                                       # observable is the position
     if observe == 'position^2':    
       A_k_analytical[observe]  = (1+ beta*K*O**2)/(beta*K)        # observable is the position^2
 
-    A_ij_analytical[observe] = A_k_analytical[observe] - numpy.vstack(A_k_analytical[observe])
+    A_ij_analytical[observe] = A_k_analytical[observe] - np.vstack(A_k_analytical[observe])
 
   return f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical
 
@@ -74,33 +74,33 @@ def GetAnalytical(beta,K,O,observables):
 # PARAMETERS
 #=============================================================================================
 
-K_k = numpy.array([25, 16, 9, 4, 1, 1]) # spring constants for each state
-O_k = numpy.array([0, 1, 2, 3, 4, 5]) # offsets for spring constants
-N_k = 10*numpy.array([1000, 1000, 1000, 1000, 0, 1000]) # number of samples from each state (can be zero for some states)
+K_k = np.array([25, 16, 9, 4, 1, 1]) # spring constants for each state
+O_k = np.array([0, 1, 2, 3, 4, 5]) # offsets for spring constants
+N_k = 10*np.array([1000, 1000, 1000, 1000, 0, 1000]) # number of samples from each state (can be zero for some states)
 Nk_ne_zero = (N_k!=0)
 beta = 1.0 # inverse temperature for all simulations
-K_extra = numpy.array([20, 12, 6, 2, 1]) 
-O_extra = numpy.array([ 0.5, 1.5, 2.5, 3.5, 4.5])
+K_extra = np.array([20, 12, 6, 2, 1]) 
+O_extra = np.array([ 0.5, 1.5, 2.5, 3.5, 4.5])
 observables = ['position','position^2','potential energy','RMS displacement']
 
 seed = None
 # Uncomment the following line to seed the random number generated to produce reproducible output.
 seed = 0
-numpy.random.seed(seed)
+np.random.seed(seed)
 
 #=============================================================================================
 # MAIN
 #=============================================================================================
 
 # Determine number of simulations.
-K = numpy.size(N_k)
-if numpy.shape(K_k) != numpy.shape(N_k): 
-  raise ParameterError("K_k ({:d}) and N_k ({:d}) must have same dimensions.".format(numpy.shape(K_k), numpy.shape(N_k)))
-if numpy.shape(O_k) != numpy.shape(N_k): 
-  raise ParameterError("O_k ({:d}) and N_k ({:d}) must have same dimensions.".format(numpy.shape(K_k), numpy.shape(N_k)))
+K = np.size(N_k)
+if np.shape(K_k) != np.shape(N_k): 
+  raise ParameterError("K_k ({:d}) and N_k ({:d}) must have same dimensions.".format(np.shape(K_k), np.shape(N_k)))
+if np.shape(O_k) != np.shape(N_k): 
+  raise ParameterError("O_k ({:d}) and N_k ({:d}) must have same dimensions.".format(np.shape(K_k), np.shape(N_k)))
 
 # Determine maximum number of samples to be drawn for any state.
-N_max = numpy.max(N_k)
+N_max = np.max(N_k)
 
 (f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical) = GetAnalytical(beta,K_k,O_k,observables)
 
@@ -158,8 +158,8 @@ print(dDelta_f_ij_estimated)
 print("Standard deviations away is:")
 # mathematical manipulation to avoid dividing by zero errors; we don't care
 # about the diagnonals, since they are identically zero.
-df_ij_mod = dDelta_f_ij_estimated + numpy.identity(K)
-stdevs = numpy.abs(Delta_f_ij_error/df_ij_mod)
+df_ij_mod = dDelta_f_ij_estimated + np.identity(K)
+stdevs = np.abs(Delta_f_ij_error/df_ij_mod)
 for k in range(K):
   stdevs[k,k] = 0
 print(stdevs)
@@ -168,7 +168,7 @@ print("==============================================")
 print("             Testing computeBAR               ")
 print("==============================================")
 
-nonzero_indices = numpy.array(list(range(K)))[Nk_ne_zero]
+nonzero_indices = np.array(list(range(K)))[Nk_ne_zero]
 Knon = len(nonzero_indices)
 for i in range(Knon-1):
   k = nonzero_indices[i]
@@ -246,7 +246,7 @@ print("======================================")
 A_kn_all = dict()
 A_k_estimated_all = dict()
 A_kl_estimated_all = dict()
-N = numpy.sum(N_k)
+N = np.sum(N_k)
 
 for observe in observables:
   print("============================================")
@@ -255,7 +255,7 @@ for observe in observables:
 
   if observe == 'RMS displacement':
     state_dependent = True
-    A_kn = numpy.zeros([K,N], dtype = numpy.float64)
+    A_kn = np.zeros([K,N], dtype = np.float64)
     n = 0
     for k in range(0,K):
       for nk in range(0,N_k[k]):
@@ -266,7 +266,7 @@ for observe in observables:
   # thermodynamic state
   elif observe == 'potential energy':
     state_dependent = True
-    A_kn = numpy.zeros([K,N], dtype = numpy.float64)
+    A_kn = np.zeros([K,N], dtype = np.float64)
     n = 0
     for k in range(0,K):
       for nk in range(0,N_k[k]):
@@ -276,14 +276,14 @@ for observe in observables:
   # observable for estimation is the position
   elif observe == 'position':
     state_dependent = False
-    A_kn = numpy.zeros([K,N_max], dtype = numpy.float64)
+    A_kn = np.zeros([K,N_max], dtype = np.float64)
     for k in range(0,K):
       A_kn[k,0:N_k[k]] = x_kn[k,0:N_k[k]]
 
   # observable for estimation is the position^2
   elif observe == 'position^2':
     state_dependent = False
-    A_kn = numpy.zeros([K,N_max], dtype = numpy.float64)
+    A_kn = np.zeros([K,N_max], dtype = np.float64)
     for k in range(0,K):
       A_kn[k,0:N_k[k]] = x_kn[k,0:N_k[k]]**2
 
@@ -293,28 +293,28 @@ for observe in observables:
 
   # need to additionally transform to get the square root
   if observe == 'RMS displacement':
-    A_k_estimated = numpy.sqrt(A_k_estimated)
+    A_k_estimated = np.sqrt(A_k_estimated)
     # Compute error from analytical observable estimate.
     dA_k_estimated = dA_k_estimated/(2*A_k_estimated)
 
-  As_k_estimated = numpy.zeros([K],numpy.float64)
-  dAs_k_estimated = numpy.zeros([K],numpy.float64)
+  As_k_estimated = np.zeros([K],np.float64)
+  dAs_k_estimated = np.zeros([K],np.float64)
 
   # 'standard' expectation averages - not defined if no samples
-  nonzeros = numpy.arange(K)[Nk_ne_zero]
+  nonzeros = np.arange(K)[Nk_ne_zero]
 
   totaln = 0
   for k in nonzeros:
     if (observe == 'position') or (observe == 'position^2'):
-      As_k_estimated[k] = numpy.average(A_kn[k,0:N_k[k]])
-      dAs_k_estimated[k]  = numpy.sqrt(numpy.var(A_kn[k,0:N_k[k]])/(N_k[k]-1))
+      As_k_estimated[k] = np.average(A_kn[k,0:N_k[k]])
+      dAs_k_estimated[k]  = np.sqrt(np.var(A_kn[k,0:N_k[k]])/(N_k[k]-1))
     elif (observe == 'RMS displacement' ) or (observe == 'potential energy'):
       totalp = totaln + N_k[k]
-      As_k_estimated[k] = numpy.average(A_kn[k,totaln:totalp])
-      dAs_k_estimated[k]  = numpy.sqrt(numpy.var(A_kn[k,totaln:totalp])/(N_k[k]-1))
+      As_k_estimated[k] = np.average(A_kn[k,totaln:totalp])
+      dAs_k_estimated[k]  = np.sqrt(np.var(A_kn[k,totaln:totalp])/(N_k[k]-1))
       totaln = totalp
       if observe == 'RMS displacement':
-        As_k_estimated[k] = numpy.sqrt(As_k_estimated[k])    
+        As_k_estimated[k] = np.sqrt(As_k_estimated[k])    
         dAs_k_estimated[k] = dAs_k_estimated[k]/(2*As_k_estimated[k])
 
   A_k_error = A_k_estimated - A_k_analytical[observe]
@@ -331,14 +331,14 @@ for observe in observables:
   print(A_k_estimated)
 
   print("MBAR estimators differ by X standard deviations")
-  stdevs = numpy.abs(A_k_error/dA_k_estimated)
+  stdevs = np.abs(A_k_error/dA_k_estimated)
   print(stdevs)
 
   print("Standard estimator of {} is (states with samples):".format(observe))
   print(As_k_estimated[Nk_ne_zero])
 
   print("Standard estimators differ by X standard deviations (states with samples)")
-  stdevs = numpy.abs(As_k_error[Nk_ne_zero]/dAs_k_estimated[Nk_ne_zero])
+  stdevs = np.abs(As_k_error[Nk_ne_zero]/dAs_k_estimated[Nk_ne_zero])
   print(stdevs)
 
   results = mbar.computeExpectations(A_kn, state_dependent = state_dependent, output = 'differences')
@@ -353,7 +353,7 @@ for observe in observables:
   if 'RMS displacement' != observe: # can't test this, because we're actually computing the expectation of
                                     # the mean square displacement, and so the differences are <a_i^2> - <a_j^2>,
                                     # not sqrt<a_i>^2 - sqrt<a_j>^2
-    A_kl_analytical = A_k_analytical[observe] - numpy.vstack(A_k_analytical[observe])
+    A_kl_analytical = A_k_analytical[observe] - np.vstack(A_k_analytical[observe])
     A_kl_error = A_kl_estimated - A_kl_analytical
     
     print("Analytical estimator of differences of {} is".format(observe))
@@ -363,7 +363,7 @@ for observe in observables:
     print(A_kl_estimated)
     
     print("MBAR estimators differ by X standard deviations")
-    stdevs = numpy.abs(A_kl_error/(dA_kl_estimated+numpy.identity(K)))
+    stdevs = np.abs(A_kl_error/(dA_kl_estimated+np.identity(K)))
     for k in range(K):
       stdevs[k,k] = 0
     print(stdevs)
@@ -380,7 +380,7 @@ print("=============================================")
 # have to exclude the potential and RMS displacemet for now, not functions of a single state
 observables_single = ['position','position^2']  
 
-A_ikn = numpy.zeros([len(observables_single), K, N_k.max()], numpy.float64)
+A_ikn = np.zeros([len(observables_single), K, N_k.max()], np.float64)
 for i,observe in enumerate(observables_single):
   A_ikn[i,:,:] = A_kn_all[observe]
 for i in range(K):
@@ -411,13 +411,13 @@ print("Free energies")
 print(Delta_f_ij)
 print(dDelta_f_ij)
 diffs1 = Delta_f_ij - Delta_f_ij_estimated
-print("maximum difference between values computed here and in computeFreeEnergies is {:g}".format(numpy.max(diffs1)))
-if (numpy.max(numpy.abs(diffs1)) > 1.0e-10):
+print("maximum difference between values computed here and in computeFreeEnergies is {:g}".format(np.max(diffs1)))
+if (np.max(np.abs(diffs1)) > 1.0e-10):
   print("Difference in values from computeFreeEnergies")
   print(diffs1)
 diffs2 = dDelta_f_ij - dDelta_f_ij_estimated
-print("maximum difference between uncertainties computed here and in computeFreeEnergies is {:g}".format(numpy.max(diffs2)))
-if (numpy.max(numpy.abs(diffs2)) > 1.0e-10):
+print("maximum difference between uncertainties computed here and in computeFreeEnergies is {:g}".format(np.max(diffs2)))
+if (np.max(np.abs(diffs2)) > 1.0e-10):
   print("Difference in expectations from computeFreeEnergies")
   print(diffs2)
 
@@ -425,10 +425,10 @@ print("Energies")
 print(Delta_u_ij)
 print(dDelta_u_ij)
 U_k = A_k_estimated_all['potential energy']
-expectations = U_k - numpy.vstack(U_k)
+expectations = U_k - np.vstack(U_k)
 diffs1 = Delta_u_ij - expectations
-print("maximum difference between values computed here and in computeExpectations is {:g}".format(numpy.max(diffs1)))
-if (numpy.max(numpy.abs(diffs1)) > 1.0e-10):
+print("maximum difference between values computed here and in computeExpectations is {:g}".format(np.max(diffs1)))
+if (np.max(np.abs(diffs1)) > 1.0e-10):
   print("Difference in values from computeExpectations")
   print(diffs1)
 
@@ -438,7 +438,7 @@ print(dDelta_s_ij)
 
 #analytical entropy estimate
 s_k_analytical = 0.5 / beta - f_k_analytical
-Delta_s_ij_analytical = s_k_analytical - numpy.vstack(s_k_analytical)
+Delta_s_ij_analytical = s_k_analytical - np.vstack(s_k_analytical)
 
 Delta_s_ij_error = Delta_s_ij_analytical - Delta_s_ij
 print("Error in entropies is:")
@@ -447,8 +447,8 @@ print(Delta_f_ij_error)
 print("Standard deviations away is:")
 # mathematical manipulation to avoid dividing by zero errors; we don't care 
 # about the diagnonals, since they are identically zero.
-ds_ij_mod = dDelta_s_ij + numpy.identity(K)
-stdevs = numpy.abs(Delta_s_ij_error/ds_ij_mod)
+ds_ij_mod = dDelta_s_ij + np.identity(K)
+stdevs = np.abs(Delta_s_ij_error/ds_ij_mod)
 for k in range(K):
   stdevs[k,k] = 0
 print(stdevs)
@@ -457,13 +457,13 @@ print("============================================")
 print("      Testing computePerturbedFreeEnergies")
 print("============================================")
 
-L = numpy.size(K_extra)
+L = np.size(K_extra)
 (f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical) = GetAnalytical(beta,K_extra,O_extra,observables)
 
-if numpy.size(O_extra) != numpy.size(K_extra):
-  raise ParameterError("O_extra ({:d}) and K_extra ({:d}) must have the same dimensions.".format(numpy.shape(K_k), numpy.shape(N_k)))
+if np.size(O_extra) != np.size(K_extra):
+  raise ParameterError("O_extra ({:d}) and K_extra ({:d}) must have the same dimensions.".format(np.shape(K_k), np.shape(N_k)))
 
-unew_kln = numpy.zeros([K,L,numpy.max(N_k)],numpy.float64)
+unew_kln = np.zeros([K,L,np.max(N_k)],np.float64)
 for k in range(K):
     for l in range(L):
       unew_kln[k,l,0:N_k[k]] = (K_extra[l]/2.0) * (x_kn[k,0:N_k[k]]-O_extra[l])**2
@@ -480,8 +480,8 @@ print(Delta_f_ij_error)
 print("Standard deviations away is:")
 # mathematical manipulation to avoid dividing by zero errors; we don't care
 # about the diagnonals, since they are identically zero.
-df_ij_mod = dDelta_f_ij_estimated + numpy.identity(L)
-stdevs = numpy.abs(Delta_f_ij_error/df_ij_mod)
+df_ij_mod = dDelta_f_ij_estimated + np.identity(L)
+stdevs = np.abs(Delta_f_ij_error/df_ij_mod)
 for l in range(L):
   stdevs[l,l] = 0
 print(stdevs)
@@ -499,7 +499,7 @@ for observe in observables:
 
   if observe == 'RMS displacement':
     state_dependent = True
-    A_kn = numpy.zeros([K,1,N_max], dtype = numpy.float64)
+    A_kn = np.zeros([K,1,N_max], dtype = np.float64)
     for k in range(0,K):
       A_kn[k,0,0:N_k[k]] = (x_kn[k,0:N_k[k]] - O_extra[nth])**2 # observable is the squared displacement
 
@@ -525,7 +525,7 @@ for observe in observables:
   dA_k_estimated = results['sigma']
   # need to additionally transform to get the square root
   if observe == 'RMS displacement':
-    A_k_estimated = numpy.sqrt(A_k_estimated)
+    A_k_estimated = np.sqrt(A_k_estimated)
     dA_k_estimated = dA_k_estimated/(2*A_k_estimated)
 
   A_k_error = A_k_estimated - A_k_analytical[observe][nth]
@@ -537,7 +537,7 @@ for observe in observables:
   print(A_k_estimated)
 
   print("MBAR estimators differ by X standard deviations")
-  stdevs = numpy.abs(A_k_error/dA_k_estimated)
+  stdevs = np.abs(A_k_error/dA_k_estimated)
   print(stdevs)
 
 print("============================================")
@@ -553,8 +553,8 @@ print("Overlap matrix output")
 print(O_ij)
 
 for k in range(K):
-  print("Sum of row {:d} is {:f} (should be 1),".format(k,numpy.sum(O_ij[k,:])), end=' ')
-  if (numpy.abs(numpy.sum(O_ij[k,:])-1)<1.0e-10):
+  print("Sum of row {:d} is {:f} (should be 1),".format(k,np.sum(O_ij[k,:])), end=' ')
+  if (np.abs(np.sum(O_ij[k,:])-1)<1.0e-10):
     print("looks like it is.")
   else:
     print("but it's not.")
@@ -581,14 +581,14 @@ A_kn = x_kn
 results = mbar.computeExpectations(A_kn)
 val_mbar = results['mu']
 err_mbar = results['sigma']
-err_standard = numpy.zeros([K],dtype = numpy.float64)
-err_scaled = numpy.zeros([K],dtype = numpy.float64)
+err_standard = np.zeros([K],dtype = np.float64)
+err_scaled = np.zeros([K],dtype = np.float64)
 
 for k in range(K):
   if N_k[k] != 0:
     # use position
-    err_standard[k] = numpy.std(A_kn[k,0:N_k[k]])/numpy.sqrt(N_k[k]-1)
-    err_scaled[k] = numpy.std(A_kn[k,0:N_k[k]])/numpy.sqrt(N_eff[k]-1)
+    err_standard[k] = np.std(A_kn[k,0:N_k[k]])/np.sqrt(N_k[k]-1)
+    err_scaled[k] = np.std(A_kn[k,0:N_k[k]])/np.sqrt(N_eff[k]-1)
 
 print("                    ", end=' ')
 for k in range(K):
@@ -599,9 +599,9 @@ print(err_mbar)
 print("standard         :", end=' ')
 print(err_standard)
 print("sqrt N_k/N_eff   :", end=' ')
-print(numpy.sqrt(N_k/N_eff))
+print(np.sqrt(N_k/N_eff))
 print("Standard (scaled):", end=' ')
-print(err_standard * numpy.sqrt(N_k/N_eff))
+print(err_standard * np.sqrt(N_k/N_eff))
 
 print("============================================")
 print("      Testing PMF functions   ")
@@ -623,14 +623,14 @@ print("============================================")
 #   Where N is the normalization constant.
 #
 # The dimensionless free energy is the integral of this, and can be computed as:
-#   f(beta,K)           = - ln [ (2*numpy.pi/(Ko+Ku))^(d/2) exp[ -Ku*Ko mu' mu / 2(Ko +Ku)]
+#   f(beta,K)           = - ln [ (2*np.pi/(Ko+Ku))^(d/2) exp[ -Ku*Ko mu' mu / 2(Ko +Ku)]
 #   f(beta,K) - fzero   = -Ku*Ko / 2(Ko+Ku)  = 1/(1/(Ku/2) + 1/(K0/2))
 
 def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100.0, gridscale=0.2, xrange = [[-3,3]]):
 
-  x0 = numpy.zeros([ndim], numpy.float64) # center of base potential
+  x0 = np.zeros([ndim], np.float64) # center of base potential
   numbrellas = 1
-  nperdim = numpy.zeros([ndim],int)
+  nperdim = np.zeros([ndim],int)
   for d in range(ndim):
     nperdim[d] = xrange[d][1] - xrange[d][0] + 1
     numbrellas *= nperdim[d]
@@ -641,10 +641,10 @@ def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100
   print("Constructing umbrellas...")
   ksum = (Ku+K0)/beta
   kprod = (Ku*K0)/(beta*beta)
-  f_k_analytical = numpy.zeros(numbrellas, numpy.float64);
-  xu_i = numpy.zeros([numbrellas, ndim], numpy.float64) # xu_i[i,:] is the center of umbrella i
+  f_k_analytical = np.zeros(numbrellas, np.float64);
+  xu_i = np.zeros([numbrellas, ndim], np.float64) # xu_i[i,:] is the center of umbrella i
 
-  dp = numpy.zeros(ndim,int)
+  dp = np.zeros(ndim,int)
   dp[0] = 1
   for d in range(1,ndim):
     dp[d] = nperdim[d]*dp[d-1]
@@ -655,17 +655,17 @@ def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100
     for d in range(ndim):
       val = gridscale*((int(i//dp[d])) % nperdim[d] + xrange[d][0])
       center.append(val)
-    center = numpy.array(center)
+    center = np.array(center)
     xu_i[i,:] = center
-    mu2 = numpy.dot(center,center)
-    f_k_analytical[i] = numpy.log((ndim*numpy.pi/ksum)**(3.0/2.0) *numpy.exp(-kprod*mu2/(2.0*ksum)))
-    if numpy.all(center==0.0):  # assumes that we have one state that is at the zero.
+    mu2 = np.dot(center,center)
+    f_k_analytical[i] = np.log((ndim*np.pi/ksum)**(3.0/2.0) *np.exp(-kprod*mu2/(2.0*ksum)))
+    if np.all(center==0.0):  # assumes that we have one state that is at the zero.
       umbrella_zero = i
     i += 1
     f_k_analytical -= f_k_analytical[umbrella_zero]
 
   print("Generating {:d} samples for each of {:d} umbrellas...".format(nsamples, numbrellas))
-  x_n = numpy.zeros([numbrellas * nsamples, ndim], numpy.float64)
+  x_n = np.zeros([numbrellas * nsamples, ndim], np.float64)
 
   for i in range(numbrellas):
     for dim in range(ndim):
@@ -677,13 +677,13 @@ def generate_pmf_data(ndim=1, nbinsperdim=15, nsamples = 1000, K0=20.0, Ku = 100
       sigma = 1.0 / (K0 + Ku)
       mu = sigma * (x0[dim]*K0 + xu_i[i,dim]*Ku)
       # Generate normal deviates for this dimension.
-      x_n[i*nsamples:(i+1)*nsamples,dim] = numpy.random.normal(mu, numpy.sqrt(sigma), [nsamples])
+      x_n[i*nsamples:(i+1)*nsamples,dim] = np.random.normal(mu, np.sqrt(sigma), [nsamples])
 
-  u_kn = numpy.zeros([numbrellas, nsamples*numbrellas], numpy.float64)
+  u_kn = np.zeros([numbrellas, nsamples*numbrellas], np.float64)
   # Compute reduced potential due to V0.
-  u_n = beta*(K0/2)*numpy.sum((x_n[:,:] - x0)**2, axis=1)
+  u_n = beta*(K0/2)*np.sum((x_n[:,:] - x0)**2, axis=1)
   for k in range(numbrellas):
-    uu = beta*(Ku/2)*numpy.sum((x_n[:,:] - xu_i[k,:])**2, axis=1) # reduced potential due to umbrella k
+    uu = beta*(Ku/2)*np.sum((x_n[:,:] - xu_i[k,:])**2, axis=1) # reduced potential due to umbrella k
     u_kn[k,:] = u_n + uu
 
   return u_kn, u_n, x_n, f_k_analytical
@@ -701,19 +701,22 @@ print("============================================")
 xrange = [[-3,3]] # in grid points
 ndim = 1
 u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(K0 = K0, Ku = Ku, ndim=ndim, nbinsperdim = nbinsperdim, nsamples = nsamples, gridscale = gridscale, xrange=xrange)
-numbrellas = (numpy.shape(u_kn))[0]
-N_k = nsamples*numpy.ones([numbrellas], int)
+numbrellas = (np.shape(u_kn))[0]
+N_k = nsamples*np.ones([numbrellas], int)
+print("Solving for free energies of state ...")
+mbar = MBAR(u_kn, N_k)
 
 # Histogram bins are indexed using the scheme:
-xmin = gridscale*(numpy.min(xrange[0][0])-1/2.0)
-xmax = gridscale*(numpy.max(xrange[0][1])+1/2.0)
+# index = 1 + np.floor((x[0] - xmin)/dx) + nbins*np.floor((x[1] - xmin)/dy)
+# index = 0 is reserved for samples outside of the allowed domain
+xmin = gridscale*(np.min(xrange[0][0])-1/2.0)
+xmax = gridscale*(np.max(xrange[0][1])+1/2.0)
 dx = (xmax-xmin)/nbinsperdim
-nbins = nbinsperdim**ndim
-bin_edges = [numpy.linspace(xmin,xmax,nbins+1)] # list of bin edges.
-bin_centers = numpy.zeros([nbins,ndim],numpy.float64)
+nbins = 1 + nbinsperdim**ndim
+bin_centers = np.zeros([nbins,ndim],np.float64)
 
-ibin = 0
-pmf_analytical = numpy.zeros([nbins],numpy.float64)
+ibin = 1
+pmf_analytical = np.zeros([nbins],np.float64)
 minmu2 = 1000000
 zeroindex = 0
 # construct the bins and the pmf
@@ -728,13 +731,15 @@ for i in range(nbins):
   ibin += 1
 fzero = pmf_analytical[zeroindex]
 pmf_analytical -= fzero
-bin_n = -1*numpy.ones([numbrellas*nsamples], int)
+pmf_analytical[0] = 0
+
+bin_n = np.zeros([numbrellas*nsamples], int)
 # Determine indices of those within bounds.
 within_bounds = (x_n[:,0] >= xmin) & (x_n[:,0] < xmax)
 # Determine states for these.
-bin_n[within_bounds] = numpy.floor((x_n[within_bounds,0]-xmin)/dx)
+bin_n[within_bounds] = 1 + np.floor((x_n[within_bounds,0]-xmin)/dx)
 # Determine indices of bins that are not empty.
-bin_counts = numpy.zeros([nbins], int)
+bin_counts = np.zeros([nbins], int)
 for i in range(nbins):
   bin_counts[i] = (bin_n == i).sum()
 # Compute PMF.
@@ -760,15 +765,16 @@ f_ik = results_kde['f_i']
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 
 print("1D PMF:")
-print("%d counts out of %d counts not in any bin" % (numpy.sum(bin_n==-1),numbrellas*nsamples))
-print("%8s %6s %8s %10s %10s %10s %10s %10s %10s %8s" % ('bin', 'x', 'N', 'f_hist', 'f_kde', 'true','err_h','err_kde','df','sigmas'))
-for i in range(0,nbins):
-  error = pmf_analytical[i]-f_i[i]
-  if df_i[i] != 0:
-    stdevs = numpy.abs(error)/df_i[i]
-  else:
-    stdevs = 0
-  print('{:8d} {:6.2f} {:8d} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:8.2f}'.format(i, bin_centers[i,0], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
+print("{:d} counts out of {:d} counts not in any bin".format(bin_counts[0],numbrellas*nsamples))
+print("{:8s} {:6s} {:8s} {:10s} {:10s} {:10s} {:10s} {:8s}".format('bin', 'x', 'N', 'f', 'true','error','df','sigmas'))
+for i in range(1,nbins):
+   if (i == zeroindex):
+     stdevs = 0 
+     df_i[0] = 0
+   else:
+     error = pmf_analytical[i]-f_i[i]
+     stdevs = np.abs(error)/df_i[i]
+   print('{:8d} {:6.2f} {:8d} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:8.2f}'.format(i, bin_centers[i,0], bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs))
 
 print("============================================")
 print("      Test 2: 2D PMF   ")
@@ -778,29 +784,32 @@ xrange = [[-3,3],[-3,3]]
 ndim = 2
 nsamples = 300
 u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(K0 = K0, Ku = Ku, ndim=ndim, nbinsperdim = nbinsperdim, nsamples = nsamples, gridscale = gridscale, xrange=xrange)
-numbrellas = (numpy.shape(u_kn))[0]
-N_k = nsamples*numpy.ones([numbrellas], int)
+numbrellas = (np.shape(u_kn))[0]
+N_k = nsamples*np.ones([numbrellas], int)
 print("Solving for free energies of state ...")
 mbar = MBAR(u_kn, N_k)
 
 # The dimensionless free energy is the integral of this, and can be computed as:
-#   f(beta,K)           = - ln [ (2*numpy.pi/(Ko+Ku))^(d/2) exp[ -Ku*Ko mu' mu / 2(Ko +Ku)]
+#   f(beta,K)           = - ln [ (2*np.pi/(Ko+Ku))^(d/2) exp[ -Ku*Ko mu' mu / 2(Ko +Ku)]
 #   f(beta,K) - fzero   = -Ku*Ko / 2(Ko+Ku)  = 1/(1/(Ku/2) + 1/(K0/2))
 # for computing harmonic samples
 
 #Can compare the free energies computed with MBAR if desired with f_k_analytical
+# Histogram bins are indexed using the scheme:
+# index = 1 + np.floor((x[0] - xmin)/dx) + nbins*np.floor((x[1] - xmin)/dy)
+# index = 0 is reserved for samples outside of the allowed domain
 
-xmin = gridscale*(numpy.min(xrange[0][0])-1/2.0)
-xmax = gridscale*(numpy.max(xrange[0][1])+1/2.0)
-ymin = gridscale*(numpy.min(xrange[1][0])-1/2.0)
-ymax = gridscale*(numpy.max(xrange[1][1])+1/2.0)
+xmin = gridscale*(np.min(xrange[0][0])-1/2.0)
+xmax = gridscale*(np.max(xrange[0][1])+1/2.0)
+ymin = gridscale*(np.min(xrange[1][0])-1/2.0)
+ymax = gridscale*(np.max(xrange[1][1])+1/2.0)
 dx = (xmax-xmin)/nbinsperdim
 dy = (ymax-ymin)/nbinsperdim
-nbins = nbinsperdim**ndim
-bin_centers = numpy.zeros([nbins,ndim],numpy.float64)
+nbins = 1 + nbinsperdim**ndim
+bin_centers = np.zeros([nbins,ndim],np.float64)
 
-ibin = 0 
-pmf_analytical = numpy.zeros([nbins],numpy.float64)
+ibin = 1 # first reserved for something outside.
+pmf_analytical = np.zeros([nbins],np.float64)
 minmu2 = 1000000
 zeroindex = 0
 # construct the bins and the pmf
@@ -820,19 +829,19 @@ for i in range(nbinsperdim):
 fzero = pmf_analytical[zeroindex]
 pmf_analytical -= fzero
 
-Ntot = numpy.sum(N_k)
-bin_n = -1*numpy.ones([Ntot,2],int)
-# Determine indices of those within bounds.  Outside bounds stays as -1 in that direction.
-within_boundsx = (x_n[:,0] >= xmin) & (x_n[:,0] < xmax)
-within_boundsy = (x_n[:,1] >= ymin) & (x_n[:,1] < ymax)
+bin_n = np.zeros([numbrellas * nsamples], int)
+# Determine indices of those within bounds.
+within_bounds = (x_n[:,0] >= xmin) & (x_n[:,0] < xmax) & (x_n[:,1] >= ymin) & (x_n[:,1] < ymax)
 # Determine states for these.
 xgrid = (x_n[within_boundsx,0]-xmin)/dx
 ygrid = (x_n[within_boundsy,1]-ymin)/dy
 bin_n[within_boundsx,0] = xgrid
 bin_n[within_boundsy,1] = ygrid
 
-# Determine 2Dindices of bins that are not empty.
-bin_counts = numpy.zeros(nbins, int)
+# Determine indices of bins that are not empty.
+bin_counts = np.zeros([nbins], int)
+for i in range(nbins):                             
+  bin_counts[i] = (bin_n == i).sum()
 
 for n in range(Ntot):
   b = bin_n[n]
@@ -863,13 +872,14 @@ f_ik = results_kde['f_i']
 print("2D PMF:")
 print("{:d} counts out of {:d} counts not in any bin".format(numpy.sum(numpy.any(bin_n==-1,axis=1)),Ntot))
 print("{:8s} {:6s} {:6s} {:8s} {:10s} {:10s} {:10s} {:10s} {:8s}".format('bin', 'x', 'y', 'N', 'f', 'true','error','df','sigmas'))
-for i in range(0,nbins):
-  if df_i[i] == 0:
-    stdevs = 0
-  else:
-    error = pmf_analytical[i]-f_i[i]
-    stdevs = numpy.abs(error)/df_i[i]
-  print('{:8d} {:6.2f} {:6.2f} {:8d} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:8.2f}'.format(i, bin_centers[i,0], bin_centers[i,1], bin_counts[i], f_i[i], f_ik[i], pmf_analytical[i], error, pmf_analytical[i]-f_ik[i], df_i[i], stdevs))
+for i in range(1,nbins):
+   if (i == zeroindex):
+     stdevs = 0
+     df_i[0] = 0
+   else:
+     error = pmf_analytical[i]-f_i[i]
+     stdevs = np.abs(error)/df_i[i]
+   print('{:8d} {:6.2f} {:6.2f} {:8d} {:10.3f} {:10.3f} {:10.3f} {:10.3f} {:8.2f}'.format(i, bin_centers[i,0], bin_centers[i,1] , bin_counts[i], f_i[i], pmf_analytical[i], error, df_i[i], stdevs))
 
 #=============================================================================================
 # TERMINATE
