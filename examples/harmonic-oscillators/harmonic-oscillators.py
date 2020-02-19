@@ -22,7 +22,7 @@
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-from __future__ import print_function
+
 import sys
 import numpy as np
 from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR

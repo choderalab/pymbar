@@ -25,9 +25,7 @@ http://dx.doi.org/10.1063/1.2978177
 # IMPORTS
 #===================================================================================================
 
-from __future__ import print_function
 import numpy as np
-from math import *
 import pymbar # for MBAR analysis
 from pymbar import timeseries # for timeseries analysis
 import os
@@ -182,25 +180,23 @@ else:
    # The 
    print("Computing statistical inefficiencies...")
    g_cosphi = timeseries.statisticalInefficiencyMultiple(np.cos(phi_kt_replica * np.pi / 180.0))
-   print("g_cos(phi) = %.1f" % g_cosphi)
+   print("g_cos(phi) = {:.1f}".format(g_cosphi))
    g_sinphi = timeseries.statisticalInefficiencyMultiple(np.sin(phi_kt_replica * np.pi / 180.0))
-   print("g_sin(phi) = %.1f" % g_sinphi)
+   print("g_sin(phi) = {:.1f}".format(g_sinphi))
    g_cospsi = timeseries.statisticalInefficiencyMultiple(np.cos(psi_kt_replica * np.pi / 180.0))
-   print("g_cos(psi) = %.1f" % g_cospsi)
+   print("g_cos(psi) = {:.1f}".format(g_cospsi))
    g_sinpsi = timeseries.statisticalInefficiencyMultiple(np.sin(psi_kt_replica * np.pi / 180.0))
-   print("g_sin(psi) = %.1f" % g_sinpsi)
-
+   print("g_sin(psi) = {:.1f}".format(g_sinpsi))
    # Subsample data with maximum of all correlation times.
    print("Subsampling data...")
    g = np.max(np.array([g_cosphi, g_sinphi, g_cospsi, g_sinpsi]))
    indices = timeseries.subsampleCorrelatedData(U_kt[k,:], g = g)
-
-   print("Using g = %.1f to obtain %d uncorrelated samples per temperature" % (g, len(indices)))
+   print("Using g = {:.1f} to obtain {:d} uncorrelated samples per temperature".format(g, len(indices)))
    N_max = int(np.ceil(T / g)) # max number of samples per temperature
-   U_kn = np.zeros([K, N_max], np.float64)
-   phi_kn = np.zeros([K, N_max], np.float64)
-   psi_kn = np.zeros([K, N_max], np.float64)
-   N_k = N_max * np.ones([K], np.int32)
+   U_kn = np.zeros([K, N_max])
+   phi_kn = np.zeros([K, N_max])
+   psi_kn = np.zeros([K, N_max])
+   N_k = N_max * np.ones([K], dtype=int)
    for k in range(K):
       U_kn[k,:] = U_kt[k,indices]
       phi_kn[k,:] = phi_kt[k,indices]
@@ -243,16 +239,10 @@ torsion_min = -180.0
 torsion_max = +180.0
 dx = (torsion_max - torsion_min) / float(nbins_per_torsion)
 # Assign torsion bins
-Ntot = np.sum(N_k)
-
-# two ways to keep track of the bins.  One is as a list of counts and bin centers.  This scales to as many 
-# dimensions as one wants in the code.  
-# However, that makes it difficult to call the PMF afterwards to determine the value of the PMF a given point,
-# and is incompatible with using the output of np.histogram or np.histogramdd 
-
-bin_nonzero = 0
-count_nonzero = list()
-centers_nonzero = list()
+bin_kn = np.zeros([K,N_max], dtype=int) # bin_kn[k,n] is the index of which histogram bin sample n from temperature index k belongs to
+nbins = 0
+bin_counts = list()
+bin_centers = list() # bin_centers[i] is a (phi,psi) tuple that gives the center of bin i
 for i in range(nbins_per_torsion):
    for j in range(nbins_per_torsion):
       # Determine (phi,psi) of bin center.

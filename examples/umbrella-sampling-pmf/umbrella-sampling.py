@@ -7,7 +7,7 @@
 # D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
 # http://dx.doi.org/10.1016/j.jmb.2007.06.002
 
-import numpy as np # numerical array library
+import numpy as np
 import pymbar # multistate Bennett acceptance ratio
 from pymbar import timeseries # timeseries analysis
 from pymbar import PMF
@@ -26,7 +26,7 @@ chi_max = +180.0 # max for PMF
 nbins = 36 # number of bins for 1D PMF
 
 # Allocate storage for simulation data
-N_k = np.zeros([K], dtype =  int) # N_k[k] is the number of snapshots from umbrella simulation k
+N_k = np.zeros([K], dtype = int) # N_k[k] is the number of snapshots from umbrella simulation k
 K_k = np.zeros([K]) # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
 chi0_k = np.zeros([K]) # chi0_k[k] is the spring center location (in deg) for umbrella simulation k
 chi_kn = np.zeros([K,N_max]) # chi_kn[k,n] is the torsion angle (in deg) for snapshot n from umbrella simulation k
@@ -110,8 +110,6 @@ for k in range(K):
     u_kn[k,0:N_k[k]] = u_kn[k,indices]
     chi_kn[k,0:N_k[k]] = chi_kn[k,indices]
 
-# data loaded, now calculate the PMF
-
 N_max = np.max(N_k) # shorten the array size
 u_kln = np.zeros([K,K,N_max]) # u_kln[k,l,n] is the reduced potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
 
@@ -120,13 +118,10 @@ u_kn -= u_kn.min()
 
 # compute bin centers
 bin_center_i = np.zeros([nbins])
-bin_edges = np.linspace(chi_min,chi_max,nbins+1)
 for i in range(nbins):
-    bin_center_i[i] = 0.5*(bin_edges[i] + bin_edges[i+1])
-
-N = np.sum(N_k)
-chi_n = np.zeros(N,dtype=int)
-ntot = 0
+    bin_center_i[i] = chi_min + delta/2 + delta * i
+# Bin data
+bin_kn = np.zeros([K,N_max], int)
 for k in range(K):
     for n in range(N_k[k]):
         # Compute bin assignment.
