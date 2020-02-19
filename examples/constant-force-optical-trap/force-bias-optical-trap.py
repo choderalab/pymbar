@@ -7,9 +7,7 @@
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-#from numpy import * # array routines
 import numpy as np
-from math import * # additional mathematical functions
 import pymbar # multistate Bennett acceptance ratio analysis (provided by pymbar)
 from pymbar import timeseries # timeseries analysis (provided by pymbar)
 import subprocess
@@ -156,8 +154,8 @@ for k in range(K):
     g = timeseries.statisticalInefficiency(x_kt[k,0:T_k[k]], x_kt[k,0:T_k[k]])
     # store statistical inefficiency
     g_k[k] = g
-    print("timeseries {:d} : g = {:.1f}, {:.0f} uncorrelated samples (of {:d} total samples)".format(k+1, g, floor(T_k[k] / g), T_k[k]))
-    N_max = max(N_max, ceil(T_k[k] / g) + 1)
+    print("timeseries {:d} : g = {:.1f}, {:.0f} uncorrelated samples (of {:d} total samples)".format(k+1, g, int(np.floor(T_k[k] / g)), T_k[k]))
+    N_max = max(N_max, int(np.ceil(T_k[k] / g)) + 1)
 
 # Subsample trajectory position data.
 x_kn = np.zeros([K, N_max])
@@ -249,7 +247,7 @@ for l in range(0,K):
     N = N_i_observed.sum()
     # estimate uncertainties in observed counts
     for bin_index in range(nbins):
-        dN_i_observed[bin_index] = sqrt(g_k[l] * N_i_observed[bin_index] * (1.0 - N_i_observed[bin_index] / float(N)))
+        dN_i_observed[bin_index] = np.sqrt(g_k[l] * N_i_observed[bin_index] * (1.0 - N_i_observed[bin_index] / float(N)))
     # compute expected histograms
     N_i_expected = float(N) * p_i
     dN_i_expected = np.sqrt(float(N) * p_i * (1.0 - p_i)) # only approximate, since correlations df_i df_j are neglected
