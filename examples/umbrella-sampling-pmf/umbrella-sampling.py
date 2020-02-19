@@ -7,8 +7,6 @@
 # D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
 # http://dx.doi.org/10.1016/j.jmb.2007.06.002
 
-from __future__ import print_function
-from timeit import default_timer as timer
 import numpy as np # numerical array library
 import pymbar # multistate Bennett acceptance ratio
 from pymbar import timeseries # timeseries analysis
@@ -115,19 +113,19 @@ for k in range(K):
 # data loaded, now calculate the PMF
 
 N_max = np.max(N_k) # shorten the array size
-u_kln = np.zeros([K,K,N_max], np.float64) # u_kln[k,l,n] is the reduced potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
+u_kln = np.zeros([K,K,N_max]) # u_kln[k,l,n] is the reduced potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
 
 # Set zero of u_kn -- this is arbitrary.
 u_kn -= u_kn.min()
 
 # compute bin centers
-bin_center_i = np.zeros([nbins], np.float64)
+bin_center_i = np.zeros([nbins])
 bin_edges = np.linspace(chi_min,chi_max,nbins+1)
 for i in range(nbins):
     bin_center_i[i] = 0.5*(bin_edges[i] + bin_edges[i+1])
 
 N = np.sum(N_k)
-chi_n = np.zeros(N,np.int32)
+chi_n = np.zeros(N,dtype=int)
 ntot = 0
 for k in range(K):
     for n in range(N_k[k]):
