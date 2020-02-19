@@ -32,6 +32,7 @@ from pymbar import timeseries, testsystems, confidenceintervals
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exp import EXP, EXPGauss
+from pymbar.pmf import PMF
 import pymbar.old_mbar
 
 try:
@@ -44,4 +45,4 @@ except:
     git_revision = 'dev'
     isrelease = False
 
-__all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
+__all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils', 'PMF']

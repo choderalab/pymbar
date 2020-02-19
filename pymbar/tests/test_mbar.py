@@ -296,37 +296,6 @@ def test_mbar_computePerturbedFreeEnergeies(system_generator):
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-def test_mbar_computePMF():
-
-    """ testing computePMF """
-
-    # Does not work with the Exponential Test Case
-
-    name, test = generate_ho()
-    x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
-    mbar = MBAR(u_kn, N_k)
-    #do a 1d PMF of the potential in the 3rd state:
-    refstate = 2
-    dx = 0.25
-    xmin = test.O_k[refstate] - 1
-    xmax = test.O_k[refstate] + 1
-    within_bounds = (x_n >= xmin) & (x_n < xmax)
-    bin_centers = dx*np.arange(np.int(xmin/dx), np.int(xmax/dx)) + dx/2
-    bin_n = np.zeros(len(x_n), int)
-    bin_n[within_bounds] = 1 + np.floor((x_n[within_bounds]-xmin)/dx)
-    # 0 is reserved for samples outside the domain.  We will ignore this state
-    range = np.max(bin_n)+1
-    results = mbar.computePMF(u_kn[refstate, :], bin_n, range, uncertainties='from-specified', pmf_reference=1)
-    f_i = results['f_i']
-    df_i = results['df_i']
-
-    f0_i = 0.5*test.K_k[refstate]*(bin_centers-test.O_k[refstate])**2
-    f_i, df_i = f_i[2:], df_i[2:]  # first state is ignored, second is zero, with zero uncertainty
-    normf0_i = f0_i[1:] - f0_i[0]  # normalize to first state
-    z = (f_i - normf0_i) / df_i
-    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
-
-
 def test_mbar_computeExpectationsInner(mbar_and_test):
 
     """Can MBAR calculate general expectations inner code (note: this just tests completion)"""
