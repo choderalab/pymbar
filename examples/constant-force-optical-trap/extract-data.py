@@ -9,9 +9,6 @@
 # IMPORTS
 #=============================================================================================
 
-from __future__ import print_function
-from numpy import * # array routines
-import numpy
 import os
 import os.path
 import sys

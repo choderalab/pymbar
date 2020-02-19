@@ -5,9 +5,8 @@
 #IMPORTS
 #=========================================================
 
-from __future__ import print_function
 import sys
-import numpy
+import numpy as np
 import pymbar # for MBAR analysis
 from pymbar import timeseries # for timeseries analysis
 import os
@@ -58,7 +57,7 @@ else:
     quit()
 ntypes = len(types)
 
-numpy.random.seed(rseed)  # seed the random numbers
+np.random.seed(rseed)  # seed the random numbers
 
 ###########################################################
 #      For Cv vs T
@@ -83,7 +82,7 @@ def read_total_energies(pathname,colnum):
     print("--Reading total energies from {}/...".format(pathname))
 
     # Initialize Return variables
-    E_kn = numpy.zeros([NumTemps, NumIterations], numpy.float64)
+    E_kn = np.zeros([NumTemps, NumIterations])
     
     #Read files
     for k in range(NumTemps):
@@ -95,7 +94,7 @@ def read_total_energies(pathname,colnum):
         numLines = len(lines)
 
         #Initialize arrays for E
-        E_from_file = numpy.zeros(NumIterations, numpy.float64)
+        E_from_file = np.zeros(NumIterations)
 
         #Parse lines in each file
         for n in range(NumIterations):
@@ -115,7 +114,7 @@ def read_simulation_temps(pathname,NumTemps):
     print("--Reading temperatures from {}/...".format(pathname))
 
     # Initialize return variable
-    temps_from_file = numpy.zeros(NumTemps, numpy.float64)
+    temps_from_file = np.zeros(NumTemps)
 
     for k in range(NumTemps):
         infile = open(os.path.join(pathname,'TEMP'+ str(k), 'simul'+str(k)+'.output'), 'r')
@@ -160,12 +159,12 @@ print("Preparing data:")
 T_from_file = read_simulation_temps(simulation,NumTemps)
 E_from_file = read_total_energies(simulation,TE_COL_NUM)
 K = len(T_from_file)
-N_k = numpy.zeros(K,numpy.int32)
-g = numpy.zeros(K,numpy.float64)
+N_k = np.zeros(K,dtype=int)
+g = np.zeros(K)
 
 for k in range(K):  # subsample the energies
    g[k] = timeseries.statisticalInefficiency(E_from_file[k])
-   indices = numpy.array(timeseries.subsampleCorrelatedData(E_from_file[k],g=g[k])) # indices of uncorrelated samples
+   indices = np.array(timeseries.subsampleCorrelatedData(E_from_file[k],g=g[k])) # indices of uncorrelated samples
    N_k[k] = len(indices) # number of uncorrelated samples
    E_from_file[k,0:N_k[k]] = E_from_file[k,indices]
 
@@ -193,22 +192,22 @@ currentv = minv
 if dertype == 'temperature':
     # Loop, inserting equally spaced T's at which we are interested in the properties
     while (currentv <= maxv):
-        val_k = numpy.append(val_k, currentv)
+        val_k = np.append(val_k, currentv)
         currentv = currentv + delta
-    Temp_k = numpy.concatenate((Temp_k,numpy.array(val_k)))
+    Temp_k = np.concatenate((Temp_k,np.array(val_k)))
 elif dertype == 'beta':
     # Loop, inserting equally spaced T's at which we are interested in the properties
     while (currentv >= maxv):
-        val_k = numpy.append(val_k, currentv)
+        val_k = np.append(val_k, currentv)
         currentv = currentv + delta
-    Temp_k = numpy.concatenate((Temp_k,(1/(kB*numpy.array(val_k)))))
+    Temp_k = np.concatenate((Temp_k,(1/(kB*np.array(val_k)))))
 
 # Update number of states
 K = len(Temp_k)
 # Loop, inserting E's into blank matrix (leaving blanks only where new Ts are inserted)
 
-Nall_k = numpy.zeros([K], numpy.int32) # Number of samples (n) for each state (k) = number of iterations/energies
-E_kn = numpy.zeros([K, NumIterations], numpy.float64)
+Nall_k = np.zeros([K], dtype=int) # Number of samples (n) for each state (k) = number of iterations/energies
+E_kn = np.zeros([K, NumIterations])
 
 for k in range(originalK):
     E_kn[k,0:N_k[k]] = E_from_file[k,0:N_k[k]]
@@ -225,16 +224,16 @@ beta_k = 1 / (kB * Temp_k)
 
 print("--Computing reduced energies...")
 
-u_kln = numpy.zeros([K,K,NumIterations], numpy.float64) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
-E_kn_samp = numpy.zeros([K,NumIterations], numpy.float64) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
+u_kln = np.zeros([K,K,NumIterations]) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
+E_kn_samp = np.zeros([K,NumIterations]) # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
 
 nBoots_work = nBoots + 1 # we add +1 to the bootstrap number, as the zeroth bootstrap sample is the original
 
-allCv_expect = numpy.zeros([K,ntypes,nBoots_work], numpy.float64)
-dCv_expect = numpy.zeros([K,ntypes],numpy.float64)
-allE_expect = numpy.zeros([K,nBoots_work], numpy.float64)
-allE2_expect = numpy.zeros([K,nBoots_work], numpy.float64)
-dE_expect = numpy.zeros([K],numpy.float64)
+allCv_expect = np.zeros([K,ntypes,nBoots_work])
+dCv_expect = np.zeros([K,ntypes])
+allE_expect = np.zeros([K,nBoots_work])
+allE2_expect = np.zeros([K,nBoots_work])
+dE_expect = np.zeros([K])
 
 
 for n in range(nBoots_work):
@@ -244,9 +243,9 @@ for n in range(nBoots_work):
     # resample the results:
         if Nall_k[k] > 0:
             if (n == 0):  # don't randomize the first one
-                booti = numpy.array(range(N_k[k]))
+                booti = np.array(range(N_k[k]))
             else:
-                booti=numpy.random.randint(Nall_k[k],size=Nall_k[k])
+                booti=np.random.randint(Nall_k[k],size=Nall_k[k])
             E_kn_samp[k,0:Nall_k[k]] = E_kn[k,booti]
 
     for k in range(K):
@@ -263,7 +262,7 @@ for n in range(nBoots_work):
         print("Initializing MBAR:")
         print("--K = number of Temperatures with data = {:d}".format(originalK))
         print("--L = number of total Temperatures = {:d}".format(K))
-        print("--N = number of Energies per Temperature = {:d}".format(numpy.max(Nall_k)))
+        print("--N = number of Energies per Temperature = {:d}".format(np.max(Nall_k)))
 
     if (n==0):
         initial_f_k = None # start from zero 
@@ -334,7 +333,7 @@ for n in range(nBoots_work):
 
     if (n==0):
         N_eff = (E2_expect - (E_expect*E_expect))/dE_expect**2  # sigma^2 / (sigma^2/n) = effective number of samples
-        dCv_expect[:,0] = allCv_expect[:,0,n]*numpy.sqrt(2/N_eff)
+        dCv_expect[:,0] = allCv_expect[:,0,n]*np.sqrt(2/N_eff)
 
     # only loop over the points that will be plotted, not the ones that
     for i in range(originalK, K):
@@ -408,14 +407,14 @@ for n in range(nBoots_work):
         PrintResults("Analytic Error Estimates",E_expect,dE_expect,allCv_expect,dCv_expect,types)
 
 if nBoots > 0:
-    Cv_boot = numpy.zeros([K,ntypes],float)
-    dCv_boot = numpy.zeros([K,ntypes],float)
-    dE_boot = numpy.zeros([K])
+    Cv_boot = np.zeros([K,ntypes])
+    dCv_boot = np.zeros([K,ntypes])
+    dE_boot = np.zeros([K])
 
     for k in range(K):
         for i in range(ntypes):
             # for these averages, don't include the first one, because it's the non-bootstrapped one.
-            Cv_boot[k,i] = numpy.mean(allCv_expect[k,i,1:nBoots_work])
-            dCv_boot[k,i] = numpy.std(allCv_expect[k,i,1:nBoots_work])
-            dE_boot[k] = numpy.std(allE_expect[k,1:nBoots_work])
+            Cv_boot[k,i] = np.mean(allCv_expect[k,i,1:nBoots_work])
+            dCv_boot[k,i] = np.std(allCv_expect[k,i,1:nBoots_work])
+            dE_boot[k] = np.std(allE_expect[k,1:nBoots_work])
     PrintResults("Bootstrap Error Estimates",allE_expect[:,0],dE_boot,allCv_expect,dCv_boot,types)

@@ -7,10 +7,7 @@
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-from __future__ import print_function
-from numpy import * # array routines
-import numpy
-from math import * # additional mathematical functions
+import numpy as np
 import pymbar # multistate Bennett acceptance ratio analysis (provided by pymbar)
 from pymbar import timeseries # timeseries analysis (provided by pymbar)
 import subprocess
@@ -48,13 +45,13 @@ def construct_nonuniform_bins(x_n, nbins):
     """Construct histogram using bins of unequal size to ensure approximately equal population in each bin.
 
     ARGUMENTS
-      x_n (1D numpy array of floats) - x_n[n] is data point n
+      x_n (1D array of floats) - x_n[n] is data point n
 
     RETURN VALUES
-      bin_left_boundary_i (1D numpy array of floats) - data in bin i will satisfy bin_left_boundary_i[i] <= x < bin_left_boundary_i[i+1]
-      bin_center_i (1D numpy array of floats) - bin_center_i[i] is the center of bin i
-      bin_width_i (1D numpy array of floats) - bin_width_i[i] is the width of bin i
-      bin_n (1D numpy array of int32) - bin_n[n] is the bin index (in range(nbins)) of x_n[n]
+      bin_left_boundary_i (1D array of floats) - data in bin i will satisfy bin_left_boundary_i[i] <= x < bin_left_boundary_i[i+1]
+      bin_center_i (1D array of floats) - bin_center_i[i] is the center of bin i
+      bin_width_i (1D array of floats) - bin_width_i[i] is the width of bin i
+      bin_n (1D array of int32) - bin_n[n] is the bin index (in range(nbins)) of x_n[n]
     """
 
     # Determine number of samples.
@@ -64,11 +61,11 @@ def construct_nonuniform_bins(x_n, nbins):
     sorted_indices = x_n.argsort()
 
     # Allocate storage for results.
-    bin_left_boundary_i = zeros([nbins+1], float64) 
-    bin_right_boundary_i = zeros([nbins+1], float64)
-    bin_center_i = zeros([nbins], float64)
-    bin_width_i = zeros([nbins], float64)
-    bin_n = zeros([N], int32)
+    bin_left_boundary_i = np.zeros([nbins+1]) 
+    bin_right_boundary_i = np.zeros([nbins+1])
+    bin_center_i = np.zeros([nbins])
+    bin_width_i = np.zeros([nbins])
+    bin_n = np.zeros([N])
     
     # Determine sampled range, adding a little bit to the rightmost range to ensure no samples escape the range.
     x_min = x_n.min()
@@ -107,9 +104,9 @@ filename = os.path.join(directory, prefix + '.forces')
 infile = open(filename, 'r')
 elements = infile.readline().split()
 K = len(elements) # number of biasing forces
-biasing_force_k = zeros([K], float64) # biasing_force_k[k] is the constant external biasing force used to collect trajectory k (in pN)
+biasing_force_k = np.zeros([K]) # biasing_force_k[k] is the constant external biasing force used to collect trajectory k (in pN)
 for k in range(K):
-    biasing_force_k[k] = float(elements[k])
+    biasing_force_k[k] = np.float(elements[k])
 infile.close()
 print("biasing forces (in pN) = ")
 print(biasing_force_k)
@@ -119,8 +116,8 @@ filename = os.path.join(directory, prefix + '.trajectories')
 T_max = int(subprocess.getoutput('wc -l %s' % filename).split()[0]) + 1
 
 # Allocate storage for original (correlated) trajectories
-T_k = zeros([K], int32) # T_k[k] is the number of snapshots from umbrella simulation k
-x_kt = zeros([K,T_max], float64) # x_kt[k,t] is the position of snapshot t from trajectory k (in nm)
+T_k = np.zeros([K],int) # T_k[k] is the number of snapshots from umbrella simulation k
+x_kt = np.zeros([K,T_max]) # x_kt[k,t] is the position of snapshot t from trajectory k (in nm)
 
 # Read the trajectories.
 filename = os.path.join(directory, prefix + '.trajectories')
@@ -133,37 +130,37 @@ for line in lines:
     elements = line.split()
     for k in range(K):
         t = T_k[k]
-        x_kt[k,t] = float(elements[k])
-        T_k[k] += 1        
+        x_kt[k,t] = np.float(elements[k])
+        T_k[k] += 1
 
 # Create a list of indices of all configurations in kt-indexing.
-mask_kt = zeros([K,T_max], dtype=bool_)
+mask_kt = np.zeros([K,T_max], dtype=bool)
 for k in range(0,K):
     mask_kt[k,0:T_k[k]] = True
 # Create a list from this mask.
-all_data_indices = where(mask_kt)
+all_data_indices = np.where(mask_kt)
 
 # Construct equal-frequency extension bins
 print("binning data...")
-bin_kt = zeros([K, T_max], int32)
+bin_kt = np.zeros([K, T_max],int)
 (bin_left_boundary_i, bin_center_i, bin_width_i, bin_assignments) = construct_nonuniform_bins(x_kt[all_data_indices], nbins)
 bin_kt[all_data_indices] = bin_assignments
 
 # Compute correlation times.
 N_max = 0
-g_k = zeros([K], float64)
+g_k = np.zeros([K])
 for k in range(K):
     # Compute statistical inefficiency for extension timeseries
     g = timeseries.statisticalInefficiency(x_kt[k,0:T_k[k]], x_kt[k,0:T_k[k]])
     # store statistical inefficiency
     g_k[k] = g
-    print("timeseries {:d} : g = {:.1f}, {:.0f} uncorrelated samples (of {:d} total samples)".format(k+1, g, floor(T_k[k] / g), T_k[k]))
-    N_max = max(N_max, ceil(T_k[k] / g) + 1)
+    print("timeseries {:d} : g = {:.1f}, {:.0f} uncorrelated samples (of {:d} total samples)".format(k+1, g, int(np.floor(T_k[k] / g)), T_k[k]))
+    N_max = max(N_max, int(np.ceil(T_k[k] / g)) + 1)
 
 # Subsample trajectory position data.
-x_kn = zeros([K, N_max], float64)
-bin_kn = zeros([K, N_max], int32)
-N_k = zeros([K], int32)
+x_kn = np.zeros([K, N_max])
+bin_kn = np.zeros([K, N_max])
+N_k = np.zeros([K],int)
 for k in range(K):
     # Compute correlation times for potential energy and chi timeseries.
     indices = timeseries.subsampleCorrelatedData(x_kt[k,0:T_k[k]])
@@ -172,15 +169,15 @@ for k in range(K):
     x_kn[k,0:N_k[k]] = x_kt[k,indices]
     bin_kn[k,0:N_k[k]] = bin_kt[k,indices]
 
-# Set arbitrary zeros for external biasing potential.
-x0_k = zeros([K], float64) # x position corresponding to zero of potential
+# Set arbitrarynp.zeros for external biasing potential.
+x0_k = np.zeros([K]) # x position corresponding to zero of potential
 for k in range(K):
     x0_k[k] = x_kn[k,0:N_k[k]].mean()
 print("x0_k = ")
 print(x0_k)
 
 # Compute bias energies in units of kT.
-u_kln = zeros([K,K,N_max], float64) # u_kln[k,l,n] is the reduced (dimensionless) relative potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
+u_kln = np.zeros([K,K,N_max]) # u_kln[k,l,n] is the reduced (dimensionless) relative potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
 for k in range(K):
     for l in range(K):
         # compute relative energy difference from sampled state to each other state
@@ -198,7 +195,7 @@ print("Running MBAR...")
 mbar = pymbar.MBAR(u_kln, N_k, verbose = True, method = 'adaptive', relative_tolerance = 1.0e-10)
 
 # Compute unbiased energies (all biasing forces are zero).
-u_kn = zeros([K,N_max], float64) # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
+u_kn = np.zeros([K,N_max]) # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
 for k in range(K):
 #    u_kn[k,0:N_k[k]] = - pN_nm_to_kT * (0.0 - biasing_force_k[k]) * x_kn[k,0:N_k[k]]    
     u_kn[k,0:N_k[k]] = 0.0 + pN_nm_to_kT * biasing_force_k[k] * (x_kn[k,0:N_k[k]] - x0_k[k])
@@ -209,7 +206,7 @@ results = mbar.computePMF(u_kn, bin_kn, nbins)
 f_i = results['f_i']
 df_i = results['df_i']
 # compute estimate of PMF including Jacobian term
-pmf_i = f_i + numpy.log(bin_width_i)
+pmf_i = f_i + np.log(bin_width_i)
 # Write out unbiased estimate of PMF
 print("Unbiased PMF (in units of kT)")
 print("{:8s} {:8s} {:8s} {:8s} {:8s}".format('bin', 'f', 'df', 'pmf', 'width'))
@@ -235,25 +232,25 @@ for l in range(0,K):
     f_i = results['f_i']
     df_i = results['df_i']
     # compute estimate of PMF including Jacobian term
-    pmf_i = f_i + numpy.log(bin_width_i)
+    pmf_i = f_i + np.log(bin_width_i)
     # center pmf
     pmf_i -= pmf_i.mean()
     # compute probability distribution
-    p_i = numpy.exp(- f_i + f_i.min())
+    p_i = np.exp(- f_i + f_i.min())
     p_i /= p_i.sum()
     # compute observed histograms, filtering to within [x_min,x_max] range
-    N_i_observed = zeros([nbins], float64)
-    dN_i_observed = zeros([nbins], float64)    
+    N_i_observed = np.zeros([nbins])
+    dN_i_observed = np.zeros([nbins])
     for t in range(T_k[l]):
         bin_index = bin_kt[l,t]
-        N_i_observed[bin_index] += 1.0
+        N_i_observed[bin_index] += 1
     N = N_i_observed.sum()
     # estimate uncertainties in observed counts
     for bin_index in range(nbins):
-        dN_i_observed[bin_index] = sqrt(g_k[l] * N_i_observed[bin_index] * (1.0 - N_i_observed[bin_index] / float(N)))
+        dN_i_observed[bin_index] = np.sqrt(g_k[l] * N_i_observed[bin_index] * (1.0 - N_i_observed[bin_index] / float(N)))
     # compute expected histograms
     N_i_expected = float(N) * p_i
-    dN_i_expected = numpy.sqrt(float(N) * p_i * (1.0 - p_i)) # only approximate, since correlations df_i df_j are neglected
+    dN_i_expected = np.sqrt(float(N) * p_i * (1.0 - p_i)) # only approximate, since correlations df_i df_j are neglected
     # plot
     print("state {:d} ({:f} pN)".format(l, biasing_force_k[l]))
     for bin_index in range(nbins):
@@ -275,10 +272,10 @@ for l in range(0,K):
     outfile.close()    
 
     # compute PMF from observed counts
-    indices = where(N_i_observed > 0)[0]
-    pmf_i_observed = zeros([nbins], float64)
-    dpmf_i_observed = zeros([nbins], float64)
-    pmf_i_observed[indices] = - numpy.log(N_i_observed[indices]) + numpy.log(bin_width_i[indices])
+    indices = np.where(N_i_observed > 0)[0]
+    pmf_i_observed = np.zeros([nbins])
+    dpmf_i_observed = np.zeros([nbins])
+    pmf_i_observed[indices] = - np.log(N_i_observed[indices]) + np.log(bin_width_i[indices])
     pmf_i_observed[indices] -= pmf_i_observed[indices].mean() # shift observed PMF
     dpmf_i_observed[indices] = dN_i_observed[indices] / N_i_observed[indices]
     # write out observed PMF
