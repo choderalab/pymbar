@@ -151,19 +151,19 @@ def test_pmf_getPMF_1d():
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
     # now KDE
-    kde_parameters = dict()
-    kde_parameters['bandwidth'] = 0.5*dx
-    pmf.generatePMF(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
-    results_kde = pmf.getPMF(bin_centers, uncertainties='from-specified', pmf_reference = 0.0)
-    f_ik = results_kde['f_i']
-    # no analytical undertainty for kde yet
+    #kde_parameters = dict()
+    #kde_parameters['bandwidth'] = 0.5*dx
+    #pmf.generatePMF(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
+    #results_kde = pmf.getPMF(bin_centers, uncertainties='from-specified', pmf_reference = 0.0)
+    #f_ik = results_kde['f_i']
+    ## no analytical undertainty for kde yet
 
-    for i in range(0,nbins):
-        if df_ih[i] != 0:
-            z[i] = np.abs(pmf_analytical[i]-f_ik[i])/df_ih[i]
-        else:
-            z[i] = 0
-    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+    #for i in range(0,nbins):
+    #    if df_ih[i] != 0:
+    #        z[i] = np.abs(pmf_analytical[i]-f_ik[i])/df_ih[i]
+    #    else:
+    #        z[i] = 0
+    #assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
     # now spline
     spline_parameters = dict()
@@ -291,17 +291,17 @@ def test_pmf_getPMF_2d():
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
     # set kde parameters
-    kde_parameters = dict()
-    kde_parameters['bandwidth'] = 0.5*dx
-    pmf.generatePMF(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
-    results_kde = pmf.getPMF(bin_centers, uncertainties='from-specified',pmf_reference = [0,0])
+    #kde_parameters = dict()
+    #kde_parameters['bandwidth'] = 0.5*dx
+    #pmf.generatePMF(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
+    #results_kde = pmf.getPMF(bin_centers, uncertainties='from-specified',pmf_reference = [0,0])
 
-    f_ik = results_kde['f_i']
-    # no analytical result for kde
+    #f_ik = results_kde['f_i']
+    ## no analytical result for kde
 
-    for i in range(0,nbins):
-        if df_ih[i] != 0:
-            z[i] = np.abs(pmf_analytical[i]-f_ik[i])/df_ih[i]
-        else:
-            z[i] = 0
-    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+    #for i in range(0,nbins):
+    #    if df_ih[i] != 0:
+    #        z[i] = np.abs(pmf_analytical[i]-f_ik[i])/df_ih[i]
+    #    else:
+    #        z[i] = 0
+    #assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
