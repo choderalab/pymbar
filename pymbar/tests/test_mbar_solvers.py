@@ -20,7 +20,7 @@ def base_oscillator():
      (200, 50, exponentials)]
 )
 def test_solvers(statesa, statesb, test_system):
-    name, U, N_k, s_n = test_system(statesa, statesb)
+    name, U, N_k, s_n, _ = test_system(statesa, statesb, provide_test=True)
     print(name)
     mbar = pymbar.MBAR(U, N_k)
     assert_almost_equal(pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8)
