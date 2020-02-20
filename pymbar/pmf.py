@@ -382,7 +382,10 @@ class PMF:
 
             self.kdes = list()
 
-            from sklearn.neighbors import KernelDensity
+            try:
+                from sklearn.neighbors import KernelDensity
+            except ImportError:
+                raise ImportError("Cannot use 'kde' type PMF without the scikit-learn module. Could not import sklearn")
             kde = KernelDensity()
             # get the default params to set them.
             kde_defaults = kde.get_params()
@@ -1170,10 +1173,11 @@ class PMF:
             if self.nbootstraps == 0:
                 df_i = None
             else:
-                fall = np.zeros([len(x), self.nbootstraps])
+                dim_breakdown = [d for d in x.shape] + [self.nbootstraps]
+                fall = np.zeros(dim_breakdown)
                 for b in range(self.nbootstraps):
-                    fall[:, b] = self.pmf_functions[b](x) - fmin
-                df_i = np.std(fall, axis=1)
+                    fall[:, :, b] = self.pmf_functions[b](x) - fmin
+                df_i = np.std(fall, axis=-1)
 
             # uncertainites "from normalization" reference is applied, since
             # the density is normalized.
