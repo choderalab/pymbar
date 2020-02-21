@@ -23,15 +23,10 @@
 # imports
 ##############################################################################
 
-from six.moves import zip_longest
+from itertools import zip_longest
 import warnings
 import numpy as np
-
-try:  # numexpr used in logsumexp when available.
-    import numexpr
-    HAVE_NUMEXPR = True
-except ImportError:
-    HAVE_NUMEXPR = False
+import numexpr
 
 
 ##############################################################################
@@ -43,26 +38,22 @@ class TypeCastPerformanceWarning(RuntimeWarning):
     pass
 
 
-def kln_to_kn(kln, N_k = None, cleanup = False):
+def kln_to_kn(kln, N_k=None, cleanup=False):
 
     """ Convert KxKxN_max array to KxN max array
-
-    if self.N is not initialized, it will be here.
 
     Parameters
     ----------
     u_kln : np.ndarray, float, shape=(KxLxN_max)
-    N_k (optional) : np.array
+    N_k : np.array, optional
         the N_k matrix from the previous formatting form
-    cleanup (optional) : bool
+    cleanup : bool, optional
         optional command to clean up, since u_kln can get very large
 
     Outputs
     -------
     u_kn: np.ndarray, float, shape=(LxN)
     """
-
-    #print "warning: KxLxN_max arrays deprecated; convering into new preferred KxN shape"
 
     # rewrite into kn shape
     [K, L, N_max] = np.shape(kln)
@@ -85,16 +76,16 @@ def kln_to_kn(kln, N_k = None, cleanup = False):
     return kn
 
 
-def kn_to_n(kn, N_k = None, cleanup = False):
+def kn_to_n(kn, N_k=None, cleanup=False):
 
     """ Convert KxN_max array to N array
 
     Parameters
     ----------
     u_kn: np.ndarray, float, shape=(KxN_max)
-    N_k (optional) : np.array
+    N_k : np.array, optional
         the N_k matrix from the previous formatting form
-    cleanup (optional) : bool
+    cleanup : bool, optional
         optional command to clean up, since u_kln can get very large
 
     Outputs
@@ -268,6 +259,7 @@ def _logsum(a_n):
 
     return log_sum
 
+
 def logsumexp(a, axis=None, b=None, use_numexpr=True):
     """Compute the log of the sum of exponentials of input elements.
 
@@ -313,12 +305,12 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     if b is not None:
         b = np.asarray(b)
-        if use_numexpr and HAVE_NUMEXPR:
+        if use_numexpr:
             out = np.log(numexpr.evaluate("b * exp(a - a_max)").sum(axis))
         else:
             out = np.log(np.sum(b * np.exp(a - a_max), axis=axis))
     else:
-        if use_numexpr and HAVE_NUMEXPR:
+        if use_numexpr:
             out = np.log(numexpr.evaluate("exp(a - a_max)").sum(axis))
         else:
             out = np.log(np.sum(np.exp(a - a_max), axis=axis))

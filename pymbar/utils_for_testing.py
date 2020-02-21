@@ -19,13 +19,11 @@
 # You should have received a copy of the MIT License along with pymbar.
 ##############################################################################
 
-import os
 import numpy as np
 from numpy.testing import (assert_allclose, assert_almost_equal,
                            assert_approx_equal, assert_array_almost_equal, assert_array_almost_equal_nulp,
                            assert_array_equal, assert_array_less, assert_array_max_ulp, assert_equal,
                            assert_raises, assert_string_equal, assert_warns)
-from pkg_resources import resource_filename
 import warnings
 import contextlib
 
@@ -35,7 +33,7 @@ __all__ = ['assert_allclose', 'assert_almost_equal', 'assert_approx_equal',
            'assert_array_almost_equal', 'assert_array_almost_equal_nulp',
            'assert_array_equal', 'assert_array_less', 'assert_array_max_ulp',
            'assert_equal', 'assert_raises', 'assert_string_equal', 'assert_warns',
-           'get_fn', 'suppress_derivative_warnings_for_tests', 'suppress_matrix_warnings_for_tests',
+           'suppress_derivative_warnings_for_tests', 'suppress_matrix_warnings_for_tests',
            'oscillators', 'exponentials']
 
 ##############################################################################
@@ -67,29 +65,6 @@ def suppress_matrix_warnings_for_tests():
     yield
     # Clear warning filters
     warnings.resetwarnings()
-
-
-def get_fn(name):
-    """Get the full path to one of the reference files shipped for testing
-
-    In the source distribution, these files are in ``MDTraj/testing/reference``,
-    but on installation, they're moved to somewhere in the user's python
-    site-packages directory.
-
-    Parameters
-    ----------
-    name : str
-        Name of the file to load (with respect to the reference/ folder).
-
-    """
-
-    fn = resource_filename('mdtraj', os.path.join('testing/reference', name))
-
-    if not os.path.exists(fn):
-        raise ValueError('Sorry! {} does not exists. If you just '
-                         'added it, you\'ll have to re install'.format(fn))
-
-    return fn
 
 
 def oscillators(n_states, n_samples, provide_test=False):

@@ -9,7 +9,6 @@ requirements:
   build:
     - python
     - setuptools
-    - six
     - numpy 1.11.*
     - toolchain
   run:
@@ -17,7 +16,6 @@ requirements:
     - numpy >=1.12
     - scipy
     - numexpr
-    - six
 
 test:
   requires:

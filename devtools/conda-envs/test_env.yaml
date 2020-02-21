@@ -9,11 +9,11 @@ dependencies:
   - numpy >=1.12
   - scipy
   - numexpr
-  - six
 
     # Testing
   - pytest
   - pytest-cov
   - codecov
   - statsmodels
+  - scikit-learn  # Provides the sklearn module
 

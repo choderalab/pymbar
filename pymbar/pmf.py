@@ -225,8 +225,19 @@ class PMF:
 
         self.mbar = pmf_mbar
 
+        self._random = np.random
+        self._seed = None
+
         if self.verbose:
             print("PMF initialized")
+
+    @property
+    def seed(self):
+        return self._seed
+
+    def reset_random(self):
+        self._random = np.random
+        self._seed = None
 
     def generatePMF(
             self,
@@ -236,9 +247,8 @@ class PMF:
             histogram_parameters=None,
             kde_parameters=None,
             spline_parameters=None,
-            uncertainties='from-lowest',
             nbootstraps=0,
-            nseed=-1,
+            seed=-1,
             ):
         """
         Given an intialized MBAR object, a set of points,
@@ -286,8 +296,17 @@ class PMF:
             - 'nspline': number of spline points
             - 'kdegree': degree of the spline.  Default is cubic ('3')
             - 'objective': - 'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
-        
-        Returns:
+
+        nbootstraps : int, 0 or > 1, Default: 0
+            Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done.
+
+        seed : int, Default: -1
+            Set the randomization seed. This does not ensure true randomization, but should get the randomization
+            (assuming the same calls are made in the same order) to return the same numbers.
+            This is local to this class and will not change any other random objects.
+
+        Returns
+        -------
 
             - result_vals: dictionary of results.
 
@@ -343,10 +362,14 @@ class PMF:
 
         self.u_n = u_n
 
-        if nseed >= 0:
-            np.random.seed(nseed)
+        if seed >= 0:
+            # Set a better seeded random state
+            self._random = np.random.RandomState(seed=seed)
+            self._seed = seed
 
         # we need to save this for calculating uncertainties.
+        if not np.issubdtype(type(nbootstraps), np.integer) or nbootstraps == 1:
+            raise ValueError(f"nbootstraps must be an integer of 0 or >=2, it was set to {nbootstraps}")
         self.nbootstraps = nbootstraps
 
         if self.timings:
@@ -382,7 +405,10 @@ class PMF:
 
             self.kdes = list()
 
-            from sklearn.neighbors import KernelDensity
+            try:
+                from sklearn.neighbors import KernelDensity
+            except ImportError:
+                raise ImportError("Cannot use 'kde' type PMF without the scikit-learn module. Could not import sklearn")
             kde = KernelDensity()
             # get the default params to set them.
             kde_defaults = kde.get_params()
@@ -470,7 +496,7 @@ class PMF:
                     scipy_tol = None # this is just the default anyway.
                 if spline_parameters['optimization_algorithm'] not in [
                         'Newton-CG', 'CG', 'BFGS', 'L-BFGS-B', 'TNC', 'SLSQP']:
-                    raise ParameterErrorr(
+                    raise ParameterError(
                         'Optimization method {:s} is not supported'.format(
                             spline_parameters['optimization_algorithm']))
             else:
@@ -481,12 +507,11 @@ class PMF:
 
             if spline_parameters['spline_initialize'] == 'bias_free_energies':
 
+                initivals = self.mbar.f_k
                 # initialize to the bias free energies
                 if 'bias_centers' in spline_parameters:  # if we are provided bias center, use them
                     bias_centers = spline_parameters['bias_centers']
                     sort_indices = np.argsort(bias_centers)
-                    initivals = self.mbar.f_k
-
                     K = self.mbar.K
                     if K < 2 * nspline:
                         noverfit = int(np.round(K / 2))
@@ -497,18 +522,18 @@ class PMF:
                         tinit[noverfit + 1:noverfit + kdegree + 1] = xrange[1]
                         # problem: bin centers might not actually be sorted.
                         binit = make_lsq_spline(
-                            bias_centers[sort_indices], initvals[sort_indices],
+                            bias_centers[sort_indices], initivals[sort_indices],
                             tinit, k=kdegree)
                         xinit = np.linspace(xrange[0], xrange[1], num=2 * nspline)
                         yinit = binit(xinit)
                     else:
                         xinit = bias_centers[sort_indices]
-                        yinit = initvals[sort_indices]
+                        yinit = initivals[sort_indices]
                 else:
                     # assume equally spaced bias scenters
                     xinit = np.linspace(
                         xrange[0], xrange[1], self.mbar.K + 1)[1:-1]
-                    yinit = initvals
+                    yinit = initivals
 
             elif spline_parameters['spline_initialize'] == 'explicit':
                 if 'xinit' in spline_parameters:
@@ -599,7 +624,7 @@ class PMF:
             else:
                 index = 0
                 for k in range(K):
-                    bootstrap_indices[index:index + N_k[k]] = index + np.random.randint(0, N_k[k], size=N_k[k])
+                    bootstrap_indices[index:index + N_k[k]] = index + self._random.randint(0, N_k[k], size=N_k[k])
                     index += N_k[k]
                     # recompute MBAR.
                     mbar = pymbar.MBAR(
@@ -927,7 +952,7 @@ class PMF:
                 raise DataError(
                     'coordinates have inconsistent dimension with the PMF.')
 
-        if uncertainties is 'from-specified' and pmf_reference is None:
+        if uncertainties == 'from-specified' and pmf_reference is None:
             raise ParameterError(
                 "No reference state specified for PMF using uncertainties = from-specified")
 
@@ -979,11 +1004,14 @@ class PMF:
 
                 df_i = np.zeros(len(self.histogram_data['f']), np.float64)
                 
-                if (uncertainties == 'from-lowest'):
+                if uncertainties == 'from-lowest':
                     # Determine bin index with lowest free energy.
                     j = self.histogram_data['f'].argmin()
-                elif (uncertainties == 'from-specified'):
+                elif uncertainties == 'from-specified':
                     j = self.histogram_data['fbin_index'][tuple(pmf_ref_grid)]
+                elif uncertainties == 'all-differences':
+                    raise ParameterError("Uncertainty method of 'all-differences' is not yet supported for histogram "
+                                         "PMF types (not implemented)")
 
                 if self.nbootstraps == 0:
                     # Compute uncertainties in free energy at each gridpoint by
@@ -1029,23 +1057,25 @@ class PMF:
                 raise ParameterError(
                     'uncertainty method \'from-normalization\' is not currently supported for histograms')
 
-                # Compute bin probabilities p_i
-                p_i = np.exp(-self.fbin - logsumexp(-self.fbin))
+                # Currently unreachable code
 
-                # todo -- eliminate triple loop over nbins!
-                # Compute uncertainties in bin probabilities.
-                d2p_i = np.zeros([nbins], np.float64)
-                for k in range(nbins):
-                    for i in range(nbins):
-                        for j in range(nbins):
-                            delta_ik = 1.0 * (i == k)
-                            delta_jk = 1.0 * (j == k)
-                            d2p_i[k] += p_i[k] * (p_i[i] - delta_ik) * p_i[k] * (
-                                p_i[j] - delta_jk) * Theta_ij[K + i, K + j]
-
-                # Transform from d2p_i to df_i
-                d2f_i = d2p_i / p_i ** 2
-                df_i = np.sqrt(d2f_i)
+                # # Compute bin probabilities p_i
+                # p_i = np.exp(-self.fbin - logsumexp(-self.fbin))
+                #
+                # # todo -- eliminate triple loop over nbins!
+                # # Compute uncertainties in bin probabilities.
+                # d2p_i = np.zeros([nbins], np.float64)
+                # for k in range(nbins):
+                #     for i in range(nbins):
+                #         for j in range(nbins):
+                #             delta_ik = 1.0 * (i == k)
+                #             delta_jk = 1.0 * (j == k)
+                #             d2p_i[k] += p_i[k] * (p_i[i] - delta_ik) * p_i[k] * (
+                #                 p_i[j] - delta_jk) * Theta_ij[K + i, K + j]
+                #
+                # # Transform from d2p_i to df_i
+                # d2f_i = d2p_i / p_i ** 2
+                # df_i = np.sqrt(d2f_i)
 
             fx_vals = np.zeros(len(x))
             dfx_vals = np.zeros(len(x))
@@ -1082,7 +1112,7 @@ class PMF:
                 result_vals['df_i'] = dfx_vals
 
             if uncertainties == 'all-differences':
-                if nbootstraps == 0:
+                if self.nbootstraps == 0:
                     # Report uncertainties in all free energy differences as
                     # well.
                     diag = Theta_ij.diagonal()
@@ -1141,6 +1171,8 @@ class PMF:
                 fmin = - \
                     self.kde.score_samples(np.array(pmf_reference).reshape(1, -1))
                 f_i = f_i - fmin
+            else:
+                raise ParameterError(f"Uncertainty method {uncertainties} for kde is unavailable")
 
             if self.nbootstraps == 0:
                 df_i = None
@@ -1165,15 +1197,16 @@ class PMF:
 
             elif uncertainties == 'from-specified':
                 fmin = - \
-                    self.pmf_functions(np.array(pmf_reference).reshape(1, -1))
+                    self.pmf_function(np.array(pmf_reference).reshape(1, -1))
                 f_i = f_i - fmin
             if self.nbootstraps == 0:
                 df_i = None
             else:
-                fall = np.zeros([len(x), self.nbootstraps])
+                dim_breakdown = [d for d in x.shape] + [self.nbootstraps]
+                fall = np.zeros(dim_breakdown)
                 for b in range(self.nbootstraps):
-                    fall[:, b] = self.pmf_functions[b](x) - fmin
-                df_i = np.std(fall, axis=1)
+                    fall[:, :, b] = self.pmf_functions[b](x) - fmin
+                df_i = np.std(fall, axis=-1)
 
             # uncertainites "from normalization" reference is applied, since
             # the density is normalized.
@@ -1503,9 +1536,9 @@ class PMF:
 
         self.cold = self.bspline.c
         psize = len(self.cold)
-        rchange = stepsize * np.random.normal()
+        rchange = stepsize * self._random.normal()
         cnew = self.cold.copy()
-        ci = np.random.randint(psize)
+        ci = self._random.randint(psize)
         cnew[ci] += rchange
         self.newspline.c = cnew
 
@@ -1527,7 +1560,7 @@ class PMF:
         if dlogposterior <= 0:
             accept = True
         if dlogposterior > 0:
-            if np.random.random() < np.exp(-dlogposterior):
+            if self._random.random() < np.exp(-dlogposterior):
                 accept = True
 
         if accept:
@@ -1863,7 +1896,7 @@ class PMF:
         """ 
         wrapper for integration in case we decide to replace quad with something analytical
         """
-        if method is 'quad':
+        if method == 'quad':
             # just use scipy quadrature
             results = quad(func,xlow,xhigh,args)[0]
         else:
@@ -1889,9 +1922,9 @@ class PMF:
         xnew[0] = (self.bspline).c[0]
         xnew[1:] = x
         bspline = BSpline((self.bspline).t, xnew, (self.bspline).k)
-        if form is 'exp':
+        if form == 'exp':
             return lambda x: -np.log(bspline(x))
-        elif form is 'log':
+        elif form == 'log':
             return bspline
         elif form is None: 
             return bspline
