@@ -50,7 +50,6 @@ DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 # MBAR class definition
 # =========================================================================
 
-
 class MBAR:
     """
 
@@ -193,7 +192,7 @@ class MBAR:
             u_kn = kln_to_kn(u_kn, N_k=self.N_k)
 
         # u_kn[k,n] is the reduced potential energy of sample n evaluated at state k
-        self.u_kn = np.array(u_kn, dtype=np.float64)
+        self.u_kn = np.array(u_kn, dtype=np.float64, copy=False)
 
         K, N = np.shape(u_kn)
 
