@@ -8,15 +8,17 @@ from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 
 try:
     import statsmodels.api as sm
+
     HAVE_STATSMODELS = True
 except ImportError as err:
     HAVE_STATSMODELS = False
 
-has_statmodels = pytest.mark.skipif(not HAVE_STATSMODELS,
-                                    reason="Skipping FFT based tests because statsmodels not installed.")
+has_statmodels = pytest.mark.skipif(
+    not HAVE_STATSMODELS, reason="Skipping FFT based tests because statsmodels not installed.",
+)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def data(N=10000, K=10):
     var = np.ones(N)
 
@@ -89,7 +91,9 @@ def test_statistical_inefficiency_fft_gaussian():
 
     for i in range(5):
         x = np.random.normal(size=100000)
-        x = np.repeat(x, 3)  # e.g. Construct correlated gaussian e.g. [a, b, c] -> [a, a, a, b, b, b, c, c, c]
+        x = np.repeat(
+            x, 3
+        )  # e.g. Construct correlated gaussian e.g. [a, b, c] -> [a, a, a, b, b, b, c, c, c]
         g0 = timeseries.statisticalInefficiency(x, fast=False)
         g1 = timeseries.statisticalInefficiency(x, x, fast=False)
         g2 = timeseries.statisticalInefficiency_fft(x)
@@ -99,7 +103,7 @@ def test_statistical_inefficiency_fft_gaussian():
         assert_almost_equal(g0, g3, decimal=5)
 
         assert_almost_equal(np.log(g0), np.log(3.0), decimal=1)
-        
+
 
 def test_detectEquil():
     x = np.random.normal(size=10000)
@@ -118,19 +122,20 @@ def test_compare_detectEquil(show_hist=False):
     compare detectEquilibration implementations (with and without binary search + fft)
     """
     t_res = []
-    N=100
+    N = 100
     for _ in range(100):
         A_t = testsystems.correlated_timeseries_example(N=N, tau=5.0) + 2.0
         B_t = testsystems.correlated_timeseries_example(N=N, tau=5.0) + 1.0
-        C_t = testsystems.correlated_timeseries_example(N=N*2, tau=5.0)
+        C_t = testsystems.correlated_timeseries_example(N=N * 2, tau=5.0)
         D_t = np.concatenate([A_t, B_t, C_t])
         bs_de = timeseries.detectEquilibration_binary_search(D_t, bs_nodes=10)
         std_de = timeseries.detectEquilibration(D_t, fast=False, nskip=1)
-        t_res.append(bs_de[0]-std_de[0])
+        t_res.append(bs_de[0] - std_de[0])
     t_res_mode = float(stats.mode(t_res)[0][0])
-    assert_almost_equal(t_res_mode, 0., decimal=1)
+    assert_almost_equal(t_res_mode, 0.0, decimal=1)
     if show_hist:
         import matplotlib.pyplot as plt
+
         plt.hist(t_res)
         plt.show()
 
@@ -155,10 +160,14 @@ def test_correlationFunctionMultiple():
     A_t = [testsystems.correlated_timeseries_example(N=10000, tau=10.0) for _ in range(10)]
     corr_norm = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t)
     corr = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t, norm=False)
-    corr_norm_trun = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t, truncate=True)
-    corr_trun = timeseries.normalizedFluctuationCorrelationFunctionMultiple(A_kn=A_t, norm=False, truncate=True)
-    assert (corr_norm_trun[-1] >= 0)
-    assert (corr_trun[-1] >= 0)
-    assert (corr_norm[0] == 1.)
-    assert (corr_norm_trun[0] == 1.)
-    assert (len(corr_trun) == len(corr_norm_trun))
+    corr_norm_trun = timeseries.normalizedFluctuationCorrelationFunctionMultiple(
+        A_kn=A_t, truncate=True
+    )
+    corr_trun = timeseries.normalizedFluctuationCorrelationFunctionMultiple(
+        A_kn=A_t, norm=False, truncate=True
+    )
+    assert corr_norm_trun[-1] >= 0
+    assert corr_trun[-1] >= 0
+    assert corr_norm[0] == 1.0
+    assert corr_norm_trun[0] == 1.0
+    assert len(corr_trun) == len(corr_norm_trun)

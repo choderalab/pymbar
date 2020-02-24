@@ -30,26 +30,27 @@ This module contains implementations of
 * EXP - unidirectional estimator for free energy differences based on Zwanzig relation / exponential averaging
 """
 
-#=============================================================================================
+# =============================================================================================
 # * Fix computeBAR and computeEXP to be BAR() and EXP() to make them easier to find.
 # * Make functions that don't need to be exported (like logsum) private by prefixing an underscore.
 # * Make asymptotic covariance matrix computation more robust to over/underflow.
 # * Double-check correspondence of comments to equation numbers once manuscript has been finalized.
 # * Change self.nonzero_N_k_indices to self.states_with_samples
-#=============================================================================================
+# =============================================================================================
 
 __authors__ = "Michael R. Shirts and John D. Chodera."
 __license__ = "MIT"
 
-#=============================================================================================
+# =============================================================================================
 # IMPORTS
-#=============================================================================================
+# =============================================================================================
 import numpy as np
 from pymbar.utils import logsumexp
 
-#=============================================================================================
+# =============================================================================================
 # One-sided exponential averaging (EXP).
-#=============================================================================================
+# =============================================================================================
+
 
 def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
@@ -97,7 +98,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     T = float(np.size(w_F))  # number of work measurements
 
     # Estimate free energy difference by exponential averaging using DeltaF = - log < exp(-w_F) >
-    DeltaF = - (logsumexp(- w_F) - np.log(T))
+    DeltaF = -(logsumexp(-w_F) - np.log(T))
 
     if compute_uncertainty:
         # Compute x_i = np.exp(-w_F_i - max_arg)
@@ -112,25 +113,28 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
         if is_timeseries:
             # Estimate statistical inefficiency of x timeseries.
             import timeseries
+
             g = timeseries.statisticalInefficiency(x, x)
 
         # Estimate standard error of E[x].
         dx = np.std(x) / np.sqrt(T / g)
 
         # dDeltaF = <x>^-1 dx
-        dDeltaF = (dx / Ex)
+        dDeltaF = dx / Ex
 
         # Return estimate of free energy difference and uncertainty.
-        result_vals['Delta_f'] = DeltaF
-        result_vals['dDelta_f'] = dDeltaF
+        result_vals["Delta_f"] = DeltaF
+        result_vals["dDelta_f"] = dDeltaF
     else:
-        result_vals['Delta_f'] = DeltaF
+        result_vals["Delta_f"] = DeltaF
 
     return result_vals
 
-#=============================================================================================
+
+# =============================================================================================
 # Gaussian approximation to exponential averaging (Gauss).
-#=============================================================================================
+# =============================================================================================
+
 
 def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
@@ -188,6 +192,7 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
         if is_timeseries:
             # Estimate statistical inefficiency of x timeseries.
             import timeseries
+
             g = timeseries.statisticalInefficiency(w_F, w_F)
 
             T_eff = T / g
@@ -196,9 +201,8 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
         dDeltaF = np.sqrt(dx2)
 
         # Return estimate of free energy difference and uncertainty.
-        result_vals['Delta_f'] = DeltaF
-        result_vals['dDelta_f'] = dDeltaF
+        result_vals["Delta_f"] = DeltaF
+        result_vals["dDelta_f"] = dDeltaF
     else:
-        result_vals['Delta_f'] = DeltaF
+        result_vals["Delta_f"] = DeltaF
     return result_vals
-

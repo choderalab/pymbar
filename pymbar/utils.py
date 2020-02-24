@@ -71,7 +71,7 @@ def kln_to_kn(kln, N_k=None, cleanup=False):
             kn[:, i] = kln[k, :, ik]
             i += 1
     if cleanup:
-        del(kln)  # very big, let's explicitly delete
+        del kln  # very big, let's explicitly delete
 
     return kn
 
@@ -93,7 +93,7 @@ def kn_to_n(kn, N_k=None, cleanup=False):
     u_n: np.ndarray, float, shape=(N)
     """
 
-    #print "warning: KxN arrays deprecated; convering into new preferred N shape"
+    # print "warning: KxN arrays deprecated; convering into new preferred N shape"
     # rewrite into kn shape
 
     # rewrite into kn shape
@@ -102,7 +102,7 @@ def kn_to_n(kn, N_k=None, cleanup=False):
     if N_k is None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
-        N_k = N_max*np.ones([K], dtype=np.int64)
+        N_k = N_max * np.ones([K], dtype=np.int64)
     N = np.sum(N_k)
 
     n = np.zeros([N], dtype=np.float64)
@@ -112,12 +112,21 @@ def kn_to_n(kn, N_k=None, cleanup=False):
             n[i] = kn[k, ik]
             i += 1
     if cleanup:
-        del(kn)  # very big, let's explicitly delete
+        del kn  # very big, let's explicitly delete
     return n
 
 
-def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=None,
-                warn_on_cast=True, add_newaxis_on_deficient_ndim=False):
+def ensure_type(
+    val,
+    dtype,
+    ndim,
+    name,
+    length=None,
+    can_be_none=False,
+    shape=None,
+    warn_on_cast=True,
+    add_newaxis_on_deficient_ndim=False,
+):
     """Typecheck the size, shape and dtype of a numpy array, with optional
     casting.
 
@@ -175,33 +184,42 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
         if add_newaxis_on_deficient_ndim and ndim == 1 and np.isscalar(val):
             val = np.array([val])
         else:
-            raise TypeError(("{} must be numpy array. "
-                             " You supplied type {}".format(name, type(val))))
+            raise TypeError(
+                ("{} must be numpy array. " " You supplied type {}".format(name, type(val)))
+            )
 
     if warn_on_cast and val.dtype != dtype:
-        warnings.warn("Casting {} dtype={} to {} ".format(name, val.dtype, dtype),
-                      TypeCastPerformanceWarning)
+        warnings.warn(
+            "Casting {} dtype={} to {} ".format(name, val.dtype, dtype),
+            TypeCastPerformanceWarning,
+        )
 
     if not val.ndim == ndim:
         if add_newaxis_on_deficient_ndim and val.ndim + 1 == ndim:
             val = val[np.newaxis, ...]
         else:
-            raise ValueError(("{} must be ndim {}. "
-                              "You supplied {}".format(name, ndim, val.ndim)))
+            raise ValueError(
+                ("{} must be ndim {}. " "You supplied {}".format(name, ndim, val.ndim))
+            )
 
     val = np.ascontiguousarray(val, dtype=dtype)
 
     if length is not None and len(val) != length:
-        raise ValueError(("{} must be length {}. "
-                          "You supplied {}.".format(name, length, len(val))))
+        raise ValueError(
+            ("{} must be length {}. " "You supplied {}.".format(name, length, len(val)))
+        )
 
     if shape is not None:
         # the shape specified given by the user can look like (None, None 3)
         # which indicates that ANY length is accepted in dimension 0 or
         # dimension 1
         sentenel = object()
-        error = ValueError(("{} must be shape {}. You supplied  "
-                            "{}".format(name, str(shape).replace('None', 'Any'), val.shape)))
+        error = ValueError(
+            (
+                "{} must be shape {}. You supplied  "
+                "{}".format(name, str(shape).replace("None", "Any"), val.shape)
+            )
+        )
         for a, b in zip_longest(val.shape, shape, fillvalue=sentenel):
             if a is sentenel or b is sentenel:
                 # if the sentenel was reached, it means that the ndim didn't
@@ -321,7 +339,7 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
     return out
 
 
-def check_w_normalized(W, N_k, tolerance = 1.0e-4):
+def check_w_normalized(W, N_k, tolerance=1.0e-4):
     """Check the weight matrix W is properly normalized. The sum over N should be 1, and the sum over k by N_k should aslo be 1
 
     Parameters
@@ -343,22 +361,29 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
     [N, K] = W.shape
 
     column_sums = np.sum(W, axis=0)
-    badcolumns = (np.abs(column_sums - 1) > tolerance)
+    badcolumns = np.abs(column_sums - 1) > tolerance
     if np.any(badcolumns):
         which_badcolumns = np.arange(K)[badcolumns]
         firstbad = which_badcolumns[0]
         raise ParameterError(
-            'Warning: Should have \\sum_n W_nk = 1. Actual column sum for state {:d} was {:f}. {:d} other columns have similar problems'.format(firstbad, column_sums[firstbad], np.sum(badcolumns)))
+            "Warning: Should have \\sum_n W_nk = 1. Actual column sum for state {:d} was {:f}. {:d} other columns have similar problems".format(
+                firstbad, column_sums[firstbad], np.sum(badcolumns)
+            )
+        )
 
     row_sums = np.sum(W * N_k, axis=1)
-    badrows = (np.abs(row_sums - 1) > tolerance)
+    badrows = np.abs(row_sums - 1) > tolerance
     if np.any(badrows):
         which_badrows = np.arange(N)[badrows]
         firstbad = which_badrows[0]
         raise ParameterError(
-            'Warning: Should have \\sum_k N_k W_nk = 1.  Actual row sum for sample {:d} was {:f}. {:d} other rows have similar problems'.format(firstbad, row_sums[firstbad], np.sum(badrows)))
+            "Warning: Should have \\sum_k N_k W_nk = 1.  Actual row sum for sample {:d} was {:f}. {:d} other rows have similar problems".format(
+                firstbad, row_sums[firstbad], np.sum(badrows)
+            )
+        )
 
     return
+
 
 # ============================================================================================
 # Exception classes
@@ -371,6 +396,7 @@ class ParameterError(Exception):
     An error in the input parameters has been detected.
 
     """
+
     pass
 
 
@@ -380,6 +406,7 @@ class ConvergenceError(Exception):
     Convergence could not be achieved.
 
     """
+
     pass
 
 
@@ -389,6 +416,7 @@ class BoundsError(Exception):
     Could not determine bounds on free energy
 
     """
+
     pass
 
 
@@ -398,4 +426,5 @@ class DataError(Exception):
     Data is inconsistent.
 
     """
+
     pass

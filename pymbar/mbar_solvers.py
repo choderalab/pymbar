@@ -7,8 +7,8 @@ import warnings
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
-#DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
-#DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
+# DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
+# DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
 # Use Adpative solver as first attempt
 DEFAULT_SOLVER_METHOD = "adaptive"
 DEFAULT_SOLVER_PROTOCOL = (dict(method=DEFAULT_SOLVER_METHOD,),)
@@ -37,9 +37,11 @@ def validate_inputs(u_kn, N_k, f_k):
     """
     n_states, n_samples = u_kn.shape
 
-    u_kn = ensure_type(u_kn, 'float', 2, "u_kn or Q_kn", shape=(n_states, n_samples))
-    N_k = ensure_type(N_k, 'float', 1, "N_k", shape=(n_states,), warn_on_cast=False)  # Autocast to float because will be eventually used in float calculations.
-    f_k = ensure_type(f_k, 'float', 1, "f_k", shape=(n_states,))
+    u_kn = ensure_type(u_kn, "float", 2, "u_kn or Q_kn", shape=(n_states, n_samples))
+    N_k = ensure_type(
+        N_k, "float", 1, "N_k", shape=(n_states,), warn_on_cast=False
+    )  # Autocast to float because will be eventually used in float calculations.
+    f_k = ensure_type(f_k, "float", 1, "f_k", shape=(n_states,))
 
     return u_kn, N_k, f_k
 
@@ -67,14 +69,16 @@ def self_consistent_update(u_kn, N_k, f_k):
     """
 
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-    
-    states_with_samples = (N_k > 0)
+
+    states_with_samples = N_k > 0
 
     # Only the states with samples can contribute to the denominator term.
-    log_denominator_n = logsumexp(f_k[states_with_samples] - u_kn[states_with_samples].T, b=N_k[states_with_samples], axis=1)
-    
+    log_denominator_n = logsumexp(
+        f_k[states_with_samples] - u_kn[states_with_samples].T, b=N_k[states_with_samples], axis=1,
+    )
+
     # All states can contribute to the numerator term.
-    return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)
+    return -1.0 * logsumexp(-log_denominator_n - u_kn, axis=1)
 
 
 def mbar_gradient(u_kn, N_k, f_k):
@@ -234,7 +238,7 @@ def mbar_W_nk(u_kn, N_k, f_k):
     return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
 
 
-def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
+def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
 
     """
     Determine dimensionless free energies by a combination of Newton-Raphson iteration and self-consistent iteration.
@@ -267,15 +271,17 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
 
     """
     # put the defaults here in case we get passed an 'options' dictionary that is only partial
-    options.setdefault('verbose',False)
-    options.setdefault('maximum_iterations',250)
-    options.setdefault('print_warning',False)
-    options.setdefault('gamma',1.0)
+    options.setdefault("verbose", False)
+    options.setdefault("maximum_iterations", 250)
+    options.setdefault("print_warning", False)
+    options.setdefault("gamma", 1.0)
 
-    gamma = options['gamma']
+    gamma = options["gamma"]
     doneIterating = False
-    if options['verbose'] == True:
-        print("Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.")
+    if options["verbose"] == True:
+        print(
+            "Determining dimensionless free energies by Newton-Raphson / self-consistent iteration."
+        )
 
     if tol < 1.5e-15:
         print("Tolerance may be too close to machine precision to converge.")
@@ -292,7 +298,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     # to calculate the first time.
     g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient.
 
-    for iteration in range(0, options['maximum_iterations']):
+    for iteration in range(0, options["maximum_iterations"]):
 
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
         Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
@@ -301,7 +307,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
 
         # self-consistent iteration gradient norm and saved log sums.
         f_sci = self_consistent_update(u_kn, N_k, f_k)
-        f_sci = f_sci -  f_sci[0]   # zero out the minimum
+        f_sci = f_sci - f_sci[0]  # zero out the minimum
         g_sci = mbar_gradient(u_kn, N_k, f_sci)
         gnorm_sci = np.dot(g_sci, g_sci)
 
@@ -312,47 +318,71 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         # we could save the gradient, for the next round, but it's not too expensive to
         # compute since we are doing the Hessian anyway.
 
-        if options['verbose']:
-            print("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
+        if options["verbose"]:
+            print(
+                "self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g"
+                % (gnorm_sci, gnorm_nr)
+            )
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
-        if (gnorm_sci < gnorm_nr or sci_iter < 2):
+        if gnorm_sci < gnorm_nr or sci_iter < 2:
             f_k = f_sci
             g = g_sci
             sci_iter += 1
-            if options['verbose']:
+            if options["verbose"]:
                 if sci_iter < 2:
                     print("Choosing self-consistent iteration on iteration %d" % iteration)
                 else:
-                    print("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
+                    print(
+                        "Choosing self-consistent iteration for lower gradient on iteration %d"
+                        % iteration
+                    )
         else:
             f_k = f_nr
             g = g_nr
             nr_iter += 1
-            if options['verbose']:
+            if options["verbose"]:
                 print("Newton-Raphson used on iteration %d" % iteration)
 
-        div = np.abs(f_k[1:]) # what we will divide by to get relative difference
-        zeroed = np.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
+        div = np.abs(f_k[1:])  # what we will divide by to get relative difference
+        zeroed = np.abs(f_k[1:]) < np.min(
+            [10 ** -8, tol]
+        )  # check which values are near enough to zero, hard coded max for now.
         div[zeroed] = 1.0  # for these values, use absolute values.
-        max_delta = np.max(np.abs(f_k[1:]-f_old[1:])/div)
+        max_delta = np.max(np.abs(f_k[1:] - f_old[1:]) / div)
         if np.isnan(max_delta) or (max_delta < tol):
             doneIterating = True
             break
 
     if doneIterating:
-        if options['verbose']:
-            print('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
-            print('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
+        if options["verbose"]:
+            print(
+                "Converged to tolerance of {:e} in {:d} iterations.".format(
+                    max_delta, iteration + 1
+                )
+            )
+            print(
+                "Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations".format(
+                    iteration + 1, nr_iter, sci_iter
+                )
+            )
             if np.all(f_k == 0.0):
                 # all f_k appear to be zero
-                print('WARNING: All f_k appear to be zero.')
+                print("WARNING: All f_k appear to be zero.")
     else:
-        print('WARNING: Did not converge to within specified tolerance.')
-        if options['maximum_iterations'] <= 0:
-            print("No iterations ran be cause maximum_iterations was <= 0 ({})!".format(options['maximum_iterations']))
+        print("WARNING: Did not converge to within specified tolerance.")
+        if options["maximum_iterations"] <= 0:
+            print(
+                "No iterations ran be cause maximum_iterations was <= 0 ({})!".format(
+                    options["maximum_iterations"]
+                )
+            )
         else:
-            print('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
+            print(
+                "max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}".format(
+                    max_delta, tol, options["maximum_iterations"], iteration
+                )
+            )
     return f_k
 
 
@@ -387,7 +417,9 @@ def precondition_u_kn(u_kn, N_k, f_k):
     return u_kn
 
 
-def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1E-12, options=None):
+def solve_mbar_once(
+    u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1e-12, options=None
+):
     """Solve MBAR self-consistent equations using some form of equation solver.
 
     Parameters
@@ -429,29 +461,63 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     For fast but precise convergence, we recommend calling this function
     multiple times to polish the result.  `solve_mbar()` facilitates this.
     """
-    u_kn_nonzero, N_k_nonzero, f_k_nonzero = validate_inputs(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
+    u_kn_nonzero, N_k_nonzero, f_k_nonzero = validate_inputs(
+        u_kn_nonzero, N_k_nonzero, f_k_nonzero
+    )
     f_k_nonzero = f_k_nonzero - f_k_nonzero[0]  # Work with reduced dimensions with f_k[0] := 0
     u_kn_nonzero = precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
 
-    pad = lambda x: np.pad(x, (1, 0), mode='constant')  # Helper function inserts zero before first element
-    unpad_second_arg = lambda obj, grad: (obj, grad[1:])  # Helper function drops first element of gradient
+    pad = lambda x: np.pad(
+        x, (1, 0), mode="constant"
+    )  # Helper function inserts zero before first element
+    unpad_second_arg = lambda obj, grad: (
+        obj,
+        grad[1:],
+    )  # Helper function drops first element of gradient
 
     # Create objective functions / nonlinear equations to send to scipy.optimize, fixing f_0 = 0
-    grad = lambda x: mbar_gradient(u_kn_nonzero, N_k_nonzero, pad(x))[1:]  # Objective function gradient
-    grad_and_obj = lambda x: unpad_second_arg(*mbar_objective_and_gradient(u_kn_nonzero, N_k_nonzero, pad(x)))  # Objective function gradient and objective function
-    hess = lambda x: mbar_hessian(u_kn_nonzero, N_k_nonzero, pad(x))[1:][:, 1:]  # Hessian of objective function
+    grad = lambda x: mbar_gradient(u_kn_nonzero, N_k_nonzero, pad(x))[
+        1:
+    ]  # Objective function gradient
+    grad_and_obj = lambda x: unpad_second_arg(
+        *mbar_objective_and_gradient(u_kn_nonzero, N_k_nonzero, pad(x))
+    )  # Objective function gradient and objective function
+    hess = lambda x: mbar_hessian(u_kn_nonzero, N_k_nonzero, pad(x))[1:][
+        :, 1:
+    ]  # Hessian of objective function
 
     with warnings.catch_warnings(record=True) as w:
-        if method in ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "SLSQP"]:
+        if method in [
+            "L-BFGS-B",
+            "dogleg",
+            "CG",
+            "BFGS",
+            "Newton-CG",
+            "TNC",
+            "trust-ncg",
+            "SLSQP",
+        ]:
             if method in ["L-BFGS-B", "CG"]:
                 hess = None  # To suppress warning from passing a hessian function.
-            results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
+            results = scipy.optimize.minimize(
+                grad_and_obj,
+                f_k_nonzero[1:],
+                jac=True,
+                hess=hess,
+                method=method,
+                tol=tol,
+                options=options,
+            )
             f_k_nonzero = pad(results["x"])
-        elif method == 'adaptive':
+        elif method == "adaptive":
             results = adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options)
-            f_k_nonzero = results # they are the same for adaptive, until we decide to return more.
+            f_k_nonzero = (
+                results  # they are the same for adaptive, until we decide to return more.
+            )
         else:
-            results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
+            results = scipy.optimize.root(
+                grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options
+            )
             f_k_nonzero = pad(results["x"])
 
     # If there were runtime warnings, show the messages
@@ -460,14 +526,22 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
         for warn_msg in w:
             if "Unknown solver options" in str(warn_msg.message):
                 continue
-            warnings.showwarning(warn_msg.message, warn_msg.category,
-                                 warn_msg.filename, warn_msg.lineno, warn_msg.file, "")
+            warnings.showwarning(
+                warn_msg.message,
+                warn_msg.category,
+                warn_msg.filename,
+                warn_msg.lineno,
+                warn_msg.file,
+                "",
+            )
             can_ignore = False  # If any warning is not just unknown options, can ]not skip check
         if not can_ignore:
             # Ensure MBAR solved correctly
             w_nk_check = mbar_W_nk(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
             check_w_normalized(w_nk_check, N_k_nonzero)
-            print("MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results.")
+            print(
+                "MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results."
+            )
 
     return f_k_nonzero, results
 
@@ -514,14 +588,19 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     if solver_protocol is None:
         solver_protocol = DEFAULT_SOLVER_PROTOCOL
     for protocol in solver_protocol:
-        if protocol['method'] is None:
-            protocol['method'] = DEFAULT_SOLVER_METHOD
+        if protocol["method"] is None:
+            protocol["method"] = DEFAULT_SOLVER_METHOD
 
     all_results = []
     for k, options in enumerate(solver_protocol):
         f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, **options)
         all_results.append(results)
-        all_results.append(("Final gradient norm: %.3g" % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero))))
+        all_results.append(
+            (
+                "Final gradient norm: %.3g"
+                % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero))
+            )
+        )
     return f_k_nonzero, all_results
 
 
@@ -551,8 +630,12 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
     if len(states_with_samples) == 1:
         f_k_nonzero = np.array([0.0])
     else:
-        f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples],
-                                              f_k[states_with_samples], solver_protocol=solver_protocol)
+        f_k_nonzero, all_results = solve_mbar(
+            u_kn[states_with_samples],
+            N_k[states_with_samples],
+            f_k[states_with_samples],
+            solver_protocol=solver_protocol,
+        )
 
     f_k[states_with_samples] = f_k_nonzero
 

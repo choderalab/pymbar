@@ -30,26 +30,27 @@ This module contains implementations of
 
 """
 
-#=============================================================================================
+# =============================================================================================
 # TODO
 # * Fix computeBAR and computeEXP to be BAR() and EXP() to make them easier to find.
 # * Make functions that don't need to be exported (like logsum) private by prefixing an underscore.
 # * Make asymptotic covariance matrix computation more robust to over/underflow.
 # * Double-check correspondence of comments to equation numbers once manuscript has been finalized.
 # * Change self.nonzero_N_k_indices to self.states_with_samples
-#=============================================================================================
+# =============================================================================================
 
 
 __authors__ = "Michael R. Shirts and John D. Chodera."
 __license__ = "MIT"
 
-#=============================================================================================
+# =============================================================================================
 # IMPORTS
-#=============================================================================================
+# =============================================================================================
 import numpy as np
 import numpy.linalg
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
 from pymbar.exp import EXP
+
 
 def BARzero(w_F, w_R, DeltaF):
     """A function that when zeroed is equivalent to the solution of
@@ -90,7 +91,7 @@ def BARzero(w_F, w_R, DeltaF):
 
     """
 
-    np.seterr(over='raise')  # raise exceptions to overflows
+    np.seterr(over="raise")  # raise exceptions to overflows
     w_F = np.array(w_F, np.float64)
     w_R = np.array(w_R, np.float64)
     DeltaF = float(DeltaF)
@@ -113,11 +114,11 @@ def BARzero(w_F, w_R, DeltaF):
     #          = - maxarg - log(exp[-maxarg] + exp[(M + W - DeltaF) - maxarg])
     # where maxarg = max((M + W - DeltaF), 0)
 
-    exp_arg_F = (M + w_F - DeltaF)
+    exp_arg_F = M + w_F - DeltaF
     # use boolean logic to zero out the ones that are less than 0, but not if greater than zero.
     max_arg_F = np.choose(np.less(0.0, exp_arg_F), (0.0, exp_arg_F))
     try:
-        log_f_F = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
+        log_f_F = -max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
     except:
         # give up; if there's overflow, return zero
         print("The input data results in overflow in BAR")
@@ -134,7 +135,7 @@ def BARzero(w_F, w_R, DeltaF):
     # use boolean logic to zero out the ones that are less than 0, but not if greater than zero.
     max_arg_R = np.choose(np.less(0.0, exp_arg_R), (0.0, exp_arg_R))
     try:
-        log_f_R = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
+        log_f_R = -max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
     except:
         print("The input data results in overflow in BAR")
         return np.nan
@@ -142,12 +143,23 @@ def BARzero(w_F, w_R, DeltaF):
 
     # This function must be zeroed to find a root
     fzero = log_numer - log_denom
-
-    np.seterr(over='warn')  # return options to standard settings so we don't disturb other functionality.
+    # return options to standard settings so we don't disturb other functionality.
+    np.seterr(over="warn")  
     return fzero
 
 
-def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True):
+def BAR(
+    w_F,
+    w_R,
+    DeltaF=0.0,
+    compute_uncertainty=True,
+    uncertainty_method="BAR",
+    maximum_iterations=500,
+    relative_tolerance=1.0e-12,
+    verbose=False,
+    method="false-position",
+    iterated_solution=True,
+):
     """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
     Parameters
@@ -221,44 +233,48 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     if not iterated_solution:
         maximum_iterations = 1
-        method = 'self-consistent-iteration'
+        method = "self-consistent-iteration"
         DeltaF_initial = DeltaF
 
-    if method not in ['self-consistent-iteration','false-position','bisection']:
-        raise ParameterError('method {:d} is not defined for BAR'.format(method))
+    if method not in ["self-consistent-iteration", "false-position", "bisection"]:
+        raise ParameterError("method {:d} is not defined for BAR".format(method))
 
-    if uncertainty_method not in ['BAR','MBAR']:
-        raise ParameterError('uncertainty_method {:d} is not defined for BAR'.format(uncertainty_method))        
+    if uncertainty_method not in ["BAR", "MBAR"]:
+        raise ParameterError(
+            "uncertainty_method {:d} is not defined for BAR".format(uncertainty_method)
+        )
 
-    if method == 'self-consistent-iteration':
+    if method == "self-consistent-iteration":
         nfunc = 0
 
-    if method == 'bisection' or method == 'false-position':
-        UpperB = EXP(w_F)['Delta_f']
-        LowerB = -EXP(w_R)['Delta_f']
+    if method == "bisection" or method == "false-position":
+        UpperB = EXP(w_F)["Delta_f"]
+        LowerB = -EXP(w_R)["Delta_f"]
 
         FUpperB = BARzero(w_F, w_R, UpperB)
         FLowerB = BARzero(w_F, w_R, LowerB)
         nfunc = 2
 
-        if (np.isnan(FUpperB) or np.isnan(FLowerB)):
+        if np.isnan(FUpperB) or np.isnan(FLowerB):
             # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
             # consider returning more information about failure
-            print("Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty.")
+            print(
+                "Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty."
+            )
             if compute_uncertainty:
-                result_vals['Delta_f'] = 0.0 
-                result_vals['dDelta_f'] = 0.0
+                result_vals["Delta_f"] = 0.0
+                result_vals["dDelta_f"] = 0.0
                 return result_vals
 
             else:
-                result_vals['Delta_f'] = 0.0
+                result_vals["Delta_f"] = 0.0
                 return result_vals
-            
+
         while FUpperB * FLowerB > 0:
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
             # There may be a better way to do this, and the above bracket should rarely fail.
             if verbose:
-                print('Initial brackets did not actually bracket, widening them')
+                print("Initial brackets did not actually bracket, widening them")
             FAve = (UpperB + LowerB) / 2
             UpperB = UpperB - max(abs(UpperB - FAve), 0.1)
             LowerB = LowerB + max(abs(LowerB - FAve), 0.1)
@@ -272,7 +288,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
         DeltaF_old = DeltaF
 
-        if method == 'false-position':
+        if method == "false-position":
             # Predict the new value
             if (LowerB == 0.0) and (UpperB == 0.0):
                 DeltaF = 0.0
@@ -285,25 +301,25 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if FNew == 0:
                 # Convergence is achieved.
                 if verbose:
-                    print('Convergence achieved.')
+                    print("Convergence achieved.")
                 relative_change = 10 ** (-15)
                 break
 
-        if method == 'bisection':
+        if method == "bisection":
             # Predict the new value
             DeltaF = (UpperB + LowerB) / 2
             FNew = BARzero(w_F, w_R, DeltaF)
             nfunc += 1
 
-        if method == 'self-consistent-iteration':
+        if method == "self-consistent-iteration":
             DeltaF = -BARzero(w_F, w_R, DeltaF) + DeltaF
             nfunc += 1
 
         # Check for convergence.
-        if (DeltaF == 0.0):
+        if DeltaF == 0.0:
             # The free energy difference appears to be zero -- return.
             if verbose:
-                print('The free energy difference appears to be zero.')
+                print("The free energy difference appears to be zero.")
             break
 
         if iterated_solution:
@@ -311,13 +327,13 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             if verbose:
                 print("relative_change = {:12.3f}".format(relative_change))
 
-            if ((iteration > 0) and (relative_change < relative_tolerance)):
+            if (iteration > 0) and (relative_change < relative_tolerance):
                 # Convergence is achieved.
                 if verbose:
                     print("Convergence achieved.")
                 break
 
-        if method == 'false-position' or method == 'bisection':
+        if method == "false-position" or method == "bisection":
             if FUpperB * FNew < 0:
                 # these two now bracket the root
                 LowerB = DeltaF
@@ -327,7 +343,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
                 UpperB = DeltaF
                 FUpperB = FNew
             else:
-                message = 'WARNING: Cannot determine bound on free energy'
+                message = "WARNING: Cannot determine bound on free energy"
                 raise BoundsError(message)
 
         if verbose:
@@ -337,14 +353,20 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     if iterated_solution:
         if iteration < maximum_iterations:
             if verbose:
-                print('Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)'.format(relative_change, iteration, nfunc))
+                print(
+                    "Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)".format(
+                        relative_change, iteration, nfunc
+                    )
+                )
         else:
-            message = 'WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = {:d}'.format(relative_change, relative_tolerance, maximum_iterations)
+            message = "WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = {:d}".format(
+                relative_change, relative_tolerance, maximum_iterations
+            )
             raise ConvergenceError(message)
 
     if compute_uncertainty:
 
-        '''
+        """
 
         Compute asymptotic variance estimate using Eq. 10a of Bennett,
         1976 (except with n_1<f>_1^2 in the second denominator, it is
@@ -448,7 +470,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         see https://github.com/choderalab/pymbar/issues/281 for more information.
 
         Now implement the two computations.
-        '''
+        """
 
         # Determine number of forward and reverse work values provided.
         T_F = float(w_F.size)  # number of forward work values
@@ -465,42 +487,43 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         # In theory, overflow handling should not be needed now, because we use numlogexp or a custom routine?
 
         # fF = 1 / (1 + np.exp(w_F + C)), but we need to handle overflows
-        exp_arg_F = (w_F + C)
-        max_arg_F  = np.max(exp_arg_F)
-        log_fF = - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
-        afF  = np.exp(logsumexp(log_fF)-max_arg_F)/T_F
+        exp_arg_F = w_F + C
+        max_arg_F = np.max(exp_arg_F)
+        log_fF = -np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
+        afF = np.exp(logsumexp(log_fF) - max_arg_F) / T_F
 
         # fR = 1 / (1 + np.exp(w_R - C)), but we need to handle overflows
-        exp_arg_R = (w_R - C)
-        max_arg_R  = np.max(exp_arg_R)
-        log_fR = - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
-        afR = np.exp(logsumexp(log_fR)-max_arg_R)/T_R
+        exp_arg_R = w_R - C
+        max_arg_R = np.max(exp_arg_R)
+        log_fR = -np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
+        afR = np.exp(logsumexp(log_fR) - max_arg_R) / T_R
 
-        afF2 = np.exp(logsumexp(2*log_fF)-2*max_arg_F)/T_F
-        afR2 = np.exp(logsumexp(2*log_fR)-2*max_arg_R)/T_R
+        afF2 = np.exp(logsumexp(2 * log_fF) - 2 * max_arg_F) / T_F
+        afR2 = np.exp(logsumexp(2 * log_fR) - 2 * max_arg_R) / T_R
 
-        nrat = (T_F + T_R)/(T_F * T_R)   # same for both methods
+        nrat = (T_F + T_R) / (T_F * T_R)  # same for both methods
 
-        if uncertainty_method == 'BAR':
-            variance = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R - nrat
+        if uncertainty_method == "BAR":
+            variance = (afF2 / afF ** 2) / T_F + (afR2 / afR ** 2) / T_R - nrat
             dDeltaF = np.sqrt(variance)
-        elif uncertainty_method == 'MBAR':
+        elif uncertainty_method == "MBAR":
             # OR equivalently
-            vartemp = ((afF - afF2)*T_F + (afR - afR2)*T_R)
-            dDeltaF = np.sqrt(1.0/vartemp - nrat)
+            vartemp = (afF - afF2) * T_F + (afR - afR2) * T_R
+            dDeltaF = np.sqrt(1.0 / vartemp - nrat)
         else:
-            message = 'ERROR: BAR uncertainty method {:s} is not defined'.format(uncertainty_method)
+            message = "ERROR: BAR uncertainty method {:s} is not defined".format(
+                uncertainty_method
+            )
             raise ParameterError(message)
 
         if verbose:
             print("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
-        result_vals['Delta_f'] = DeltaF
-        result_vals['dDelta_f'] = dDeltaF
+        result_vals["Delta_f"] = DeltaF
+        result_vals["dDelta_f"] = dDeltaF
         return result_vals
 
     else:
         if verbose:
             print("DeltaF = {:8.3f}".format(DeltaF))
-        result_vals['Delta_f'] = DeltaF
+        result_vals["Delta_f"] = DeltaF
         return result_vals
-

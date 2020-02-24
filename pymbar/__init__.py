@@ -40,9 +40,20 @@ try:
 except:
     # Fill in information manually.
     # TODO: See if we can at least get the git revision info in here.
-    version = 'dev'
-    full_version = 'dev'
-    git_revision = 'dev'
+    version = "dev"
+    full_version = "dev"
+    git_revision = "dev"
     isrelease = False
 
-__all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils', 'PMF']
+__all__ = [
+    "EXP",
+    "EXPGauss",
+    "BAR",
+    "BARzero",
+    "MBAR",
+    "timeseries",
+    "testsystems",
+    "confidenceintervals",
+    "utils",
+    "PMF",
+]
