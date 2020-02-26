@@ -325,7 +325,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
 
         # compute normalized fluctuation correlation function at time t
         C = C / sigma2
-        # logger.debug("C[{:5d}] = {:16f} ({:16f} / {:16f})".format(t, C, numerator, denominator))
+        # logger.info("C[{:5d}] = {:16f} ({:16f} / {:16f})".format(t, C, numerator, denominator))
 
         # Store estimate of correlation function.
         Ct.append((t, C))
@@ -704,16 +704,16 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
     # Compute the statistical inefficiency for the timeseries.
     if not g:
         if verbose:
-            logger.debug("Computing statistical inefficiency...")
+            logger.info("Computing statistical inefficiency...")
         g = statisticalInefficiency(A_t, A_t, fast=fast)
         if verbose:
-            logger.debug("g = {:f}".format(g))
+            logger.info("g = {:f}".format(g))
 
     if conservative:
         # Round g up to determine the stride we can use to pick out regularly-spaced uncorrelated samples.
         stride = int(math.ceil(g))
         if verbose:
-            logger.debug("conservative subsampling: using stride of {:d}".format(stride))
+            logger.info("conservative subsampling: using stride of {:d}".format(stride))
 
         # Assemble list of indices of uncorrelated snapshots.
         indices = range(0, T, stride)
@@ -728,13 +728,13 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
                 indices.append(t)
             n += 1
         if verbose:
-            logger.debug("standard subsampling: using average stride of {:f}".format(g))
+            logger.info("standard subsampling: using average stride of {:f}".format(g))
 
     # Number of samples in subsampled timeseries.
     N = len(indices)
 
     if verbose:
-        logger.debug("The resulting subsampled set has {:d} samples (original timeseries had {:d}).".format(N, T))
+        logger.info("The resulting subsampled set has {:d} samples (original timeseries had {:d}).".format(N, T))
 
     # Return the list of indices of uncorrelated snapshots.
     return indices

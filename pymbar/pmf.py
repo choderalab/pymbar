@@ -229,7 +229,7 @@ class PMF:
         self._seed = None
 
         if self.verbose:
-            logger.debug("PMF initialized")
+            logger.info("PMF initialized")
 
     @property
     def seed(self):
@@ -1346,7 +1346,7 @@ class PMF:
         g_mc = None
 
         if verbose:
-            logger.debug("Done MC sampling")
+            logger.info("Done MC sampling")
 
         if decorrelate:
             t_mc, g_mc, Neff = timeseries.detectEquilibration(logposteriors)
@@ -1354,12 +1354,12 @@ class PMF:
             equil_logp = logposteriors[t_mc:]
             g_mc = timeseries.statisticalInefficiency(equil_logp)
             if verbose:
-                logger.debug("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
+                logger.info("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
             g_c = np.zeros(len(c))
             for nc in range(len(c)):
                 g_c[nc] = timeseries.statisticalInefficiency(csamples[nc,t_mc:])
             if verbose:
-                logger.debug("Time series for spline parameters are: {:s}".format(str(g_c))) 
+                logger.info("Time series for spline parameters are: {:s}".format(str(g_c))) 
             maxgc = np.max(g_c)
             meangc = np.mean(g_c)
             guse = g_mc  # doesn't affect the distribution that much
@@ -1367,14 +1367,14 @@ class PMF:
             logposteriors = equil_logp[indices]
             csamples = (csamples[:,t_mc:])[:,indices]
             if verbose:
-                logger.debug("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
+                logger.info("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
 
         self.mc_data['samples'] = csamples
         self.mc_data['logposteriors'] = logposteriors
         self.mc_data['mc_parameters'] = mc_parameters
         self.mc_data['acceptance ratio'] = self.naccept / niterations
         if verbose:
-            logger.debug("Acceptance rate: {:5.3f}".format(self.mc_data['acceptance ratio']))
+            logger.info("Acceptance rate: {:5.3f}".format(self.mc_data['acceptance ratio']))
         self.mc_data['nequil'] = t_mc # the start of the "equilibrated" data set
         self.mc_data['g_logposterior'] = g_mc # statistical efficiency of the log posterior
         self.mc_data['g_parameters'] = g_c # statistical efficiency of the parametere

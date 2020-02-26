@@ -278,7 +278,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     gamma = options['gamma']
     doneIterating = False
     if options['verbose'] == True:
-        logger.debug("Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.")
+        logger.info("Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.")
 
     if tol < 1.5e-15:
         logger.info("Tolerance may be too close to machine precision to converge.")
@@ -316,7 +316,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         # compute since we are doing the Hessian anyway.
 
         if options['verbose']:
-            logger.debug("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
+            logger.info("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
         if (gnorm_sci < gnorm_nr or sci_iter < 2):
@@ -325,15 +325,15 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
             sci_iter += 1
             if options['verbose']:
                 if sci_iter < 2:
-                    logger.debug("Choosing self-consistent iteration on iteration %d" % iteration)
+                    logger.info("Choosing self-consistent iteration on iteration %d" % iteration)
                 else:
-                    logger.debug("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
+                    logger.info("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
         else:
             f_k = f_nr
             g = g_nr
             nr_iter += 1
             if options['verbose']:
-                logger.debug("Newton-Raphson used on iteration %d" % iteration)
+                logger.info("Newton-Raphson used on iteration %d" % iteration)
 
         div = np.abs(f_k[1:]) # what we will divide by to get relative difference
         zeroed = np.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
@@ -345,11 +345,11 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
 
     if doneIterating:
         if options['verbose']:
-            logger.debug('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
-            logger.debug('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
+            logger.info('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
+            logger.info('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
             if np.all(f_k == 0.0):
                 # all f_k appear to be zero
-                logger.debug('WARNING: All f_k appear to be zero.')
+                logger.info('WARNING: All f_k appear to be zero.')
     else:
         logger.warning('WARNING: Did not converge to within specified tolerance.')
         if options['maximum_iterations'] <= 0:
