@@ -109,14 +109,13 @@ def test_ukln(mbar_and_test_kln):
     free_energies_almost_equal(fe, fe_sigma, test.analytical_free_energies())
 
 
-def test_duplicate_state(fixed_harmonic_sample, capsys):
+def test_duplicate_state(fixed_harmonic_sample, caplog):
     """Test that MBAR's duplicate state check is working"""
     _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode='u_kn')
     u_kn_dup = np.append(u_kn, u_kn[[0], :], axis=0)
     N_k_dup = np.append(N_k, [0])
     mbar = MBAR(u_kn_dup, N_k_dup, verbose=True)
-    captured = capsys.readouterr()
-    assert "likely to to be the same thermodynamic state" in captured.out
+    assert "likely to to be the same thermodynamic state" in caplog.text
     results = mbar.getFreeEnergyDifferences()
     fe = results['Delta_f']
     assert np.allclose(fe[0], fe[-1])

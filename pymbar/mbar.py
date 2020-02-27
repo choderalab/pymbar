@@ -37,6 +37,8 @@ This module contains implementations of
 
 """
 
+from textwrap import dedent
+import logging
 import math
 import numpy as np
 import numpy.linalg as linalg
@@ -44,6 +46,7 @@ import warnings
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
+logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
 # =========================================================================
@@ -198,7 +201,7 @@ class MBAR:
         K, N = np.shape(u_kn)
 
         if verbose:
-            print("K (total states) = {:d}, total samples = {:d}".format(K, N))
+            logger.info("K (total states) = {:d}, total samples = {:d}".format(K, N))
 
         if np.sum(self.N_k) != N:
             raise ParameterError(
@@ -255,17 +258,18 @@ class MBAR:
                     if (diffsum < relative_tolerance):
                         self.samestates.append([k, l])
                         self.samestates.append([l, k])
-                        print('')
-                        print('Warning: states {:d} and {:d} have the same energies on the dataset.'.format(l, k))
-                        print('They are therefore likely to to be the same thermodynamic state.  This can occasionally cause')
-                        print('numerical problems with computing the covariance of their energy difference, which must be')
-                        print('identically zero in any case. Consider combining them into a single state.')
-                        print('')
+                        msg = """
+                        States {:d} and {:d} have the same energies on the dataset.
+                        They are therefore likely to to be the same thermodynamic state. This can occasionally cause
+                        numerical problems with computing the covariance of their energy difference, which must be
+                        identically zero in any case. Consider combining them into a single state.
+                        """.format(l, k)
+                        logger.warning(dedent(msg[1:]))
 
         # Print number of samples from each state.
         if self.verbose:
-            print("N_k = ")
-            print(self.N_k)
+            logger.info("N_k = ")
+            logger.info(self.N_k)
 
         # Determine list of k indices for which N_k != 0
         self.states_with_samples = np.where(self.N_k != 0)[0]
@@ -274,7 +278,7 @@ class MBAR:
         # Number of states with samples.
         self.K_nonzero = self.states_with_samples.size
         if verbose:
-            print("There are {:d} states with samples.".format(self.K_nonzero))
+            logger.info("There are {:d} states with samples.".format(self.K_nonzero))
 
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
@@ -285,7 +289,7 @@ class MBAR:
         # specified, start with that.
         if initial_f_k is not None:
             if self.verbose:
-                print("Initializing f_k with provided initial guess.")
+                logger.info("Initializing f_k with provided initial guess.")
             # Cast to np array.
             initial_f_k = np.array(initial_f_k, dtype=np.float64)
             # Check shape
@@ -295,7 +299,7 @@ class MBAR:
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
             if self.verbose:
-                print(self.f_k)
+                logger.info(self.f_k)
             # Shift all free energies such that f_0 = 0.
             self.f_k[:] = self.f_k[:] - self.f_k[0]
         else:
@@ -303,9 +307,9 @@ class MBAR:
             self._initializeFreeEnergies(verbose, method=initialize)
 
             if self.verbose:
-                print("Initial dimensionless free energies with method {}".format(initialize))
-                print("f_k = ")
-                print(self.f_k)
+                logger.info("Initial dimensionless free energies with method {}".format(initialize))
+                logger.info("f_k = ")
+                logger.info(self.f_k)
 
         if solver_protocol is None:
             solver_protocol = ({'method': None},)
@@ -322,12 +326,12 @@ class MBAR:
 
         # Print final dimensionless free energies.
         if self.verbose:
-            print("Final dimensionless free energies")
-            print("f_k = ")
-            print(self.f_k)
+            logger.info("Final dimensionless free energies")
+            logger.info("f_k = ")
+            logger.info(self.f_k)
 
         if self.verbose:
-            print("MBAR initialization complete.")
+            logger.info("MBAR initialization complete.")
 
     @property
     def W_nk(self):
@@ -414,8 +418,8 @@ class MBAR:
             w = np.exp(self.Log_W_nk[:,k])
             N_eff[k] = 1/np.sum(w**2)
             if verbose:
-                print("Effective number of sample in state {:d} is {:10.3f}".format(k,N_eff[k]))
-                print("Efficiency for state {:d} is {:6f}/{:d} = {:10.4f}".format(k,N_eff[k],len(w),N_eff[k]/len(w)))
+                logger.info("Effective number of sample in state {:d} is {:10.3f}".format(k,N_eff[k]))
+                logger.info("Efficiency for state {:d} is {:6f}/{:d} = {:10.4f}".format(k,N_eff[k],len(w),N_eff[k]/len(w)))
 
         return N_eff
 
@@ -956,7 +960,7 @@ class MBAR:
         dims = len(np.shape(A_n))
 
         if dims > 2:
-            print("Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.")
+            logger.warning("dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.")
 
         if not state_dependent:
             if dims==2:
@@ -1245,7 +1249,7 @@ class MBAR:
 
         """
         if verbose:
-            print("Computing average energy and entropy by MBAR.")
+            logger.info("Computing average energy and entropy by MBAR.")
 
         dims = len(np.shape(u_kn))
         if dims==3:
@@ -1343,7 +1347,7 @@ class MBAR:
         # check for any numbers below zero.
         if np.any(d2 < 0.0):
             if np.any(d2 < cutoff):
-                print("A squared uncertainty is negative. Largest Magnitude = {0:f}".format(
+                logger.warning("A squared uncertainty is negative. Largest Magnitude = {0:f}".format(
                     abs(np.min(d2[d2 < cutoff]))))
             else:
                 d2[np.logical_and(0 > d2, d2 > cutoff)] = 0.0
@@ -1505,18 +1509,18 @@ class MBAR:
         if (method == 'zeros'):
             # Use zeros for initial free energies.
             if verbose:
-                print("Initializing free energies to zero.")
+                logger.info("Initializing free energies to zero.")
             self.f_k[:] = 0.0
         elif (method == 'mean-reduced-potential'):
             # Compute initial guess at free energies from the mean reduced
             # potential from each state
             if verbose:
-                print("Initializing free energies with mean reduced potential for each state.")
+                logger.info("Initializing free energies with mean reduced potential for each state.")
             means = np.zeros([self.K], float)
             for k in self.states_with_samples:
                 means[k] = self.u_kn[k, 0:self.N_k[k]].mean()
             if (np.max(np.abs(means)) < 0.000001):
-                print("Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir.")
+                logger.warning("Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir.")
             self.f_k = means
         elif (method == 'BAR'):
             # For now, make a simple list of those states with samples.

@@ -21,6 +21,7 @@ A module implementing calculation of potentials of mean force from biased simula
 
 """
 
+import logging
 import math
 import itertools as it
 import numpy as np
@@ -39,8 +40,9 @@ from scipy.optimize import minimize
 
 from timeit import default_timer as timer  # may remove timing?
 
-import pdb  # delete when done
+import pdb  # TODO: delete when done
 
+logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
 # =========================================================================
@@ -149,9 +151,7 @@ class PMF:
 
         """
         for key, val in kwargs.items():
-            print(
-                "Warning: parameter {}={} is unrecognized and unused.".format(
-                    key, val))
+            logging.warning("Warning: parameter {}={} is unrecognized and unused.".format(key, val))
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be
@@ -229,7 +229,7 @@ class PMF:
         self._seed = None
 
         if self.verbose:
-            print("PMF initialized")
+            logger.info("PMF initialized")
 
     @property
     def seed(self):
@@ -842,7 +842,7 @@ class PMF:
                         xi = xold - dx
                         if spline_parameters['optimize_options']['disp']:
                             dg = np.sqrt(np.dot(g, g))
-                            print(
+                            logger.info(
                                 "f = {:.10f}. gradient norm = {:.10f}".format(
                                     f, np.sqrt(dg)))
                     self.bspline = self._val_to_spline(xi, form = 'log')
@@ -1289,7 +1289,7 @@ class PMF:
                 "Need to generate a splined PMF using GeneratePMF before performing MCMC sampling")
 
         if mc_parameters is None:
-            print('Using default MC parameters')
+            logger.info('Using default MC parameters')
             mc_parameters = dict()
 
         if 'niterations' not in mc_parameters:
@@ -1346,20 +1346,20 @@ class PMF:
         g_mc = None
 
         if verbose:
-            print("Done MC sampling")
+            logger.info("Done MC sampling")
 
         if decorrelate:
             t_mc, g_mc, Neff = timeseries.detectEquilibration(logposteriors)
-            print("First equilibration sample is {:d} of {:d}".format(t_mc,len(logposteriors)))
+            logger.info("First equilibration sample is {:d} of {:d}".format(t_mc,len(logposteriors)))
             equil_logp = logposteriors[t_mc:]
             g_mc = timeseries.statisticalInefficiency(equil_logp)
             if verbose:
-                print("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
+                logger.info("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
             g_c = np.zeros(len(c))
             for nc in range(len(c)):
                 g_c[nc] = timeseries.statisticalInefficiency(csamples[nc,t_mc:])
             if verbose:
-                print("Time series for spline parameters are: {:s}".format(str(g_c))) 
+                logger.info("Time series for spline parameters are: {:s}".format(str(g_c))) 
             maxgc = np.max(g_c)
             meangc = np.mean(g_c)
             guse = g_mc  # doesn't affect the distribution that much
@@ -1367,14 +1367,14 @@ class PMF:
             logposteriors = equil_logp[indices]
             csamples = (csamples[:,t_mc:])[:,indices]
             if verbose:
-                print("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
+                logger.info("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
 
         self.mc_data['samples'] = csamples
         self.mc_data['logposteriors'] = logposteriors
         self.mc_data['mc_parameters'] = mc_parameters
         self.mc_data['acceptance ratio'] = self.naccept / niterations
         if verbose:
-            print("Acceptance rate: {:5.3f}".format(self.mc_data['acceptance ratio']))
+            logger.info("Acceptance rate: {:5.3f}".format(self.mc_data['acceptance ratio']))
         self.mc_data['nequil'] = t_mc # the start of the "equilibrated" data set
         self.mc_data['g_logposterior'] = g_mc # statistical efficiency of the log posterior
         self.mc_data['g_parameters'] = g_c # statistical efficiency of the parametere
