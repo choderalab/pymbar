@@ -76,6 +76,7 @@ jobs:
     env:
       CI_OS: ubuntu-latest
       PACKAGE: "pymbar"
+      PYVER: "3.6"
 
     steps:
     - name: Checkout the code
@@ -86,10 +87,13 @@ jobs:
       run: |
         . devtools/github-actions/initialize_conda.sh
         conda activate
-        pip install pylint
+        python devtools/scripts/create_conda_env.py -n=test -p=$PYVER devtools/conda-envs/test_env.yaml
+        conda activate test
+        conda install pylint
 
     - name: Run linter
       shell: bash
       run: |
         . devtools/github-actions/initialize_conda.sh
+        conda activate test
         pylint --disable=all --enable=W,E --disable=W0511 $PACKAGE/
