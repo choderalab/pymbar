@@ -96,4 +96,4 @@ jobs:
       run: |
         . devtools/github-actions/initialize_conda.sh
         conda activate test
-        pylint --disable=all --enable=W,E --disable=W0511 $PACKAGE/
+        pylint $PACKAGE/
