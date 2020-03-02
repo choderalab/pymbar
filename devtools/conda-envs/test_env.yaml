@@ -16,4 +16,4 @@ dependencies:
   - codecov
   - statsmodels
   - scikit-learn  # Provides the sklearn module
-
+  - matplotlib-base
