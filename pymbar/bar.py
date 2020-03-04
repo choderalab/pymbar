@@ -125,7 +125,7 @@ def BARzero(w_F, w_R, DeltaF):
         log_f_F = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
     except:
         # give up; if there's overflow, return zero
-        logger.info("The input data results in overflow in BAR")
+        logger.warning("The input data results in overflow in BAR")
         return np.nan
     log_numer = logsumexp(log_f_F)
 

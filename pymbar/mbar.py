@@ -39,10 +39,8 @@ This module contains implementations of
 
 from textwrap import dedent
 import logging
-import math
 import numpy as np
 import numpy.linalg as linalg
-import warnings
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
@@ -307,7 +305,7 @@ class MBAR:
             self._initializeFreeEnergies(verbose, method=initialize)
 
             if self.verbose:
-                logger.info("Initial dimensionless free energies with method {}".format(initialize))
+                logger.info("Initial dimensionless free energies with method {:s}",format(initialize))
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
