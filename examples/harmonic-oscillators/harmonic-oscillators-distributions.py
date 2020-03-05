@@ -221,7 +221,7 @@ for replicate_index in range(0,nreplicates):
 print("Free energies")
 # compute anderson/darling statistics
 
-D = confidenceintervals.AndersonDarling(replicates_df,K)
+D = confidenceintervals.anderson_darling(replicates_df,K)
 print("Anderson-Darling Metrics (see README.md)")
 print(D)
 if (generateplots):
@@ -230,7 +230,7 @@ if (generateplots):
 
 print("Standard ensemble averaged observables")
 (alpha_Ai,Pobs_Ai,Plow_Ai,Phigh_Ai,dPobs_Ai,Pnorm_Ai) = confidenceintervals.generateConfidenceIntervals(replicates_standobservable,numpy.sum(ifzero))
-D = confidenceintervals.AndersonDarling(replicates_standobservable,numpy.sum(ifzero))
+D = confidenceintervals.anderson_darling(replicates_standobservable,numpy.sum(ifzero))
 print("Anderson-Darling Metrics (see README.md)")
 print(D)
 if (generateplots):
@@ -238,7 +238,7 @@ if (generateplots):
 
 print("MBAR ensemble averaged observables")
 (alpha_Ai,Pobs_Ai,Plow_Ai,Phigh_Ai,dPobs_Ai,Pnorm_Ai) = confidenceintervals.generateConfidenceIntervals(replicates_observable,K)
-D = confidenceintervals.AndersonDarling(replicates_observable,K)
+D = confidenceintervals.anderson_darling(replicates_observable,K)
 print("Anderson-Darling Metrics (see README.md)")
 print(D)
 if (generateplots):

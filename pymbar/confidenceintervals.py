@@ -23,8 +23,9 @@ import numpy as np
 import scipy
 import scipy.special
 import scipy.stats
+from pymbar._deprecate import _deprecate
 
-def OrderReplicates(replicates, K):
+def order_replicates(replicates, K):
 
     ''' Inputs: An array of replicates, and the size of the data.
 
@@ -58,7 +59,9 @@ def OrderReplicates(replicates, K):
     sigma -= sigmacorr
     return sortedyi
 
-def AndersonDarling(replicates, K):
+OrderReplicates = _deprecate(order_replicates, "OrderReplicates")
+
+def anderson_darling(replicates, K):
 
     # inputs:
     #      replicates: list of replicates
@@ -86,7 +89,7 @@ def AndersonDarling(replicates, K):
     # for now, the standard deviation we use is the one from the
     # _first_ replicate.
 
-    sortedyi = OrderReplicates(replicates, K)
+    sortedyi = order_replicates(replicates, K)
     zerosigma = (replicates[0]['destimated'] == 0) # ignore the ones with zero values of the std
 
     N = len(replicates)
@@ -99,12 +102,14 @@ def AndersonDarling(replicates, K):
     A2[zerosigma] = 0
     return A2
 
-def QQPlot(replicates, K, title='Generic Q-Q plot', filename = 'qq.pdf'):
+AndersonDarling = _deprecate(anderson_darling, "AndersonDarling")
+
+def QQ_plot(replicates, K, title='Generic Q-Q plot', filename = 'qq.pdf'):
 
     import matplotlib
     import matplotlib.pyplot as plt
 
-    sortedyi = OrderReplicates(replicates, K)
+    sortedyi = order_replicates(replicates, K)
     N = len(replicates)
     dim = len(np.shape(replicates[0]['error']))
     xvals = scipy.stats.norm.ppf((np.arange(0,N)+0.5)/N)  # inverse pdf
@@ -160,7 +165,10 @@ def QQPlot(replicates, K, title='Generic Q-Q plot', filename = 'qq.pdf'):
 
     return
 
-def generateConfidenceIntervals(replicates, K):
+QQPlot = _deprecate(QQ_plot, "QQPlot")
+
+
+def generate_confidence_intervals(replicates, K):
     # inputs:
     #      replicates: list of replicates
     #      K: number of replicates
@@ -346,3 +354,5 @@ def generateConfidenceIntervals(replicates, K):
     print("Totals: %10.4f  %10.4f  %10.4f  %10.4f %10.4f" % (pave, pbias, prms, pstdev, pavestd))
 
     return alpha_values, Pobs, Plow, Phigh, dPobs, Pnorm
+
+generateConfidenceIntervals = _deprecate(generate_confidence_intervals, "generateConfidenceIntervals")

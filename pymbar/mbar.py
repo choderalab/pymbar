@@ -42,6 +42,7 @@ import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
+from pymbar._deprecate import _deprecate
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
@@ -328,7 +329,8 @@ class MBAR:
         return np.exp(self.Log_W_nk)
 
     # =========================================================================
-    def getWeights(self):
+    # TODO: Should this be a property instead of a method?
+    def weights(self):
         """Retrieve the weight matrix W_nk from the MBAR algorithm.
 
         Necessary because they are stored internally as log weights.
@@ -342,8 +344,11 @@ class MBAR:
 
         return self.W_nk
 
+    getWeights = _deprecate(weights, "getWeights")
+
     # =========================================================================
-    def computeEffectiveSampleNumber(self, verbose = False):
+    # TODO: Drop the compute_ prefix?
+    def compute_effective_sample_number(self, verbose = False):
         """
         Compute the effective sample number of each state;
         essentially, an estimate of how many samples are contributing to the average
@@ -390,7 +395,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> [x_kn, u_kln, N_k, s_n] = testsystems.HarmonicOscillatorsTestCase().sample()
         >>> mbar = MBAR(u_kln, N_k)
-        >>> N_eff = mbar.computeEffectiveSampleNumber()
+        >>> N_eff = mbar.compute_effective_sample_number()
         """
 
         N_eff = np.zeros(self.K)
@@ -403,8 +408,10 @@ class MBAR:
 
         return N_eff
 
+    computeEffectiveSampleNumber = _deprecate(compute_effective_sample_number, "computeEffectiveSampleNumber")
+    
     # =========================================================================
-    def computeOverlap(self, return_dict=True):
+    def compute_overlap(self, return_dict=True):
         """
         Compute estimate of overlap matrix between the states.
 
@@ -444,11 +451,11 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_kn, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computeOverlap(return_dict=True)
+        >>> results = mbar.compute_overlap(return_dict=True)
 
         """
 
-        W = np.matrix(self.getWeights(), np.float64)
+        W = np.matrix(self.weights(), np.float64)
         O = np.multiply(self.N_k, W.T * W)
         (eigenvals, eigevec) = linalg.eig(O)
         # sort in descending order
@@ -464,8 +471,10 @@ class MBAR:
             return results_vals
         return overlap_scalar, eigenvals, O
 
+    computeOverlap = _deprecate(compute_overlap, "computeOverlap")
+
     #=========================================================================
-    def getFreeEnergyDifferences(self, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False, return_dict=False):
+    def compute_free_energy_differences(self, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False, return_dict=False):
         """Get the dimensionless free energy differences and uncertainties among all thermodynamic states.
 
 
@@ -516,7 +525,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.getFreeEnergyDifferences(return_dict=True)
+        >>> results = mbar.compute_free_energy_differences(return_dict=True)
 
         """
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
@@ -558,8 +567,10 @@ class MBAR:
             return result_vals
         return tuple(return_list)
 
+    getFreeEnergyDifferences = _deprecate(compute_free_energy_differences, "getFreeEnergyDifferences")
+
     # =========================================================================
-    def computeExpectationsInner(self, A_n, u_ln, state_map,
+    def compute_expectations_inner(self, A_n, u_ln, state_map,
                                  uncertainty_method=None,
                                  warning_cutoff=1.0e-10,
                                  return_theta=False):
@@ -640,7 +651,7 @@ class MBAR:
         >>> A_n = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[:2,:]
         >>> state_map = np.array([[0,0],[1,0],[2,0],[2,1]],int)
-        >>> results = mbar.computeExpectationsInner(A_n, u_n, state_map)
+        >>> results = mbar.compute_expectations_inner(A_n, u_n, state_map)
 
         """
 
@@ -802,8 +813,10 @@ class MBAR:
         #   =  A^2 (Theta(c_A,c_A) + (A^2+2A+1)Theta(c_a,c_a) -(2A^2+2A)Theta(c_A,c_a)
         #
 
+    computeExpectationsInner = _deprecate(compute_expectations_inner, "computeExpectationsInner")
+
     #=========================================================================
-    def computeCovarianceOfSums(self, d_ij, K, a):
+    def compute_covariance_of_sums(self, d_ij, K, a):
 
         """
         We wish to calculate the variance of a weighted sum of free energy differences.
@@ -885,8 +898,10 @@ class MBAR:
 
         return np.sqrt(d2)
 
+    computeCovarianceOfSums = _deprecate(compute_covariance_of_sums, "computeCovarianceOfSums")
+
     #=========================================================================
-    def computeExpectations(self, A_n, u_kn=None, output='averages', state_dependent=False,
+    def compute_expectations(self, A_n, u_kn=None, output='averages', state_dependent=False,
                             compute_uncertainty=True, uncertainty_method=None,
                             warning_cutoff=1.0e-10, return_theta=False,
                             return_dict=False):
@@ -952,9 +967,9 @@ class MBAR:
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_n = x_n
-        >>> results = mbar.computeExpectations(A_n, return_dict=True)
+        >>> results = mbar.compute_expectations(A_n, return_dict=True)
         >>> A_n = u_kn[0,:]
-        >>> results = mbar.computeExpectations(A_n, output='differences', return_dict=True)
+        >>> results = mbar.compute_expectations(A_n, output='differences', return_dict=True)
         """
 
         dims = len(np.shape(A_n))
@@ -1002,7 +1017,7 @@ class MBAR:
                 state_map[0,k] = k
                 state_map[1,k] = 0
 
-        inner_results = self.computeExpectationsInner(A_n,u_kn,state_map,
+        inner_results = self.compute_expectations_inner(A_n,u_kn,state_map,
                                                       return_theta=compute_uncertainty,
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
@@ -1045,8 +1060,10 @@ class MBAR:
             return result_vals
         return tuple(result_list)
 
+    computeExpectations = _deprecate(compute_expectations, "computeExpectations")
+    
     #=========================================================================
-    def computeMultipleExpectations(self, A_in, u_n, compute_uncertainty=True, compute_covariance=False,
+    def compute_multiple_expectations(self, A_in, u_n, compute_uncertainty=True, compute_covariance=False,
                                     uncertainty_method=None, warning_cutoff=1.0e-10, return_theta=False,
                                     return_dict=False):
         """Compute the expectations of multiple observables of phase space functions.
@@ -1102,7 +1119,7 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_in = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[0,:]
-        >>> results = mbar.computeMultipleExpectations(A_in, u_kn, return_dict=True)
+        >>> results = mbar.compute_multiple_expectations(A_in, u_kn, return_dict=True)
 
         """
 
@@ -1123,7 +1140,7 @@ class MBAR:
         state_map = np.zeros([2,I],int)
         state_map[1,:] = np.arange(I)  # same (first) state for all variables.
 
-        inner_results = self.computeExpectationsInner(A_in,u_n,state_map,
+        inner_results = self.compute_expectations_inner(A_in,u_n,state_map,
                                                       return_theta=(compute_uncertainty or compute_covariance),
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
@@ -1158,9 +1175,10 @@ class MBAR:
             return result_vals
         return tuple(return_list)
 
+    computeExpectations = _deprecate(compute_multiple_expectations, "computeExpectations")
 
     #=========================================================================
-    def computePerturbedFreeEnergies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_dict=False):
+    def compute_perturbed_free_energies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_dict=False):
         """Compute the free energies for a new set of states.
 
         Here, we desire the free energy differences among a set of new states, as well as the uncertainty estimates in these differences.
@@ -1195,7 +1213,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computePerturbedFreeEnergies(u_kn, return_dict=True)
+        >>> results = mbar.compute_perturbed_free_energies(u_kn, return_dict=True)
         """
 
         # Convert to np matrix.
@@ -1213,7 +1231,7 @@ class MBAR:
 
         state_list = np.arange(L)   # need to get it into the correct shape
         A_in = np.array([0])
-        inner_results = self.computeExpectationsInner(A_in, u_ln, state_list,
+        inner_results = self.compute_expectations_inner(A_in, u_ln, state_list,
                                                       return_theta=compute_uncertainty,
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
@@ -1236,9 +1254,10 @@ class MBAR:
             return result_vals
         return tuple(results_list)
 
-    #=====================================================================
+    computePerturbedFreeEnergies = _deprecate(compute_perturbed_free_energies, "computePerturbedFreeEnergies")
 
-    def computeEntropyAndEnthalpy(self, u_kn=None, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10, return_dict=False):
+    #=====================================================================
+    def compute_entropy_and_enthalpy(self, u_kn=None, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10, return_dict=False):
         """Decompose free energy differences into enthalpy and entropy differences.
 
         Compute the decomposition of the free energy difference between
@@ -1284,7 +1303,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computeEntropyAndEnthalpy(return_dict=True)
+        >>> results = mbar.compute_entropy_and_enthalpy(return_dict=True)
 
         """
         if verbose:
@@ -1305,7 +1324,7 @@ class MBAR:
             state_map[0,k] = k
             state_map[1,k] = k
 
-        inner_results = self.computeExpectationsInner(A_in, u_kn, state_map,
+        inner_results = self.compute_expectations_inner(A_in, u_kn, state_map,
                                                       return_theta=True,
                                                       uncertainty_method=uncertainty_method,
                                                       warning_cutoff=warning_cutoff)
@@ -1374,9 +1393,10 @@ class MBAR:
             return result_vals
         return tuple(results_list)
 
-    #=====================================================================
+    computeEntropyAndEnthalpy = _deprecate(compute_entropy_and_enthalpy, "computeEntropyAndEnthalpy")
 
-    def computePMF(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None, return_dict=False):
+    #=====================================================================
+    def compute_pmf(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None, return_dict=False):
         """
         Compute the free energy of occupying a number of bins.
 
@@ -1416,7 +1436,7 @@ class MBAR:
 
         Notes
         -----
-        * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
+        * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling compute_pmf().
         * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
         * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
         * the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
@@ -1441,7 +1461,7 @@ class MBAR:
         >>> bin_n = np.zeros(x_n.shape, np.int64)
         >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
-        >>> results = mbar.computePMF(u_n, bin_n, nbins, return_dict=True)
+        >>> results = mbar.compute_pmf(u_n, bin_n, nbins, return_dict=True)
         >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
         >>> f_i_corrected = results['f_i'] - np.log(bin_widths)
 
@@ -1564,7 +1584,8 @@ class MBAR:
             return result_vals
         return f_i, df_i
 
-
+    computePMF = _deprecate(compute_pmf, "computePMF")
+    
     #=========================================================================
     # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
     #=========================================================================

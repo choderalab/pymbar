@@ -25,9 +25,9 @@ def _test(data_generator):
     name, U, N_k, s_n = data_generator()
     print(name)
     mbar = pymbar.MBAR(U, N_k)
-    results1 = mbar.getFreeEnergyDifferences(uncertainty_method="svd", return_dict=True)
-    fij1_t, dfij1_t = mbar.getFreeEnergyDifferences(uncertainty_method="svd", return_dict=False)
-    results2 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew", return_dict=True)
+    results1 = mbar.compute_free_energy_differences(uncertainty_method="svd", return_dict=True)
+    fij1_t, dfij1_t = mbar.compute_free_energy_differences(uncertainty_method="svd", return_dict=False)
+    results2 = mbar.compute_free_energy_differences(uncertainty_method="svd-ew", return_dict=True)
     fij1 = results1['Delta_f']
     dfij1 = results1['dDelta_f']
     fij2 = results2['Delta_f']
@@ -45,7 +45,7 @@ def _test(data_generator):
     # Test against old MBAR code.
     with suppress_derivative_warnings_for_tests():
         mbar0 = pymbar.old_mbar.MBAR(U, N_k)
-    fij0, dfij0 = mbar0.getFreeEnergyDifferences(uncertainty_method="svd")
+    fij0, dfij0 = mbar0.compute_free_energy_differences(uncertainty_method="svd")
     eq(mbar.f_k, mbar0.f_k, decimal=8)
     eq(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
 

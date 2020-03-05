@@ -50,8 +50,9 @@ import numpy as np
 import numpy.linalg
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
 from pymbar.exp import EXP
+from pymbar._deprecate import _deprecate, warn as _warn
 
-def BARzero(w_F, w_R, DeltaF):
+def BAR_zero(w_F, w_R, DeltaF):
     """A function that when zeroed is equivalent to the solution of
     the Bennett acceptance ratio.
 
@@ -86,7 +87,7 @@ def BARzero(w_F, w_R, DeltaF):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> DeltaF = BARzero(w_F, w_R, 0.0)
+    >>> DeltaF = BAR_zero(w_F, w_R, 0.0)
 
     """
 
@@ -146,6 +147,7 @@ def BARzero(w_F, w_R, DeltaF):
     np.seterr(over='warn')  # return options to standard settings so we don't disturb other functionality.
     return fzero
 
+BARzero = _deprecate(BAR_zero, "BARzero")
 
 def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True, return_dict=False):
     """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
@@ -233,8 +235,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         UpperB = EXP(w_F, return_dict=True)['Delta_f']
         LowerB = -EXP(w_R, return_dict=True)['Delta_f']
 
-        FUpperB = BARzero(w_F, w_R, UpperB)
-        FLowerB = BARzero(w_F, w_R, LowerB)
+        FUpperB = BAR_zero(w_F, w_R, UpperB)
+        FLowerB = BAR_zero(w_F, w_R, LowerB)
         nfunc = 2
 
         if (np.isnan(FUpperB) or np.isnan(FLowerB)):
@@ -261,8 +263,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             FAve = (UpperB + LowerB) / 2
             UpperB = UpperB - max(abs(UpperB - FAve), 0.1)
             LowerB = LowerB + max(abs(LowerB - FAve), 0.1)
-            FUpperB = BARzero(w_F, w_R, UpperB)
-            FLowerB = BARzero(w_F, w_R, LowerB)
+            FUpperB = BAR_zero(w_F, w_R, UpperB)
+            FLowerB = BAR_zero(w_F, w_R, LowerB)
             nfunc += 2
 
     # Iterate to convergence or until maximum number of iterations has been exceeded.
@@ -278,7 +280,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
                 FNew = 0.0
             else:
                 DeltaF = UpperB - FUpperB * (UpperB - LowerB) / (FUpperB - FLowerB)
-                FNew = BARzero(w_F, w_R, DeltaF)
+                FNew = BAR_zero(w_F, w_R, DeltaF)
             nfunc += 1
 
             if FNew == 0:
@@ -291,11 +293,11 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         if method == 'bisection':
             # Predict the new value
             DeltaF = (UpperB + LowerB) / 2
-            FNew = BARzero(w_F, w_R, DeltaF)
+            FNew = BAR_zero(w_F, w_R, DeltaF)
             nfunc += 1
 
         if method == 'self-consistent-iteration':
-            DeltaF = -BARzero(w_F, w_R, DeltaF) + DeltaF
+            DeltaF = -BAR_zero(w_F, w_R, DeltaF) + DeltaF
             nfunc += 1
 
         # Check for convergence.
@@ -508,20 +510,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 # For compatibility with 2.0.1-beta
 #=============================================================================================
 
-deprecation_warning = """
-Warning
--------
-This method name is deprecated, and provided for backward-compatibility only.
-It may be removed in future versions.
-"""
-
-def computeBARzero(*args, **kwargs):
-    return BARzero(*args, **kwargs)
-computeBARzero.__doc__ = BARzero.__doc__ + deprecation_warning
-
-def computeBAR(*args, **kwargs):
-    return BAR(*args, **kwargs)
-computeBAR.__doc__ = BAR.__doc__ + deprecation_warning
+computeBARzero = _deprecate(BAR_zero, "computeBARzero")
+computeBAR = _deprecate(BAR, "computeBAR")
 
 def _compatibilityDoctests():
     """
@@ -529,7 +519,7 @@ def _compatibilityDoctests():
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> DeltaF = BARzero(w_F, w_R, 0.0)
+    >>> DeltaF = BAR_zero(w_F, w_R, 0.0)
     >>> [DeltaF, dDeltaF] = computeBAR(w_F, w_R)
     """
-    pass
+    _warn(f"This doctest will be deprecated in pymbar 4+.", DeprecationWarning)

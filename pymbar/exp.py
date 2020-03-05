@@ -46,6 +46,7 @@ __license__ = "MIT"
 #=============================================================================================
 import numpy as np
 from pymbar.utils import logsumexp
+from pymbar._deprecate import _deprecate, warn
 
 #=============================================================================================
 # One-sided exponential averaging (EXP).
@@ -117,7 +118,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=False):
         if is_timeseries:
             # Estimate statistical inefficiency of x timeseries.
             import timeseries
-            g = timeseries.statisticalInefficiency(x, x)
+            g = timeseries.statistical_inefficiency(x, x)
 
         # Estimate standard error of E[x].
         dx = np.std(x) / np.sqrt(T / g)
@@ -141,7 +142,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=False):
 # Gaussian approximation to exponential averaging (Gauss).
 #=============================================================================================
 
-def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=False):
+def EXP_gauss(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=False):
     """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
     Parameters
@@ -175,10 +176,10 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=Fal
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = EXPGauss(w_F, return_dict=True)
+    >>> results = EXP_gauss(w_F, return_dict=True)
     >>> print('Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-    >>> results = EXPGauss(w_R, return_dict=True)
+    >>> results = EXP_gauss(w_R, return_dict=True)
     >>> print('Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
 
@@ -200,7 +201,7 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=Fal
         if is_timeseries:
             # Estimate statistical inefficiency of x timeseries.
             import timeseries
-            g = timeseries.statisticalInefficiency(w_F, w_F)
+            g = timeseries.statistical_inefficiency(w_F, w_F)
 
             T_eff = T / g
         # Estimate standard error of E[x].
@@ -219,24 +220,14 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=Fal
         return result_vals
     return tuple(result_list)
 
+
+EXPGauss = _deprecate(EXP_gauss, "EXPGauss")
+
 #=============================================================================================
 # For compatibility with 2.0.1-beta
 #=============================================================================================
-
-deprecation_warning = """
-Warning
--------
-This method name is deprecated, and provided for backward-compatibility only.
-It may be removed in future versions.
-"""
-
-def computeEXP(*args, **kwargs):
-    return EXP(*args, **kwargs)
-computeEXP.__doc__ = EXP.__doc__ + deprecation_warning
-
-def computeEXPGauss(*args, **kwargs):
-    return EXPGauss(*args, **kwargs)
-computeEXPGauss.__doc__ = EXPGauss.__doc__ + deprecation_warning
+computeEXP = _deprecate(EXP, "computeEXP")
+computeEXPGauss = _deprecate(EXPGauss, "computeEXPGauss")
 
 def _compatibilityDoctests():
     """
@@ -247,4 +238,4 @@ def _compatibilityDoctests():
     >>> [DeltaF, dDeltaF] = computeEXP(w_F)
     >>> [DeltaF, dDeltaF] = computeEXPGauss(w_F)
     """
-    pass
+    warn(f"This doctest will be deprecated.", DeprecationWarning)
