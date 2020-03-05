@@ -383,7 +383,7 @@ def integrated_autocorrelation_time_multiple(A_kn, fast=False):
 
     See Also
     --------
-    integrated_autocorrelation_time
+    statistical_inefficiency_multiple
 
     """
 
