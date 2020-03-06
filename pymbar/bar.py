@@ -122,7 +122,7 @@ def BARzero(w_F, w_R, DeltaF):
     max_arg_F = np.choose(np.less(0.0, exp_arg_F), (0.0, exp_arg_F))
     try:
         log_f_F = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
-    except:
+    except ParameterError():
         # give up; if there's overflow, return zero
         logger.warning("The input data results in overflow in BAR")
         return np.nan
@@ -139,7 +139,7 @@ def BARzero(w_F, w_R, DeltaF):
     max_arg_R = np.choose(np.less(0.0, exp_arg_R), (0.0, exp_arg_R))
     try:
         log_f_R = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
-    except:
+    except ParameterError:
         logger.info("The input data results in overflow in BAR")
         return np.nan
     log_denom = logsumexp(log_f_R)
@@ -349,7 +349,6 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     if compute_uncertainty:
 
         '''
-
         Compute asymptotic variance estimate using Eq. 10a of Bennett,
         1976 (except with n_1<f>_1^2 in the second denominator, it is
         an error in the original.
