@@ -54,7 +54,7 @@ class ExponentialTestCase(object):
         """
         rates = np.array(rates, np.float64)
 
-        self.n_states = len(rates)o
+        self.n_states = len(rates)
         self.rates = np.array(rates,np. float64)
         self.beta = beta
 
