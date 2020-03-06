@@ -1,6 +1,4 @@
 import numpy as np
-from pymbar.utils import ensure_type
-
 
 class HarmonicOscillatorsTestCase(object):
 
@@ -98,7 +96,7 @@ class HarmonicOscillatorsTestCase(object):
     def analytical_entropies(self, subtract_component = 0):
         return self.analytical_observable(observable = 'potential energy') - self.analytical_free_energies(subtract_component)
 
-    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kn', seed = None):
+    def sample(self, N_k=(10, 20, 30, 40, 50), mode='u_kn', seed = None):
         """Draw samples from the distribution.
 
         Parameters

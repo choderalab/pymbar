@@ -48,7 +48,6 @@ __license__ = "MIT"
 #=============================================================================================
 import logging
 import numpy as np
-import numpy.linalg
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
 from pymbar.exp import EXP
 

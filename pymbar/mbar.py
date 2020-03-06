@@ -305,7 +305,7 @@ class MBAR:
             self._initializeFreeEnergies(verbose, method=initialize)
 
             if self.verbose:
-                logger.info("Initial dimensionless free energies with method {:s}",format(initialize))
+                logger.info("Initial dimensionless free energies with method {:s}".format(initialize))
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
