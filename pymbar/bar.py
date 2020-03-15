@@ -348,7 +348,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     if compute_uncertainty:
 
-        '''
+        """
         Compute asymptotic variance estimate using Eq. 10a of Bennett,
         1976 (except with n_1<f>_1^2 in the second denominator, it is
         an error in the original.
@@ -451,7 +451,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         see https://github.com/choderalab/pymbar/issues/281 for more information.
 
         Now implement the two computations.
-        '''
+        """
 
         # Determine number of forward and reverse work values provided.
         T_F = float(w_F.size)  # number of forward work values
