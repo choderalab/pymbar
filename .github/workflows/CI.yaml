@@ -23,7 +23,7 @@ jobs:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
         python-version: [3.7, 3.8]
-        fail-fast: false
+        # fail-fast: false
     env:
       PYVER: ${{ matrix.python-version }}
       CI_OS: ${{ matrix.os }}
