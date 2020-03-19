@@ -972,4 +972,4 @@ def detect_equilibration_binary_search(A_t, bs_nodes=10):
             start = time_grid[k - 1]
             end = time_grid[k + 1]
 
-    return (t, g, Neff_max)
+    return t, g, Neff_max

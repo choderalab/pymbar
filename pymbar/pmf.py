@@ -124,7 +124,7 @@ class PMF:
             allow this assumption to be overwritten by parameters passed
             from above, once ``u_kln`` is phased out.
 
-        mbar_options: dictionary, with the following options supported by mbar (see MBAR documentation)
+        mbar_options: dict, with the following options supported by mbar (see MBAR documentation)
 
             maximum_iterations : int, optional
             relative_tolerance : float, optional
@@ -254,8 +254,7 @@ class PMF:
 
         Parameters
         ----------
-
-        pmf_type: string
+        pmf_type: str
              options = 'histogram', 'kde', 'spline'
 
         u_n : np.ndarray, float, shape=(N)
@@ -304,10 +303,9 @@ class PMF:
 
         Returns
         -------
-
-            - result_vals: dictionary of results.
-
-            if 'timings' == True, returns the time taken to construct the model.
+        dict
+        float, optional
+            if 'timings' is True, returns the time taken to construct the model.
 
         Notes
         -----
@@ -965,17 +963,16 @@ class PMF:
         return result_vals  # should we returrn results under some other conditions?
 
     def getInformationCriteria(self, type="akaike"):
-
         """
         returns the Akaike Informatiton Criteria for the model if it exists.
 
-        Parameters:
-        ===========
+        Parameters
+        ----------
 
         type: string, Either 'Akaike' or 'Bayesian'
 
-        Output:
-        =======
+        Output
+        ------
 
         information criteria
         """
@@ -1000,9 +997,9 @@ class PMF:
         Parameters
         ----------
 
-        x: numpy:ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
 
-        uncertainties : string, optional
+        uncertainties : str, optional
             Method for reporting uncertainties (default: 'from-lowest')
 
             * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
@@ -1010,18 +1007,16 @@ class PMF:
             * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
-        pmf_reference : an N-d point specifying the reference state. Ignored except with uncertainty method 'from_specified''
+        pmf_reference :
+            an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
         -------
-        result_vals : dictionary
-
-        keys in the result_vals dictionary:
-
-        'f_i' : np.ndarray, float, shape=(K)
-            result_vals['f_i'][i] is the dimensionless free energy of the x_i point, relative to the reference point
-        'df_i' : np.ndarray, float, shape=(K)
-            result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
+        dict
+            'f_i' : np.ndarray, float, shape=(K)
+                result_vals['f_i'][i] is the dimensionless free energy of the x_i point, relative to the reference point
+            'df_i' : np.ndarray, float, shape=(K)
+                result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
 
         """
 
@@ -1314,9 +1309,10 @@ class PMF:
     def getMBAR(self):
         """return the MBAR object being used by the PMF
 
-           Parameters: None
 
-           Returns: MBAR object
+        Returns
+        -------
+           MBAR object
         """
         if self.mbar is not None:
             return self.mbar
@@ -1326,9 +1322,9 @@ class PMF:
     def getKDE(self):
         """ return the KernelDensity object if it exists.
 
-            Parameters: None
-
-            Returns: sklearn KernelDensity object
+        Returns
+        -------
+        sklearn KernelDensity object
         """
 
         if self.pmf_type == "kde":
@@ -1478,9 +1474,18 @@ class PMF:
 
     def getConfidenceIntervals(self, xplot, plow, phigh, reference="zero"):
         """
-        xplot is the data points we want to plot at
-        plow is the lowest percentile
-        phigh is the highest percentile
+        Parameters
+        ----------
+        xplot :
+            data points we want to plot at
+        plow :
+            lowest percentile
+        phigh :
+            highest percentile
+
+        Returns
+        -------
+        TODO:
         """
 
         if self.mc_data is None:
@@ -1531,24 +1536,17 @@ class PMF:
 
         """ convenience function to get MC data
 
-        Parameters:
-        ===========
-
-        None
-
-        Outputs:
-        ========
-
-        results data dictionary, with entries:
-
-        mc_data['samples']: samples of the parameters with size [# parameters x # points]
-        mc_data['logposteriors']: log posteriors (which might be defined with respect to some reference) as a time series size [# points]
-        self.mc_data['mc_parameters']: dictionary of parameters that were run with
-        self.mc_data['acceptance ratio']: acceptance ratio overall of the MC chain
-        self.mc_data['nequil']: the start of the "equilibrated" data set (i.e. nequil-1 is the number that werer thrown out)
-        self.mc_data['g_logposterior']: statistical efficiency of the log posterior
-        self.mc_data['g_parameters']: statistical efficiency of the parametere
-        self.mc_data['g']: statistical efficiency used for subsampling
+        Returns
+        -------
+        dict
+            samples: samples of the parameters with size [# parameters x # points]
+            logposteriors: log posteriors (which might be defined with respect to some reference) as a time series size [# points]
+            mc_parameters: dictionary of parameters that were run with
+            acceptanceatio: acceptance ratio overall of the MC chain
+            nequil: the start of the "equilibrated" data set (i.e. nequil-1 is the number that werer thrown out)
+            g_logposterior: statistical efficiency of the log posterior
+            g_parameters: statistical efficiency of the parametere
+            g: statistical efficiency used for subsampling
 
         """
 
@@ -1594,25 +1592,31 @@ class PMF:
 
         """ sample over the posterior space of the PMF as splined.
 
-        Parameters:
-        ===========
-
-        x_n: samples from the biased distribution
-        w_n: weights of each sample.
-        stepsize: sigma of the normal distribution used to propose steps
-        xrange: Range the probility distribution is defined o er.
-        spline_weights: Type of weighting used for maximum likelihood for splines.  See class
+        Parameters
+        ----------
+        x_n :
+            samples from the biased distribution
+        w_n :
+            weights of each sample.
+        stepsize :
+            sigma of the normal distribution used to propose steps
+        xrange :
+            Range the probility distribution is defined o er.
+        spline_weights :
+            Type of weighting used for maximum likelihood for splines.  See class
                         definition for description of types.
-        logprior: function describing the prior of the parameters. Default is uniform.
+        logprior :
+            function describing the prior of the parameters. Default is uniform.
 
-        Outputs:
-        ========
-
-        results dict(), containing:
-            * 'c' the value of the spline constants (len nsplines - we always assume normalized
+        Outputs
+        -------
+        dict
+            * 'c': the value of the spline constants (len nsplines - we always assume normalized
             * 'logposterior': the current value of the logoposterior.
 
-        NOTE: modifies several saved variables saved in the structure.x
+        Notes
+        -----
+        Modifies several saved variables saved in the structure.x
 
         """
 
@@ -1686,27 +1690,38 @@ class PMF:
 
         """ Calculate the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
-        Parameters:
-        ===========
+        Parameters
+        ----------
 
-        xi: spline coefficients, array of floats size nspline-1
-        w_n: weights for each sample.
-        x_n: values of each sample.
-        nspline: number of spline points
-        kdegree: degree of spline
-        spline_weights: type of spline weighting (i.e. choice of maximum likelihood)
-        xrange: range the PMF is defined over
-        xrangei: range the ith basis function of the spline is defined over
-        xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.
-        logprior: log of the prior for MAP
-        dlogprior: d(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
-        ddlogprior: d^2(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
+        xi : array of floats size nspline-1
+            spline coefficients,
+        w_n :
+            weights for each sample.
+        x_n :
+            values of each sample.
+        nspline :
+            number of spline points
+        kdegree :
+            degree of spline
+        spline_weights :
+            type of spline weighting (i.e. choice of maximum likelihood)
+        xrange :
+            range the PMF is defined over
+        xrangei :
+            range the ith basis function of the spline is defined over
+        xrangeij :
+            range in x and y the 2d integration of basis functions i and j are defined over.
+        logprior :
+            log of the prior for MAP
+        dlogprior :
+            d(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
+        ddlogprior :
+            d^2(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
 
-        Output:
-        =======
-
-        function value: scalar float
-
+        Output
+        ------
+        float
+            function value
         """
 
         K = self.mbar.K
@@ -1781,11 +1796,10 @@ class PMF:
         dlogprior,
         ddlogprior,
     ):
+        """Calculate the gradient of the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
-        """ Calculate the gradient of the maximum likelihood / KL divergence of the PMF represented using B-splines.
-
-        Parameters:
-        ===========
+        Parameters
+        -----------
 
         xi: spline coefficients, array of floats size nspline-1
         w_n: weights for each sample.
@@ -1803,8 +1817,8 @@ class PMF:
         dlogprior: d(log prior)/xi for MAP.
         ddlogprior: d^2(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
 
-        Output:
-        =======
+        Output
+        ------
 
         gradient: float, size (nspline-1)
 
@@ -1916,31 +1930,44 @@ class PMF:
 
         """ Calculate the Hessian of the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
-        Parameters:
-        ===========
+        Parameters
+        ----------
 
-        xi: spline coefficients, array of floats size nspline-1
-        w_n: weights for each sample.
-        x_n: values of each sample.
-        nspline: number of spline points
-        kdegree: degree of spline
-        spline_weights: type of spline weighting (i.e. choice of maximum likelihood)
-        xrange: range the PMF is defined over
-        xrangei: range the ith basis function of the spline is defined over
-        xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.
-        logprior: log of the prior for MAP  Not needed here, but included for consistent arguments
-        dlogprior: d(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
-        ddlogprior: d^2(log prior)/xi for MAP.
+        xi: array of floats size nspline-1
+            spline coefficients
+        w_n:
+            weights for each sample
+        x_n:
+            values of each sample
+        nspline :
+            number of spline points
+        kdegree :
+            degree of spline
+        spline_weights :
+            type of spline weighting (i.e. choice of maximum likelihood)
+        xrange :
+            range the PMF is defined over
+        xrangei :
+            range the ith basis function of the spline is defined over
+        xrangeij :
+            range in x and y the 2d integration of basis functions i and j are defined over.
+        logprior :
+            log of the prior for MAP  Not needed here, but included for consistent arguments
+        dlogprior :
+            d(log prior)/xi for MAP.  Not needed here, but included for consistent arguments
+        ddlogprior :
+            d^2(log prior)/xi for MAP.
 
-        Output:
-        =======
+        Output
+        ------
+        Hessian
+            nfloat, size (nspline-1) x (nspline - 1)
 
-        Hessian: nfloat, size (nspline-1) x (nspline - 1)
-
+        Notes
+        -----
         CURRENTLY assumes that the gradient has already been called at
         the current value of the parameters.  Otherwise, it fails.  This means it only
         works for certain algorithms.
-
         """
         K = self.mbar.K
         N_k = self.mbar.N_k
@@ -2028,11 +2055,13 @@ class PMF:
         Convert a set of B-spline coefficients into a BSpline object
 
         Parameters
-        ==========
+        ----------
+        x:
+            the last N-1 coefficients for a bspline; we assume the initial coefficient is set to zero.
 
-        x: the last N-1 coefficients for a bspline; we assume the initial coefficient is set to zero.
-
-        Output: A bspline object (or function returniing -log (bspline) object if we need it)
+        Returns
+        -------
+        A bspline object (or function returning -log (bspline) object if we need it)
 
         """
 
