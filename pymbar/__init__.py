@@ -36,7 +36,7 @@ from pymbar.pmf import PMF
 import pymbar.old_mbar
 
 try:
-    from pymbar import version
+    from pymbar.version import *
 except ImportError:
     # Fill in information manually.
     # TODO: See if we can at least get the git revision info in here.
