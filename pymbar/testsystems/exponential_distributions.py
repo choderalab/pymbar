@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class ExponentialTestCase(object):
 
     """Test cases using exponential distributions.
@@ -55,7 +56,7 @@ class ExponentialTestCase(object):
         rates = np.array(rates, np.float64)
 
         self.n_states = len(rates)
-        self.rates = np.array(rates,np. float64)
+        self.rates = np.array(rates, np.float64)
         self.beta = beta
 
     def analytical_free_energies(self):
@@ -63,33 +64,36 @@ class ExponentialTestCase(object):
         return np.log(self.rates)
 
     def analytical_means(self):
-        return self.rates ** -1.
+        return self.rates ** -1.0
 
     def analytical_variances(self):
-        return self.rates ** -2.
+        return self.rates ** -2.0
 
     def analytical_standard_deviations(self):
-        return np.sqrt(self.rates ** -2.)
+        return np.sqrt(self.rates ** -2.0)
 
-    def analytical_observable(self, observable = 'position'):
+    def analytical_observable(self, observable="position"):
 
-        if observable == 'position':
+        if observable == "position":
             return self.analytical_means()
-        if observable == 'position^2':
-            return 2.0*self.analytical_variances()
-        if observable == 'RMS displacement':
-            #<X^2> - <X>^2 = 2L^2-L^2 = L^2
+        if observable == "position^2":
+            return 2.0 * self.analytical_variances()
+        if observable == "RMS displacement":
+            # <X^2> - <X>^2 = 2L^2-L^2 = L^2
             return self.analytical_variances()
-        if observable == 'potential energy':
+        if observable == "potential energy":
             return np.ones(len(self.rates))
 
     def analytical_entropies(self):
-        return self.analytical_observable(observable='potential energy') - self.analytical_free_energies()
+        return (
+            self.analytical_observable(observable="potential energy")
+            - self.analytical_free_energies()
+        )
 
     def analytical_x_squared(self):
-        return self.analytical_variances() + self.analytical_means() ** 2.
+        return self.analytical_variances() + self.analytical_means() ** 2.0
 
-    def sample(self, N_k=(10, 20, 30, 40, 50), mode='u_kln', seed=None):
+    def sample(self, N_k=(10, 20, 30, 40, 50), mode="u_kln", seed=None):
         """Draw samples from the distribution.
 
         Parameters
@@ -142,11 +146,19 @@ class ExponentialTestCase(object):
 
         N_k = np.array(N_k, np.int32)
         if len(N_k) != self.n_states:
-            raise Exception("N_k has {:d} states while self.n_states has {:d} states.".format(len(N_k), self.n_states))
+            raise Exception(
+                "N_k has {:d} states while self.n_states has {:d} states.".format(
+                    len(N_k), self.n_states
+                )
+            )
 
-        if mode == 'wFwR':
+        if mode == "wFwR":
             if len(N_k) != 2:
-                raise Exception("N_k has {:d} states instead of 2, we cannot generate forward and reverse work distributions".format(len(N_k)))
+                raise Exception(
+                    "N_k has {:d} states instead of 2, we cannot generate forward and reverse work distributions".format(
+                        len(N_k)
+                    )
+                )
 
         N_max = N_k.max()  # maximum number of samples per state
         N_tot = N_k.sum()  # total number of samples
@@ -157,29 +169,35 @@ class ExponentialTestCase(object):
         u_kn = np.zeros([self.n_states, N_tot], np.float64)
         index = 0
         for k, N in enumerate(N_k):
-            x = np.random.exponential(scale=self.rates[k] ** -1., size=N)
+            x = np.random.exponential(scale=self.rates[k] ** -1.0, size=N)
             x_kn[k, 0:N] = x
-            x_n[index:(index + N)] = x
-            s_n[index:(index + N)] = k
+            x_n[index : (index + N)] = x
+            s_n[index : (index + N)] = k
             for l in range(self.n_states):
                 u = self.beta * self.rates[l] * x
                 u_kln[k, l, 0:N] = u
-                u_kn[l, index:(index + N)] = u
+                u_kn[l, index : (index + N)] = u
             index += N
 
-        if mode == 'u_kn':
+        if mode == "u_kn":
             return x_n, u_kn, N_k, s_n
-        elif mode == 'u_kln':
+        elif mode == "u_kln":
             return x_kn, u_kln, N_k
-        elif mode == 'wFwR':
-            return u_kln[0,1,:N_k[0]]-u_kln[0,0,:N_k[0]], u_kln[1,0,:N_k[1]]-u_kln[1,1,:N_k[1]], N_k
+        elif mode == "wFwR":
+            return (
+                u_kln[0, 1, : N_k[0]] - u_kln[0, 0, : N_k[0]],
+                u_kln[1, 0, : N_k[1]] - u_kln[1, 1, : N_k[1]],
+                N_k,
+            )
         else:
             raise Exception("Unknown mode '{}'".format(mode))
 
         return
-    
+
     @classmethod
-    def evenly_spaced_exponentials(cls, n_states, n_samples_per_state, lower_rate=1.0, upper_rate=3.0):
+    def evenly_spaced_exponentials(
+        cls, n_states, n_samples_per_state, lower_rate=1.0, upper_rate=3.0
+    ):
         """Generate samples from evenly spaced exponential distributions.
 
         Parameters
@@ -213,13 +231,13 @@ class ExponentialTestCase(object):
         s_n : np.ndarray, shape=(n_samples)
             State of origin of each sample
         """
-                
+
         name = "{:d}x{:d} exponentials".format(n_states, n_samples_per_state)
 
         rates = np.linspace(lower_rate, upper_rate, n_states)
-        N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
+        N_k = (np.ones(n_states) * n_samples_per_state).astype("int")
 
         testsystem = cls(rates)
-        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn')
+        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode="u_kn")
 
         return name, testsystem, x_n, u_kn, N_k_output, s_n
