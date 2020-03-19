@@ -35,8 +35,8 @@ def exp_and_test(request):
     # can't return method, because EXP is just a function
     exps["F"] = pyexp.EXP(w_F)
     exps["R"] = pyexp.EXP(w_R)
-    exps["gF"] = pyexp.EXPGauss(w_F)
-    exps["gR"] = pyexp.EXPGauss(w_R)
+    exps["gF"] = pyexp.EXP_gauss(w_F)
+    exps["gR"] = pyexp.EXP_gauss(w_R)
 
     yield_bundle = {
         "exps": exps,

@@ -55,7 +55,7 @@ from pymbar.exp import EXP
 logger = logging.getLogger(__name__)
 
 
-def BARzero(w_F, w_R, DeltaF):
+def BAR_zero(w_F, w_R, DeltaF):
     """A function that when zeroed is equivalent to the solution of
     the Bennett acceptance ratio.
 
@@ -90,7 +90,7 @@ def BARzero(w_F, w_R, DeltaF):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> DeltaF = BARzero(w_F, w_R, 0.0)
+    >>> DeltaF = BAR_zero(w_F, w_R, 0.0)
 
     """
 
@@ -191,7 +191,7 @@ def BAR(
     method : str, optional, defualt='false-position'
         choice of method to solve BAR nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-position')
     iterated_solution : bool, optional, default=True
-        whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be 
+        whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be
         equivalent to transition matrix sampling.
 
     Returns
@@ -256,8 +256,8 @@ def BAR(
         UpperB = EXP(w_F)["Delta_f"]
         LowerB = -EXP(w_R)["Delta_f"]
 
-        FUpperB = BARzero(w_F, w_R, UpperB)
-        FLowerB = BARzero(w_F, w_R, LowerB)
+        FUpperB = BAR_zero(w_F, w_R, UpperB)
+        FLowerB = BAR_zero(w_F, w_R, LowerB)
         nfunc = 2
 
         if np.isnan(FUpperB) or np.isnan(FLowerB):
@@ -283,8 +283,8 @@ def BAR(
             FAve = (UpperB + LowerB) / 2
             UpperB = UpperB - max(abs(UpperB - FAve), 0.1)
             LowerB = LowerB + max(abs(LowerB - FAve), 0.1)
-            FUpperB = BARzero(w_F, w_R, UpperB)
-            FLowerB = BARzero(w_F, w_R, LowerB)
+            FUpperB = BAR_zero(w_F, w_R, UpperB)
+            FLowerB = BAR_zero(w_F, w_R, LowerB)
             nfunc += 2
 
     # Iterate to convergence or until maximum number of iterations has been exceeded.
@@ -300,7 +300,7 @@ def BAR(
                 FNew = 0.0
             else:
                 DeltaF = UpperB - FUpperB * (UpperB - LowerB) / (FUpperB - FLowerB)
-                FNew = BARzero(w_F, w_R, DeltaF)
+                FNew = BAR_zero(w_F, w_R, DeltaF)
             nfunc += 1
 
             if FNew == 0:
@@ -313,11 +313,11 @@ def BAR(
         if method == "bisection":
             # Predict the new value
             DeltaF = (UpperB + LowerB) / 2
-            FNew = BARzero(w_F, w_R, DeltaF)
+            FNew = BAR_zero(w_F, w_R, DeltaF)
             nfunc += 1
 
         if method == "self-consistent-iteration":
-            DeltaF = -BARzero(w_F, w_R, DeltaF) + DeltaF
+            DeltaF = -BAR_zero(w_F, w_R, DeltaF) + DeltaF
             nfunc += 1
 
         # Check for convergence.

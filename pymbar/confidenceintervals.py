@@ -30,7 +30,7 @@ import scipy.stats
 logger = logging.getLogger(__name__)
 
 
-def OrderReplicates(replicates, K):
+def order_replicates(replicates, K):
 
     """ Inputs: An array of replicates, and the size of the data.
 
@@ -67,7 +67,7 @@ def OrderReplicates(replicates, K):
     return sortedyi
 
 
-def AndersonDarling(replicates, K):
+def anderson_darling(replicates, K):
 
     # inputs:
     #      replicates: list of replicates
@@ -95,7 +95,7 @@ def AndersonDarling(replicates, K):
     # for now, the standard deviation we use is the one from the
     # _first_ replicate.
 
-    sortedyi = OrderReplicates(replicates, K)
+    sortedyi = order_replicates(replicates, K)
     zerosigma = replicates[0]["destimated"] == 0  # ignore the ones with zero values of the std
 
     N = len(replicates)
@@ -109,12 +109,12 @@ def AndersonDarling(replicates, K):
     return A2
 
 
-def QQPlot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
+def QQ_plot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
 
     import matplotlib
     import matplotlib.pyplot as plt
 
-    sortedyi = OrderReplicates(replicates, K)
+    sortedyi = order_replicates(replicates, K)
     N = len(replicates)
     dim = len(np.shape(replicates[0]["error"]))
     xvals = scipy.stats.norm.ppf((np.arange(0, N) + 0.5) / N)  # inverse pdf
@@ -193,7 +193,7 @@ def QQPlot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
     return
 
 
-def generateConfidenceIntervals(replicates, K):
+def generate_confidence_intervals(replicates, K):
     # inputs:
     #      replicates: list of replicates
     #      K: number of replicates

@@ -1443,23 +1443,23 @@ class PMF:
             logger.info("Done MC sampling")
 
         if decorrelate:
-            t_mc, g_mc, Neff = timeseries.detectEquilibration(logposteriors)
+            t_mc, g_mc, Neff = timeseries.detect_equilibration(logposteriors)
             logger.info(
                 "First equilibration sample is {:d} of {:d}".format(t_mc, len(logposteriors))
             )
             equil_logp = logposteriors[t_mc:]
-            g_mc = timeseries.statisticalInefficiency(equil_logp)
+            g_mc = timeseries.statistical_inefficiency(equil_logp)
             if verbose:
                 logger.info("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
             g_c = np.zeros(len(c))
             for nc in range(len(c)):
-                g_c[nc] = timeseries.statisticalInefficiency(csamples[nc, t_mc:])
+                g_c[nc] = timeseries.statistical_inefficiency(csamples[nc, t_mc:])
             if verbose:
                 logger.info("Time series for spline parameters are: {:s}".format(str(g_c)))
             maxgc = np.max(g_c)
             meangc = np.mean(g_c)
             guse = g_mc  # doesn't affect the distribution that much
-            indices = timeseries.subsampleCorrelatedData(equil_logp, g=guse)
+            indices = timeseries.subsample_correlated_data(equil_logp, g=guse)
             logposteriors = equil_logp[indices]
             csamples = (csamples[:, t_mc:])[:, indices]
             if verbose:

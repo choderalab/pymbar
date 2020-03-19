@@ -80,7 +80,7 @@ logger.warning(LongWarning)
 # =============================================================================================
 
 
-def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
+def statistical_inefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
@@ -90,7 +90,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     B_n : np.ndarray, float, optional, default=None
         B_n[n] is nth value of timeseries B.  Length is deduced from vector.
         If supplied, the cross-correlation of timeseries A and B will be estimated instead of the
-        autocorrelation of timeseries A.  
+        autocorrelation of timeseries A.
     fast : bool, optional, default=False
         f True, will use faster (but less accurate) method to estimate correlation
         time, described in Ref. [1] (default: False).  This is ignored
@@ -102,7 +102,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
         if there is a strong initial negative peak in the correlation function.
     fft : bool, optional, default=False
         If fft=True and B_n=None, then use the fft based approach, as
-        implemented in statisticalInefficiency_fft().
+        implemented in statistical_inefficiency_fft().
 
     Returns
     -------
@@ -124,11 +124,11 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     Examples
     --------
 
-    Compute statistical inefficiency of timeseries data with known correlation time.  
+    Compute statistical inefficiency of timeseries data with known correlation time.
 
     >>> from pymbar.testsystems import correlated_timeseries_example
     >>> A_n = correlated_timeseries_example(N=100000, tau=5.0)
-    >>> g = statisticalInefficiency(A_n, fast=True)
+    >>> g = statistical_inefficiency(A_n, fast=True)
 
     """
 
@@ -136,7 +136,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     A_n = np.array(A_n)
 
     if fft and B_n is None:
-        return statisticalInefficiency_fft(A_n, mintime=mintime)
+        return statistical_inefficiency_fft(A_n, mintime=mintime)
 
     if B_n is not None:
         B_n = np.array(B_n)
@@ -208,7 +208,7 @@ def statisticalInefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
 # =============================================================================================
 
 
-def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_function=False):
+def statistical_inefficiency_multiple(A_kn, fast=False, return_correlation_function=False):
     """Estimate the statistical inefficiency from multiple stationary timeseries (of potentially differing lengths).
 
     Parameters
@@ -251,11 +251,11 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
     >>> N_k = [1000, 2000, 3000, 4000, 5000]
     >>> tau = 5.0 # exponential relaxation time
     >>> A_kn = [ testsystems.correlated_timeseries_example(N=N, tau=tau) for N in N_k ]
-    >>> g = statisticalInefficiencyMultiple(A_kn)
+    >>> g = statistical_inefficiency_multiple(A_kn)
 
     Also return the values of the normalized fluctuation autocorrelation function that were computed.
 
-    >>> [g, Ct] = statisticalInefficiencyMultiple(A_kn, return_correlation_function=True)
+    >>> [g, Ct] = statistical_inefficiency_multiple(A_kn, return_correlation_function=True)
 
     """
 
@@ -370,7 +370,7 @@ def statisticalInefficiencyMultiple(A_kn, fast=False, return_correlation_functio
 # =============================================================================================
 
 
-def integratedAutocorrelationTime(A_n, B_n=None, fast=False, mintime=3):
+def integrated_autocorrelation_time(A_n, B_n=None, fast=False, mintime=3):
     """Estimate the integrated autocorrelation time.
 
     See Also
@@ -379,7 +379,7 @@ def integratedAutocorrelationTime(A_n, B_n=None, fast=False, mintime=3):
 
     """
 
-    g = statisticalInefficiency(A_n, B_n, fast, mintime)
+    g = statistical_inefficiency(A_n, B_n, fast, mintime)
     tau = (g - 1.0) / 2.0
     return tau
 
@@ -387,16 +387,16 @@ def integratedAutocorrelationTime(A_n, B_n=None, fast=False, mintime=3):
 # =============================================================================================
 
 
-def integratedAutocorrelationTimeMultiple(A_kn, fast=False):
+def integrated_autocorrelation_timeMultiple(A_kn, fast=False):
     """Estimate the integrated autocorrelation time from multiple timeseries.
 
     See Also
     --------
-    statisticalInefficiencyMultiple
+    statistical_inefficiency_multiple
 
     """
 
-    g = statisticalInefficiencyMultiple(A_kn, fast, False)
+    g = statistical_inefficiency_multiple(A_kn, fast, False)
     tau = (g - 1.0) / 2.0
     return tau
 
@@ -404,7 +404,7 @@ def integratedAutocorrelationTimeMultiple(A_kn, fast=False):
 # =============================================================================================
 
 
-def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=True):
+def normalized_fluctuation_correlation_function(A_n, B_n=None, N_max=None, norm=True):
     """Compute the normalized fluctuation (cross) correlation function of (two) stationary timeseries.
 
     C(t) = (<A(t) B(t)> - <A><B>) / (<AB> - <A><B>)
@@ -446,7 +446,7 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=Tru
 
     >>> from pymbar import testsystems
     >>> A_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0)
-    >>> C_t = normalizedFluctuationCorrelationFunction(A_t, N_max=25)
+    >>> C_t = normalized_fluctuation_correlation_function(A_t, N_max=25)
 
     """
 
@@ -508,7 +508,7 @@ def normalizedFluctuationCorrelationFunction(A_n, B_n=None, N_max=None, norm=Tru
 # =============================================================================================
 
 
-def normalizedFluctuationCorrelationFunctionMultiple(
+def normalized_fluctuation_correlation_function_multiple(
     A_kn, B_kn=None, N_max=None, norm=True, truncate=False
 ):
     """Compute the normalized fluctuation (cross) correlation function of (two) timeseries from multiple timeseries samples.
@@ -555,7 +555,7 @@ def normalizedFluctuationCorrelationFunctionMultiple(
     >>> N_k = [1000, 2000, 3000, 4000, 5000]
     >>> tau = 5.0 # exponential relaxation time
     >>> A_kn = [ testsystems.correlated_timeseries_example(N=N, tau=tau) for N in N_k ]
-    >>> C_n = normalizedFluctuationCorrelationFunctionMultiple(A_kn, N_max=25)
+    >>> C_n = normalized_fluctuation_correlation_function_multiple(A_kn, N_max=25)
 
     """
 
@@ -663,7 +663,7 @@ def normalizedFluctuationCorrelationFunctionMultiple(
 # =============================================================================================
 
 
-def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose=False):
+def subsample_correlated_data(A_t, g=None, fast=False, conservative=False, verbose=False):
     """Determine the indices of an uncorrelated subsample of the data.
 
     Parameters
@@ -701,7 +701,7 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
 
     >>> from pymbar import testsystems
     >>> A_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
-    >>> indices = subsampleCorrelatedData(A_t) # compute indices of uncorrelated timeseries
+    >>> indices = subsample_correlated_data(A_t) # compute indices of uncorrelated timeseries
     >>> A_n = A_t[indices] # extract uncorrelated samples
 
     Extract uncorrelated samples from multiple timeseries data from the same process.
@@ -712,12 +712,12 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
     >>> tau = 5.0 # exponential relaxation time
     >>> A_kt = [ testsystems.correlated_timeseries_example(N=T, tau=tau) for T in T_k ] # A_kt[k] is correlated timeseries k
     >>> # Estimate statistical inefficiency from all timeseries data.
-    >>> g = statisticalInefficiencyMultiple(A_kt)
+    >>> g = statistical_inefficiency_multiple(A_kt)
     >>> # Count number of uncorrelated samples in each timeseries.
-    >>> N_k = np.array([ len(subsampleCorrelatedData(A_t, g=g)) for A_t in A_kt ]) # N_k[k] is the number of uncorrelated samples in timeseries k
+    >>> N_k = np.array([ len(subsample_correlated_data(A_t, g=g)) for A_t in A_kt ]) # N_k[k] is the number of uncorrelated samples in timeseries k
     >>> N = N_k.sum() # total number of uncorrelated samples
     >>> # Subsample all trajectories to produce uncorrelated samples
-    >>> A_kn = [ A_t[subsampleCorrelatedData(A_t, g=g)] for A_t in A_kt ] # A_kn[k] is uncorrelated subset of trajectory A_kt[t]
+    >>> A_kn = [ A_t[subsample_correlated_data(A_t, g=g)] for A_t in A_kt ] # A_kn[k] is uncorrelated subset of trajectory A_kt[t]
     >>> # Concatenate data into one timeseries.
     >>> A_n = np.zeros([N], np.float32) # A_n[n] is nth sample in concatenated set of uncorrelated samples
     >>> A_n[0:N_k[0]] = A_kn[0]
@@ -735,7 +735,7 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
     if not g:
         if verbose:
             logger.info("Computing statistical inefficiency...")
-        g = statisticalInefficiency(A_t, A_t, fast=fast)
+        g = statistical_inefficiency(A_t, A_t, fast=fast)
         if verbose:
             logger.info("g = {:f}".format(g))
 
@@ -774,12 +774,12 @@ def subsampleCorrelatedData(A_t, g=None, fast=False, conservative=False, verbose
     return indices
 
 
-def detectEquilibration(A_t, fast=True, nskip=1):
+def detect_equilibration(A_t, fast=True, nskip=1):
     """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
 
     Parameters
     ----------
-    A_t : np.ndarray 
+    A_t : np.ndarray
         timeseries
     nskip : int, optional, default=1
         number of samples to sparsify data by in order to speed equilibration detection
@@ -791,7 +791,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     g : float
         statistical inefficiency of equilibrated data
     Neff_max : float
-        number of uncorrelated samples   
+        number of uncorrelated samples
 
     ToDo
     ----
@@ -801,7 +801,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     -----
     If your input consists of some period of equilibration followed by
     a constant sequence, this function treats the trailing constant sequence
-    as having Neff = 1.  
+    as having Neff = 1.
 
     Examples
     --------
@@ -810,7 +810,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
 
     >>> from pymbar import testsystems
     >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) # generate a test correlated timeseries
-    >>> [t, g, Neff_max] = detectEquilibration(A_t) # compute indices of uncorrelated timeseries
+    >>> [t, g, Neff_max] = detect_equilibration(A_t) # compute indices of uncorrelated timeseries
 
     Determine start of equilibrated data for a correlated timeseries with a shift.
 
@@ -818,7 +818,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     >>> A_t = testsystems.correlated_timeseries_example(N=1000, tau=5.0) + 2.0 # generate a test correlated timeseries
     >>> B_t = testsystems.correlated_timeseries_example(N=10000, tau=5.0) # generate a test correlated timeseries
     >>> C_t = np.concatenate([A_t, B_t])
-    >>> [t, g, Neff_max] = detectEquilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
+    >>> [t, g, Neff_max] = detect_equilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
 
     """
     T = A_t.size
@@ -831,7 +831,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     Neff_t = np.ones([T - 1], np.float32)
     for t in range(0, T - 1, nskip):
         try:
-            g_t[t] = statisticalInefficiency(A_t[t:T], fast=fast)
+            g_t[t] = statistical_inefficiency(A_t[t:T], fast=fast)
         except ParameterError:  # Fix for issue https://github.com/choderalab/pymbar/issues/122
             g_t[t] = T - t + 1
         Neff_t[t] = (T - t + 1) / g_t[t]
@@ -842,7 +842,7 @@ def detectEquilibration(A_t, fast=True, nskip=1):
     return (t, g, Neff_max)
 
 
-def statisticalInefficiency_fft(A_n, mintime=3):
+def statistical_inefficiency_fft(A_n, mintime=3):
     """Compute the (cross) statistical inefficiency of (two) timeseries.
 
     Parameters
@@ -903,14 +903,14 @@ def statisticalInefficiency_fft(A_n, mintime=3):
     return g  # , g_t, C_t
 
 
-def detectEquilibration_binary_search(A_t, bs_nodes=10):
+def detect_equilibration_binary_search(A_t, bs_nodes=10):
     """Automatically detect equilibrated region of a dataset using a heuristic that maximizes number of effectively uncorrelated samples.
 
     Parameters
     ----------
-    A_t : np.ndarray 
+    A_t : np.ndarray
         timeseries
-    
+
     bs_nodes : int > 4
         number of geometrically distributed binary search nodes
 
@@ -922,7 +922,7 @@ def detectEquilibration_binary_search(A_t, bs_nodes=10):
         statistical inefficiency of equilibrated data
     Neff_max : float
         number of uncorrelated samples
-        
+
     Notes
     -----
     Finds the discard region (t) by a binary search on the range of
@@ -951,7 +951,7 @@ def detectEquilibration_binary_search(A_t, bs_nodes=10):
 
         for k, t in enumerate(time_grid):
             if t < T - 1:
-                g_t[k] = statisticalInefficiency_fft(A_t[t:])
+                g_t[k] = statistical_inefficiency_fft(A_t[t:])
                 Neff_t[k] = (T - t + 1) / g_t[k]
 
         Neff_max = Neff_t.max()

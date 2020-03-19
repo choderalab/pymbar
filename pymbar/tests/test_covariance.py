@@ -18,8 +18,8 @@ def _test(statesa, statesb, test_system):
     name, U, N_k, s_n = test_system(statesa, statesb)
     print(name)
     mbar = pymbar.MBAR(U, N_k)
-    results1 = mbar.getFreeEnergyDifferences(uncertainty_method="svd")
-    results2 = mbar.getFreeEnergyDifferences(uncertainty_method="svd-ew")
+    results1 = mbar.compute_free_energy_differences(uncertainty_method="svd")
+    results2 = mbar.compute_free_energy_differences(uncertainty_method="svd-ew")
     fij1 = results1["Delta_f"]
     dfij1 = results1["dDelta_f"]
     fij2 = results2["Delta_f"]
@@ -38,7 +38,7 @@ def _test(statesa, statesb, test_system):
     with suppress_derivative_warnings_for_tests():
         with suppress_matrix_warnings_for_tests():
             mbar0 = pymbar.old_mbar.MBAR(U, N_k)
-    fij0, dfij0 = mbar0.getFreeEnergyDifferences(uncertainty_method="svd")
+    fij0, dfij0 = mbar0.compute_free_energy_differences(uncertainty_method="svd")
     assert_almost_equal(mbar.f_k, mbar0.f_k, decimal=8)
     assert_almost_equal(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
 

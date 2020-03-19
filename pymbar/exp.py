@@ -114,7 +114,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
             # Estimate statistical inefficiency of x timeseries.
             import timeseries
 
-            g = timeseries.statisticalInefficiency(x, x)
+            g = timeseries.statistical_inefficiency(x, x)
 
         # Estimate standard error of E[x].
         dx = np.std(x) / np.sqrt(T / g)
@@ -136,7 +136,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 # =============================================================================================
 
 
-def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
+def EXP_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
     Parameters
@@ -168,10 +168,10 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = EXPGauss(w_F)
+    >>> results = EXP_gauss(w_F)
     >>> print('Forward Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-    >>> results = EXPGauss(w_R)
+    >>> results = EXP_gauss(w_R)
     >>> print('Reverse Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
 
@@ -193,7 +193,7 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
             # Estimate statistical inefficiency of x timeseries.
             import timeseries
 
-            g = timeseries.statisticalInefficiency(w_F, w_F)
+            g = timeseries.statistical_inefficiency(w_F, w_F)
 
             T_eff = T / g
         # Estimate standard error of E[x].
