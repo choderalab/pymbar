@@ -3,8 +3,10 @@ import pytest
 from pymbar import PMF
 from pymbar.utils import ParameterError
 from pymbar.utils_for_testing import assert_almost_equal
+
 try:
     import sklearn
+
     has_sklearn = True
 except ImportError:
     has_sklearn = False
@@ -30,26 +32,28 @@ def generate_pmf_data(ndim=1, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, x
     # Enumerate umbrella centers, and compute the analytical free energy of that umbrella
     # print("Constructing umbrellas...")
 
-    ksum = (Ku+K0)/beta
-    kprod = (Ku*K0)/(beta*beta)
+    ksum = (Ku + K0) / beta
+    kprod = (Ku * K0) / (beta * beta)
     f_k_analytical = np.zeros(numbrellas)
     xu_i = np.zeros([numbrellas, ndim])  # xu_i[i,:] is the center of umbrella i
-    
+
     dp = np.zeros(ndim, int)
     dp[0] = 1
     for d in range(1, ndim):
-        dp[d] = nperdim[d]*dp[d-1]
+        dp[d] = nperdim[d] * dp[d - 1]
 
     umbrella_zero = 0
     for i in range(numbrellas):
         center = []
         for d in range(ndim):
-            val = gridscale*((int(i//dp[d])) % nperdim[d] + xrange[d][0])
+            val = gridscale * ((int(i // dp[d])) % nperdim[d] + xrange[d][0])
             center.append(val)
         center = np.array(center)
         xu_i[i, :] = center
         mu2 = np.dot(center, center)
-        f_k_analytical[i] = np.log((ndim*np.pi/ksum)**(3.0/2.0) * np.exp(-kprod*mu2/(2.0*ksum)))
+        f_k_analytical[i] = np.log(
+            (ndim * np.pi / ksum) ** (3.0 / 2.0) * np.exp(-kprod * mu2 / (2.0 * ksum))
+        )
         if np.all(center == 0.0):  # assumes that we have one state that is at the zero.
             umbrella_zero = i
         i += 1
@@ -66,29 +70,33 @@ def generate_pmf_data(ndim=1, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, x
             # c = C(a/A+b/B)
             # A = 1/K0, B = 1/Ku
             sigma = 1.0 / (K0 + Ku)
-            mu = sigma * (x0[dim]*K0 + xu_i[i, dim]*Ku)
+            mu = sigma * (x0[dim] * K0 + xu_i[i, dim] * Ku)
             # Generate normal deviates for this dimension.
-            x_n[i*nsamples:(i+1)*nsamples, dim] = np.random.normal(mu, np.sqrt(sigma), [nsamples])
+            x_n[i * nsamples : (i + 1) * nsamples, dim] = np.random.normal(
+                mu, np.sqrt(sigma), [nsamples]
+            )
 
-    u_kn = np.zeros([numbrellas, nsamples*numbrellas])
+    u_kn = np.zeros([numbrellas, nsamples * numbrellas])
     # Compute reduced potential due to V0.
-    u_n = beta*(K0/2)*np.sum((x_n[:, :] - x0)**2, axis=1)
+    u_n = beta * (K0 / 2) * np.sum((x_n[:, :] - x0) ** 2, axis=1)
     for k in range(numbrellas):
-        uu = beta*(Ku/2)*np.sum((x_n[:, :] - xu_i[k, :])**2, axis=1)  # reduced potential due to umbrella k
+        uu = (
+            beta * (Ku / 2) * np.sum((x_n[:, :] - xu_i[k, :]) ** 2, axis=1)
+        )  # reduced potential due to umbrella k
         u_kn[k, :] = u_n + uu
 
-    pmf_const = K0/2.0  # using a quadratic surface, so has same multpliciative value everywhere.
+    pmf_const = K0 / 2.0  # using a quadratic surface, so has same multpliciative value everywhere.
 
     def bias_potential(x, k_bias):
         dx = x - xu_i[k_bias, :]
-        return beta*(Ku/2.0) * np.dot(dx, dx)
+        return beta * (Ku / 2.0) * np.dot(dx, dx)
 
     bias_potentials = [(lambda x, klocal=k: bias_potential(x, klocal)) for k in range(numbrellas)]
 
     return u_kn, u_n, x_n, f_k_analytical, pmf_const, bias_potentials
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def pmf_1d():
 
     gridscale = 0.2
@@ -100,22 +108,18 @@ def pmf_1d():
     Ku = 100
 
     payload = {
-        'gridscale': gridscale,
-        'nbinsperdim': nbinsperdim,
-        'xrange': xrange,
-        'ndim': ndim,
-        'nsamples': nsamples,
-        'K0': K0,
-        'Ku': Ku
+        "gridscale": gridscale,
+        "nbinsperdim": nbinsperdim,
+        "xrange": xrange,
+        "ndim": ndim,
+        "nsamples": nsamples,
+        "K0": K0,
+        "Ku": Ku,
     }
 
     u_kn, u_n, x_n, f_k_analytical, pmf_const, bias_potentials = generate_pmf_data(
-        K0=K0,
-        Ku=Ku,
-        ndim=ndim,
-        nsamples=nsamples,
-        gridscale=gridscale,
-        xrange=xrange)
+        K0=K0, Ku=Ku, ndim=ndim, nsamples=nsamples, gridscale=gridscale, xrange=xrange
+    )
     numbrellas = (np.shape(u_kn))[0]
     N_k = nsamples * np.ones([numbrellas], int)
 
@@ -136,7 +140,7 @@ def pmf_1d():
         xbin = xmin + dx * (i + 0.5)
         bin_centers[ibin, 0] = xbin
         mu2 = xbin * xbin
-        if (mu2 < minmu2):
+        if mu2 < minmu2:
             minmu2 = mu2
             zeroindex = ibin
         pmf_analytical[ibin] = pmf_const * mu2
@@ -157,29 +161,29 @@ def pmf_1d():
     pmf = PMF(u_kn, N_k)
 
     # Make a quick calculation to get reference uncertainties
-    pmf.generatePMF(u_n, x_n, histogram_parameters={'bin_edges': bin_edges})
-    results = pmf.getPMF(bin_centers, uncertainties='from-specified', pmf_reference=0.0)
+    pmf.generatePMF(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
+    results = pmf.getPMF(bin_centers, uncertainties="from-specified", pmf_reference=0.0)
 
-    payload['pmf'] = pmf
-    payload['u_kn'] = u_kn
-    payload['N_k'] = N_k
-    payload['u_n'] = u_n
-    payload['x_n'] = x_n
-    payload['dx'] = dx
-    payload['nbins'] = nbins
-    payload['bin_edges'] = bin_edges
-    payload['bin_centers'] = bin_centers
-    payload['pmf_const'] = pmf_const
-    payload['pmf_analytical'] = pmf_analytical
-    payload['f_k_analytical'] = f_k_analytical
-    payload['bias_potentials'] = bias_potentials
-    payload['reference_df_i'] = results['df_i']
+    payload["pmf"] = pmf
+    payload["u_kn"] = u_kn
+    payload["N_k"] = N_k
+    payload["u_n"] = u_n
+    payload["x_n"] = x_n
+    payload["dx"] = dx
+    payload["nbins"] = nbins
+    payload["bin_edges"] = bin_edges
+    payload["bin_centers"] = bin_centers
+    payload["pmf_const"] = pmf_const
+    payload["pmf_analytical"] = pmf_analytical
+    payload["f_k_analytical"] = f_k_analytical
+    payload["bias_potentials"] = bias_potentials
+    payload["reference_df_i"] = results["df_i"]
     del results
 
     return payload
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def pmf_2d():
 
     xrange = [[-3, 3], [-3, 3]]
@@ -192,17 +196,18 @@ def pmf_2d():
     delta = 0.0001  # to break ties in things being too close.
 
     payload = {
-        'gridscale': gridscale,
-        'nbinsperdim': nbinsperdim,
-        'xrange': xrange,
-        'ndim': ndim,
-        'nsamples': nsamples,
-        'K0': K0,
-        'Ku': Ku
+        "gridscale": gridscale,
+        "nbinsperdim": nbinsperdim,
+        "xrange": xrange,
+        "ndim": ndim,
+        "nsamples": nsamples,
+        "K0": K0,
+        "Ku": Ku,
     }
 
     u_kn, u_n, x_n, f_k_analytical, pmf_const, bias_potentials = generate_pmf_data(
-        K0=K0, Ku=Ku, ndim=ndim, nsamples=nsamples, gridscale=gridscale, xrange=xrange)
+        K0=K0, Ku=Ku, ndim=ndim, nsamples=nsamples, gridscale=gridscale, xrange=xrange
+    )
     numbrellas = (np.shape(u_kn))[0]
     N_k = nsamples * np.ones([numbrellas], int)
     # print("Solving for free energies of state ...")
@@ -236,7 +241,7 @@ def pmf_2d():
             bin_centers[ibin, 0] = xbin
             bin_centers[ibin, 1] = ybin
             mu2 = xbin * xbin + ybin * ybin
-            if (mu2 < minmu2):
+            if mu2 < minmu2:
                 minmu2 = mu2
                 zeroindex = ibin
             pmf_analytical[ibin] = pmf_const * mu2
@@ -263,57 +268,62 @@ def pmf_2d():
         bin_label = b[0] + nbinsperdim * b[1]
         bin_counts[bin_label] += 1
 
-    bin_edges = [np.linspace(xmin, xmax, nbinsperdim + 1), np.linspace(ymin, ymax, nbinsperdim + 1)]
+    bin_edges = [
+        np.linspace(xmin, xmax, nbinsperdim + 1),
+        np.linspace(ymin, ymax, nbinsperdim + 1),
+    ]
 
     # initialize PMF
     pmf = PMF(u_kn, N_k)
 
     # Make a quick calculation to get reference uncertainties
-    pmf.generatePMF(u_n, x_n, histogram_parameters={'bin_edges': bin_edges})
-    results = pmf.getPMF(bin_centers+delta, uncertainties = 'from-specified', pmf_reference=[0, 0])
+    pmf.generatePMF(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
+    results = pmf.getPMF(bin_centers + delta, uncertainties="from-specified", pmf_reference=[0, 0])
 
-    payload['pmf'] = pmf
-    payload['u_kn'] = u_kn
-    payload['N_k'] = N_k
-    payload['u_n'] = u_n
-    payload['x_n'] = x_n
-    payload['dx'] = dx
-    payload['nbins'] = nbins
-    payload['bin_edges'] = bin_edges
-    payload['bin_centers'] = bin_centers
-    payload['delta'] = delta
-    payload['pmf_const'] = pmf_const
-    payload['pmf_analytical'] = pmf_analytical
-    payload['f_k_analytical'] = f_k_analytical
-    payload['bias_potentials'] = bias_potentials
-    payload['reference_df_i'] = results['df_i']
+    payload["pmf"] = pmf
+    payload["u_kn"] = u_kn
+    payload["N_k"] = N_k
+    payload["u_n"] = u_n
+    payload["x_n"] = x_n
+    payload["dx"] = dx
+    payload["nbins"] = nbins
+    payload["bin_edges"] = bin_edges
+    payload["bin_centers"] = bin_centers
+    payload["delta"] = delta
+    payload["pmf_const"] = pmf_const
+    payload["pmf_analytical"] = pmf_analytical
+    payload["f_k_analytical"] = f_k_analytical
+    payload["bias_potentials"] = bias_potentials
+    payload["reference_df_i"] = results["df_i"]
     del results
 
     return payload
 
 
-@pytest.mark.parametrize("uncertainties",
-                         ['from-lowest',
-                          'from-specified',
-                          pytest.param('from-normalization', marks=pytest.mark.xfail(raises=ParameterError)),
-                          pytest.param('all-differences', marks=pytest.mark.xfail(raises=ParameterError))
-                          ]
-                         )
+@pytest.mark.parametrize(
+    "uncertainties",
+    [
+        "from-lowest",
+        "from-specified",
+        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
+    ],
+)
 def test_1d_pmf_histogram(pmf_1d, uncertainties):
 
-    pmf = pmf_1d['pmf']
+    pmf = pmf_1d["pmf"]
 
     histogram_parameters = dict()
-    histogram_parameters['bin_edges'] = pmf_1d['bin_edges']
-    pmf.generatePMF(pmf_1d['u_n'], pmf_1d['x_n'], histogram_parameters=histogram_parameters)
-    results = pmf.getPMF(pmf_1d['bin_centers'], uncertainties=uncertainties, pmf_reference=0.0)
-    f_ih = results['f_i']
-    df_ih = results['df_i']
+    histogram_parameters["bin_edges"] = pmf_1d["bin_edges"]
+    pmf.generatePMF(pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters)
+    results = pmf.getPMF(pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0)
+    f_ih = results["f_i"]
+    df_ih = results["df_i"]
 
-    z = np.zeros(pmf_1d['nbins'])
-    for i in range(0, pmf_1d['nbins']):
+    z = np.zeros(pmf_1d["nbins"])
+    for i in range(0, pmf_1d["nbins"]):
         if df_ih[i] != 0:
-            z[i] = np.abs(pmf_1d['pmf_analytical'][i]-f_ih[i])/df_ih[i]
+            z[i] = np.abs(pmf_1d["pmf_analytical"][i] - f_ih[i]) / df_ih[i]
         else:
             z[i] = 0
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
@@ -321,113 +331,121 @@ def test_1d_pmf_histogram(pmf_1d, uncertainties):
 
 def base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
 
-    pmf = pmf_1d['pmf']
+    pmf = pmf_1d["pmf"]
 
     kde_parameters = dict()
-    kde_parameters['bandwidth'] = 0.5*pmf_1d['dx']
+    kde_parameters["bandwidth"] = 0.5 * pmf_1d["dx"]
     # no analytical uncertainty for kde yet, have to use bootstraps
-    pmf.generatePMF(pmf_1d['u_n'], pmf_1d['x_n'], pmf_type='kde', kde_parameters=kde_parameters, **gen_kwargs)
-    results_kde = pmf.getPMF(pmf_1d['bin_centers'], uncertainties=uncertainties, pmf_reference=0.0)
-    f_ik = results_kde['f_i']
+    pmf.generatePMF(
+        pmf_1d["u_n"], pmf_1d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
+    )
+    results_kde = pmf.getPMF(pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0)
+    f_ik = results_kde["f_i"]
     # df_ih = results_kde['df_i']
     # Just use the reference for now
-    df_ih = pmf_1d['reference_df_i']
+    df_ih = pmf_1d["reference_df_i"]
     if df_ih is None:
-        df_ih = pmf_1d['reference_df_i']
+        df_ih = pmf_1d["reference_df_i"]
 
-    z = np.zeros(pmf_1d['nbins'])
-    for i in range(0, pmf_1d['nbins']):
+    z = np.zeros(pmf_1d["nbins"])
+    for i in range(0, pmf_1d["nbins"]):
         if df_ih[i] != 0:
-            z[i] = np.abs(pmf_1d['pmf_analytical'][i]-f_ik[i])/df_ih[i]
+            z[i] = np.abs(pmf_1d["pmf_analytical"][i] - f_ik[i]) / df_ih[i]
         else:
             z[i] = 0
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-@pytest.mark.skipif(not has_sklearn, reason="Must have sklearn (package scikit-learn) installed to use KDE type PMF")
-@pytest.mark.parametrize("gen_kwargs",
-                         [
-                             {},
-                             {'seed': 10}
-                         ]
-                         )
-@pytest.mark.parametrize("uncertainties",
-                         ['from-lowest',
-                          'from-specified',
-                          pytest.param('from-normalization', marks=pytest.mark.xfail(raises=ParameterError)),
-                          pytest.param('all-differences', marks=pytest.mark.xfail(raises=ParameterError))
-                          ]
-                         )
+@pytest.mark.skipif(
+    not has_sklearn,
+    reason="Must have sklearn (package scikit-learn) installed to use KDE type PMF",
+)
+@pytest.mark.parametrize("gen_kwargs", [{}, {"seed": 10}])
+@pytest.mark.parametrize(
+    "uncertainties",
+    [
+        "from-lowest",
+        "from-specified",
+        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
+    ],
+)
 def test_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
     base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties)
 
 
-@pytest.mark.skipif(not has_sklearn, reason="Must have sklearn (package scikit-learn) installed to use KDE type PMF")
+@pytest.mark.skipif(
+    not has_sklearn,
+    reason="Must have sklearn (package scikit-learn) installed to use KDE type PMF",
+)
 def test_1d_pmf_kde_bootstraped(pmf_1d):
     # Make tests faster overall by only testing bootstraps once.
     # Once more paths are fixed, this can be folded into the gen_kwargs of the more general test
-    base_1d_pmf_kde(pmf_1d, {'nbootstraps': 2}, 'from-lowest')
+    base_1d_pmf_kde(pmf_1d, {"nbootstraps": 2}, "from-lowest")
 
 
 def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
 
-    pmf = pmf_1d['pmf']
-    bin_centers = pmf_1d['bin_centers']
-    pmf_analytical = pmf_1d['pmf_analytical']
+    pmf = pmf_1d["pmf"]
+    bin_centers = pmf_1d["bin_centers"]
+    pmf_analytical = pmf_1d["pmf_analytical"]
 
     # now spline
     spline_parameters = dict()
-    spline_parameters['spline_weights'] = 'simplesum'  # fastest spline method
-    spline_parameters['nspline'] = 4
-    spline_parameters['spline_initialize'] = 'explicit'
+    spline_parameters["spline_weights"] = "simplesum"  # fastest spline method
+    spline_parameters["nspline"] = 4
+    spline_parameters["spline_initialize"] = "explicit"
 
-    spline_parameters['xinit'] = bin_centers[:, 0]
-    spline_parameters['yinit'] = pmf_analytical  # cheat by starting with "true" answer - for speed
+    spline_parameters["xinit"] = bin_centers[:, 0]
+    spline_parameters["yinit"] = pmf_analytical  # cheat by starting with "true" answer - for speed
 
-    spline_parameters['xrange'] = pmf_1d['xrange'][0]
-    spline_parameters['fkbias'] = pmf_1d['bias_potentials']
+    spline_parameters["xrange"] = pmf_1d["xrange"][0]
+    spline_parameters["fkbias"] = pmf_1d["bias_potentials"]
 
-    spline_parameters['kdegree'] = 3
-    spline_parameters['optimization_algorithm'] = 'Newton-CG'
-    spline_parameters['optimize_options'] = {'disp': True, 'tol': 10**(-6)}
-    spline_parameters['objective'] = 'ml'
-    spline_parameters['map_data'] = None
+    spline_parameters["kdegree"] = 3
+    spline_parameters["optimization_algorithm"] = "Newton-CG"
+    spline_parameters["optimize_options"] = {"disp": True, "tol": 10 ** (-6)}
+    spline_parameters["objective"] = "ml"
+    spline_parameters["map_data"] = None
 
     # TODO: Is this u_kn for spline or u_n like all the others? Right now I have it as u_kn as thats what it was
     # no analytical uncertainty for kde yet, have to use bootstraps
-    pmf.generatePMF(pmf_1d['u_kn'], pmf_1d['x_n'], pmf_type='spline', spline_parameters=spline_parameters, **gen_kwargs)
+    pmf.generatePMF(
+        pmf_1d["u_kn"],
+        pmf_1d["x_n"],
+        pmf_type="spline",
+        spline_parameters=spline_parameters,
+        **gen_kwargs
+    )
     # Something wrong with unbiased state?
     results_spline = pmf.getPMF(bin_centers, uncertainties=uncertainties, pmf_reference=0.0)
-    f_is = results_spline['f_i']
+    f_is = results_spline["f_i"]
     # df_ih = results_spline['df_i']
     # Just use the reference for now
-    df_ih = pmf_1d['reference_df_i']
+    df_ih = pmf_1d["reference_df_i"]
     if df_ih is None:
-        df_ih = pmf_1d['reference_df_i']
+        df_ih = pmf_1d["reference_df_i"]
 
-    z = np.zeros(pmf_1d['nbins'])
-    for i in range(0, pmf_1d['nbins']):
+    z = np.zeros(pmf_1d["nbins"])
+    for i in range(0, pmf_1d["nbins"]):
         if df_ih[i] != 0:
-            z[i] = np.abs(pmf_analytical[i]-f_is[i])/df_ih[i]
+            z[i] = np.abs(pmf_analytical[i] - f_is[i]) / df_ih[i]
         else:
             z[i] = 0
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-@pytest.mark.parametrize("gen_kwargs",
-                         [
-                             {},
-                             {'seed': 10}
-                         ]
-                         )
-@pytest.mark.parametrize("uncertainties",
-                         ['from-lowest',
-                          # Lots of things are wrong with this, not going to debug it at this time.
-                          # pytest.param('from-specified', marks=pytest.mark.xfail(reason="Not sure why this fails")),
-                          # pytest.param('from-normalization', marks=pytest.mark.xfail),
-                          # pytest.param('all-differences', marks=pytest.mark.xfail)
-                          ]
-                         )
+@pytest.mark.parametrize("gen_kwargs", [{}, {"seed": 10}])
+@pytest.mark.parametrize(
+    "uncertainties",
+    [
+        "from-lowest",
+        # Lots of things are wrong with this, not going to debug it at this time.
+        # pytest.param('from-specified', marks=pytest.mark.xfail(reason="Not sure why this fails")),
+        # pytest.param('from-normalization', marks=pytest.mark.xfail),
+        # pytest.param('all-differences', marks=pytest.mark.xfail)
+    ],
+)
 def test_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
     base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties)
 
@@ -435,76 +453,89 @@ def test_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
 def test_1d_pmf_spline_bootstraped(pmf_1d):
     # Make tests faster overall by only testing bootstraps once.
     # Once more paths are fixed, this can be folded into the gen_kwargs of the more general test
-    base_1d_pmf_spline(pmf_1d, {'nbootstraps': 2}, 'from-lowest')
+    base_1d_pmf_spline(pmf_1d, {"nbootstraps": 2}, "from-lowest")
 
 
-@pytest.mark.parametrize("uncertainties",
-                         ['from-lowest',
-                          'from-specified',
-                          pytest.param('from-normalization', marks=pytest.mark.xfail(raises=ParameterError)),
-                          pytest.param('all-differences', marks=pytest.mark.xfail(raises=ParameterError))
-                          ]
-                         )
+@pytest.mark.parametrize(
+    "uncertainties",
+    [
+        "from-lowest",
+        "from-specified",
+        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
+    ],
+)
 def test_2d_pmf_histogram(pmf_2d, uncertainties):
 
     """ testing pmf_generatePMF and pmf_getPMF in 2D """
 
-    pmf = pmf_2d['pmf']
-    pmf_analytical = pmf_2d['pmf_analytical']
+    pmf = pmf_2d["pmf"]
+    pmf_analytical = pmf_2d["pmf_analytical"]
 
     # set histogram parameters.
     histogram_parameters = dict()
-    histogram_parameters['bin_edges'] = pmf_2d['bin_edges']
-    pmf.generatePMF(pmf_2d['u_n'], pmf_2d['x_n'], pmf_type='histogram', histogram_parameters=histogram_parameters)
+    histogram_parameters["bin_edges"] = pmf_2d["bin_edges"]
+    pmf.generatePMF(
+        pmf_2d["u_n"],
+        pmf_2d["x_n"],
+        pmf_type="histogram",
+        histogram_parameters=histogram_parameters,
+    )
 
-    results = pmf.getPMF(pmf_2d['bin_centers'] + pmf_2d['delta'], uncertainties=uncertainties, pmf_reference=[0, 0])
-    f_ih = results['f_i']
-    df_ih = pmf_2d['reference_df_i']
+    results = pmf.getPMF(
+        pmf_2d["bin_centers"] + pmf_2d["delta"], uncertainties=uncertainties, pmf_reference=[0, 0]
+    )
+    f_ih = results["f_i"]
+    df_ih = pmf_2d["reference_df_i"]
 
-    nbins = pmf_2d['nbins']
+    nbins = pmf_2d["nbins"]
     z = np.zeros(nbins)
     for i in range(0, nbins):
         if df_ih[i] != 0:
-            z[i] = np.abs(pmf_analytical[i]-f_ih[i])/df_ih[i]
+            z[i] = np.abs(pmf_analytical[i] - f_ih[i]) / df_ih[i]
         else:
             z[i] = 0
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-@pytest.mark.skipif(not has_sklearn, reason="Must have sklearn (package scikit-learn) installed to use KDE type PMF")
-@pytest.mark.parametrize("gen_kwargs",
-                         [
-                             {},
-                             {'seed': 10}
-                         ]
-                         )
-@pytest.mark.parametrize("uncertainties",
-                         ['from-lowest',
-                          'from-specified',
-                          pytest.param('from-normalization', marks=pytest.mark.xfail(raises=ParameterError)),
-                          pytest.param('all-differences', marks=pytest.mark.xfail(raises=ParameterError))
-                          ]
-                         )
+@pytest.mark.skipif(
+    not has_sklearn,
+    reason="Must have sklearn (package scikit-learn) installed to use KDE type PMF",
+)
+@pytest.mark.parametrize("gen_kwargs", [{}, {"seed": 10}])
+@pytest.mark.parametrize(
+    "uncertainties",
+    [
+        "from-lowest",
+        "from-specified",
+        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
+    ],
+)
 def test_2d_pmf_kde(pmf_2d, gen_kwargs, uncertainties):
 
-    pmf = pmf_2d['pmf']
-    pmf_analytical = pmf_2d['pmf_analytical']
+    pmf = pmf_2d["pmf"]
+    pmf_analytical = pmf_2d["pmf_analytical"]
 
     # set kde parameters
     kde_parameters = dict()
-    kde_parameters['bandwidth'] = 0.5*pmf_2d['dx']
-    pmf.generatePMF(pmf_2d['u_n'], pmf_2d['x_n'], pmf_type='kde', kde_parameters=kde_parameters, **gen_kwargs)
+    kde_parameters["bandwidth"] = 0.5 * pmf_2d["dx"]
+    pmf.generatePMF(
+        pmf_2d["u_n"], pmf_2d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
+    )
     # I don't know if this needs the +delta
-    results_kde = pmf.getPMF(pmf_2d['bin_centers'] + pmf_2d['delta'], uncertainties=uncertainties, pmf_reference=[0, 0])
+    results_kde = pmf.getPMF(
+        pmf_2d["bin_centers"] + pmf_2d["delta"], uncertainties=uncertainties, pmf_reference=[0, 0]
+    )
 
-    f_ik = results_kde['f_i']
-    df_ih = pmf_2d['reference_df_i']
+    f_ik = results_kde["f_i"]
+    df_ih = pmf_2d["reference_df_i"]
 
-    nbins = pmf_2d['nbins']
+    nbins = pmf_2d["nbins"]
     z = np.zeros(nbins)
     for i in range(0, nbins):
         if df_ih[i] != 0:
-            z[i] = np.abs(pmf_analytical[i]-f_ik[i])/df_ih[i]
+            z[i] = np.abs(pmf_analytical[i] - f_ik[i]) / df_ih[i]
         else:
             z[i] = 0
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)

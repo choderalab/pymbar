@@ -32,37 +32,40 @@ logger = logging.getLogger(__name__)
 
 def OrderReplicates(replicates, K):
 
-    ''' Inputs: An array of replicates, and the size of the data.
+    """ Inputs: An array of replicates, and the size of the data.
 
         Outputs: a Nxdims arrary of the data in the replicates, normalized by the standard deviation
 
-    '''
+    """
 
-    dims = np.shape(replicates[0]['destimated'])
+    dims = np.shape(replicates[0]["destimated"])
 
-    sigma = replicates[0]['destimated']
-    zerosigma = (sigma == 0)
-    sigmacorr = zerosigma  # we need to avoid errors with zero standard errors.  We will ignore them later.
+    sigma = replicates[0]["destimated"]
+    zerosigma = sigma == 0
+    sigmacorr = (
+        zerosigma  # we need to avoid errors with zero standard errors.  We will ignore them later.
+    )
     sigma += sigmacorr
 
     yi = []
     for (replicate_index, replicate) in enumerate(replicates):
-        yi.append(replicate['error']/sigma)
+        yi.append(replicate["error"] / sigma)
     yiarray = np.asarray(yi)
     sortedyi = np.zeros(np.shape(yiarray))
     if len(dims) == 0:
         sortedyi[:] = np.sort(yiarray)
     elif len(dims) == 1:
         for i in range(K):
-            sortedyi[:,i] = np.sort(yiarray[:,i])
+            sortedyi[:, i] = np.sort(yiarray[:, i])
     elif len(dims) == 2:
         for i in range(K):
             for j in range(K):
-                sortedyi[:,i,j] = np.sort(yiarray[:,i,j])
+                sortedyi[:, i, j] = np.sort(yiarray[:, i, j])
 
     # remove the correction so we have zero sigmas again
     sigma -= sigmacorr
     return sortedyi
+
 
 def AndersonDarling(replicates, K):
 
@@ -93,86 +96,110 @@ def AndersonDarling(replicates, K):
     # _first_ replicate.
 
     sortedyi = OrderReplicates(replicates, K)
-    zerosigma = (replicates[0]['destimated'] == 0) # ignore the ones with zero values of the std
+    zerosigma = replicates[0]["destimated"] == 0  # ignore the ones with zero values of the std
 
     N = len(replicates)
-    dims = np.shape(replicates[0]['destimated'])
+    dims = np.shape(replicates[0]["destimated"])
     sum = np.zeros(dims)
     for i in range(N):
         cdfi = scipy.stats.norm.cdf(sortedyi[i])
-        sum += (2*i-1)*np.log(cdfi) + (2*(N-i)+1)*np.log(1-cdfi)
-    A2 = -N - sum/N
+        sum += (2 * i - 1) * np.log(cdfi) + (2 * (N - i) + 1) * np.log(1 - cdfi)
+    A2 = -N - sum / N
     A2[zerosigma] = 0
     return A2
 
-def QQPlot(replicates, K, title='Generic Q-Q plot', filename = 'qq.pdf'):
+
+def QQPlot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
 
     import matplotlib
     import matplotlib.pyplot as plt
 
     sortedyi = OrderReplicates(replicates, K)
     N = len(replicates)
-    dim = len(np.shape(replicates[0]['error']))
-    xvals = scipy.stats.norm.ppf((np.arange(0,N)+0.5)/N)  # inverse pdf
+    dim = len(np.shape(replicates[0]["error"]))
+    xvals = scipy.stats.norm.ppf((np.arange(0, N) + 0.5) / N)  # inverse pdf
 
     if dim == 0:
         nplots = 1
     elif dim == 1:
         nplots = K
     elif dim == 2:
-        nplots = K*K
+        nplots = K * K
 
-    yy = np.zeros([N,nplots])
+    yy = np.zeros([N, nplots])
 
     labelij = dict()
     if dim == 0:
-        yy[:,0] = sortedyi[:]
+        yy[:, 0] = sortedyi[:]
     elif dim == 1:
         nplots = K
         for i in range(K):
-            yy[:,i] = sortedyi[:,i]
+            yy[:, i] = sortedyi[:, i]
     elif dim == 2:
-        nplots = K*(K-1)
+        nplots = K * (K - 1)
         k = 0
         for i in range(K):
             for j in range(K):
-                if i!=j:
-                    yy[:,k] = sortedyi[:,i,j]
-                    labelij[k] = [i,j]
-                    k+=1
+                if i != j:
+                    yy[:, k] = sortedyi[:, i, j]
+                    labelij[k] = [i, j]
+                    k += 1
 
-    sq = (nplots)**0.5
-    labelsize = 30.0/sq
-    matplotlib.rc('axes', facecolor = '#E3E4FA')
-    matplotlib.rc('axes', edgecolor = 'white')
-    matplotlib.rc('xtick', labelsize = labelsize)
-    matplotlib.rc('ytick', labelsize = labelsize)
+    sq = (nplots) ** 0.5
+    labelsize = 30.0 / sq
+    matplotlib.rc("axes", facecolor="#E3E4FA")
+    matplotlib.rc("axes", edgecolor="white")
+    matplotlib.rc("xtick", labelsize=labelsize)
+    matplotlib.rc("ytick", labelsize=labelsize)
     h = int(sq)
-    w = h + 1 + 1*(sq-h>0.5)
-    fig = plt.figure(figsize = (8,6))
+    w = h + 1 + 1 * (sq - h > 0.5)
+    fig = plt.figure(figsize=(8, 6))
     for i in range(nplots):
-        ax = plt.subplot(h, w, i+1)
-        ms = 75.0/len(yy[:,i])
-        ax.plot(xvals, yy[:,i], color='r', ms=ms, marker='o', mec='r')
-        ax.plot(xvals, xvals, color='b', ls = '-')
+        ax = plt.subplot(h, w, i + 1)
+        ms = 75.0 / len(yy[:, i])
+        ax.plot(xvals, yy[:, i], color="r", ms=ms, marker="o", mec="r")
+        ax.plot(xvals, xvals, color="b", ls="-")
         plt.xlim(xvals.min(), xvals.max())
-        if dim==1:
-            ax.annotate(r'State $\mathrm{%d}$' % (i), xy=(0.5, 0.9), xycoords=('axes fraction', 'axes fraction'), xytext=(0, -2), size=labelsize, textcoords='offset points', va='top', ha='center', color='#151B54', bbox = dict(fc='w', ec='none', alpha=0.5))
-        if dim==2:
-            ax.annotate(r'State $\mathrm{%d-%d}$' % (labelij[i][0], labelij[i][1]), xy=(0.5, 0.9), xycoords=('axes fraction', 'axes fraction'), xytext=(0, -2), size=labelsize, textcoords='offset points', va='top', ha='center', color='#151B54', bbox = dict(fc='w', ec='none', alpha=0.5))
+        if dim == 1:
+            ax.annotate(
+                r"State $\mathrm{%d}$" % (i),
+                xy=(0.5, 0.9),
+                xycoords=("axes fraction", "axes fraction"),
+                xytext=(0, -2),
+                size=labelsize,
+                textcoords="offset points",
+                va="top",
+                ha="center",
+                color="#151B54",
+                bbox=dict(fc="w", ec="none", alpha=0.5),
+            )
+        if dim == 2:
+            ax.annotate(
+                r"State $\mathrm{%d-%d}$" % (labelij[i][0], labelij[i][1]),
+                xy=(0.5, 0.9),
+                xycoords=("axes fraction", "axes fraction"),
+                xytext=(0, -2),
+                size=labelsize,
+                textcoords="offset points",
+                va="top",
+                ha="center",
+                color="#151B54",
+                bbox=dict(fc="w", ec="none", alpha=0.5),
+            )
     plt.suptitle(title, fontsize=20)
     plt.savefig(filename)
     plt.close(fig)
 
     return
 
+
 def generateConfidenceIntervals(replicates, K):
     # inputs:
     #      replicates: list of replicates
     #      K: number of replicates
-    #=============================================================================================
+    # =============================================================================================
     # Analyze data.
-    #=============================================================================================
+    # =============================================================================================
     #
     # By Chebyshev's inequality, we should have
     #   P(error >= alpha sigma) <= 1 / alpha^2
@@ -210,7 +237,7 @@ def generateConfidenceIntervals(replicates, K):
     Plow = np.zeros([nalpha], dtype=np.float64)
     Phigh = np.zeros([nalpha], dtype=np.float64)
     nreplicates = len(replicates)
-    dim = len(np.shape(replicates[0]['estimated']))
+    dim = len(np.shape(replicates[0]["estimated"]))
     for alpha_index in range(0, nalpha):
         # Get alpha value.
         alpha = alpha_values[alpha_index]
@@ -222,47 +249,52 @@ def generateConfidenceIntervals(replicates, K):
         for (replicate_index, replicate) in enumerate(replicates):
             # Compute fraction of free energy differences where error <= alpha sigma
             # We only count differences where the analytical difference is larger than a cutoff, so that the results will not be limited by machine precision.
-            if (dim == 0):
-                if np.isnan(replicate['error']) or np.isnan(replicate['destimated']):
+            if dim == 0:
+                if np.isnan(replicate["error"]) or np.isnan(replicate["destimated"]):
                     logger.warning("replicate {:d}".format(replicate_index))
                     logger.warning("error")
-                    logger.warning(replicate['error'])
+                    logger.warning(replicate["error"])
                     logger.warning("destimated")
-                    logger.warning(replicate['destimated'])
+                    logger.warning(replicate["destimated"])
                     raise ArithmaticError("Encountered isnan in computation")
                 else:
-                    if abs(replicate['error']) <= alpha * replicate['destimated']:
+                    if abs(replicate["error"]) <= alpha * replicate["destimated"]:
                         a += 1.0
                     else:
                         b += 1.0
 
-            elif (dim == 1):
+            elif dim == 1:
                 for i in range(0, K):
-                    if np.isnan(replicate['error'][i]) or np.isnan(replicate['destimated'][i]):
+                    if np.isnan(replicate["error"][i]) or np.isnan(replicate["destimated"][i]):
                         logger.warning("replicate {:d}".format(replicate_index))
                         logger.warning("error")
-                        logger.warning(replicate['error'])
+                        logger.warning(replicate["error"])
                         logger.warning("destimated")
-                        logger.warning(replicate['destimated'])
+                        logger.warning(replicate["destimated"])
                         raise ArithmaticError("Encountered isnan in computation")
                     else:
-                        if abs(replicate['error'][i]) <= alpha * replicate['destimated'][i]:
+                        if abs(replicate["error"][i]) <= alpha * replicate["destimated"][i]:
                             a += 1.0
                         else:
                             b += 1.0
 
-            elif (dim == 2):
+            elif dim == 2:
                 for i in range(0, K):
                     for j in range(0, i):
-                        if np.isnan(replicate['error'][i, j]) or np.isnan(replicate['destimated'][i, j]):
+                        if np.isnan(replicate["error"][i, j]) or np.isnan(
+                            replicate["destimated"][i, j]
+                        ):
                             logger.warning("replicate {:d}".format(replicate_index))
                             logger.warning("ij_error")
-                            logger.warning(replicate['error'])
+                            logger.warning(replicate["error"])
                             logger.warning("ij_estimated")
-                            logger.warning(replicate['destimated'])
+                            logger.warning(replicate["destimated"])
                             raise ArithmaticError("Encountered isnan in computation")
                         else:
-                            if abs(replicate['error'][i, j]) <= alpha * replicate['destimated'][i, j]:
+                            if (
+                                abs(replicate["error"][i, j])
+                                <= alpha * replicate["destimated"][i, j]
+                            ):
                                 a += 1.0
                             else:
                                 b += 1.0
@@ -274,11 +306,22 @@ def generateConfidenceIntervals(replicates, K):
 
     # Write error as a function of sigma.
     logger.info("Error vs. alpha")
-    logger.info("{:5s} {:10s} {:10s} {:16s} {:17s}".format('alpha', 'cheby', 'obs', 'obs err', 'normal'))
-    Pnorm = scipy.special.erf(alpha_values / np.sqrt(2.))
+    logger.info(
+        "{:5s} {:10s} {:10s} {:16s} {:17s}".format("alpha", "cheby", "obs", "obs err", "normal")
+    )
+    Pnorm = scipy.special.erf(alpha_values / np.sqrt(2.0))
     for alpha_index in range(0, nalpha):
         alpha = alpha_values[alpha_index]
-        logger.info("{:5.1f} {:10.6f} {:10.6f} ({:10.6f},{:10.6f}) {:10.6f}".format(alpha, 1. - 1. / alpha ** 2, Pobs[alpha_index], Plow[alpha_index], Phigh[alpha_index], Pnorm[alpha_index]))
+        logger.info(
+            "{:5.1f} {:10.6f} {:10.6f} ({:10.6f},{:10.6f}) {:10.6f}".format(
+                alpha,
+                1.0 - 1.0 / alpha ** 2,
+                Pobs[alpha_index],
+                Plow[alpha_index],
+                Phigh[alpha_index],
+                Pnorm[alpha_index],
+            )
+        )
 
     # compute bias, average, etc - do it by replicate, not by bias
     if dim == 0:
@@ -297,20 +340,20 @@ def generateConfidenceIntervals(replicates, K):
     rindex = 0
     for replicate in replicates:
         if dim == 0:
-            vals[rindex] = replicate['estimated']
-            vals_error[rindex] = replicate['error']
-            vals_std[rindex] = replicate['destimated']
+            vals[rindex] = replicate["estimated"]
+            vals_error[rindex] = replicate["error"]
+            vals_std[rindex] = replicate["destimated"]
         elif dim == 1:
             for i in range(0, K):
-                vals[rindex,:] = replicate['estimated']      
-                vals_error[rindex,:] = replicate['error']      
-                vals_std[rindex,:] = replicate['destimated']
+                vals[rindex, :] = replicate["estimated"]
+                vals_error[rindex, :] = replicate["error"]
+                vals_std[rindex, :] = replicate["destimated"]
         elif dim == 2:
             for i in range(0, K):
                 for j in range(0, i):
-                    vals[rindex,:,:] = replicate['estimated']      
-                    vals_error[rindex,:,:] = replicate['error']      
-                    vals_std[rindex,:,:] = replicate['destimated']
+                    vals[rindex, :, :] = replicate["estimated"]
+                    vals_error[rindex, :, :] = replicate["error"]
+                    vals_std[rindex, :, :] = replicate["destimated"]
         rindex += 1
 
     aveval = np.average(vals, axis=0)
@@ -339,7 +382,11 @@ def generateConfidenceIntervals(replicates, K):
             prms = rms_error[i]
             pstdev = standarddev[i]
             pavestd = ave_std[i]
-            logger.info("{:7d} {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(i, pave, pbias, prms, pstdev, pavestd))
+            logger.info(
+                "{:7d} {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(
+                    i, pave, pbias, prms, pstdev, pavestd
+                )
+            )
     elif dim == 2:
         for i in range(0, K):
             pave = aveval[0, i]
@@ -347,8 +394,16 @@ def generateConfidenceIntervals(replicates, K):
             prms = rms_error[0, i]
             pstdev = standarddev[0, i]
             pavestd = ave_std[0, i]
-            logger.info("{:7d} {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(i, pave, pbias, prms, pstdev, pavestd))
+            logger.info(
+                "{:7d} {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(
+                    i, pave, pbias, prms, pstdev, pavestd
+                )
+            )
 
-    logger.info("Totals: {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(pave, pbias, prms, pstdev, pavestd))
+    logger.info(
+        "Totals: {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f} {:10.4f}".format(
+            pave, pbias, prms, pstdev, pavestd
+        )
+    )
 
     return alpha_values, Pobs, Plow, Phigh, dPobs, Pnorm
