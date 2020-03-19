@@ -23,7 +23,7 @@ jobs:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
         python-version: [3.7, 3.8]
-      # fail-fast: false # Un-comment once finalized
+        fail-fast: false
     env:
       PYVER: ${{ matrix.python-version }}
       CI_OS: ${{ matrix.os }}
@@ -40,12 +40,11 @@ jobs:
         df -h
         ulimit -a
     
-    - name: Setup and update conda
+    - name: Setup conda
       shell: bash
       run: |
         . devtools/github-actions/initialize_conda.sh
-        echo 'envs_dirs: [ ~/my-envs ]' > ~/.condarc
-        conda update conda
+        echo 'envs_dirs: [ ~/conda-envs ]' > ~/.condarc
     
     - name: Create environment for package
       shell: bash
