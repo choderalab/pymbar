@@ -37,7 +37,7 @@ import pymbar.old_mbar
 
 try:
     from pymbar import version
-except:
+except ImportError:
     # Fill in information manually.
     # TODO: See if we can at least get the git revision info in here.
     version = 'dev'
