@@ -141,16 +141,17 @@ def test_compare_detectEquil(show_hist=False):
 
 
 def test_detectEquil_constant_trailing():
-    # This explicitly tests issue #122, see https://github.com/choderalab/pymbar/issues/122
-    x = np.random.normal(size=100) * 0.01
-    x[50:] = 3.0
-    # The input data is some MCMC chain where the trailing end of the chain is a constant sequence.
-    (t, g, Neff_max) = timeseries.detect_equilibration(x)
     """
+    This explicitly tests issue #122, see https://github.com/choderalab/pymbar/issues/122
+
     We only check that the code doesn't give an exception.  The exact value of Neff can either be
     ~50 if we try to include part of the equilibration samples, or it can be Neff=1 if we find that the
     whole first half is discarded.
     """
+    x = np.random.normal(size=100) * 0.01
+    x[50:] = 3.0
+    # The input data is some MCMC chain where the trailing end of the chain is a constant sequence.
+    (t, g, Neff_max) = timeseries.detect_equilibration(x)
 
 
 def test_correlationFunctionMultiple():
