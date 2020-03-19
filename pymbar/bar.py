@@ -48,7 +48,6 @@ __license__ = "MIT"
 #=============================================================================================
 import logging
 import numpy as np
-import numpy.linalg
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
 from pymbar.exp import EXP
 
@@ -123,9 +122,9 @@ def BARzero(w_F, w_R, DeltaF):
     max_arg_F = np.choose(np.less(0.0, exp_arg_F), (0.0, exp_arg_F))
     try:
         log_f_F = - max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
-    except:
+    except ParameterError():
         # give up; if there's overflow, return zero
-        logger.info("The input data results in overflow in BAR")
+        logger.warning("The input data results in overflow in BAR")
         return np.nan
     log_numer = logsumexp(log_f_F)
 
@@ -140,7 +139,7 @@ def BARzero(w_F, w_R, DeltaF):
     max_arg_R = np.choose(np.less(0.0, exp_arg_R), (0.0, exp_arg_R))
     try:
         log_f_R = - max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
-    except:
+    except ParameterError:
         logger.info("The input data results in overflow in BAR")
         return np.nan
     log_denom = logsumexp(log_f_R)
@@ -349,111 +348,110 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
 
     if compute_uncertainty:
 
-        '''
-
-        Compute asymptotic variance estimate using Eq. 10a of Bennett,
-        1976 (except with n_1<f>_1^2 in the second denominator, it is
-        an error in the original.
-
-        NOTE: The 'BAR' and 'MBAR' estimators
-        do not agree for poor overlap. This is not because of
-        numerical precision, but because they are fundamentally
-        different estimators. For poor overlap, 'MBAR' diverges high,
-        and 'BAR' diverges by being too low. In situations they are
-        noticeably from each other, they are also pretty different
-        from the true answer (obtained by calculating the standard
-        deviation over lots of realizations).
-
-        First, we examine the 'BAR' equation. Rederive from Bennett, substituting (8) into (7)
-
-        (8)    -> W = [q0/n0 exp(-U1) + q1/n1 exp(-U0)]^-1
-                    <(W exp(-U1))^2 >_0         <(W exp(-U0))^2 >_1
-        (7)    -> -----------------------  +   -----------------------   - 1/n0 - 1/n1
-                   n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
-
-            Const cancels out of top and bottom.   Wexp(-U0) = [q0/n0 exp(-(U1-U0)) + q1/n1]^-1
-                                                             =  n1/q1 [n1/n0 q0/q1 exp(-(U1-U0)) + 1]^-1
-                                                             =  n1/q1 [exp (M+(F1-F0)-(U1-U0)+1)^-1]
-                                                             =  n1/q1 f(x)
-                                                   Wexp(-U1) = [q0/n0 + q1/n1 exp(-(U0-U1))]^-1
-                                                             =  n0/q0 [1 + n0/n1 q1/q0 exp(-(U0-U1))]^-1
-                                                             =  n0/q0 [1 + exp(-M+[F0-F1)-(U0-U1))]^-1
-                                                             =  n0/q0 f(-x)
-
-
-                  <(W exp(-U1))^2 >_0          <(W exp(-U0))^2 >_1
-         (7) -> -----------------------   +  -----------------------   - 1/n0 - 1/n1
-                n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
-
-                   <[n0/q0 f(-x)]^2>_0        <[n1/q1 f(x)]^2>_1
-                -----------------------  +  ------------------------   -1/n0 -1/n1
-                  n_0 <n0/q0 f(-x)>_0^2      n_1 <n1/q1 f(x)>_1^2
-
-               1      <[f(-x)]^2>_0                 1        <[f(x)]^2>_1
-               -  [-----------------------  - 1]  + -  [------------------------  - 1]
-               n0      <f(-x)>_0^2                  n1      n_1<f(x)>_1^2
-
-        where f = the fermi function, 1/(1+exp(-x))
-
-        This formula the 'BAR' equation works for works for free
-        energies (F0-F1) that don't satisfy the BAR equation.  The
-        'MBAR' equation, detailed below, only works for free energies
-        that satisfy the equation.
-
-
-        Now, let's look at the MBAR version of the uncertainty.  This
-        is written (from Shirts and Chodera, JPC, 129, 124105, Equation E9) as
-
-              [ n0<f(x)f(-x)>_0 + n1<f(x)f(-x)_1 ]^-1 - n0^-1 - n1^-1
-
-              we note the f(-x) + f(x)  = 1, and change this to:
-
-              [ n0<(1-f(-x)f(-x)>_0 + n1<f(x)(1-f(x))_1 ]^-1 - n0^-1 - n1^-1
-
-              [ n0<f(-x)-f(-x)^2)>_0 + n1<f(x)-f(x)^2)_1 ]^-1 - n0^-1 - n1^-1
-
-                                                1                                         1     1
-              --------------------------------------------------------------------    -  --- - ---
-                 n0 <f(-x)>_0 - n0 <[f(-x)]^2>_0 + n1 <f(x)>_1 + n1 <[f(x)]^2>_1          n0    n1
-
-
-        Removing the factor of - (T_F + T_R)/(T_F*T_R)) from both, we compare:
-
-                  <[f(-x)]^2>_0          <[f(x)]^2>_1
-              [------------------]  + [---------------]
-                 n0 <f(-x)>_0^2          n1 <f(x)>_1^2
-
-                                                1
-              --------------------------------------------------------------------
-                 n0 <f(-x)>_0 - n0 <[f(-x)]^2>_0 + n1 <f(x)>_1 + n1 <[f(x)]^2>_1
-
-        denote: <f(-x)>_0 = afF
-                <f(-x)^2>_0 = afF2
-                <f(x)>_1 = afR
-                <f(x)^2>_1 = afF2
-
-        Then we can look at both of these as:
-
-        variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
-        variance_MBAR = 1/(afF*T_F - afF2*T_F + afR*T_R - afR2*T_R)
-
-        Rearranging:
-
-        variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
-        variance_MBAR = 1/(afF*T_F + afR*T_R - (afF2*T_F +  afR2*T_R))
-
-        # check the steps below?  Not quite sure.
-        variance_BAR = (afF2/afF**2) + (afR2/afR**2)  = (afF2 + afR2)/afR**2
-        variance_MBAR = 1/(afF + afR - (afF2 +  afR2)) = 1/(2*afR-(afF2+afR2))
-
-        Definitely not the same.  Now, the reason that they both work
-        for high overlap is still not clear. We will determine the
-        difference at some point.
-
-        see https://github.com/choderalab/pymbar/issues/281 for more information.
-
-        Now implement the two computations.
-        '''
+        #############
+        # Compute asymptotic variance estimate using Eq. 10a of Bennett,
+        # 1976 (except with n_1<f>_1^2 in the second denominator, it is
+        # an error in the original.
+        #
+        # NOTE: The 'BAR' and 'MBAR' estimators
+        # do not agree for poor overlap. This is not because of
+        # numerical precision, but because they are fundamentally
+        # different estimators. For poor overlap, 'MBAR' diverges high,
+        # and 'BAR' diverges by being too low. In situations they are
+        # noticeably from each other, they are also pretty different
+        # from the true answer (obtained by calculating the standard
+        # deviation over lots of realizations).
+        #
+        # First, we examine the 'BAR' equation. Rederive from Bennett, substituting (8) into (7)
+        #
+        # (8)    -> W = [q0/n0 exp(-U1) + q1/n1 exp(-U0)]^-1
+        #             <(W exp(-U1))^2 >_0         <(W exp(-U0))^2 >_1
+        # (7)    -> -----------------------  +   -----------------------   - 1/n0 - 1/n1
+        #            n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
+        #
+        #     Const cancels out of top and bottom.   Wexp(-U0) = [q0/n0 exp(-(U1-U0)) + q1/n1]^-1
+        #                                                      =  n1/q1 [n1/n0 q0/q1 exp(-(U1-U0)) + 1]^-1
+        #                                                      =  n1/q1 [exp (M+(F1-F0)-(U1-U0)+1)^-1]
+        #                                                      =  n1/q1 f(x)
+        #                                            Wexp(-U1) = [q0/n0 + q1/n1 exp(-(U0-U1))]^-1
+        #                                                      =  n0/q0 [1 + n0/n1 q1/q0 exp(-(U0-U1))]^-1
+        #                                                      =  n0/q0 [1 + exp(-M+[F0-F1)-(U0-U1))]^-1
+        #                                                      =  n0/q0 f(-x)
+        #
+        #
+        #           <(W exp(-U1))^2 >_0          <(W exp(-U0))^2 >_1
+        #  (7) -> -----------------------   +  -----------------------   - 1/n0 - 1/n1
+        #         n_0 [<(W exp(-U1)>_0]^2      n_1 [<(W exp(-U0)>_1]^2
+        #
+        #            <[n0/q0 f(-x)]^2>_0        <[n1/q1 f(x)]^2>_1
+        #         -----------------------  +  ------------------------   -1/n0 -1/n1
+        #           n_0 <n0/q0 f(-x)>_0^2      n_1 <n1/q1 f(x)>_1^2
+        #
+        #        1      <[f(-x)]^2>_0                 1        <[f(x)]^2>_1
+        #        -  [-----------------------  - 1]  + -  [------------------------  - 1]
+        #        n0      <f(-x)>_0^2                  n1      n_1<f(x)>_1^2
+        #
+        # where f = the fermi function, 1/(1+exp(-x))
+        #
+        # This formula the 'BAR' equation works for works for free
+        # energies (F0-F1) that don't satisfy the BAR equation.  The
+        # 'MBAR' equation, detailed below, only works for free energies
+        # that satisfy the equation.
+        #
+        #
+        # Now, let's look at the MBAR version of the uncertainty.  This
+        # is written (from Shirts and Chodera, JPC, 129, 124105, Equation E9) as
+        #
+        #       [ n0<f(x)f(-x)>_0 + n1<f(x)f(-x)_1 ]^-1 - n0^-1 - n1^-1
+        #
+        #       we note the f(-x) + f(x)  = 1, and change this to:
+        #
+        #       [ n0<(1-f(-x)f(-x)>_0 + n1<f(x)(1-f(x))_1 ]^-1 - n0^-1 - n1^-1
+        #
+        #       [ n0<f(-x)-f(-x)^2)>_0 + n1<f(x)-f(x)^2)_1 ]^-1 - n0^-1 - n1^-1
+        #
+        #                                         1                                         1     1
+        #       --------------------------------------------------------------------    -  --- - ---
+        #          n0 <f(-x)>_0 - n0 <[f(-x)]^2>_0 + n1 <f(x)>_1 + n1 <[f(x)]^2>_1          n0    n1
+        #
+        #
+        # Removing the factor of - (T_F + T_R)/(T_F*T_R)) from both, we compare:
+        #
+        #           <[f(-x)]^2>_0          <[f(x)]^2>_1
+        #       [------------------]  + [---------------]
+        #          n0 <f(-x)>_0^2          n1 <f(x)>_1^2
+        #
+        #                                         1
+        #       --------------------------------------------------------------------
+        #          n0 <f(-x)>_0 - n0 <[f(-x)]^2>_0 + n1 <f(x)>_1 + n1 <[f(x)]^2>_1
+        #
+        # denote: <f(-x)>_0 = afF
+        #         <f(-x)^2>_0 = afF2
+        #         <f(x)>_1 = afR
+        #         <f(x)^2>_1 = afF2
+        #
+        # Then we can look at both of these as:
+        #
+        # variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
+        # variance_MBAR = 1/(afF*T_F - afF2*T_F + afR*T_R - afR2*T_R)
+        #
+        # Rearranging:
+        #
+        # variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
+        # variance_MBAR = 1/(afF*T_F + afR*T_R - (afF2*T_F +  afR2*T_R))
+        #
+        # # check the steps below?  Not quite sure.
+        # variance_BAR = (afF2/afF**2) + (afR2/afR**2)  = (afF2 + afR2)/afR**2
+        # variance_MBAR = 1/(afF + afR - (afF2 +  afR2)) = 1/(2*afR-(afF2+afR2))
+        #
+        # Definitely not the same.  Now, the reason that they both work
+        # for high overlap is still not clear. We will determine the
+        # difference at some point.
+        #
+        # see https://github.com/choderalab/pymbar/issues/281 for more information.
+        #
+        # Now implement the two computations.
+        ###############
 
         # Determine number of forward and reverse work values provided.
         T_F = float(w_F.size)  # number of forward work values

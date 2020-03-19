@@ -353,7 +353,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     else:
         logger.warning('WARNING: Did not converge to within specified tolerance.')
         if options['maximum_iterations'] <= 0:
-            logger.warning("No iterations ran be cause maximum_iterations was <= 0 ({})!".format(options['maximum_iterations']))
+            logger.warning("No iterations ran be cause maximum_iterations was <= 0 ({:s})!".format(options['maximum_iterations']))
         else:
             logger.warning('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
     return f_k

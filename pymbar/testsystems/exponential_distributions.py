@@ -1,6 +1,4 @@
 import numpy as np
-from pymbar.utils import ensure_type
-
 
 class ExponentialTestCase(object):
 
@@ -39,7 +37,7 @@ class ExponentialTestCase(object):
 
     """
 
-    def __init__(self, rates=[1, 2, 3, 4, 5], beta=1.0):
+    def __init__(self, rates=(1, 2, 3, 4, 5), beta=1.0):
         """Generate test case with exponential distributions.
 
         Parameters
@@ -57,7 +55,7 @@ class ExponentialTestCase(object):
         rates = np.array(rates, np.float64)
 
         self.n_states = len(rates)
-        self.rates = rates
+        self.rates = np.array(rates,np. float64)
         self.beta = beta
 
     def analytical_free_energies(self):

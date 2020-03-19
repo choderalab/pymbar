@@ -337,10 +337,10 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
 
     z = np.zeros(pmf_1d['nbins'])
     for i in range(0, pmf_1d['nbins']):
-       if df_ih[i] != 0:
-           z[i] = np.abs(pmf_1d['pmf_analytical'][i]-f_ik[i])/df_ih[i]
-       else:
-           z[i] = 0
+        if df_ih[i] != 0:
+            z[i] = np.abs(pmf_1d['pmf_analytical'][i]-f_ik[i])/df_ih[i]
+        else:
+            z[i] = 0
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 

@@ -371,7 +371,6 @@ class ParameterError(Exception):
     An error in the input parameters has been detected.
 
     """
-    pass
 
 
 class ConvergenceError(Exception):
@@ -380,7 +379,6 @@ class ConvergenceError(Exception):
     Convergence could not be achieved.
 
     """
-    pass
 
 
 class BoundsError(Exception):
@@ -389,7 +387,6 @@ class BoundsError(Exception):
     Could not determine bounds on free energy
 
     """
-    pass
 
 
 class DataError(Exception):
@@ -398,4 +395,3 @@ class DataError(Exception):
     Data is inconsistent.
 
     """
-    pass

@@ -4,7 +4,7 @@ import numpy as np
 from scipy import stats
 import pytest
 
-from pymbar.utils_for_testing import assert_equal, assert_almost_equal
+from pymbar.utils_for_testing import assert_almost_equal
 
 try:
     import statsmodels.api as sm

@@ -25,11 +25,10 @@ import logging
 import math
 import itertools as it
 import numpy as np
-import numpy.linalg as linalg
 import pymbar
 
 from pymbar import mbar_solvers
-from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
+from pymbar.utils import kln_to_kn, ParameterError, DataError, logsumexp
 from pymbar import timeseries
 
 # bunch of imports needed for doing newton optimization of B-splines
@@ -39,8 +38,6 @@ from scipy.integrate import quad
 from scipy.optimize import minimize
 
 from timeit import default_timer as timer  # may remove timing?
-
-import pdb  # TODO: delete when done
 
 logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
@@ -151,7 +148,7 @@ class PMF:
 
         """
         for key, val in kwargs.items():
-            logging.warning("Warning: parameter {}={} is unrecognized and unused.".format(key, val))
+            logging.warning("Warning: parameter {:s}={:s} is unrecognized and unused.".format(key, val))
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be
@@ -994,9 +991,7 @@ class PMF:
                     if pmf_ref_grid[d] == - 1 or pmf_ref_grid[d] == len(bins[d]):
                         raise ParameterError(
                             "Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(
-                                pmf_ref_grid[d], np.min(
-                                    bins[d]), np.max(
-                                    bins[d])))
+                                pmf_ref_grid[d], d, np.min(bins[d]), np.max(bins[d])))
 
             if uncertainties == 'from-lowest' or uncertainties == 'from-specified' or uncertainties == 'all-differences':
                 # Report uncertainties in free energy difference from a given
@@ -1863,8 +1858,7 @@ class PMF:
             for i in range(nspline - 1):
                 for j in range(0, i + 1):
                     if np.abs(i - j) <= kdegree:
-                        def ddexpf(
-                            x, k): return db_c[i + 1](x) * db_c[j + 1](x) * expf[k](x)
+                        def ddexpf(x, k): return db_c[i + 1](x) * db_c[j + 1](x) * expf[k](x)
                         for k in range(K):
                             # now compute the expectation of each derivative
                             pE = integral_scaling[k] * self._integrate(
@@ -1875,8 +1869,7 @@ class PMF:
             for i in range(nspline - 1):
                 for j in range(0, i + 1):
                     if np.abs(i - j) <= kdegree:
-                        def ddexpf(
-                            x): return db_c[i + 1](x) * db_c[j + 1](x) * expf(x)
+                        def ddexpf(x): return db_c[i + 1](x) * db_c[j + 1](x) * expf(x)
                         # now compute the expectation of each derivative
                         pE = self._integrate(
                             spline_weights, ddexpf, xrangeij[i+1, j+1, 0], xrangeij[i+1, j+1, 1])
@@ -1929,23 +1922,22 @@ class PMF:
         elif form is None: 
             return bspline
 
-"""
-Integration notes:
-
-If we wanted to integrate the function, can we do it analytically?  
-Let's focus on the likelihood integral, which is what is slowing down
-the MC, which is the slow part.
-
-for k=0, then B_i,0:t = 1 if t_i < x < t_i+i, 0 otherwise
-for k=1, It is a piecewise sum of 2 linear terms, so linear.
-f(x) = \\int exp(ax+b)_{t_i}^{t_i+1) = (1/a) e^b (e^a*t2 - e^a t1) 
-for k=2, it is piecewise sum of 3 quadratic terms, which is quadradic 
-f(x) = \\int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\\pi]] (Erf[1/2 Sqrt[a] (b + c - 2 t1)] - 
-   Erf[1/2 Sqrt[a] (b + c - 2 t2)]))/(2 Sqrt[a]), for a > 0, switch for a<0.
-
-for k=3, piecewise sum of cubic terms, which appears hard in general. 
-
-Of course, even with linear, we need to be able to integrate with the
-bias functions.  If it's a Gaussian bias, then linear and quadratic should integrate fine.
-
-"""
+########
+# Integration notes:
+#
+# If we wanted to integrate the function, can we do it analytically?  
+# Let's focus on the likelihood integral, which is what is slowing down
+# the MC, which is the slow part.
+#
+# for k=0, then B_i,0:t = 1 if t_i < x < t_i+i, 0 otherwise
+# for k=1, It is a piecewise sum of 2 linear terms, so linear.
+# f(x) = \\int exp(ax+b)_{t_i}^{t_i+1) = (1/a) e^b (e^a*t2 - e^a t1) 
+# for k=2, it is piecewise sum of 3 quadratic terms, which is quadradic 
+# f(x) = \\int exp(-a(x-b)(x-c))_{t_i)+{t_i+1) = (exp^(1/4 a (b - c)^2) Sqrt[\\pi]] (Erf[1/2 Sqrt[a] (b + c - 2 t1)] - 
+#    Erf[1/2 Sqrt[a] (b + c - 2 t2)]))/(2 Sqrt[a]), for a > 0, switch for a<0.
+#
+# for k=3, piecewise sum of cubic terms, which appears hard in general. 
+#
+# Of course, even with linear, we need to be able to integrate with the
+# bias functions.  If it's a Gaussian bias, then linear and quadratic should integrate fine.
+########
