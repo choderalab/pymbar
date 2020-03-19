@@ -120,7 +120,7 @@ class MBAR:
 
             We assume that the states are ordered such that the first ``N_k``
             are from the first state, the 2nd ``N_k`` the second state, and so
-            forth. This only becomes important for BAR -- MBAR does not
+            forth. This only becomes important for bar -- MBAR does not
             care which samples are from which state.  We should eventually
             allow this assumption to be overwritten by parameters passed
             from above, once ``u_kln`` is phased out.
@@ -146,7 +146,7 @@ class MBAR:
             gradient is chosen to improve numerical stability.
 
         initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
-            If equal to 'BAR', use BAR between the pairwise state to
+            If equal to 'BAR', use bar between the pairwise state to
             initialize the free energies.  Eventually, should specify a path;
             for now, it just does it zipping up the states.
 
@@ -158,7 +158,7 @@ class MBAR:
 
             (default: 'zeros', unless specific values are passed in.)
         x_kindices
-            Which state is each x from?  Usually doesn't matter, but does for BAR. We assume the samples
+            Which state is each x from?  Usually doesn't matter, but does for bar. We assume the samples
             are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
             the 1st state, and so forth.
 
@@ -1455,7 +1455,7 @@ class MBAR:
         return result_vals
 
     # =========================================================================
-    # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
+    # PRIVATE METHODS - INTERFACES ARE NOT expORTED
     # =========================================================================
 
     def _ErrorOfDifferences(self, cov, warning_cutoff=1.0e-10):
@@ -1678,13 +1678,13 @@ class MBAR:
                 # self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
 
                 if len(w_F) > 0 and len(w_R) > 0:
-                    # BAR solution doesn't need to be incredibly accurate to
+                    # bar solution doesn't need to be incredibly accurate to
                     # kickstart NR.
                     import pymbar.bar
 
                     self.f_k[l] = (
                         self.f_k[k]
-                        + pymbar.bar.BAR(
+                        + pymbar.bar.bar(
                             w_F,
                             w_R,
                             relative_tolerance=0.000001,

@@ -26,13 +26,13 @@ J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
 
 This module contains implementations of
 
-* BAR - bidirectional estimator for free energy differences / Bennett acceptance ratio estimator
+* bar - bidirectional estimator for free energy differences / Bennett acceptance ratio estimator
 
 """
 
 # =============================================================================================
 # TODO
-# * Fix computeBAR and computeEXP to be BAR() and EXP() to make them easier to find.
+# * Fix computeBAR and computeEXP to be bar() and exp() to make them easier to find.
 # * Make functions that don't need to be exported (like logsum) private by prefixing an underscore.
 # * Make asymptotic covariance matrix computation more robust to over/underflow.
 # * Double-check correspondence of comments to equation numbers once manuscript has been finalized.
@@ -49,13 +49,13 @@ __license__ = "MIT"
 import logging
 import numpy as np
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
-from pymbar.exp import EXP
+from pymbar.exp import exp
 
 
 logger = logging.getLogger(__name__)
 
 
-def BAR_zero(w_F, w_R, DeltaF):
+def bar_zero(w_F, w_R, DeltaF):
     """A function that when zeroed is equivalent to the solution of
     the Bennett acceptance ratio.
 
@@ -82,7 +82,7 @@ def BAR_zero(w_F, w_R, DeltaF):
     Returns
     -------
     fzero : float
-        a variable that is zeroed when DeltaF satisfies BAR.
+        a variable that is zeroed when DeltaF satisfies bar.
 
     Examples
     --------
@@ -90,7 +90,7 @@ def BAR_zero(w_F, w_R, DeltaF):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> DeltaF = BAR_zero(w_F, w_R, 0.0)
+    >>> DeltaF = bar_zero(w_F, w_R, 0.0)
 
     """
 
@@ -99,7 +99,7 @@ def BAR_zero(w_F, w_R, DeltaF):
     w_R = np.array(w_R, np.float64)
     DeltaF = float(DeltaF)
 
-    # Recommended stable implementation of BAR.
+    # Recommended stable implementation of bar.
 
     # Determine number of forward and reverse work values provided.
     T_F = float(w_F.size)  # number of forward work values
@@ -124,7 +124,7 @@ def BAR_zero(w_F, w_R, DeltaF):
         log_f_F = -max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
     except ParameterError():
         # give up; if there's overflow, return zero
-        logger.warning("The input data results in overflow in BAR")
+        logger.warning("The input data results in overflow in bar")
         return np.nan
     log_numer = logsumexp(log_f_F)
 
@@ -140,7 +140,7 @@ def BAR_zero(w_F, w_R, DeltaF):
     try:
         log_f_R = -max_arg_R - np.log(np.exp(-max_arg_R) + np.exp(exp_arg_R - max_arg_R))
     except ParameterError:
-        logger.info("The input data results in overflow in BAR")
+        logger.info("The input data results in overflow in bar")
         return np.nan
     log_denom = logsumexp(log_f_R)
 
@@ -153,7 +153,7 @@ def BAR_zero(w_F, w_R, DeltaF):
     return fzero
 
 
-def BAR(
+def bar(
     w_F,
     w_R,
     DeltaF=0.0,
@@ -180,7 +180,7 @@ def BAR(
     compute_uncertainty : bool, optional, default=True
         if False, only the free energy is returned
     uncertainty_method: string, optional, default=BAR
-        There are two possible uncertainty estimates for BAR.  One agrees with MBAR for two states exactly;
+        There are two possible uncertainty estimates for bar.  One agrees with MBAR for two states exactly;
         The other only agrees with MBAR in the limit of good overlap. See below.
     maximum_iterations : int, optional, default=500
         can be set to limit the maximum number of iterations performed
@@ -189,9 +189,9 @@ def BAR(
     verbose : bool
         should be set to True if verbse debug output is desired (default False)
     method : str, optional, defualt='false-position'
-        choice of method to solve BAR nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-position')
+        choice of method to solve bar nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-position')
     iterated_solution : bool, optional, default=True
-        whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be
+        whether to fully solve the optimized bar equation to consistency, or to stop after one step, to be
         equivalent to transition matrix sampling.
 
     Returns
@@ -220,15 +220,15 @@ def BAR(
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = BAR(w_F, w_R)
+    >>> results = bar(w_F, w_R)
     >>> print('Free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Free energy difference is 1.088 +- 0.050 kT
 
     Test completion of various other schemes.
 
-    >>> results = BAR(w_F, w_R, method='self-consistent-iteration')
-    >>> results = BAR(w_F, w_R, method='false-position')
-    >>> results = BAR(w_F, w_R, method='bisection')
+    >>> results = bar(w_F, w_R, method='self-consistent-iteration')
+    >>> results = bar(w_F, w_R, method='false-position')
+    >>> results = bar(w_F, w_R, method='bisection')
 
     """
 
@@ -242,22 +242,22 @@ def BAR(
         DeltaF_initial = DeltaF
 
     if method not in ["self-consistent-iteration", "false-position", "bisection"]:
-        raise ParameterError("method {:d} is not defined for BAR".format(method))
+        raise ParameterError("method {:d} is not defined for bar".format(method))
 
     if uncertainty_method not in ["BAR", "MBAR"]:
         raise ParameterError(
-            "uncertainty_method {:d} is not defined for BAR".format(uncertainty_method)
+            "uncertainty_method {:d} is not defined for bar".format(uncertainty_method)
         )
 
     if method == "self-consistent-iteration":
         nfunc = 0
 
     if method == "bisection" or method == "false-position":
-        UpperB = EXP(w_F)["Delta_f"]
+        UpperB = exp(w_F)["Delta_f"]
         LowerB = -EXP(w_R)["Delta_f"]
 
-        FUpperB = BAR_zero(w_F, w_R, UpperB)
-        FLowerB = BAR_zero(w_F, w_R, LowerB)
+        FUpperB = bar_zero(w_F, w_R, UpperB)
+        FLowerB = bar_zero(w_F, w_R, LowerB)
         nfunc = 2
 
         if np.isnan(FUpperB) or np.isnan(FLowerB):
@@ -283,8 +283,8 @@ def BAR(
             FAve = (UpperB + LowerB) / 2
             UpperB = UpperB - max(abs(UpperB - FAve), 0.1)
             LowerB = LowerB + max(abs(LowerB - FAve), 0.1)
-            FUpperB = BAR_zero(w_F, w_R, UpperB)
-            FLowerB = BAR_zero(w_F, w_R, LowerB)
+            FUpperB = bar_zero(w_F, w_R, UpperB)
+            FLowerB = bar_zero(w_F, w_R, LowerB)
             nfunc += 2
 
     # Iterate to convergence or until maximum number of iterations has been exceeded.
@@ -300,7 +300,7 @@ def BAR(
                 FNew = 0.0
             else:
                 DeltaF = UpperB - FUpperB * (UpperB - LowerB) / (FUpperB - FLowerB)
-                FNew = BAR_zero(w_F, w_R, DeltaF)
+                FNew = bar_zero(w_F, w_R, DeltaF)
             nfunc += 1
 
             if FNew == 0:
@@ -313,11 +313,11 @@ def BAR(
         if method == "bisection":
             # Predict the new value
             DeltaF = (UpperB + LowerB) / 2
-            FNew = BAR_zero(w_F, w_R, DeltaF)
+            FNew = bar_zero(w_F, w_R, DeltaF)
             nfunc += 1
 
         if method == "self-consistent-iteration":
-            DeltaF = -BAR_zero(w_F, w_R, DeltaF) + DeltaF
+            DeltaF = -bar_zero(w_F, w_R, DeltaF) + DeltaF
             nfunc += 1
 
         # Check for convergence.
@@ -417,7 +417,7 @@ def BAR(
         # where f = the fermi function, 1/(1+exp(-x))
         #
         # This formula the 'BAR' equation works for works for free
-        # energies (F0-F1) that don't satisfy the BAR equation.  The
+        # energies (F0-F1) that don't satisfy the bar equation.  The
         # 'MBAR' equation, detailed below, only works for free energies
         # that satisfy the equation.
         #
@@ -455,16 +455,16 @@ def BAR(
         #
         # Then we can look at both of these as:
         #
-        # variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
+        # variance_bar = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
         # variance_MBAR = 1/(afF*T_F - afF2*T_F + afR*T_R - afR2*T_R)
         #
         # Rearranging:
         #
-        # variance_BAR = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
+        # variance_bar = (afF2/afF**2)/T_F + (afR2/afR**2)/T_R
         # variance_MBAR = 1/(afF*T_F + afR*T_R - (afF2*T_F +  afR2*T_R))
         #
         # # check the steps below?  Not quite sure.
-        # variance_BAR = (afF2/afF**2) + (afR2/afR**2)  = (afF2 + afR2)/afR**2
+        # variance_bar = (afF2/afF**2) + (afR2/afR**2)  = (afF2 + afR2)/afR**2
         # variance_MBAR = 1/(afF + afR - (afF2 +  afR2)) = 1/(2*afR-(afF2+afR2))
         #
         # Definitely not the same.  Now, the reason that they both work
@@ -515,7 +515,7 @@ def BAR(
             vartemp = (afF - afF2) * T_F + (afR - afR2) * T_R
             dDeltaF = np.sqrt(1.0 / vartemp - nrat)
         else:
-            message = "ERROR: BAR uncertainty method {:s} is not defined".format(
+            message = "ERROR: bar uncertainty method {:s} is not defined".format(
                 uncertainty_method
             )
             raise ParameterError(message)

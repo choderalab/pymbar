@@ -127,7 +127,7 @@ def anderson_darling(replicates, K):
     return A2
 
 
-def QQ_plot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
+def qq_plot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
     """
     TODO: Description here
 

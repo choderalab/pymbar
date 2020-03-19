@@ -32,7 +32,7 @@ def exp_and_test(request):
     w_F, w_R, N_k_output = test.sample(N_k, mode="wFwR")
     assert_equal(N_k, N_k_output)
     exps = dict()
-    # can't return method, because EXP is just a function
+    # can't return method, because exp is just a function
     exps["F"] = pyexp.EXP(w_F)
     exps["R"] = pyexp.EXP(w_R)
     exps["gF"] = pyexp.EXP_gauss(w_F)
@@ -62,7 +62,7 @@ def test_sample(system_generator):
 
 def test_EXP_free_energies(exp_and_test):
 
-    """Can EXP calculate moderately correct free energy differences?"""
+    """Can exp calculate moderately correct free energy differences?"""
 
     exps, test = exp_and_test["exps"], exp_and_test["test"]
 

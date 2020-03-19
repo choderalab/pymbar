@@ -32,12 +32,12 @@ def bar_and_test(request):
     w_F, w_R, N_k_output = test.sample(N_k, mode="wFwR")
     assert_equal(N_k, N_k_output)
     bars = dict()
-    # can't return method, because BAR is just a function
-    bars["sci"] = pybar.BAR(w_F, w_R, method="self-consistent-iteration")
-    bars["bis"] = pybar.BAR(w_F, w_R, method="bisection")
-    bars["fp"] = pybar.BAR(w_F, w_R, method="false-position")
-    bars["dBAR"] = pybar.BAR(w_F, w_R, uncertainty_method="BAR")
-    bars["dMBAR"] = pybar.BAR(w_F, w_R, uncertainty_method="MBAR")
+    # can't return method, because bar is just a function
+    bars["sci"] = pybar.bar(w_F, w_R, method="self-consistent-iteration")
+    bars["bis"] = pybar.bar(w_F, w_R, method="bisection")
+    bars["fp"] = pybar.bar(w_F, w_R, method="false-position")
+    bars["dBAR"] = pybar.bar(w_F, w_R, uncertainty_method="BAR")
+    bars["dMBAR"] = pybar.bar(w_F, w_R, uncertainty_method="MBAR")
 
     yield_bundle = {
         "bars": bars,
@@ -63,7 +63,7 @@ def test_sample(system_generator):
 
 def test_bar_free_energies(bar_and_test):
 
-    """Can BAR calculate moderately correct free energy differences?"""
+    """Can bar calculate moderately correct free energy differences?"""
 
     bars, test = bar_and_test["bars"], bar_and_test["test"]
 

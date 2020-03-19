@@ -119,7 +119,7 @@ class PMF:
 
             We assume that the states are ordered such that the first ``N_k``
             are from the first state, the 2nd ``N_k`` the second state, and so
-            forth. This only becomes important for BAR -- MBAR does not
+            forth. This only becomes important for bar -- MBAR does not
             care which samples are from which state.  We should eventually
             allow this assumption to be overwritten by parameters passed
             from above, once ``u_kln`` is phased out.

@@ -27,11 +27,11 @@ J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
 
 This module contains implementations of
 
-* EXP - unidirectional estimator for free energy differences based on Zwanzig relation / exponential averaging
+* exp - unidirectional estimator for free energy differences based on Zwanzig relation / exponential averaging
 """
 
 # =============================================================================================
-# * Fix computeBAR and computeEXP to be BAR() and EXP() to make them easier to find.
+# * Fix computeBAR and computeEXP to be bar() and exp() to make them easier to find.
 # * Make functions that don't need to be exported (like logsum) private by prefixing an underscore.
 # * Make asymptotic covariance matrix computation more robust to over/underflow.
 # * Double-check correspondence of comments to equation numbers once manuscript has been finalized.
@@ -52,7 +52,7 @@ from pymbar.utils import logsumexp
 # =============================================================================================
 
 
-def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
+def exp(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
 
     Parameters
@@ -83,10 +83,10 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = EXP(w_F)
+    >>> results = exp(w_F)
     >>> print('Forward free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Forward free energy difference is 1.088 +- 0.076 kT
-    >>> results = EXP(w_R)
+    >>> results = exp(w_R)
     >>> print('Reverse free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Reverse free energy difference is -1.073 +- 0.082 kT
 
@@ -136,7 +136,7 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 # =============================================================================================
 
 
-def EXP_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
+def exp_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
     Parameters
@@ -168,10 +168,10 @@ def EXP_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = EXP_gauss(w_F)
+    >>> results = exp_gauss(w_F)
     >>> print('Forward Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-    >>> results = EXP_gauss(w_R)
+    >>> results = exp_gauss(w_R)
     >>> print('Reverse Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
     Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
 
