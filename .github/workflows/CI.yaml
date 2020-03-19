@@ -107,6 +107,7 @@ jobs:
     # TODO: Remove --exclude pymbar/old_mbar.py after deprecation
     - name: Run black check
       shell: bash
+      if: always()
       run: |
         . devtools/github-actions/initialize_conda.sh
         conda activate test
