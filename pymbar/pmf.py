@@ -89,15 +89,15 @@ class PMF:
 
         Methods are:
 
-           generatePMF: given an intialized MBAR object, a set of points,
+           generate_pmf: given an intialized MBAR object, a set of points,
                         the desired energies at that point, and a method, generate
                         an object that contains the PMF information.
 
-           getPMF: given coordinates, generate the PMF at each coordinate (and uncertainty)
+           get_pmf: given coordinates, generate the PMF at each coordinate (and uncertainty)
 
-           getMBAR: return the underlying mbar object.
+           get_mbar: return the underlying mbar object.
 
-           getKDE: return the underlying kde object.
+           get_kde: return the underlying kde object.
 
            sampleParameterDistribution: Only works for pmf_type =
            'spline'. Sample the space of spline parameters according
@@ -236,7 +236,7 @@ class PMF:
         self._random = np.random
         self._seed = None
 
-    def generatePMF(
+    def generate_pmf(
         self,
         u_n,
         x_n,
@@ -334,12 +334,12 @@ class PMF:
         >>> pmf = PMF(u_kn,N_k)
         >>> histogram_parameters = dict()
         >>> histogram_parameters['bin_edges'] = [bins]
-        >>> pmf.generatePMF(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
-        >>> results = pmf.getPMF(x_n)
+        >>> pmf.generate_pmf(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
+        >>> results = pmf.get_pmf(x_n)
         >>> f_i = results['f_i']
         >>> for i,x_n in enumerate(x_n):
         >>> print(x_n,f_i[i])
-        >>> mbar = pmf.getMBAR()
+        >>> mbar = pmf.get_mbar()
         >>> print(mbar.f_k)
         >>> print(N_k)
 
@@ -962,7 +962,7 @@ class PMF:
 
         return result_vals  # should we returrn results under some other conditions?
 
-    def getInformationCriteria(self, type="akaike"):
+    def get_information_criteria(self, type="akaike"):
         """
         returns the Akaike Informatiton Criteria for the model if it exists.
 
@@ -990,7 +990,7 @@ class PMF:
         else:
             raise ParameterError("Information criteria of type '{:s}' not defined".format(type))
 
-    def getPMF(self, x, uncertainties="from-lowest", pmf_reference=None):
+    def get_pmf(self, x, uncertainties="from-lowest", pmf_reference=None):
         """
         Returns values of the PMF at the specified x points.
 
@@ -1306,7 +1306,7 @@ class PMF:
 
         return result_vals
 
-    def getMBAR(self):
+    def get_mbar(self):
         """return the MBAR object being used by the PMF
 
 
@@ -1319,7 +1319,7 @@ class PMF:
         else:
             raise DataError("MBAR in the PMF object is not initialized, cannot return it.")
 
-    def getKDE(self):
+    def get_kde(self):
         """ return the KernelDensity object if it exists.
 
         Returns
