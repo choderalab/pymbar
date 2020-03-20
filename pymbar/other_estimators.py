@@ -27,6 +27,7 @@ J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
 This module contains implementations of
 
 * bar - bidirectional estimator for free energy differences / Bennett acceptance ratio estimator
+* exp - unidirectional estimator for free energy differences based on Zwanzig relation / exponential averaging
 
 """
 
@@ -39,7 +40,6 @@ This module contains implementations of
 # * Change self.nonzero_N_k_indices to self.states_with_samples
 # =============================================================================================
 
-
 __authors__ = "Michael R. Shirts and John D. Chodera."
 __license__ = "MIT"
 
@@ -49,8 +49,6 @@ __license__ = "MIT"
 import logging
 import numpy as np
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
-from pymbar.exp import exp
-
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +58,15 @@ def bar_zero(w_F, w_R, DeltaF):
     the Bennett acceptance ratio.
 
     from http://journals.aps.org/prl/pdf/10.1103/PhysRevLett.91.140601
-    D_F = M + w_F - Delta F
-    D_R = M + w_R - Delta F
+
+        D_F = M + w_F - Delta F
+        D_R = M + w_R - Delta F
 
     we want:
-    \\sum_N_F (1+exp(D_F))^-1 = \\sum N_R N_R <(1+exp(-D_R))^-1>
-    ln \\sum N_F (1+exp(D_F))^-1>_F = \\ln \\sum N_R exp((1+exp(-D_R))^(-1)>_R
-    ln \\sum N_F (1+exp(D_F))^-1>_F - \\ln \\sum N_R exp((1+exp(-D_R))^(-1)>_R = 0
+
+        \\sum_N_F (1+exp(D_F))^-1 = \\sum N_R N_R <(1+exp(-D_R))^-1>
+        ln \\sum N_F (1+exp(D_F))^-1>_F = \\ln \\sum N_R exp((1+exp(-D_R))^(-1)>_R
+        ln \\sum N_F (1+exp(D_F))^-1>_F - \\ln \\sum N_R exp((1+exp(-D_R))^(-1)>_R = 0
 
     Parameters
     ----------
@@ -196,13 +196,11 @@ def bar(
 
     Returns
     -------
-    Results dictionary with the following keys:
-
-    'Delta_f' : float
-        Free energy difference
-    'dDelta_f': float
-        Estimated standard deviation of free energy difference
-
+    dict
+        'Delta_f' : float
+            Free energy difference
+        'dDelta_f': float
+            Estimated standard deviation of free energy difference
 
     References
     ----------
@@ -254,7 +252,7 @@ def bar(
 
     if method == "bisection" or method == "false-position":
         UpperB = exp(w_F)["Delta_f"]
-        LowerB = -EXP(w_R)["Delta_f"]
+        LowerB = -exp(w_R)["Delta_f"]
 
         FUpperB = bar_zero(w_F, w_R, UpperB)
         FLowerB = bar_zero(w_F, w_R, LowerB)
@@ -531,3 +529,164 @@ def bar(
             logger.info("DeltaF = {:8.3f}".format(DeltaF))
         result_vals["Delta_f"] = DeltaF
         return result_vals
+
+
+# =============================================================================================
+# One-sided exponential averaging (EXP).
+# =============================================================================================
+
+
+def exp(w_F, compute_uncertainty=True, is_timeseries=False):
+    """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
+
+    Parameters
+    ----------
+    w_F : np.ndarray, float
+        w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
+    compute_uncertainty : bool, optional, default=True
+        if False, will disable computation of the statistical uncertainty (default: True)
+    is_timeseries : bool, default=False
+        if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
+        Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+
+    Returns
+    -------
+    'Delta_f' : float
+        Free energy difference
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference
+
+    Notes
+    -----
+    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
+
+    Examples
+    --------
+
+    Compute the free energy difference given a sample of forward work values.
+
+    >>> from pymbar import testsystems
+    >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
+    >>> results = exp(w_F)
+    >>> print('Forward free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
+    Forward free energy difference is 1.088 +- 0.076 kT
+    >>> results = exp(w_R)
+    >>> print('Reverse free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
+    Reverse free energy difference is -1.073 +- 0.082 kT
+
+    """
+
+    result_vals = dict()
+
+    # Get number of work measurements.
+    T = float(np.size(w_F))  # number of work measurements
+
+    # Estimate free energy difference by exponential averaging using DeltaF = - log < exp(-w_F) >
+    DeltaF = -(logsumexp(-w_F) - np.log(T))
+
+    if compute_uncertainty:
+        # Compute x_i = np.exp(-w_F_i - max_arg)
+        max_arg = np.max(-w_F)  # maximum argument
+        x = np.exp(-w_F - max_arg)
+
+        # Compute E[x] = <x> and dx
+        Ex = x.mean()
+
+        # Compute effective number of uncorrelated samples.
+        g = 1.0  # statistical inefficiency
+        if is_timeseries:
+            # Estimate statistical inefficiency of x timeseries.
+            from pymbar import timeseries
+
+            g = timeseries.statistical_inefficiency(x, x)
+
+        # Estimate standard error of E[x].
+        dx = np.std(x) / np.sqrt(T / g)
+
+        # dDeltaF = <x>^-1 dx
+        dDeltaF = dx / Ex
+
+        # Return estimate of free energy difference and uncertainty.
+        result_vals["Delta_f"] = DeltaF
+        result_vals["dDelta_f"] = dDeltaF
+    else:
+        result_vals["Delta_f"] = DeltaF
+
+    return result_vals
+
+
+# =============================================================================================
+# Gaussian approximation to exponential averaging (Gauss).
+# =============================================================================================
+
+
+def exp_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
+    """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
+
+    Parameters
+    ----------
+    w_F : np.ndarray, float
+        w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
+    compute_uncertainty : bool, optional, default=True
+        if False, will disable computation of the statistical uncertainty (default: True)
+    is_timeseries : bool, default=False
+        if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
+        Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+
+    Returns
+    -------
+    Results dictionary with keys:
+    'Delta_f' : float
+        Free energy difference between the two states
+    'dDelta_f': float
+        Estimated standard deviation of free energy difference between the two states.
+
+
+    Notes
+    -----
+    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
+
+    Examples
+    --------
+    Compute the free energy difference given a sample of forward work values.
+
+    >>> from pymbar import testsystems
+    >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
+    >>> results = exp_gauss(w_F)
+    >>> print('Forward Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
+    Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
+    >>> results = exp_gauss(w_R)
+    >>> print('Reverse Gaussian approximated free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
+    Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
+
+    """
+
+    # Get number of work measurements.
+    T = float(np.size(w_F))  # number of work measurements
+
+    var = np.var(w_F)
+    # Estimate free energy difference by Gaussian approximation, dG = <U> - 0.5*var(U)
+    DeltaF = np.average(w_F) - 0.5 * var
+
+    result_vals = dict()
+    if compute_uncertainty:
+        # Compute effective number of uncorrelated samples.
+        g = 1.0  # statistical inefficiency
+        T_eff = T
+        if is_timeseries:
+            # Estimate statistical inefficiency of x timeseries.
+            from pymbar import timeseries
+
+            g = timeseries.statistical_inefficiency(w_F, w_F)
+
+            T_eff = T / g
+        # Estimate standard error of E[x].
+        dx2 = var / T_eff + 0.5 * var * var / (T_eff - 1)
+        dDeltaF = np.sqrt(dx2)
+
+        # Return estimate of free energy difference and uncertainty.
+        result_vals["Delta_f"] = DeltaF
+        result_vals["dDelta_f"] = dDeltaF
+    else:
+        result_vals["Delta_f"] = DeltaF
+    return result_vals

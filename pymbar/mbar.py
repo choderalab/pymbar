@@ -1680,11 +1680,11 @@ class MBAR:
                 if len(w_F) > 0 and len(w_R) > 0:
                     # bar solution doesn't need to be incredibly accurate to
                     # kickstart NR.
-                    import pymbar.bar
+                    from pymbar.other_estimators import bar
 
                     self.f_k[l] = (
                         self.f_k[k]
-                        + pymbar.bar.bar(
+                        + bar(
                             w_F,
                             w_R,
                             relative_tolerance=0.000001,
