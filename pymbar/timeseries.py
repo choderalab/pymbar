@@ -361,7 +361,7 @@ def statistical_inefficiency_multiple(A_kn, fast=False, return_correlation_funct
 
     # Return statistical inefficency and correlation function estimate, if requested.
     if return_correlation_function:
-        return (g, Ct)
+        return g, Ct
 
     # Return the computed statistical inefficiency.
     return g
@@ -825,7 +825,7 @@ def detect_equilibration(A_t, fast=True, nskip=1):
 
     # Special case if timeseries is constant.
     if A_t.std() == 0.0:
-        return (0, 1, 1)  # Changed from Neff=N to Neff=1 after issue #122
+        return 0, 1, 1  # Changed from Neff=N to Neff=1 after issue #122
 
     g_t = np.ones([T - 1], np.float32)
     Neff_t = np.ones([T - 1], np.float32)
@@ -839,7 +839,7 @@ def detect_equilibration(A_t, fast=True, nskip=1):
     t = Neff_t.argmax()
     g = g_t[t]
 
-    return (t, g, Neff_max)
+    return t, g, Neff_max
 
 
 def statistical_inefficiency_fft(A_n, mintime=3):
@@ -936,7 +936,7 @@ def detect_equilibration_binary_search(A_t, bs_nodes=10):
 
     # Special case if timeseries is constant.
     if A_t.std() == 0.0:
-        return (0, 1, T)
+        return 0, 1, T
 
     start = 1
     end = T - 1
