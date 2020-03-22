@@ -4,7 +4,7 @@ for which the true free energy differences can be computed analytically.
 
 import numpy as np
 import pytest
-from pymbar import exp as pyexp
+from pymbar import other_estimators as estimators
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 
@@ -32,11 +32,11 @@ def exp_and_test(request):
     w_F, w_R, N_k_output = test.sample(N_k, mode="wFwR")
     assert_equal(N_k, N_k_output)
     exps = dict()
-    # can't return method, because EXP is just a function
-    exps["F"] = pyexp.EXP(w_F)
-    exps["R"] = pyexp.EXP(w_R)
-    exps["gF"] = pyexp.EXPGauss(w_F)
-    exps["gR"] = pyexp.EXPGauss(w_R)
+    # can't return method, because exp is just a function
+    exps["F"] = estimators.exp(w_F)
+    exps["R"] = estimators.exp(w_R)
+    exps["gF"] = estimators.exp_gauss(w_F)
+    exps["gR"] = estimators.exp_gauss(w_R)
 
     yield_bundle = {
         "exps": exps,
@@ -62,7 +62,7 @@ def test_sample(system_generator):
 
 def test_EXP_free_energies(exp_and_test):
 
-    """Can EXP calculate moderately correct free energy differences?"""
+    """Can exp calculate moderately correct free energy differences?"""
 
     exps, test = exp_and_test["exps"], exp_and_test["test"]
 

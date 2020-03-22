@@ -30,12 +30,20 @@ import scipy.stats
 logger = logging.getLogger(__name__)
 
 
-def OrderReplicates(replicates, K):
+def order_replicates(replicates, K):
 
-    """ Inputs: An array of replicates, and the size of the data.
+    """
+    TODO: Add description for this function and types for parameters
 
-        Outputs: a Nxdims arrary of the data in the replicates, normalized by the standard deviation
+    Parameters
+    ----------
+    replicates:
+        An array of replicates, and the size of the data.
 
+    Returns
+    -------
+    np.array
+        a Nxdims array of the data in the replicates, normalized by the standard deviation
     """
 
     dims = np.shape(replicates[0]["destimated"])
@@ -67,35 +75,45 @@ def OrderReplicates(replicates, K):
     return sortedyi
 
 
-def AndersonDarling(replicates, K):
+def anderson_darling(replicates, K):
 
-    # inputs:
-    #      replicates: list of replicates
-    #      K: number of replicates
-    # outputs: Anderson-Darling statistics.
-    # http://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test
-    #
-    # Since both sigma and mu are known (mu exactly, sigma as an estimate from mbar),
-    # we can apply the case 1 test.
-    #
-    # Because sigma is not precise, we should accept a higher threshold than the 1%
-    # threshold listed below to throw an error:
-    #
-    # 15%  1.610
-    # 10%  1.933
-    # 5%   2.492
-    # 2.5% 3.070
-    # 1%   3.857
-    #
-    # So we choose something like 4.5.  Note that for lower numbers of
-    # samples, it's more likely.  2000 samples for each of the
-    # harmonic_oscillators_distributions.py seems to give good
-    # results.
-    #
-    # for now, the standard deviation we use is the one from the
-    # _first_ replicate.
+    """
+    TODO: Description here
 
-    sortedyi = OrderReplicates(replicates, K)
+    Parameters
+    ----------
+        replicates: list of replicates
+        K: number of replicates
+
+    Returns
+    -------
+    type
+        Anderson-Darling statistics. See:
+        http://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test
+
+    Notes
+    -----
+    Since both sigma and mu are known (mu exactly, sigma as an estimate from mbar),
+    we can apply the case 1 test.
+
+    Because sigma is not precise, we should accept a higher threshold than the 1%
+    threshold listed below to throw an error:
+
+        15%  1.610
+        10%  1.933
+        5%   2.492
+        2.5% 3.070
+        1%   3.857
+
+    So we choose something like 4.5.  Note that for lower numbers of
+    samples, it's more likely.  2000 samples for each of the
+    harmonic_oscillators_distributions.py seems to give good
+    results.
+
+    For now, the standard deviation we use is the one from the
+    _first_ replicate.
+    """
+    sortedyi = order_replicates(replicates, K)
     zerosigma = replicates[0]["destimated"] == 0  # ignore the ones with zero values of the std
 
     N = len(replicates)
@@ -109,12 +127,26 @@ def AndersonDarling(replicates, K):
     return A2
 
 
-def QQPlot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
+def qq_plot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
+    """
+    TODO: Description here
+
+    Parameters
+    ----------
+    replicates : list
+        TODO: type and description
+    K : int
+        TODO: type and description
+    title : str, optional="Generic Q-Q plot"
+        Plot title
+    filename : str, optional="qq.pdf"
+        Output path to generated PDF
+    """
 
     import matplotlib
     import matplotlib.pyplot as plt
 
-    sortedyi = OrderReplicates(replicates, K)
+    sortedyi = order_replicates(replicates, K)
     N = len(replicates)
     dim = len(np.shape(replicates[0]["error"]))
     xvals = scipy.stats.norm.ppf((np.arange(0, N) + 0.5) / N)  # inverse pdf
@@ -193,22 +225,44 @@ def QQPlot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
     return
 
 
-def generateConfidenceIntervals(replicates, K):
-    # inputs:
-    #      replicates: list of replicates
-    #      K: number of replicates
-    # =============================================================================================
-    # Analyze data.
-    # =============================================================================================
-    #
-    # By Chebyshev's inequality, we should have
-    #   P(error >= alpha sigma) <= 1 / alpha^2
-    # so that a lower bound will be
-    #   P(error < alpha sigma) > 1 - 1 / alpha^2
-    # for any real multiplier 'k', where 'sigma' represents the computed uncertainty (as one standard deviation).
-    #
-    # If the error is normal, we should have
-    #   P(error < alpha sigma) = erf(alpha / sqrt(2))
+def generate_confidence_intervals(replicates, K):
+    """
+    Parameters
+    ----------
+    replicates: list
+        list of replicates
+    K: int
+        number of replicates
+
+    Returns
+    -------
+    alpha_values
+        TODO: Description and type
+    Pobs
+        TODO: Description and type
+    Plow
+        TODO: Description and type
+    Phigh
+        TODO: Description and type
+    dPobs
+        TODO: Description and type
+    Pnorm
+        TODO: Description and type
+
+    Notes
+    -----
+    Analyze data.
+
+    By Chebyshev's inequality, we should have
+      P(error >= alpha sigma) <= 1 / alpha^2
+    so that a lower bound will be
+      P(error < alpha sigma) > 1 - 1 / alpha^2
+    for any real multiplier 'k', where 'sigma' represents the computed uncertainty (as one standard deviation).
+
+    If the error is normal, we should have
+      P(error < alpha sigma) = erf(alpha / sqrt(2))
+    """
+
     msg = """
     The uncertainty estimates are tested in this section.
     If the error is normally distributed, the actual error will be less than a

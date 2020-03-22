@@ -105,7 +105,7 @@ def free_energies_almost_equal(mbar_fe, err_fe, analytical_fe):
 def test_ukln(mbar_and_test_kln):
     """Test that MBAR's u_kln->u_kn works correctly"""
     mbar, test = mbar_and_test_kln["mbar"], mbar_and_test_kln["test"]
-    results = mbar.getFreeEnergyDifferences()
+    results = mbar.compute_free_energy_differences()
     fe = results["Delta_f"]
     fe_sigma = results["dDelta_f"]
     free_energies_almost_equal(fe, fe_sigma, test.analytical_free_energies())
@@ -118,7 +118,7 @@ def test_duplicate_state(fixed_harmonic_sample, caplog):
     N_k_dup = np.append(N_k, [0])
     mbar = MBAR(u_kn_dup, N_k_dup, verbose=True)
     assert "likely to to be the same thermodynamic state" in caplog.text
-    results = mbar.getFreeEnergyDifferences()
+    results = mbar.compute_free_energy_differences()
     fe = results["Delta_f"]
     assert np.allclose(fe[0], fe[-1])
 
@@ -129,8 +129,8 @@ def test_x_kindices(fixed_harmonic_sample):
     flat_x_indices = np.concatenate([[k] * n for k, n in enumerate(N_k)]).astype(int)
     mbar = MBAR(u_kn, N_k)
     mbar_indices = MBAR(u_kn, N_k, x_kindices=flat_x_indices)
-    fe = mbar.getFreeEnergyDifferences()["Delta_f"]
-    fes = mbar_indices.getFreeEnergyDifferences()["Delta_f"]
+    fe = mbar.compute_free_energy_differences()["Delta_f"]
+    fes = mbar_indices.compute_free_energy_differences()["Delta_f"]
     assert np.allclose(fe, fes)
 
 
@@ -144,9 +144,9 @@ def test_covariance_of_sums_runs(mbar_and_test_kln):
     """Test that CovarianceOfSums function runs"""
     # TODO: Is this function still needed? And what would be a better test?
     mbar = mbar_and_test_kln["mbar"]
-    results = mbar.getFreeEnergyDifferences(return_theta=True)
+    results = mbar.compute_free_energy_differences(return_theta=True)
     theta = results["Theta"]
-    mbar.computeCovarianceOfSums(theta, 1, np.array([1, -1]))
+    mbar.compute_covariance_of_sums(theta, 1, np.array([1, -1]))
 
 
 @pytest.mark.parametrize("system_generator", system_generators)
@@ -187,7 +187,7 @@ def test_mbar_free_energies(mbar_and_test, uncertainty_method):
 
     """Can MBAR calculate moderately correct free energy differences?"""
     mbar, test = mbar_and_test["mbar"], mbar_and_test["test"]
-    results = mbar.getFreeEnergyDifferences(
+    results = mbar.compute_free_energy_differences(
         return_theta=True, uncertainty_method=uncertainty_method
     )
     fe = results["Delta_f"]
@@ -203,18 +203,18 @@ def test_mbar_initialization(fixed_harmonic_sample, method):
     """Do the MBAR initialization methods work?"""
     _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode="u_kn")
     mbar = MBAR(u_kn, N_k, initialize=method, verbose=True)
-    results = mbar.getFreeEnergyDifferences()
+    results = mbar.compute_free_energy_differences()
     fe = results["Delta_f"]
     fe_sigma = results["dDelta_f"]
     free_energies_almost_equal(fe, fe_sigma, fixed_harmonic_sample.analytical_free_energies())
 
 
-def test_mbar_computeExpectations_position_averages(mbar_and_test):
+def test_mbar_compute_expectations_position_averages(mbar_and_test):
 
     """Can MBAR calculate E(x_n)??"""
 
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
-    results = mbar.computeExpectations(x_n)
+    results = mbar.compute_expectations(x_n)
     mu = results["mu"]
     sigma = results["sigma"]
 
@@ -224,12 +224,12 @@ def test_mbar_computeExpectations_position_averages(mbar_and_test):
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-def test_mbar_computeExpectations_position_differences(mbar_and_test):
+def test_mbar_compute_expectations_position_differences(mbar_and_test):
 
     """Can MBAR calculate E(x_n)??"""
 
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
-    results = mbar.computeExpectations(x_n, output="differences")
+    results = mbar.compute_expectations(x_n, output="differences")
     mu_ij = results["mu"]
     sigma_ij = results["sigma"]
 
@@ -238,12 +238,12 @@ def test_mbar_computeExpectations_position_differences(mbar_and_test):
     assert_almost_equal(z / z_scale_factor, np.zeros(np.shape(z)), decimal=0)
 
 
-def test_mbar_computeExpectations_position2(mbar_and_test):
+def test_mbar_compute_expectations_position2(mbar_and_test):
 
     """Can MBAR calculate E(x_n^2)??"""
 
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
-    results = mbar.computeExpectations(x_n ** 2)
+    results = mbar.compute_expectations(x_n ** 2)
     mu = results["mu"]
     sigma = results["sigma"]
     mu0 = test.analytical_observable(observable="position^2")
@@ -252,12 +252,12 @@ def test_mbar_computeExpectations_position2(mbar_and_test):
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-def test_mbar_computeExpectations_potential(mbar_and_test):
+def test_mbar_compute_expectations_potential(mbar_and_test):
 
     """Can MBAR calculate E(u_kn)??"""
 
     mbar, test, u_kn = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["u_kn"]
-    results = mbar.computeExpectations(u_kn, state_dependent=True)
+    results = mbar.compute_expectations(u_kn, state_dependent=True)
     mu = results["mu"]
     sigma = results["sigma"]
     mu0 = test.analytical_observable(observable="potential energy")
@@ -280,7 +280,7 @@ def test_mbar_computeExpectations_potential(mbar_and_test):
         ("potential energy", True, "u_kn", True, False),
     ],
 )
-def test_mbar_computeExpectations_edges(
+def test_mbar_compute_expectations_edges(
     mbar_and_test_harmonic,
     mbar_and_test_kln,
     observable,
@@ -302,7 +302,7 @@ def test_mbar_computeExpectations_edges(
         obs = payload["x_n"]
     if single_dim:
         u_xxx = u_xxx[0]
-    results = mbar.computeExpectations(
+    results = mbar.compute_expectations(
         obs, state_dependent=state_dependent, u_kn=u_xxx if with_uxx else None, return_theta=True
     )
     mu = results["mu"]
@@ -323,7 +323,7 @@ def multiExpectationAssertion(results, test, state=1):
     assert_almost_equal(z / z_scale_factor, 0 * z, decimal=0)
 
 
-def test_mbar_computeMultipleExpectations(mbar_and_test):
+def test_mbar_compute_multiple_expectations(mbar_and_test):
 
     """Can MBAR calculate E(u_kn)??"""
 
@@ -337,11 +337,11 @@ def test_mbar_computeMultipleExpectations(mbar_and_test):
     A[0, :] = x_n
     A[1, :] = x_n ** 2
     state = 1
-    results = mbar.computeMultipleExpectations(A, u_kn[state, :])
+    results = mbar.compute_multiple_expectations(A, u_kn[state, :])
     multiExpectationAssertion(results, test, state=state)
 
 
-def test_mbar_computeMultipleExpectations_more_dims(mbar_and_test_kln):
+def test_mbar_compute_multiple_expectations_more_dims(mbar_and_test_kln):
 
     """Can MBAR calculate E(u_kn) with 3 dimensions??"""
 
@@ -355,13 +355,13 @@ def test_mbar_computeMultipleExpectations_more_dims(mbar_and_test_kln):
     A[0, :, :] = x_n
     A[1, :, :] = x_n ** 2
     state = 1
-    results = mbar.computeMultipleExpectations(
+    results = mbar.compute_multiple_expectations(
         A, u_kn[:, state, :], compute_covariance=True, return_theta=True
     )
     multiExpectationAssertion(results, test, state=state)
 
 
-def test_mbar_computeEntropyAndEnthalpy(mbar_and_test, with_uxx=True):
+def test_mbar_compute_entropy_and_enthalpy(mbar_and_test, with_uxx=True):
 
     """Can MBAR calculate f_k, <u_k> and s_k ??"""
 
@@ -371,7 +371,7 @@ def test_mbar_computeEntropyAndEnthalpy(mbar_and_test, with_uxx=True):
         mbar_and_test["x_n"],
         mbar_and_test["u_kn"],
     )
-    results = mbar.computeEntropyAndEnthalpy(u_kn if with_uxx else None, verbose=True)
+    results = mbar.compute_entropy_and_enthalpy(u_kn if with_uxx else None, verbose=True)
     f_ij = results["Delta_f"]
     df_ij = results["dDelta_f"]
     u_ij = results["Delta_u"]
@@ -404,28 +404,28 @@ def test_mbar_computeEntropyAndEnthalpy(mbar_and_test, with_uxx=True):
         # False True handled by main test
     ],
 )
-def test_mbar_computeEntropyAndEnthalpy_edges(
+def test_mbar_compute_entropy_and_enthalpy_edges(
     mbar_and_test_harmonic, mbar_and_test_kln, as_kln, with_uxx
 ):
     if as_kln:
         payload = mbar_and_test_kln
     else:
         payload = mbar_and_test_harmonic
-    test_mbar_computeEntropyAndEnthalpy(payload, with_uxx=with_uxx)
+    test_mbar_compute_entropy_and_enthalpy(payload, with_uxx=with_uxx)
 
 
-def test_mbar_computeEffectiveSampleNumber(mbar_and_test):
-    """ testing computeEffectiveSampleNumber """
+def test_mbar_compute_effective_sample_number(mbar_and_test):
+    """ testing compute_effective_sample_number """
 
     mbar = mbar_and_test["mbar"]
     # one mathematical effective sample numbers should be between N_k and sum_k N_k
-    N_eff = mbar.computeEffectiveSampleNumber()
+    N_eff = mbar.compute_effective_sample_number()
     sumN = np.sum(N_k)
     assert all(N_eff > N_k)
     assert all(N_eff < sumN)
 
 
-def test_mbar_computeOverlap_analytical():
+def test_mbar_compute_overlap_analytical():
     """Tests Overlap with identical states, which gives analytical results."""
 
     d = len(N_k)
@@ -436,7 +436,7 @@ def test_mbar_computeOverlap_analytical():
     x_n, u_kn, N_k_output, s_n = test.sample(even_N_k, mode="u_kn")
     mbar = MBAR(u_kn, even_N_k)
 
-    results = mbar.computeOverlap()
+    results = mbar.compute_overlap()
     overlap_scalar = results["scalar"]
     eigenval = results["eigenvalues"]
     O = results["matrix"]
@@ -451,10 +451,10 @@ def test_mbar_computeOverlap_analytical():
     assert_almost_equal(overlap_scalar, reference_scalar, decimal=precision)
 
 
-def test_mbar_computeOverlap_nonanalytical(mbar_and_test):
+def test_mbar_compute_overlap_nonanalytical(mbar_and_test):
     """Tests Overlap with stochastic tests"""
     mbar = mbar_and_test["mbar"]
-    results = mbar.computeOverlap()
+    results = mbar.compute_overlap()
     overlap_scalar = results["scalar"]
     eigenval = results["eigenvalues"]
     O = results["matrix"]
@@ -466,12 +466,12 @@ def test_mbar_computeOverlap_nonanalytical(mbar_and_test):
     assert_almost_equal(eigenval[0], np.float64(1.0), decimal=precision)
 
 
-def test_mbar_getWeights(mbar_and_test):
+def test_mbar_weights(mbar_and_test):
 
-    """ testing getWeights """
+    """ testing weights """
 
     mbar = mbar_and_test["mbar"]
-    W = mbar.getWeights()
+    W = mbar.weights()
     sumrows = np.sum(W, axis=0)
     assert_almost_equal(sumrows, np.ones(len(sumrows)), decimal=precision)
 
@@ -487,7 +487,7 @@ def test_mbar_getWeights(mbar_and_test):
 )
 def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
 
-    """ testing computePerturbedFreeEnergies """
+    """ testing compute_perturbed_free_energies """
 
     # only do MBAR with the first and last set
 
@@ -508,7 +508,7 @@ def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
         pslice = np.s_[2:, :numN]
 
     mbar = MBAR(u_kn[mslice], N_k[:2])
-    results = mbar.computePerturbedFreeEnergies(u_kn[pslice])
+    results = mbar.compute_perturbed_free_energies(u_kn[pslice])
     fe = results["Delta_f"]
     fe_sigma = results["dDelta_f"]
 
@@ -520,7 +520,7 @@ def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-def test_mbar_computeExpectationsInner(mbar_and_test):
+def test_mbar_compute_expectations_inner(mbar_and_test):
 
     """Can MBAR calculate general expectations inner code (note: this just tests completion)"""
     mbar, test, x_n, u_kn = (
@@ -532,4 +532,4 @@ def test_mbar_computeExpectationsInner(mbar_and_test):
     A_in = np.array([x_n, x_n ** 2, x_n ** 3])
     u_n = u_kn[:2, :]
     state_map = np.array([[0, 0], [1, 0], [2, 0], [2, 1]], int)
-    _ = mbar.computeExpectationsInner(A_in, u_n, state_map)
+    _ = mbar.compute_expectations_inner(A_in, u_n, state_map)

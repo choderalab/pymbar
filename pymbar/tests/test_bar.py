@@ -4,7 +4,7 @@ for which the true free energy differences can be computed analytically.
 
 import numpy as np
 import pytest
-from pymbar import bar as pybar
+from pymbar import other_estimators as estimators
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 
@@ -32,12 +32,12 @@ def bar_and_test(request):
     w_F, w_R, N_k_output = test.sample(N_k, mode="wFwR")
     assert_equal(N_k, N_k_output)
     bars = dict()
-    # can't return method, because BAR is just a function
-    bars["sci"] = pybar.BAR(w_F, w_R, method="self-consistent-iteration")
-    bars["bis"] = pybar.BAR(w_F, w_R, method="bisection")
-    bars["fp"] = pybar.BAR(w_F, w_R, method="false-position")
-    bars["dBAR"] = pybar.BAR(w_F, w_R, uncertainty_method="BAR")
-    bars["dMBAR"] = pybar.BAR(w_F, w_R, uncertainty_method="MBAR")
+    # can't return method, because bar is just a function
+    bars["sci"] = estimators.bar(w_F, w_R, method="self-consistent-iteration")
+    bars["bis"] = estimators.bar(w_F, w_R, method="bisection")
+    bars["fp"] = estimators.bar(w_F, w_R, method="false-position")
+    bars["dBAR"] = estimators.bar(w_F, w_R, uncertainty_method="BAR")
+    bars["dMBAR"] = estimators.bar(w_F, w_R, uncertainty_method="MBAR")
 
     yield_bundle = {
         "bars": bars,
@@ -63,7 +63,7 @@ def test_sample(system_generator):
 
 def test_bar_free_energies(bar_and_test):
 
-    """Can BAR calculate moderately correct free energy differences?"""
+    """Can bar calculate moderately correct free energy differences?"""
 
     bars, test = bar_and_test["bars"], bar_and_test["test"]
 

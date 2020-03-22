@@ -39,7 +39,6 @@ class TypeCastPerformanceWarning(RuntimeWarning):
 
 
 def kln_to_kn(kln, N_k=None, cleanup=False):
-
     """ Convert KxKxN_max array to KxN max array
 
     Parameters
@@ -77,7 +76,6 @@ def kln_to_kn(kln, N_k=None, cleanup=False):
 
 
 def kn_to_n(kn, N_k=None, cleanup=False):
-
     """ Convert KxN_max array to N array
 
     Parameters
@@ -236,6 +234,7 @@ def ensure_type(
 
 def _logsum(a_n):
     """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.
+
     NOTE: this function has been deprecated in favor of logsumexp.
 
     Parameters
@@ -307,7 +306,7 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     Notes
     -----
-    This is based on scipy.misc.logsumexp but with optional numexpr
+    This is based on ``scipy.misc.logsumexp`` but with optional numexpr
     support for improved performance.
     """
 
@@ -354,7 +353,12 @@ def check_w_normalized(W, N_k, tolerance=1.0e-4):
     Returns
     -------
     None : NoneType
-        Returns a None object if test passes, otherwise raises a ParameterError with appropriate message if W is not normalized within tolerance.
+        Returns a None object if test passes
+
+    Raises
+    ------
+    ParameterError
+        Appropriate message if W is not normalized within tolerance.
     """
 
     [N, K] = W.shape
@@ -393,7 +397,6 @@ class ParameterError(Exception):
 
     """
     An error in the input parameters has been detected.
-
     """
 
 
@@ -401,7 +404,6 @@ class ConvergenceError(Exception):
 
     """
     Convergence could not be achieved.
-
     """
 
 
@@ -409,7 +411,6 @@ class BoundsError(Exception):
 
     """
     Could not determine bounds on free energy
-
     """
 
 
@@ -417,5 +418,4 @@ class DataError(Exception):
 
     """
     Data is inconsistent.
-
     """

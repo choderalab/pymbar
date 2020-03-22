@@ -96,8 +96,8 @@ class MBAR:
 
         Upon initialization, the dimensionless free energies for all states are computed.
         This may take anywhere from seconds to minutes, depending upon the quantity of data.
-        After initialization, the computed free energies may be obtained by a call to :func:`getFreeEnergyDifferences`,
-        or expectation at any state of interest can be computed by calls to :func:`computeExpectations`.
+        After initialization, the computed free energies may be obtained by a call to :func:`compute_free_energy_differences`,
+        or expectation at any state of interest can be computed by calls to :func:`compute_expectations`.
 
         Parameters
         ----------
@@ -120,7 +120,7 @@ class MBAR:
 
             We assume that the states are ordered such that the first ``N_k``
             are from the first state, the 2nd ``N_k`` the second state, and so
-            forth. This only becomes important for BAR -- MBAR does not
+            forth. This only becomes important for bar -- MBAR does not
             care which samples are from which state.  We should eventually
             allow this assumption to be overwritten by parameters passed
             from above, once ``u_kln`` is phased out.
@@ -146,7 +146,7 @@ class MBAR:
             gradient is chosen to improve numerical stability.
 
         initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
-            If equal to 'BAR', use BAR between the pairwise state to
+            If equal to 'BAR', use bar between the pairwise state to
             initialize the free energies.  Eventually, should specify a path;
             for now, it just does it zipping up the states.
 
@@ -158,7 +158,7 @@ class MBAR:
 
             (default: 'zeros', unless specific values are passed in.)
         x_kindices
-            Which state is each x from?  Usually doesn't matter, but does for BAR. We assume the samples
+            Which state is each x from?  Usually doesn't matter, but does for bar. We assume the samples
             are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
             the 1st state, and so forth.
 
@@ -189,7 +189,7 @@ class MBAR:
         The configurations ``x_ln`` must be uncorrelated.  This can be ensured by subsampling a correlated timeseries
         with a period larger than the statistical inefficiency, which can be estimated from the potential energy
         timeseries ``{u_k(x_ln)}_{n=1}^{N_k}`` using the provided utility
-        :func:`pymbar.timeseries.statisticalInefficiency`.
+        :func:`pymbar.timeseries.statistical_inefficiency`.
         See the help for this function for more information.
 
         Examples
@@ -372,7 +372,7 @@ class MBAR:
         return np.exp(self.Log_W_nk)
 
     # =========================================================================
-    def getWeights(self):
+    def weights(self):
         """Retrieve the weight matrix W_nk from the MBAR algorithm.
 
         Necessary because they are stored internally as log weights.
@@ -387,7 +387,7 @@ class MBAR:
         return self.W_nk
 
     # =========================================================================
-    def computeEffectiveSampleNumber(self, verbose=False):
+    def compute_effective_sample_number(self, verbose=False):
         """
         Compute the effective sample number of each state;
         essentially, an estimate of how many samples are contributing to the average
@@ -434,7 +434,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> [x_kn, u_kln, N_k, s_n] = testsystems.HarmonicOscillatorsTestCase().sample()
         >>> mbar = MBAR(u_kln, N_k)
-        >>> N_eff = mbar.computeEffectiveSampleNumber()
+        >>> N_eff = mbar.compute_effective_sample_number()
         """
 
         N_eff = np.zeros(self.K)
@@ -454,7 +454,7 @@ class MBAR:
         return N_eff
 
     # =========================================================================
-    def computeOverlap(self):
+    def compute_overlap(self):
         """
         Compute estimate of overlap matrix between the states.
 
@@ -492,11 +492,11 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_kn, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computeOverlap()
+        >>> results = mbar.compute_overlap()
 
         """
 
-        W = self.getWeights()
+        W = self.weights()
         O = self.N_k * (W.T @ W)
         (eigenvals, eigevec) = linalg.eig(O)
         # sort in descending order
@@ -511,7 +511,7 @@ class MBAR:
         return results_vals
 
     # =========================================================================
-    def getFreeEnergyDifferences(
+    def compute_free_energy_differences(
         self,
         compute_uncertainty=True,
         uncertainty_method=None,
@@ -565,7 +565,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.getFreeEnergyDifferences()
+        >>> results = mbar.compute_free_energy_differences()
 
         """
         Deltaf_ij, dDeltaf_ij, Theta_ij = (
@@ -604,7 +604,7 @@ class MBAR:
         return result_vals
 
     # =========================================================================
-    def computeExpectationsInner(
+    def compute_expectations_inner(
         self,
         A_n,
         u_ln,
@@ -668,8 +668,8 @@ class MBAR:
 
         Situations this will be used for :
 
-        * Multiple observables, single state (called though computeMultipleExpectations)
-        * Single observable, multiple states (called through computeExpectations)
+        * Multiple observables, single state (called though compute_multiple_expectations)
+        * Single observable, multiple states (called through compute_expectations)
 
             This has two cases: observables that don't change with state, and observables that
             do change with state.
@@ -690,7 +690,7 @@ class MBAR:
         >>> A_n = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[:2,:]
         >>> state_map = np.array([[0,0],[1,0],[2,0],[2,1]],int)
-        >>> results = mbar.computeExpectationsInner(A_n, u_n, state_map)
+        >>> results = mbar.compute_expectations_inner(A_n, u_n, state_map)
 
         """
 
@@ -860,7 +860,7 @@ class MBAR:
         #
 
     # =========================================================================
-    def computeCovarianceOfSums(self, d_ij, K, a):
+    def compute_covariance_of_sums(self, d_ij, K, a):
 
         """
         We wish to calculate the variance of a weighted sum of free energy differences.
@@ -952,7 +952,7 @@ class MBAR:
         return np.sqrt(d2)
 
     # =========================================================================
-    def computeExpectations(
+    def compute_expectations(
         self,
         A_n,
         u_kn=None,
@@ -996,7 +996,7 @@ class MBAR:
 
         Returns
         -------
-        
+
         Results dictionary with the following keys
 
         'mu' : np.ndarray, float
@@ -1022,9 +1022,9 @@ class MBAR:
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_n = x_n
-        >>> results = mbar.computeExpectations(A_n)
+        >>> results = mbar.compute_expectations(A_n)
         >>> A_n = u_kn[0,:]
-        >>> results = mbar.computeExpectations(A_n, output='differences')
+        >>> results = mbar.compute_expectations(A_n, output='differences')
         """
 
         dims = len(np.shape(A_n))
@@ -1074,7 +1074,7 @@ class MBAR:
                 state_map[0, k] = k
                 state_map[1, k] = 0
 
-        inner_results = self.computeExpectationsInner(
+        inner_results = self.compute_expectations_inner(
             A_n,
             u_kn,
             state_map,
@@ -1120,7 +1120,7 @@ class MBAR:
         return result_vals
 
     # =========================================================================
-    def computeMultipleExpectations(
+    def compute_multiple_expectations(
         self,
         A_in,
         u_n,
@@ -1139,7 +1139,7 @@ class MBAR:
         which is the energy of the n samples evaluated at a the chosen
         state.
 
-        
+
         Parameters:
         -------------
 
@@ -1160,7 +1160,7 @@ class MBAR:
         Returns
         -------------
         Results dictionary with the following keys
-        
+
         'mu' : np.ndarray, float, shape=(I)
             result_vals['mu'] is the estimate for the expectation of A_i(x) at the state specified by u_kn
         'sigma' : np.ndarray, float, shape = (I)
@@ -1179,7 +1179,7 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
         >>> A_in = np.array([x_n,x_n**2,x_n**3])
         >>> u_n = u_kn[0,:]
-        >>> results = mbar.computeMultipleExpectations(A_in, u_kn)
+        >>> results = mbar.compute_multiple_expectations(A_in, u_kn)
 
         """
 
@@ -1200,7 +1200,7 @@ class MBAR:
         state_map = np.zeros([2, I], int)
         state_map[1, :] = np.arange(I)  # same (first) state for all variables.
 
-        inner_results = self.computeExpectationsInner(
+        inner_results = self.compute_expectations_inner(
             A_in,
             u_n,
             state_map,
@@ -1238,7 +1238,7 @@ class MBAR:
         return result_vals
 
     # =========================================================================
-    def computePerturbedFreeEnergies(
+    def compute_perturbed_free_energies(
         self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10
     ):
         """Compute the free energies for a new set of states.
@@ -1273,7 +1273,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computePerturbedFreeEnergies(u_kn)
+        >>> results = mbar.compute_perturbed_free_energies(u_kn)
         """
 
         # Get the dimensions of the matrix of reduced potential energies, and convert if necessary
@@ -1290,7 +1290,7 @@ class MBAR:
 
         state_list = np.arange(L)  # need to get it into the correct shape
         A_in = np.array([0])
-        inner_results = self.computeExpectationsInner(
+        inner_results = self.compute_expectations_inner(
             A_in,
             u_ln,
             state_list,
@@ -1315,7 +1315,7 @@ class MBAR:
 
     # =====================================================================
 
-    def computeEntropyAndEnthalpy(
+    def compute_entropy_and_enthalpy(
         self, u_kn=None, uncertainty_method=None, verbose=False, warning_cutoff=1.0e-10
     ):
         """Decompose free energy differences into enthalpy and entropy differences.
@@ -1337,7 +1337,7 @@ class MBAR:
         Returns
         -------
         Results dictionary with the following keys
-        
+
         'Delta_f' : np.ndarray, float, shape=(K, K)
             results['Delta_f'] is the dimensionless free energy difference f_j - f_i
         'dDelta_f' : np.ndarray, float, shape=(K, K)
@@ -1357,7 +1357,7 @@ class MBAR:
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
-        >>> results = mbar.computeEntropyAndEnthalpy()
+        >>> results = mbar.compute_entropy_and_enthalpy()
 
         """
         if verbose:
@@ -1378,7 +1378,7 @@ class MBAR:
             state_map[0, k] = k
             state_map[1, k] = k
 
-        inner_results = self.computeExpectationsInner(
+        inner_results = self.compute_expectations_inner(
             A_in,
             u_kn,
             state_map,
@@ -1455,7 +1455,7 @@ class MBAR:
         return result_vals
 
     # =========================================================================
-    # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
+    # PRIVATE METHODS - INTERFACES ARE NOT expORTED
     # =========================================================================
 
     def _ErrorOfDifferences(self, cov, warning_cutoff=1.0e-10):
@@ -1678,13 +1678,13 @@ class MBAR:
                 # self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
 
                 if len(w_F) > 0 and len(w_R) > 0:
-                    # BAR solution doesn't need to be incredibly accurate to
+                    # bar solution doesn't need to be incredibly accurate to
                     # kickstart NR.
-                    import pymbar.bar
+                    from pymbar.other_estimators import bar
 
                     self.f_k[l] = (
                         self.f_k[k]
-                        + pymbar.bar.BAR(
+                        + bar(
                             w_F,
                             w_R,
                             relative_tolerance=0.000001,

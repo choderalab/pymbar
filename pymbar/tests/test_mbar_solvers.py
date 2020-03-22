@@ -80,7 +80,7 @@ def test_protocols(base_oscillator, protocol):
         mbar = pymbar.MBAR(
             u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({"method": protocol},)
         )
-        results = mbar.getFreeEnergyDifferences()
+        results = mbar.compute_free_energy_differences()
         fe = results["Delta_f"][0, 1:]
         fe_sigma = results["dDelta_f"][0, 1:]
         z = (fe - fa) / fe_sigma

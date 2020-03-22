@@ -161,8 +161,8 @@ def pmf_1d():
     pmf = PMF(u_kn, N_k)
 
     # Make a quick calculation to get reference uncertainties
-    pmf.generatePMF(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
-    results = pmf.getPMF(bin_centers, uncertainties="from-specified", pmf_reference=0.0)
+    pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
+    results = pmf.get_pmf(bin_centers, uncertainties="from-specified", pmf_reference=0.0)
 
     payload["pmf"] = pmf
     payload["u_kn"] = u_kn
@@ -277,8 +277,10 @@ def pmf_2d():
     pmf = PMF(u_kn, N_k)
 
     # Make a quick calculation to get reference uncertainties
-    pmf.generatePMF(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
-    results = pmf.getPMF(bin_centers + delta, uncertainties="from-specified", pmf_reference=[0, 0])
+    pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
+    results = pmf.get_pmf(
+        bin_centers + delta, uncertainties="from-specified", pmf_reference=[0, 0]
+    )
 
     payload["pmf"] = pmf
     payload["u_kn"] = u_kn
@@ -315,8 +317,8 @@ def test_1d_pmf_histogram(pmf_1d, uncertainties):
 
     histogram_parameters = dict()
     histogram_parameters["bin_edges"] = pmf_1d["bin_edges"]
-    pmf.generatePMF(pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters)
-    results = pmf.getPMF(pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0)
+    pmf.generate_pmf(pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters)
+    results = pmf.get_pmf(pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0)
     f_ih = results["f_i"]
     df_ih = results["df_i"]
 
@@ -336,10 +338,12 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
     kde_parameters = dict()
     kde_parameters["bandwidth"] = 0.5 * pmf_1d["dx"]
     # no analytical uncertainty for kde yet, have to use bootstraps
-    pmf.generatePMF(
+    pmf.generate_pmf(
         pmf_1d["u_n"], pmf_1d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
     )
-    results_kde = pmf.getPMF(pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0)
+    results_kde = pmf.get_pmf(
+        pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0
+    )
     f_ik = results_kde["f_i"]
     # df_ih = results_kde['df_i']
     # Just use the reference for now
@@ -410,7 +414,7 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
 
     # TODO: Is this u_kn for spline or u_n like all the others? Right now I have it as u_kn as thats what it was
     # no analytical uncertainty for kde yet, have to use bootstraps
-    pmf.generatePMF(
+    pmf.generate_pmf(
         pmf_1d["u_kn"],
         pmf_1d["x_n"],
         pmf_type="spline",
@@ -418,7 +422,7 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
         **gen_kwargs
     )
     # Something wrong with unbiased state?
-    results_spline = pmf.getPMF(bin_centers, uncertainties=uncertainties, pmf_reference=0.0)
+    results_spline = pmf.get_pmf(bin_centers, uncertainties=uncertainties, pmf_reference=0.0)
     f_is = results_spline["f_i"]
     # df_ih = results_spline['df_i']
     # Just use the reference for now
@@ -467,7 +471,7 @@ def test_1d_pmf_spline_bootstraped(pmf_1d):
 )
 def test_2d_pmf_histogram(pmf_2d, uncertainties):
 
-    """ testing pmf_generatePMF and pmf_getPMF in 2D """
+    """ testing pmf_generate_pmf and pmf_get_pmf in 2D """
 
     pmf = pmf_2d["pmf"]
     pmf_analytical = pmf_2d["pmf_analytical"]
@@ -475,14 +479,14 @@ def test_2d_pmf_histogram(pmf_2d, uncertainties):
     # set histogram parameters.
     histogram_parameters = dict()
     histogram_parameters["bin_edges"] = pmf_2d["bin_edges"]
-    pmf.generatePMF(
+    pmf.generate_pmf(
         pmf_2d["u_n"],
         pmf_2d["x_n"],
         pmf_type="histogram",
         histogram_parameters=histogram_parameters,
     )
 
-    results = pmf.getPMF(
+    results = pmf.get_pmf(
         pmf_2d["bin_centers"] + pmf_2d["delta"], uncertainties=uncertainties, pmf_reference=[0, 0]
     )
     f_ih = results["f_i"]
@@ -520,11 +524,11 @@ def test_2d_pmf_kde(pmf_2d, gen_kwargs, uncertainties):
     # set kde parameters
     kde_parameters = dict()
     kde_parameters["bandwidth"] = 0.5 * pmf_2d["dx"]
-    pmf.generatePMF(
+    pmf.generate_pmf(
         pmf_2d["u_n"], pmf_2d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
     )
     # I don't know if this needs the +delta
-    results_kde = pmf.getPMF(
+    results_kde = pmf.get_pmf(
         pmf_2d["bin_centers"] + pmf_2d["delta"], uncertainties=uncertainties, pmf_reference=[0, 0]
     )
 
