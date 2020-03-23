@@ -106,17 +106,17 @@ for k in range(K):
     # timeseries.  If the temperatures differ, use energies to determine samples; otherwise, use the cosine of chi
 
     if DifferentTemperatures:
-        g_k[k] = timeseries.statisticalInefficiency(u_kn[k, :], u_kn[k, 0 : N_k[k]])
+        g_k[k] = timeseries.statistical_inefficiency(u_kn[k, :], u_kn[k, 0 : N_k[k]])
         print("Correlation time for set {:5d} is {:10.3f}".format(k, g_k[k]))
-        indices = timeseries.subsampleCorrelatedData(u_kn[k, 0 : N_k[k]])
+        indices = timeseries.subsample_correlated_data(u_kn[k, 0 : N_k[k]])
     else:
         chi_radians = chi_kn[k, 0 : N_k[k]] / (180.0 / np.pi)
-        g_cos = timeseries.statisticalInefficiency(np.cos(chi_radians))
-        g_sin = timeseries.statisticalInefficiency(np.sin(chi_radians))
+        g_cos = timeseries.statistical_inefficiency(np.cos(chi_radians))
+        g_sin = timeseries.statistical_inefficiency(np.sin(chi_radians))
         print("g_cos = {:.1f} | g_sin = {:.1f}".format(g_cos, g_sin))
         g_k[k] = max(g_cos, g_sin)
         print("Correlation time for set {:5d} is {:10.3f}".format(k, g_k[k]))
-        indices = timeseries.subsampleCorrelatedData(chi_radians, g=g_k[k])
+        indices = timeseries.subsample_correlated_data(chi_radians, g=g_k[k])
     # Subsample data.
     N_k[k] = len(indices)
     u_kn[k, 0 : N_k[k]] = u_kn[k, indices]

@@ -204,9 +204,9 @@ N_k = np.zeros(K, dtype=int)
 g = np.zeros(K)
 
 for k in range(K):  # subsample the energies
-    g[k] = timeseries.statisticalInefficiency(E_from_file[k])
+    g[k] = timeseries.statistical_inefficiency(E_from_file[k])
     indices = np.array(
-        timeseries.subsampleCorrelatedData(E_from_file[k], g=g[k])
+        timeseries.subsample_correlated_data(E_from_file[k], g=g[k])
     )  # indices of uncorrelated samples
     N_k[k] = len(indices)  # number of uncorrelated samples
     E_from_file[k, 0 : N_k[k]] = E_from_file[k, indices]
@@ -335,23 +335,23 @@ for n in range(nBoots_work):
         E_kln[:, k, :] *= beta_k[k] ** (
             -1
         )  # get the 'unreduced' potential -- we can't take differences of reduced potentials because the beta is different; math is much more confusing with derivatives of the reduced potentials.
-    results = mbar.computeExpectations(E_kln, state_dependent=True)
+    results = mbar.compute_expectations(E_kln, state_dependent=True)
     E_expect = results["mu"]
     dE_expect = results["sigma"]
     allE_expect[:, n] = E_expect[:]
 
     # expectations for the differences, which we need for numerical derivatives
-    results = mbar.computeExpectations(E_kln, output="differences", state_dependent=True)
+    results = mbar.compute_expectations(E_kln, output="differences", state_dependent=True)
     DeltaE_expect = results["mu"]
     dDeltaE_expect = results["sigma"]
     print("Computing Expectations for E^2...")
 
-    results = mbar.computeExpectations(E_kln ** 2, state_dependent=True)
+    results = mbar.compute_expectations(E_kln ** 2, state_dependent=True)
     E2_expect = results["mu"]
     dE2_expect = results["sigma"]
     allE2_expect[:, n] = E2_expect[:]
 
-    results = mbar.getFreeEnergyDifferences()
+    results = mbar.compute_free_energy_differences()
     df_ij = results["Delta_f"]
     ddf_ij = results["dDelta_f"]
 
@@ -507,4 +507,3 @@ if nBoots > 0:
     print_results(
         "Bootstrap Error Estimates", allE_expect[:, 0], dE_boot, allCv_expect, dCv_boot, types
     )
-

@@ -118,7 +118,7 @@ if np.shape(O_k) != np.shape(N_k):
 # Determine maximum number of samples to be drawn for any state.
 N_max = np.max(N_k)
 
-(f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical) = get_analytical(
+f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical = get_analytical(
     beta, K_k, O_k, observables
 )
 
@@ -162,10 +162,10 @@ mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10, verbose=True)
 # Get matrix of dimensionless free energy differences and uncertainty estimate.
 
 print("=============================================")
-print("      Testing getFreeEnergyDifferences       ")
+print("      Testing compute_free_energy_differences       ")
 print("=============================================")
 
-results = mbar.getFreeEnergyDifferences()
+results = mbar.compute_free_energy_differences()
 Delta_f_ij_estimated = results["Delta_f"]
 dDelta_f_ij_estimated = results["dDelta_f"]
 
@@ -210,7 +210,7 @@ for i in range(Knon - 1):
     stddev_away("BAR estimator", bar_error, ddf_bar)
 
 print("==============================================")
-print("             Testing computeEXP               ")
+print("             Testing EXP               ")
 print("==============================================")
 
 print("EXP forward free energy")
@@ -230,7 +230,7 @@ print("EXP reverse free energy")
 for k in range(1, K):
     if N_k[k] != 0:
         w_R = u_kln[k, k - 1, 0 : N_k[k]] - u_kln[k, k, 0 : N_k[k]]  # reverse work
-        (df_exp, ddf_exp) = exp(w_R)
+        df_exp, ddf_exp = exp(w_R)
         df_exp = -results["Delta_f"]
         ddf_exp = results["dDelta_f"]
         exp_analytical = f_k_analytical[k] - f_k_analytical[k - 1]
@@ -276,7 +276,7 @@ for k in range(1, K):
         stddev_away("df", gauss_error, ddf_gauss)
 
 print("======================================")
-print("      Testing computeExpectations")
+print("      Testing compute_expectations")
 print("======================================")
 
 A_kn_all = dict()
@@ -324,7 +324,7 @@ for observe in observables:
         for k in range(0, K):
             A_kn[k, 0 : N_k[k]] = x_kn[k, 0 : N_k[k]] ** 2
 
-    results = mbar.computeExpectations(A_kn, state_dependent=state_dependent)
+    results = mbar.compute_expectations(A_kn, state_dependent=state_dependent)
     A_k_estimated = results["mu"]
     dA_k_estimated = results["sigma"]
 
@@ -378,7 +378,9 @@ for observe in observables:
     stdevs = np.abs(As_k_error[Nk_ne_zero] / dAs_k_estimated[Nk_ne_zero])
     print(stdevs)
 
-    results = mbar.computeExpectations(A_kn, state_dependent=state_dependent, output="differences")
+    results = mbar.compute_expectations(
+        A_kn, state_dependent=state_dependent, output="differences"
+    )
     A_kl_estimated = results["mu"]
     dA_kl_estimated = results["sigma"]
 
@@ -406,13 +408,13 @@ for observe in observables:
             stdevs[k, k] = 0
         print(stdevs)
 
-    # save up the A_k for use in computeMultipleExpectations
+    # save up the A_k for use in compute_multiple_expectations
     A_kn_all[observe] = A_kn
     A_k_estimated_all[observe] = A_k_estimated
     A_kl_estimated_all[observe] = A_kl_estimated
 
 print("=============================================")
-print("      Testing computeMultipleExpectations")
+print("      Testing compute_multiple_expectations")
 print("=============================================")
 
 # have to exclude the potential and RMS displacemet for now, not functions
@@ -423,7 +425,7 @@ A_ikn = np.zeros([len(observables_single), K, N_k.max()], np.float64)
 for i, observe in enumerate(observables_single):
     A_ikn[i, :, :] = A_kn_all[observe]
 for i in range(K):
-    results = mbar.computeMultipleExpectations(A_ikn, u_kln[:, i, :], compute_covariance=True)
+    results = mbar.compute_multiple_expectations(A_ikn, u_kln[:, i, :], compute_covariance=True)
     A_i = results["mu"]
     dA_ij = results["sigma"]
     Ca_ij = results["covariances"]
@@ -435,10 +437,10 @@ for i in range(K):
     print(Ca_ij)
 
 print("============================================")
-print("      Testing computeEntropyAndEnthalpy")
+print("      Testing compute_entropy_and_enthalpy")
 print("============================================")
 
-results = mbar.computeEntropyAndEnthalpy(u_kn=u_kln, verbose=True)
+results = mbar.compute_entropy_and_enthalpy(u_kn=u_kln, verbose=True)
 Delta_f_ij = results["Delta_f"]
 dDelta_f_ij = results["dDelta_f"]
 Delta_u_ij = results["Delta_u"]
@@ -475,12 +477,12 @@ U_k = A_k_estimated_all["potential energy"]
 expectations = U_k - np.vstack(U_k)
 diffs1 = Delta_u_ij - expectations
 print(
-    "maximum difference between values computed here and in computeExpectations is {:g}".format(
+    "maximum difference between values computed here and in compute_expectations is {:g}".format(
         np.max(diffs1)
     )
 )
 if np.max(np.abs(diffs1)) > 1.0e-10:
-    print("Difference in values from computeExpectations")
+    print("Difference in values from compute_expectations")
     print(diffs1)
 
 print("Entropies")
@@ -505,11 +507,11 @@ for k in range(K):
 print(stdevs)
 
 print("============================================")
-print("      Testing computePerturbedFreeEnergies")
+print("      Testing compute_perturbed_free_energies")
 print("============================================")
 
 L = np.size(K_extra)
-(f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical) = get_analytical(
+f_k_analytical, Delta_f_ij_analytical, A_k_analytical, A_ij_analytical = get_analytical(
     beta, K_extra, O_extra, observables
 )
 
@@ -525,7 +527,7 @@ for k in range(K):
     for l in range(L):
         unew_kln[k, l, 0 : N_k[k]] = (K_extra[l] / 2.0) * (x_kn[k, 0 : N_k[k]] - O_extra[l]) ** 2
 
-results = mbar.computePerturbedFreeEnergies(unew_kln)
+results = mbar.compute_perturbed_free_energies(unew_kln)
 Delta_f_ij_estimated = results["Delta_f"]
 dDelta_f_ij_estimated = results["dDelta_f"]
 
@@ -578,7 +580,7 @@ for observe in observables:
         A_kn = A_kn_all["position^2"]
 
     A_k_estimated, dA_k_estimated
-    results = mbar.computeExpectations(
+    results = mbar.compute_expectations(
         A_kn, unew_kln[:, [nth], :], state_dependent=state_dependent
     )
     A_k_estimated = results["mu"]
@@ -601,10 +603,10 @@ for observe in observables:
     print(stdevs)
 
 print("============================================")
-print("      Testing computeOverlap   ")
+print("      Testing compute_overlap   ")
 print("============================================")
 
-results = mbar.computeOverlap()
+results = mbar.compute_overlap()
 O = results["scalar"]
 O_i = results["eigenvalues"]
 O_ij = results["matrix"]
@@ -627,10 +629,10 @@ print("Overlap scalar output")
 print(O)
 
 print("============================================")
-print("    Testing computeEffectiveSampleNumber    ")
+print("    Testing compute_effective_sample_number    ")
 print("============================================")
 
-N_eff = mbar.computeEffectiveSampleNumber(verbose=True)
+N_eff = mbar.compute_effective_sample_number(verbose=True)
 print("Effective Sample number")
 print(N_eff)
 print("Compare stanadrd estimate of <x> with the MBAR estimate of <x>")
@@ -638,7 +640,7 @@ print("We should have that with MBAR, err_MBAR = sqrt(N_k/N_eff)*err_standard,")
 print("so standard (scaled) results should be very close to MBAR results.")
 print("No standard estimate exists for states that are not sampled.")
 A_kn = x_kn
-results = mbar.computeExpectations(A_kn)
+results = mbar.compute_expectations(A_kn)
 val_mbar = results["mu"]
 err_mbar = results["sigma"]
 err_standard = np.zeros([K], dtype=np.float64)
@@ -829,7 +831,7 @@ mbar_options = dict()
 mbar_options["verbose"] = True
 pmf = PMF(u_kn, N_k, mbar_options=mbar_options)
 print("Computing PMF ...")
-results = mbar.computePMF(
+results = mbar.compute_pmf(
     u_n, bin_n, nbins, uncertainties="from-specified", pmf_reference=zeroindex
 )
 f_i = results["f_i"]
@@ -937,7 +939,7 @@ for i in range(nbins):
 # Compute PMF.
 print("Computing PMF ...")
 [f_i, df_i]
-results = mbar.computePMF(
+results = mbar.compute_pmf(
     u_n, bin_n, nbins, uncertainties="from-specified", pmf_reference=zeroindex
 )
 f_i = results["f_i"]

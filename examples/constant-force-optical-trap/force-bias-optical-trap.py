@@ -160,7 +160,7 @@ N_max = 0
 g_k = np.zeros([K])
 for k in range(K):
     # Compute statistical inefficiency for extension timeseries
-    g = timeseries.statisticalInefficiency(x_kt[k, 0 : T_k[k]], x_kt[k, 0 : T_k[k]])
+    g = timeseries.statistical_inefficiency(x_kt[k, 0 : T_k[k]], x_kt[k, 0 : T_k[k]])
     # store statistical inefficiency
     g_k[k] = g
     print(
@@ -176,7 +176,7 @@ bin_kn = np.zeros([K, N_max])
 N_k = np.zeros([K], int)
 for k in range(K):
     # Compute correlation times for potential energy and chi timeseries.
-    indices = timeseries.subsampleCorrelatedData(x_kt[k, 0 : T_k[k]])
+    indices = timeseries.subsample_correlated_data(x_kt[k, 0 : T_k[k]])
     # Store subsampled positions.
     N_k[k] = len(indices)
     x_kn[k, 0 : N_k[k]] = x_kt[k, indices]
@@ -221,7 +221,7 @@ for k in range(K):
 
 # Compute PMF in unbiased potential (in units of kT).
 print("Computing PMF...")
-results = mbar.computePMF(u_kn, bin_kn, nbins)
+results = mbar.compute_pmf(u_kn, bin_kn, nbins)
 f_i = results["f_i"]
 df_i = results["df_i"]
 # compute estimate of PMF including Jacobian term
@@ -251,7 +251,7 @@ print("analysis took {:f} seconds".format(elapsed_time))
 # compute observed and expected histograms at each state
 for l in range(0, K):
     # compute PMF at state l
-    results = mbar.computePMF(u_kln[:, l, :], bin_kn, nbins)
+    results = mbar.compute_pmf(u_kln[:, l, :], bin_kn, nbins)
     f_i = results["f_i"]
     df_i = results["df_i"]
     # compute estimate of PMF including Jacobian term
@@ -357,4 +357,3 @@ plot "%(output_directory)s/pmf-expected-%(l)d.out" u 1:2:3 with yerrorbars t "MB
     outfile.close()
     output = subprocess.getoutput("gnuplot < %(gnuplot_input_filename)s".format(vars()))
     output = subprocess.getoutput("epstopdf %(filename)s" % vars())
-
