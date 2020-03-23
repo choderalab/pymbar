@@ -177,7 +177,7 @@ else:
          psi_kt_replica[replica_index,snapshot_indices] = psi_kt[k,snapshot_indices]
    # Estimate the statistical inefficiency of the simulation by analyzing the timeseries of interest.
    # We use the max of cos and sin of the phi and psi timeseries because they are periodic angles.
-   # The 
+   # The
    print("Computing statistical inefficiencies...")
    g_cosphi = timeseries.statisticalInefficiencyMultiple(np.cos(phi_kt_replica * np.pi / 180.0))
    print("g_cos(phi) = {:.1f}".format(g_cosphi))
@@ -277,7 +277,7 @@ for i in range(2):
    bin_edges.append(np.linspace(torsion_min,torsion_max,nbins_per_torsion+1))
 
 # Initialize PMF with data collected
-pmf = pymbar.PMF(u_kln,N_k) 
+pmf = pymbar.PMF(u_kln,N_k)
 
 #===================================================================================================
 # Compute PMF at the desired temperature.
@@ -295,8 +295,8 @@ u_kn = target_beta * U_kn
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = dict()
 histogram_parameters['bin_edges'] = bin_edges
-pmf.generatePMF(u_kn, x_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
-results = pmf.getPMF(np.array(centers_nonzero), uncertainties = 'from-lowest')
+pmf.generate_pmf(u_kn, x_n, pmf_type = 'histogram', histogram_parameters=histogram_parameters)
+results = pmf.get_pmf(np.array(centers_nonzero), uncertainties = 'from-lowest')
 f_i = results['f_i']
 df_i = results['df_i']
 
