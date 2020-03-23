@@ -16,19 +16,18 @@ PROTOCOL
 REFERENCES
 
 [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
-J. Chem. Phys. 129:124105, 2008
-http://dx.doi.org/10.1063/1.2978177
+J. Chem. Phys. 129:124105, 2008. http://dx.doi.org/10.1063/1.2978177
 """
 
 # ===================================================================================================
 # IMPORTS
 # ===================================================================================================
+from pathlib import Path
 
 import numpy as np
 import pymbar  # for MBAR analysis
+
 from pymbar import timeseries  # for timeseries analysis
-import os
-import os.path
 
 # ===================================================================================================
 # CONSTANTS
@@ -40,14 +39,12 @@ kB = 1.3806503 * 6.0221415 / 4184.0  # Boltzmann constant in kcal/mol/K
 # PARAMETERS
 # ===================================================================================================
 
-data_directory = "data/"  # directory containing the parallel tempering data
-temperature_list_filename = os.path.join(
-    data_directory, "temperatures"
-)  # file containing temperatures in K
+DATA_DIRECTORY = Path("data/")  # directory containing the parallel tempering data
+# file containing temperatures in K
+temperature_list_filename = DATA_DIRECTORY / "temperatures"
 free_energies_filename = "f_k.out"
-potential_energies_filename = os.path.join(
-    data_directory, "energies", "potential-energies"
-)  # file containing total energies (in kcal/mol) for each temperature and snapshot
+# file containing total energies (in kcal/mol) for each temperature and snapshot
+potential_energies_filename = DATA_DIRECTORY / "energies" / "potential-energies"
 trajectory_segment_length = 20  # number of snapshots in each contiguous trajectory segment
 niterations = 500  # number of iterations to use
 target_temperature = 302  # target temperature for 2D PMF (in K)
@@ -61,22 +58,18 @@ nbins_per_torsion = 10  # number of bins per torsion dimension
 def read_file(filename):
     """Read contents of the specified file.
 
-   Parameters:
-   -----------
-   filename : str
-      The name of the file to be read
+    Parameters:
+    -----------
+    filename : str
+        The name of the file to be read
 
-   Returns:
-   lines : list of str
-      The contents of the file, split by line
-
-   """
-
-    infile = open(filename, "r")
-    lines = infile.readlines()
-    infile.close()
-
-    return lines
+    Returns
+    -------
+    lines : list of str
+        The contents of the file, split by line
+    """
+    with open(filename, "r") as f:
+        return f.readlines()
 
 
 # ===================================================================================================
@@ -107,11 +100,10 @@ T = trajectory_segment_length * niterations  # total number of snapshots per tem
 # ===================================================================================================
 
 print("Reading potential energies...")
-U_kt = np.zeros(
-    [K, T]
-)  # U_kn[k,t] is the potential energy (in kcal/mol) for snapshot t of temperature index k
+# U_kn[k,t] is the potential energy (in kcal/mol) for snapshot t of temperature index k
+U_kt = np.zeros([K, T])
 lines = read_file(potential_energies_filename)
-print("{:d} lines read, processing {:d} snapshots".format(len(lines), T))
+print(f"{len(lines):d} lines read, processing {T:d} snapshots")
 for t in range(T):
     # Get line containing the energies for snapshot t of trajectory segment n
     line = lines[t]
@@ -125,22 +117,16 @@ for t in range(T):
 # ===================================================================================================
 
 print("Reading phi, psi trajectories...")
-phi_kt = np.zeros(
-    [K, T]
-)  # phi_kt[k,n,t] is phi angle (in degrees) for snapshot t of temperature k
-psi_kt = np.zeros(
-    [K, T]
-)  # psi_kt[k,n,t] is psi angle (in degrees) for snapshot t of temperature k
+# phi_kt[k,n,t] is phi angle (in degrees) for snapshot t of temperature k
+phi_kt = np.zeros([K, T])
+# psi_kt[k,n,t] is psi angle (in degrees) for snapshot t of temperature k
+psi_kt = np.zeros([K, T])
 for k in range(K):
-    phi_filename = os.path.join(data_directory, "backbone-torsions", "{:d}.phi".format(k))
-    psi_filename = os.path.join(data_directory, "backbone-torsions", "{:d}.psi".format(k))
+    phi_filename = DATA_DIRECTORY / "backbone-torsions" / f"{k:d}.phi"
+    psi_filename = DATA_DIRECTORY / "backbone-torsions" / f"{k:d}.psi"
     phi_lines = read_file(phi_filename)
     psi_lines = read_file(psi_filename)
-    print(
-        "k = {:d}, {:d} phi lines read, {:d} psi lines read".format(
-            k, len(phi_lines), len(psi_lines)
-        )
-    )
+    print(f"k = {k:d}, {len(phi_lines):d} phi lines read, {len(psi_lines):d} psi lines read")
     for t in range(T):
         # Extract phi and psi
         phi_kt[k, t] = float(phi_lines[t])
@@ -151,16 +137,15 @@ for k in range(K):
 # ===================================================================================================
 
 print("Reading replica indices...")
-filename = os.path.join(data_directory, "replica-indices")
+filename = DATA_DIRECTORY / "replica-indices"
 lines = read_file(filename)
-replica_ik = np.zeros(
-    [niterations, K], np.int32
-)  # replica_ki[i,k] is the replica index of temperature k for iteration i
+# replica_ki[i,k] is the replica index of temperature k for iteration i
+replica_ik = np.zeros([niterations, K], np.int32)
 for i in range(niterations):
     elements = lines[i].split()
     for k in range(K):
         replica_ik[i, k] = int(elements[k])
-print("Replica indices for {:d} iterations processed.".format(niterations))
+print(f"Replica indices for {niterations:d} iterations processed.")
 
 # ===================================================================================================
 # Permute data by replica and subsample to generate an uncorrelated subset of data by temperature
@@ -196,25 +181,21 @@ else:
             psi_kt_replica[replica_index, snapshot_indices] = psi_kt[k, snapshot_indices]
     # Estimate the statistical inefficiency of the simulation by analyzing the timeseries of interest.
     # We use the max of cos and sin of the phi and psi timeseries because they are periodic angles.
-    # The
+    # The  ## TODO: ???
     print("Computing statistical inefficiencies...")
     g_cosphi = timeseries.statistical_inefficiency_multiple(np.cos(phi_kt_replica * np.pi / 180.0))
-    print("g_cos(phi) = {:.1f}".format(g_cosphi))
+    print(f"g_cos(phi) = {g_cosphi:.1f}")
     g_sinphi = timeseries.statistical_inefficiency_multiple(np.sin(phi_kt_replica * np.pi / 180.0))
-    print("g_sin(phi) = {:.1f}".format(g_sinphi))
+    print(f"g_sin(phi) = {g_sinphi:.1f}")
     g_cospsi = timeseries.statistical_inefficiency_multiple(np.cos(psi_kt_replica * np.pi / 180.0))
-    print("g_cos(psi) = {:.1f}".format(g_cospsi))
+    print(f"g_cos(psi) = {g_cospsi:.1f}")
     g_sinpsi = timeseries.statistical_inefficiency_multiple(np.sin(psi_kt_replica * np.pi / 180.0))
-    print("g_sin(psi) = {:.1f}".format(g_sinpsi))
+    print(f"g_sin(psi) = {g_sinpsi:.1f}")
     # Subsample data with maximum of all correlation times.
     print("Subsampling data...")
     g = np.max(np.array([g_cosphi, g_sinphi, g_cospsi, g_sinpsi]))
     indices = timeseries.subsample_correlated_data(U_kt[k, :], g=g)
-    print(
-        "Using g = {:.1f} to obtain {:d} uncorrelated samples per temperature".format(
-            g, len(indices)
-        )
-    )
+    print(f"Using g = {g:.1f} to obtain {len(indices):d} uncorrelated samples per temperature")
     N_max = int(np.ceil(T / g))  # max number of samples per temperature
     U_kn = np.zeros([K, N_max])
     phi_kn = np.zeros([K, N_max])
@@ -224,7 +205,7 @@ else:
         U_kn[k, :] = U_kt[k, indices]
         phi_kn[k, :] = phi_kt[k, indices]
         psi_kn[k, :] = psi_kt[k, indices]
-    print("{:d} uncorrelated samples per temperature".format(N_max))
+    print(f"{N_max:d} uncorrelated samples per temperature")
 
 # ===================================================================================================
 # Generate a list of indices of all configurations in kn-indexing
@@ -232,7 +213,7 @@ else:
 
 # Create a list of indices of all configurations in kn-indexing.
 mask_kn = np.zeros([K, N_max], dtype=np.bool)
-for k in range(0, K):
+for k in range(K):
     mask_kn[k, 0 : N_k[k]] = True
 # Create a list from this mask.
 indices = np.where(mask_kn)
@@ -242,9 +223,8 @@ indices = np.where(mask_kn)
 # ===================================================================================================
 
 print("Computing reduced potential energies...")
-u_kln = np.zeros(
-    [K, K, N_max]
-)  # u_kln[k,l,n] is reduced potential energy of trajectory segment n of temperature k evaluated at temperature l
+# u_kln[k,l,n] is reduced potential energy of trajectory segment n of temperature k evaluated at temperature l
+u_kln = np.zeros([K, K, N_max])
 for k in range(K):
     for l in range(K):
         u_kln[k, l, 0 : N_k[k]] = beta_k[l] * U_kn[k, 0 : N_k[k]]
@@ -264,12 +244,15 @@ torsion_min = -180.0
 torsion_max = +180.0
 dx = (torsion_max - torsion_min) / float(nbins_per_torsion)
 # Assign torsion bins
-bin_kn = np.zeros(
-    [K, N_max], dtype=int
-)  # bin_kn[k,n] is the index of which histogram bin sample n from temperature index k belongs to
+# bin_kn[k,n] is the index of which histogram bin sample n from temperature index k belongs to
+bin_kn = np.zeros([K, N_max], dtype=int)
 nbins = 0
-bin_counts = list()
-bin_centers = list()  # bin_centers[i] is a (phi,psi) tuple that gives the center of bin i
+bin_nonzero = []
+bin_counts = []
+bin_centers = []  # bin_centers[i] is a (phi,psi) tuple that gives the center of bin i
+count_nonzero = []
+centers_nonzero = []
+
 for i in range(nbins_per_torsion):
     for j in range(nbins_per_torsion):
         # Determine (phi,psi) of bin center.
@@ -292,22 +275,21 @@ for i in range(nbins_per_torsion):
             centers_nonzero.append((phi, psi))
             bin_nonzero += 1
 
-print("%d bins were populated:" % bin_nonzero)
+print(f"{bin_nonzero:d} bins were populated:")
 for i in range(bin_nonzero):
     print(
-        "bin %5d (%6.1f, %6.1f) %12d conformations"
-        % (i, centers_nonzero[i][0], centers_nonzero[i][1], count_nonzero[i])
+        f"bin {i:5d} ({centers_nonzero[i][0]:6.1f}, {centers_nonzero[i][1]:6.1f}) {count_nonzero[i]:12d} conformations"
     )
 
+Ntot = 0  # TODO: this line was one line below??? is this ok?
 x_n = np.zeros([Ntot, 2])  # the configurations
-Ntot = 0
 for k in range(K):
     for n in range(N_k[k]):
         x_n[Ntot, 0] = phi_kn[k, n]
         x_n[Ntot, 1] = psi_kn[k, n]
         Ntot += 1
 
-bin_edges = list()
+bin_edges = []
 for i in range(2):
     bin_edges.append(np.linspace(torsion_min, torsion_max, nbins_per_torsion + 1))
 
@@ -328,7 +310,7 @@ u_kn = target_beta * U_kn
 # df_i[i,j] is an estimate of the covariance in the estimate of (f_i[i] - f_j[j], with reference
 # the lowest free energy state.
 # Compute PMF in unbiased potential (in units of kT).
-histogram_parameters = dict()
+histogram_parameters = {}
 histogram_parameters["bin_edges"] = bin_edges
 pmf.generate_pmf(u_kn, x_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
 results = pmf.get_pmf(np.array(centers_nonzero), uncertainties="from-lowest")
@@ -337,12 +319,10 @@ df_i = results["df_i"]
 
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF")
-print("")
-print("{:8s} {:6s} {:6s} {:8s} {:10s} {:10s}".format("bin", "phi", "psi", "N", "f", "df"))
+print()
+print(f"{'bin':8s} {'phi':6s} {'psi':6s} {'N':8s} {'f':10s} {'df':10s}")
 
 for i in range(bin_nonzero):
     print(
-        "{:d} {:6.1f} {:6.1f} {:8d} {:10.3f} {:10.3f}".format(
-            i, centers_nonzero[i][0], centers_nonzero[i][1], count_nonzero[i], f_i[i], df_i[i]
-        )
+        f"{i:d} {centers_nonzero[i][0]:6.1f} {centers_nonzero[i][1]:6.1f} {count_nonzero[i]:8d} {f_i[i]:10.3f} {df_i[i]:10.3f}"
     )

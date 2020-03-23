@@ -32,9 +32,8 @@ def convert_to_differences(x_ij, dx_ij, xa):
         dx_ij[i, i] += 1
     z = (x_ij - xa_ij) / dx_ij
     for i in range(len(N_k)):
-        z[i, i] = (
-            x_ij[i, i] - xa_ij[i, i]
-        )  # these terms should be zero; so we only throw an error if they aren't
+        # these terms should be zero; so we only throw an error if they aren't
+        z[i, i] = x_ij[i, i] - xa_ij[i, i]
     return z
 
 

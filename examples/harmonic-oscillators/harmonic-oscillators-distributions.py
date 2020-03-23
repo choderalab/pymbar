@@ -1,30 +1,25 @@
-#!/usr/bin/python
+"""
+Test MBAR by performing statistical tests on a set of of 1D harmonic oscillators, for which
+the true free energy differences can be computed analytically.
 
-# =============================================================================================
-# Test MBAR by performing statistical tests on a set of of 1D harmonic oscillators, for which
-# the true free energy differences can be computed analytically.
-#
-# A number of replications of an experiment in which i.i.d. samples are drawn from a set of
-# K harmonic oscillators are produced.  For each replicate, we estimate the dimensionless free
-# energy differences and mean-square displacements (an observable), as well as their uncertainties.
-#
-# For a 1D harmonic oscillator, the potential is given by
-#   V(x;K) = (K/2) * (x-x_0)**2
-# where K denotes the spring constant.
-#
-# The equilibrium distribution is given analytically by
-#   p(x;beta,K) = sqrt[(beta K) / (2 pi)] exp[-beta K (x-x_0)**2 / 2]
-# The dimensionless free energy is therefore
-#   f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]
-#
-# =============================================================================================
+A number of replications of an experiment in which i.i.d. samples are drawn from a set of
+K harmonic oscillators are produced.  For each replicate, we estimate the dimensionless free
+energy differences and mean-square displacements (an observable), as well as their uncertainties.
 
-# =============================================================================================
+For a 1D harmonic oscillator, the potential is given by
+  V(x;K) = (K/2) * (x-x_0)**2
+where K denotes the spring constant.
+
+The equilibrium distribution is given analytically by
+  p(x;beta,K) = sqrt[(beta K) / (2 pi)] exp[-beta K (x-x_0)**2 / 2]
+The dimensionless free energy is therefore
+  f(beta,K) = - (1/2) * ln[ (2 pi) / (beta K) ]
+
+"""
 
 # =============================================================================================
 # IMPORTS
 # =============================================================================================
-from __future__ import print_function
 import numpy
 from pymbar import testsystems, MBAR, confidenceintervals
 from pymbar.utils import ParameterError, DataError
@@ -35,19 +30,17 @@ from pymbar.utils import ParameterError, DataError
 
 K_k = numpy.array([25, 16, 9, 4, 1, 1])  # spring constants for each state
 O_k = numpy.array([0, 1, 2, 3, 4, 5])  # offsets for spring constants
-N_k = numpy.array(
-    [2000, 2000, 2000, 2000, 2000, 0]
-)  # number of samples from each state (can be zero for some states)
+# number of samples from each state (can be zero for some states)
+N_k = numpy.array([2000, 2000, 2000, 2000, 2000, 0])
 beta = 1.0  # inverse temperature for all simulations
 nreplicates = 200  # number of replicates of experiment for testing uncertainty estimate
 
 generateplots = True
-if generateplots:
-    try:
-        import matplotlib.pyplot as plt
-    except:
-        print("Can't import matplotlib, will not produce graphs.")
-        generateplots = False
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    print("Can't import matplotlib, will not produce graphs.")
+    generateplots = False
 
 observe = "position^2"  # the observable, one of 'mean square displacement','position', or 'potential energy'
 
@@ -134,7 +127,7 @@ for replicate_index in range(0, nreplicates):
     randomsample = testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(
         O_k=O_k, K_k=K_k, beta=beta
     )
-    [x_kn, u_kln, N_k] = randomsample.sample(N_k, mode="u_kln")
+    x_kn, u_kln, N_k = randomsample.sample(N_k, mode="u_kln")
 
     # get the unreduced energies
     U_kln = u_kln / beta
@@ -144,9 +137,8 @@ for replicate_index in range(0, nreplicates):
     # =============================================================================================
 
     # Initialize the MBAR class, determining the free energies.
-    mbar = MBAR(
-        u_kln, N_k, relative_tolerance=1.0e-10, verbose=False
-    )  # use fast Newton-Raphson solver
+    # use fast Newton-Raphson solver
+    mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10, verbose=False)
     results = mbar.compute_free_energy_differences()
     Deltaf_ij_estimated = results["Delta_f"]
     dDeltaf_ij_estimated = results["dDelta_f"]
@@ -159,9 +151,8 @@ for replicate_index in range(0, nreplicates):
         A_kn = numpy.zeros([K, K, N_max], dtype=numpy.float64)
         for k in range(0, K):
             for l in range(0, K):
-                A_kn[k, l, 0 : N_k[k]] = (
-                    x_kn[k, 0 : N_k[k]] - O_k[l]
-                ) ** 2  # observable is the squared displacement
+                # observable is the squared displacement
+                A_kn[k, l, 0 : N_k[k]] = (x_kn[k, 0 : N_k[k]] - O_k[l]) ** 2
 
     # observable is the potential energy, a 3D array since the potential energy is a function of
     # thermodynamic state
@@ -239,7 +230,7 @@ D = confidenceintervals.anderson_darling(replicates_df, K)
 print("Anderson-Darling Metrics (see README.md)")
 print(D)
 if generateplots:
-    confidenceintervals.QQ_plot(
+    confidenceintervals.qq_plot(
         replicates_df, K, title="Q-Q plots of free energy differences", filename="QQdf.pdf"
     )
 (
@@ -344,4 +335,3 @@ if generateplots:
     plt.figure(2)
     plt.axis([0.0, 4.0, 0.0, 1.0])
     plt.plot(alpha_fij, Pnorm_fij, "k-", label="Normal")
-

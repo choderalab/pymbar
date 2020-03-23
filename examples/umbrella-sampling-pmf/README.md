@@ -2,12 +2,12 @@
 
 The data represents an umbrella sampling simulation for the chi torsion of a valine sidechain in lysozyme L99A with benzene bound in the cavity.
 
-# REFERENCE
+# Reference
 
 D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
 http://dx.doi.org/10.1016/j.jmb.2007.06.002
 
-# TO USE
+# Usage
 
 Run the included `umbrella-sampling.py` code.  `umbrella-sampling.sample_output` gives the expected output of the program.
 
