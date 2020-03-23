@@ -1,21 +1,29 @@
-# Example illustrating the application of MBAR to compute a 1D PMF from an umbrella sampling simulation.
-#
-# The data represents an umbrella sampling simulation for the chi torsion of a valine sidechain in lysozyme L99A with benzene bound in the cavity.
-#
-# REFERENCE
-#
-# M. R. Shirts and Andrew L. Ferguson, "Statistically optimal continuous potentials of mean force from umbrella sampling and multistate reweighting" https://arxiv.org/abs/2001.01170
-#
-# D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill, "Predicting absolute ligand binding free energies to a simple model site," Journal of Molecular Biology 371(4):1118-1134 (2007).
-# http://dx.doi.org/10.1016/j.jmb.2007.06.002
+"""
+Example illustrating the application of MBAR to compute a 1D PMF from an umbrella sampling simulation.
+
+The data represents an umbrella sampling simulation for the chi torsion of a valine sidechain in lysozyme L99A with benzene bound in the cavity.
+
+Reference:
+
+    [1] M. R. Shirts and Andrew L. Ferguson,
+    "Statistically optimal continuous potentials of mean force from
+    umbrella sampling and multistate reweighting" https://arxiv.org/abs/2001.01170
+
+    [2] D. L. Mobley, A. P. Graves, J. D. Chodera, A. C. McReynolds, B. K. Shoichet and K. A. Dill,
+    "Predicting absolute ligand binding free energies to a simple model site,"
+    Journal of Molecular Biology 371(4):1118-1134 (2007).
+    http://dx.doi.org/10.1016/j.jmb.2007.06.002
+"""
+import copy
+from timeit import default_timer as timer
 
 import matplotlib.pyplot as plt
-import copy
+from scipy.stats import multivariate_normal
 from scipy.interpolate import BSpline
-from timeit import default_timer as timer
 import numpy as np  # numerical array library
+
 import pymbar  # multistate Bennett acceptance ratio
-from pymbar import PMF, timeseries  # timeseries analysis
+from pymbar import timeseries  # timeseries analysis
 
 kB = 1.381e-23 * 6.022e23 / 1000.0  # Boltzmann constant in kJ/mol/K
 nplot = 1200
@@ -36,8 +44,8 @@ mc_iterations = 50000  # could take a while.
 smoothness_scalefac = 0.01
 fig_suffix = "test1"  # figure suffix for identifiability of the output!
 
-colors = dict()
-descriptions = dict()
+colors = {}
+descriptions = {}
 colors["histogram"] = "k-"
 colors["kde"] = "k:"
 colors["biased-ml"] = "g-"
@@ -67,49 +75,43 @@ nbins = 30  # number of bins for 1D PMF. Note, does not have to correspond to th
 
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32)  # N_k[k] is the number of snapshots from umbrella simulation k
-K_k = np.zeros(
-    [K], np.float64
-)  # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
-chi0_k = np.zeros(
-    [K], np.float64
-)  # chi0_k[k] is the spring center location (in deg) for umbrella simulation k
-chi_kn = np.zeros(
-    [K, N_max], np.float64
-)  # chi_kn[k,n] is the torsion angle (in deg) for snapshot n from umbrella simulation k
-u_kn = np.zeros(
-    [K, N_max], np.float64
-)  # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
+# K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
+K_k = np.zeros([K], np.float64)
+# chi0_k[k] is the spring center location (in deg) for umbrella simulation k
+chi0_k = np.zeros([K], np.float64)
+# chi_kn[k,n] is the torsion angle (in deg) for snapshot n from umbrella simulation k
+chi_kn = np.zeros([K, N_max], np.float64)
+# u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
+u_kn = np.zeros([K, N_max], np.float64)
 g_k = np.zeros([K], np.float32)
 
 # Read in umbrella spring constants and centers.
-infile = open("data/centers.dat", "r")
-lines = infile.readlines()
-infile.close()
+with open("data/centers.dat") as infile:
+    lines = infile.readlines()
 for k in range(K):
     # Parse line k.
     line = lines[k]
     tokens = line.split()
     chi0_k[k] = float(tokens[0])  # spring center locatiomn (in deg)
-    K_k[k] = (
-        float(tokens[1]) * (np.pi / 180) ** 2
-    )  # spring constant (read in kJ/mol/rad**2, converted to kJ/mol/deg**2)
+    # spring constant (read in kJ/mol/rad**2, converted to kJ/mol/deg**2)
+    K_k[k] = float(tokens[1]) * (np.pi / 180) ** 2
     if len(tokens) > 2:
         T_k[k] = float(tokens[2])  # temperature the kth simulation was run at.
 
 beta_k = 1.0 / (kB * T_k)  # beta factor for the different temperatures
-DifferentTemperatures = True
+different_temperatures = True
 if min(T_k) == max(T_k):
-    DifferentTemperatures = (
-        False  # if all the temperatures are the same, then we don't have to read in energies.
-    )
+    # if all the temperatures are the same, then we don't have to read in energies.
+    different_temperatures = False
+
 # Read the simulation data
 for k in range(K):
     # Read torsion angle data.
-    filename = "data/prod{:d}_dihed.xvg".format(k)
-    print("Reading {:s}...".format(filename))
-    infile = open(filename, "r")
-    lines = infile.readlines()
-    infile.close()
+    filename = f"data/prod{k:d}_dihed.xvg"
+    print(f"Reading {filename}...")
+    with open(filename) as infile:
+        lines = infile.readlines()
+
     # Parse data.
     n = 0
     for line in lines:
@@ -126,39 +128,38 @@ for k in range(K):
             n += 1
     N_k[k] = n
 
-    if DifferentTemperatures:  # if different temperatures are specified the metadata file,
+    if different_temperatures:  # if different temperatures are specified the metadata file,
         # then we need the energies to compute the PMF
         # Read energies
-        filename = "data/prod{:d}_energies.xvg".format(k)
-        print("Reading {:s}...".format(filename))
-        infile = open(filename, "r")
-        lines = infile.readlines()
-        infile.close()
+        filename = f"data/prod{k:d}_energies.xvg"
+        print(f"Reading {filename}...")
+        with open(filename) as infile:
+            lines = infile.readlines()
+
         # Parse data.
         n = 0
         for line in lines:
             if line[0] != "#" and line[0] != "@":
                 tokens = line.split()
-                u_kn[k, n] = beta_k[k] * (
-                    float(tokens[2]) - float(tokens[1])
-                )  # reduced potential energy without umbrella restraint
+                # reduced potential energy without umbrella restraint
+                u_kn[k, n] = beta_k[k] * (float(tokens[2]) - float(tokens[1]))
                 n += 1
 
     # Compute correlation times for potential energy and chi
     # timeseries.  If the temperatures differ, use energies to determine samples; otherwise, use the cosine of chi
 
-    if DifferentTemperatures:
+    if different_temperatures:
         g_k[k] = timeseries.statistical_inefficiency(u_kn[k, :], u_kn[k, 0 : N_k[k]])
-        print("Correlation time for set {:5d} is {:10.3f}".format(k, g_k[k]))
+        print(f"Correlation time for set {k:5d} is {g_k[k]:10.3f}")
         indices = timeseries.subsample_correlated_data(u_kn[k, 0 : N_k[k]])
     else:
         chi_radians = chi_kn[k, 0 : N_k[k]] / (180.0 / np.pi)
         g_cos = timeseries.statistical_inefficiency(np.cos(chi_radians))
         g_sin = timeseries.statistical_inefficiency(np.sin(chi_radians))
-        print("g_cos = {:.1f} | g_sin = {:.1f}".format(g_cos, g_sin))
+        print(f"g_cos = {g_cos:.1f} | g_sin = {g_sin:.1f}")
         # g_k[k] = max(g_cos, g_sin)
         g_k[k] = 1
-        print("Correlation time for set {:5d} is {:10.3f}".format(k, g_k[k]))
+        print(f"Correlation time for set {k:5d} is {g_k[k]:10.3f}")
         indices = timeseries.subsample_correlated_data(chi_radians, g=g_k[k])
     # Subsample data.
     N_k[k] = len(indices)
@@ -166,9 +167,8 @@ for k in range(K):
     chi_kn[k, 0 : N_k[k]] = chi_kn[k, indices]
 
 N_max = np.max(N_k)  # shorten the array size
-u_kln = np.zeros(
-    [K, K, N_max], np.float64
-)  # u_kln[k,l,n] is the reduced potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
+# u_kln[k,l,n] is the reduced potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
+u_kln = np.zeros([K, K, N_max], np.float64)
 
 # Set zero of u_kn -- this is arbitrary.
 u_kn -= u_kn.min()
@@ -208,8 +208,9 @@ for k in range(K):
 # initialize PMF with the data collected.
 basepmf = pymbar.PMF(u_kln, N_k, verbose=True)
 
-# define the bias potentials needed for umbrella sampling.
+
 def bias_potential(x, k):
+    """Define the bias potentials needed for umbrella sampling"""
     dchi = x - chi0_k[k]
     # vectorize the conditional
     i = np.fabs(dchi) > 180.0
@@ -217,28 +218,28 @@ def bias_potential(x, k):
     return beta_k[k] * (K_k[k] / 2.0) * dchi ** 2
 
 
-from scipy.stats import multivariate_normal
-
-
 def deltag(c, scalef=1, n=nspline):
-    # bias on the smoothness, including periodicity. Normalization is indepednent of parameters, so we ignore.
-    # consider periodicity later!!
+    """bias on the smoothness, including periodicity. Normalization is indepednent of parameters, so we ignore.
+    consider periodicity later!!
+    """
     cdiff = np.diff(c)
     logp = -scalef / n * (np.sum(cdiff ** 2))
     return logp
 
 
 def ddeltag(c, scalef=1, n=nspline):
-    # derivative of the log prior above
-    # The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
-    # this is unnormalized.  However, the normalization is independent of the values of the parameters, it only
-    # depends on the hyperparameter a, so we can omit it in the normalization.
-    #
-    # However, we fix c[1] to be zero.  So we are actually minimizing -scalef (c1)^2 + \sum_{i=1}^{C-1} - scalef*(c_{i+1} - c_{i})^2
-    # So the derivative is  -2*scalef*[c[1]-c[2],c[1]+2*c[2]-c[3],c[2]+2*c[3]-c[4], . . ., c[C-1]-c[C]]
-    #
-    # Finally, for the minimization, we are the first coefficient to zero, and it's not allowed to move.
-    # so we shift everything over by
+    r"""derivative of the log prior above
+
+    The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
+    this is unnormalized.  However, the normalization is independent of the values of the parameters, it only
+    depends on the hyperparameter a, so we can omit it in the normalization.
+
+    However, we fix c[1] to be zero.  So we are actually minimizing -scalef (c1)^2 + \sum_{i=1}^{C-1} - scalef*(c_{i+1} - c_{i})^2
+    So the derivative is  -2*scalef*[c[1]-c[2],c[1]+2*c[2]-c[3],c[2]+2*c[3]-c[4], . . ., c[C-1]-c[C]]
+
+    Finally, for the minimization, we are the first coefficient to zero, and it's not allowed to move.
+    so we shift everything over by
+    """
     cdiff = np.diff(c)
     lenc = len(c)
     dlogp = np.zeros(lenc)
@@ -251,13 +252,16 @@ def ddeltag(c, scalef=1, n=nspline):
 
 
 def dddeltag(c, scalef=1, n=nspline):
-    # Hessian of the log prior above
-    # The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
-    # this is unnormalized.  However, the normalization is independent of the values of the parameters, it only
-    # depends on the hyperparameter a, so we can omit it in the normalization
-    # The derivative is -2*scalef*[c[1]-c[2],c[1]+2*c[2]-c[3],c[2]+2*c[3]-c[4], . . ., c[C-1]-c[C]]
-    # so the hessian willl be a constant matrix.  Will have -2 down diagonal, 1 on off diagonal, except for
-    # first and last rows
+    r"""
+    Hessian of the log prior above
+
+    The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
+    this is unnormalized.  However, the normalization is independent of the values of the parameters, it only
+    depends on the hyperparameter a, so we can omit it in the normalization
+    The derivative is -2*scalef*[c[1]-c[2],c[1]+2*c[2]-c[3],c[2]+2*c[3]-c[4], . . ., c[C-1]-c[C]]
+    so the hessian willl be a constant matrix.  Will have -2 down diagonal, 1 on off diagonal, except for
+    first and last rows
+    """
     cdiff = np.diff(c)
     lenc = len(c)
     ddlogp = np.zeros([lenc, lenc])
@@ -267,12 +271,13 @@ def dddeltag(c, scalef=1, n=nspline):
     ddlogp[0, 0] = -1
     ddlogp[lenc - 1, lenc - 1] = -1
     ddlogp = (2 * scalef / n) * ddlogp
+    # the first variable is set to zero in the MAP.
     return ddlogp[
         1:, 1:,
-    ]  # the first variable is set to zero in the MAP.
+    ]
 
 
-times = dict()  # keep track of time elaped each method takes
+times = {}  # keep track of time elaped each method takes
 
 xplot = np.linspace(chi_min, chi_max, nplot)  # number of points we are plotting
 f_i_kde = None  # We check later if these have been defined or not
@@ -280,7 +285,7 @@ xstart = np.linspace(
     chi_min, chi_max, nbins * 3
 )  # the data we used initially to parameterize points, from the KDE
 
-pmfs = dict()
+pmfs = {}
 for methodfull in methods:
 
     # create a fresh copy of the initialized pmf object. Operate on that within the loop.
@@ -296,8 +301,7 @@ for methodfull in methods:
         method = methodfull
 
     if method == "histogram":
-
-        histogram_parameters = dict()
+        histogram_parameters = {}
         histogram_parameters["bin_edges"] = [bin_edges]
         pmf.generate_pmf(
             u_kn,
@@ -309,10 +313,9 @@ for methodfull in methods:
 
     if method == "kde":
 
-        kde_parameters = dict()
-        kde_parameters["bandwidth"] = 0.5 * (
-            (chi_max - chi_min) / nbins
-        )  # set the sigma for the spline.
+        kde_parameters = {}
+        # set the sigma for the spline.
+        kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
         pmf.generate_pmf(
             u_kn, chi_n, pmf_type="kde", kde_parameters=kde_parameters, nbootstraps=nbootstraps
         )
@@ -323,7 +326,7 @@ for methodfull in methods:
 
     if method in ["unbiased", "biased", "simple"]:
 
-        spline_parameters = dict()
+        spline_parameters = {}
         if method == "unbiased":
             spline_parameters["spline_weights"] = "unbiasedstate"
         elif method == "biased":
@@ -342,9 +345,10 @@ for methodfull in methods:
             spline_parameters["yinit"] = np.zeros(len(xstart))
 
         spline_parameters["xrange"] = [chi_min, chi_max]
+        # introduce klocal to force K to use local definition of K, otherwise would use global value of k.
         spline_parameters["fkbias"] = [
             (lambda x, klocal=k: bias_potential(x, klocal)) for k in range(K)
-        ]  # introduce klocal to force K to use local definition of K, otherwise would use global value of k.
+        ]
 
         spline_parameters["kdegree"] = spline_degree
         spline_parameters["optimization_algorithm"] = optimization_algorithm
@@ -352,7 +356,7 @@ for methodfull in methods:
 
         if tominimize == "map":
             spline_parameters["objective"] = "map"
-            spline_parameters["map_data"] = dict()
+            spline_parameters["map_data"] = {}
             spline_parameters["map_data"]["logprior"] = lambda x: deltag(
                 x, scalef=smoothness_scalefac
             )
@@ -377,20 +381,16 @@ for methodfull in methods:
     end = timer()
     times[methodfull] = end - start
 
-    yout = dict()
-    yerr = dict()
-    print("PMF (in units of kT) for {:s}".format(methodfull))
-    print("{:8s} {:8s} {:8s}".format("bin", "f", "df"))
+    yout = {}
+    yerr = {}
+    print(f"PMF (in units of kT) for {methodfull}")
+    print(f"{'bin':8s} {'f':8s} {'df':8s}")
     results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
     for i in range(nbins):
         if results["df_i"] is not None:
-            print(
-                "{:8.1f} {:8.1f} {:8.1f}".format(
-                    bin_center_i[i], results["f_i"][i], results["df_i"][i]
-                )
-            )
+            print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f} {results['df_i'][i]:8.1f}")
         else:
-            print("{:8.1f} {:8.1f}".format(bin_center_i[i], results["f_i"][i]))
+            print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f}")
 
     results = pmf.get_pmf(xplot, uncertainties="from-lowest")
     yout[methodfull] = results["f_i"]
@@ -430,14 +430,10 @@ for methodfull in methods:
 
         if "-ml" in methodfull:
             print(
-                "AIC for {:s} with {:d} splines is: {:f}".format(
-                    method, nspline, pmf.get_information_criteria(type="AIC")
-                )
+                f"AIC for {method} with {nspline:d} splines is: {pmf.get_information_criteria(type='AIC'):f}"
             )
             print(
-                "BIC for {:s} with {:d} splines is: {:f}".format(
-                    method, nspline, pmf.get_information_criteria(type="BIC")
-                )
+                f"BIC for {method} with {nspline:d} splines is: {pmf.get_information_criteria(type='BIC'):f}"
             )
 
 plt.xlim([chi_min, chi_max])
@@ -446,7 +442,7 @@ plt.xlabel("Torsion angle (degrees)")
 plt.ylabel(r"PMF (units of $k_BT$)")
 plt.legend(fontsize="x-small")
 plt.title("Comparison of PMFs")
-plt.savefig("compare_pmf_{:s}.pdf".format(fig_suffix))
+plt.savefig(f"compare_pmf_{fig_suffix}.pdf")
 plt.clf()
 
 
@@ -467,9 +463,9 @@ for method in mc_methods:
         "print_every": 50,
     }
 
-    pmf.sampleParameterDistribution(chi_n, mc_parameters=mc_parameters, decorrelate=True)
+    pmf.sample_parameter_distribution(chi_n, mc_parameters=mc_parameters, decorrelate=True)
 
-    mc_results = pmf.getMCData()
+    mc_results = pmf.get_mc_data()
 
     plt.figure(1)
     plt.hist(mc_results["logposteriors"], label=descriptions[method])
@@ -481,7 +477,7 @@ for method in mc_methods:
 
     plt.figure(2)
     plt.xlim([chi_min, chi_max])
-    CI_results = pmf.getConfidenceIntervals(xplot, 2.5, 97.5, reference="zero")
+    CI_results = pmf.get_confidence_intervals(xplot, 2.5, 97.5, reference="zero")
     ylow = CI_results["plow"]
     yhigh = CI_results["phigh"]
     plt.plot(xplot, CI_results["values"], colors[method], label=descriptions[method])
@@ -493,7 +489,7 @@ for method in mc_methods:
 
     plt.figure(3)
     plt.xlim([chi_min, chi_max])
-    CI_results = pmf.getConfidenceIntervals(xplot, 16, 84)
+    CI_results = pmf.get_confidence_intervals(xplot, 16, 84)
     plt.plot(xplot, CI_results["values"], colors[method], label=descriptions[method])
     plt.plot(xplot, results_ml["f_i"], colors[method_ml], label=descriptions[method_ml])
     ylow = CI_results["plow"]
@@ -506,19 +502,19 @@ for method in mc_methods:
     # plot the timeseries of the parameters to check for equilibration
     plt.figure(4)
     samples = mc_results["samples"]
-    [lp, lt] = np.shape(samples)
+    lp, lt = np.shape(samples)
     for p in range(lp):
-        plt.plot(np.arange(lt), samples[p, :], label="{:d}_{:s}".format(p, method))
+        plt.plot(np.arange(lt), samples[p, :], label=f"{p:d}_{method}")
     plt.title("Spline parameter time series")
 
     # print text results
-    CI_results = pmf.getConfidenceIntervals(bin_center_i, 16, 84)
+    CI_results = pmf.get_confidence_intervals(bin_center_i, 16, 84)
     df = (CI_results["phigh"] - CI_results["plow"]) / 2
     print("PMF (in units of kT) with 1 sigma errors from posterior sampling")
     for i in range(nbins):
-        print("{:8.1f} {:8.1f} {:8.1f}".format(bin_center_i[i], CI_results["values"][i], df[i]))
+        print(f"{bin_center_i[i]:8.1f} {CI_results['values'][i]:8.1f} {df[i]:8.1f}")
 
     for i in range(len(pltname)):
         plt.figure(i + 1)
         plt.legend(fontsize="x-small")
-        plt.savefig("{:s}_{:s}.pdf".format(pltname[i], fig_suffix))
+        plt.savefig(f"{pltname[i]}_{fig_suffix}.pdf")

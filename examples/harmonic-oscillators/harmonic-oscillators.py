@@ -195,7 +195,7 @@ for i in range(Knon - 1):
     bar_analytical = f_k_analytical[k1] - f_k_analytical[k]
     bar_error = bar_analytical - df_bar
     print(
-        "BAR estimator for reduced free energy from states {k:d} to {k1:d} is {df_bar:f} +/- {ddf_bar:f}"
+        f"BAR estimator for reduced free energy from states {k:d} to {k1:d} is {df_bar:f} +/- {ddf_bar:f}"
     )
     stddev_away("BAR estimator", bar_error, ddf_bar)
 
@@ -225,7 +225,7 @@ for k in range(1, K):
         ddf_exp = results["dDelta_f"]
         exp_analytical = f_k_analytical[k] - f_k_analytical[k - 1]
         exp_error = exp_analytical - df_exp
-        print("df from states {:d} to {:d} is {:f} +/- {:f}".format(k, k - 1, df_exp, ddf_exp))
+        print(f"df from states {k:d} to {k - 1:d} is {df_exp:f} +/- {ddf_exp:f}")
         stddev_away("df", exp_error, ddf_exp)
 
 print("==============================================")
@@ -570,10 +570,10 @@ for observe in observables:
 
     A_k_error = A_k_estimated - A_k_analytical[observe][nth]
 
-    print("Analytical estimator of {} is".format(observe))
+    print(f"Analytical estimator of {observe} is")
     print(A_k_analytical[observe][nth])
 
-    print("MBAR estimator of the {} is".format(observe))
+    print(f"MBAR estimator of the {observe} is")
     print(A_k_estimated)
 
     print("MBAR estimators differ by X standard deviations")

@@ -217,11 +217,9 @@ def main():
 
     # Initialize MBAR.
     print("Running MBAR...")
-    # TODO: method is uncertainty_method now, but there's no "adaptive" strategy!
-    # Which one is it? "approximate", "svd", or "svd-ew"?
-    mbar = pymbar.MBAR(
-        u_kln, N_k, verbose=True, uncertainty_method="adaptive", relative_tolerance=1.0e-10
-    )
+    # TODO: method is not part of the MBAR signature
+    #       `method="adaptive"`
+    mbar = pymbar.MBAR(u_kln, N_k, verbose=True, relative_tolerance=1.0e-10)
 
     # Compute unbiased energies (all biasing forces are zero).
     # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
@@ -234,6 +232,7 @@ def main():
 
     # Compute PMF in unbiased potential (in units of kT).
     print("Computing PMF...")
+    # TODO: PMF computations is not part of MBAR now?
     results = mbar.compute_pmf(u_kn, bin_kn, NBINS)
     f_i = results["f_i"]
     df_i = results["df_i"]
@@ -250,7 +249,7 @@ def main():
     filename = OUTPUT_DIRECTORY / "pmf-unbiased.out"
     with open(filename, "w") as outfile:
         for i in range(NBINS):
-            outfile.write("{:8.3f} {:8.3f} {:8.3f}\n".format(bin_center_i[i], pmf_i[i], df_i[i]))
+            outfile.write(f"{bin_center_i[i]:8.3f} {pmf_i[i]:8.3f} {df_i[i]:8.3f}\n")
 
     # DEBUG
     stop_time = time.time()
@@ -260,6 +259,7 @@ def main():
     # compute observed and expected histograms at each state
     for l in range(K):
         # compute PMF at state l
+        # TODO: PMF computations is not part of MBAR now?
         results = mbar.compute_pmf(u_kln[:, l, :], bin_kn, NBINS)
         f_i = results["f_i"]
         df_i = results["df_i"]
@@ -287,35 +287,26 @@ def main():
         # only approximate, since correlations df_i df_j are neglected
         dN_i_expected = np.sqrt(float(N) * p_i * (1.0 - p_i))
         # plot
-        print("state {:d} ({:f} pN)".format(l, biasing_force_k[l]))
+        print(f"state {l:d} ({biasing_force_k[l]:f} pN)")
         for bin_index in range(NBINS):
             print(
-                "{:8.3f} {:10f} {:10f} +- {:10f}".format(
-                    bin_center_i[bin_index],
-                    N_i_expected[bin_index],
-                    N_i_observed[bin_index],
-                    dN_i_observed[bin_index],
-                )
+                f"{bin_center_i[bin_index]:8.3f} {N_i_expected[bin_index]:10f} {N_i_observed[bin_index]:10f} +- {dN_i_observed[bin_index]:10f}"
             )
 
         # Write out observed bin counts
-        filename = OUTPUT_DIRECTORY / "counts-observed-{:d}.out".format(l)
+        filename = OUTPUT_DIRECTORY / f"counts-observed-{l:d}.out"
         with open(filename, "w") as outfile:
             for i in range(NBINS):
                 outfile.write(
-                    "{:8.3f} {:16f} {:16f}\n".format(
-                        bin_center_i[i], N_i_observed[i], dN_i_observed[i]
-                    )
+                    f"{bin_center_i[i]:8.3f} {N_i_observed[i]:16f} {dN_i_observed[i]:16f}\n"
                 )
 
         # write out expected bin counts
-        filename = OUTPUT_DIRECTORY / "counts-expected-{:d}.out".format(l)
+        filename = OUTPUT_DIRECTORY / f"counts-expected-{l:d}.out"
         with open(filename, "w") as outfile:
             for i in range(NBINS):
                 outfile.write(
-                    "{:8.3f} {:16f} {:16f}\n".format(
-                        bin_center_i[i], N_i_expected[i], dN_i_expected[i]
-                    )
+                    f"{bin_center_i[i]:8.3f} {N_i_expected[i]:16f} {dN_i_expected[i]:16f}\n"
                 )
 
         # compute PMF from observed counts
@@ -326,13 +317,11 @@ def main():
         pmf_i_observed[indices] -= pmf_i_observed[indices].mean()  # shift observed PMF
         dpmf_i_observed[indices] = dN_i_observed[indices] / N_i_observed[indices]
         # write out observed PMF
-        filename = OUTPUT_DIRECTORY / "pmf-observed-{:d}.out".format(l)
+        filename = OUTPUT_DIRECTORY / f"pmf-observed-{l:d}.out"
         with open(filename, "w") as outfile:
             for i in indices:
                 outfile.write(
-                    "{:8.3f} {:8.3f} {:8.3f}\n".format(
-                        bin_center_i[i], pmf_i_observed[i], dpmf_i_observed[i]
-                    )
+                    f"{bin_center_i[i]:8.3f} {pmf_i_observed[i]:8.3f} {dpmf_i_observed[i]:8.3f}\n"
                 )
 
         # Write out unbiased estimate of PMF
@@ -340,9 +329,7 @@ def main():
         filename = OUTPUT_DIRECTORY / f"pmf-expected-{l:d}.out"
         with open(filename, "w") as outfile:
             for i in range(NBINS):
-                outfile.write(
-                    "{:8.3f} {:8.3f} {:8.3f}\n".format(bin_center_i[i], pmf_i[i], df_i[i])
-                )
+                outfile.write(f"{bin_center_i[i]:8.3f} {pmf_i[i]:8.3f} {df_i[i]:8.3f}\n")
 
         # make gnuplot plots
         # TODO: Adapt to matplotlib
@@ -350,11 +337,11 @@ def main():
         filename = PLOT_DIRECTORY / f"pmf-comparison-{l:d}.eps"
         gnuplot_input = f"""
     set term postscript color solid
-    set output "{filename:s}"
-    set title "{PREFIX:s} - {biasing_force:.}2f pN"
+    set output "{filename}"
+    set title "{PREFIX} - {biasing_force:.}2f pN"
     set xlabel "extension (nm)"
     set ylabel "potential of mean force (kT)"
-    plot "{OUTPUT_DIRECTORY:s}/pmf-expected-{l:d}.out" u 1:2:3 with yerrorbars t "MBAR optimal estimate", "{output_directory:s}/pmf-observed-{l:d}.out" u 1:2:3 with yerrorbars t "observed from single experiment"
+    plot "{OUTPUT_DIRECTORY}/pmf-expected-{l:d}.out" u 1:2:3 with yerrorbars t "MBAR optimal estimate", "{OUTPUT_DIRECTORY}/pmf-observed-{l:d}.out" u 1:2:3 with yerrorbars t "observed from single experiment"
     """
 
         gnuplot_input_filename = PLOT_DIRECTORY / "gnuplot.in"

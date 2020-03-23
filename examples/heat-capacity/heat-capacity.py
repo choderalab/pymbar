@@ -193,7 +193,7 @@ def print_results(string, E, dE, Cv, dCv, types):
             if Cv[k, i, 0] < -100000.0:
                 print("         N/A          ", end=" ")
             else:
-                print("    {Cv[k, i, 0]:7.4f} +/- {dCv[k, i]):6.4f}", end=" ")
+                print(f"    {Cv[k, i, 0]:7.4f} +/- {dCv[k, i]):6.4f}", end=" ")
         print()
 
 
@@ -293,7 +293,7 @@ dE_expect = np.zeros([K])
 
 for n in range(n_boots_work):
     if n > 0:
-        print("Bootstrap: {:d}/{:d}".format(n, n_boots))
+        print(f"Bootstrap: {n:d}/{n_boots:d}")
     for k in range(K):
         # resample the results:
         if Nall_k[k] > 0:
@@ -315,9 +315,9 @@ for n in range(n_boots_work):
     if n == 0:  # only print this information the first time
         print()
         print("Initializing MBAR:")
-        print("--K = number of Temperatures with data = {:d}".format(originalK))
-        print("--L = number of total Temperatures = {:d}".format(K))
-        print("--N = number of Energies per Temperature = {:d}".format(np.max(Nall_k)))
+        print(f"--K = number of Temperatures with data = {originalK:d}")
+        print(f"--L = number of total Temperatures = {K:d}")
+        print(f"--N = number of Energies per Temperature = {np.max(Nall_k):d}")
 
     if n == 0:
         initial_f_k = None  # start from zero

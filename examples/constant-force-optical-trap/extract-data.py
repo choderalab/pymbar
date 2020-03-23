@@ -51,7 +51,7 @@ def main():
 
         # DEBUG
         print(
-            "Workbook contains {workbook.nsheets:d} worksheets:", workbook.sheet_names(), sep="\n"
+            f"Workbook contains {workbook.nsheets:d} worksheets:", workbook.sheet_names(), sep="\n"
         )
 
         # Get the first worksheet.
@@ -76,7 +76,7 @@ def main():
             for k in range(K):
                 if k > 0:
                     outfile.write(" ")
-                outfile.write("{:.2f}".format(biasing_force_k[k]))
+                outfile.write(f"{biasing_force_k[k]:.2f}")
 
         # Read trajectories.
         T_max = worksheet.nrows - 3
@@ -95,7 +95,7 @@ def main():
                 for k in range(K):
                     if k > 0:
                         outfile.write(" ")
-                    outfile.write("{:f}".format(x_kt[k, t]))
+                    outfile.write(f"{x_kt[k, t]:f}")
                 outfile.write("\n")
 
 
