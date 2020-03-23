@@ -99,11 +99,11 @@ class PMF:
 
            get_kde: return the underlying kde object.
 
-           sampleParameterDistribution: Only works for pmf_type =
+           sample_parameter_distribution: Only works for pmf_type =
            'spline'. Sample the space of spline parameters according
            to the likelihood function.
 
-           getConfidenceIntervals: if sampleParameterDistribution has
+           get_confidence_intervals: if sample_parameter_distribution has
            been called, generates confidence intervals for the curves
            given the posterior distribution.
 
@@ -1337,7 +1337,7 @@ class PMF:
         else:
             raise ParameterError("Can't return the KernelDensity object because pmf_type != kde")
 
-    def sampleParameterDistribution(
+    def sample_parameter_distribution(
         self, x_n, mc_parameters=None, decorrelate=True, verbose=True,
     ):
 
@@ -1472,7 +1472,7 @@ class PMF:
         self.mc_data["g_parameters"] = g_c  # statistical efficiency of the parametere
         self.mc_data["g"] = guse  # statistical efficiency used for subsampling
 
-    def getConfidenceIntervals(self, xplot, plow, phigh, reference="zero"):
+    def get_confidence_intervals(self, xplot, plow, phigh, reference="zero"):
         """
         Parameters
         ----------
@@ -1532,7 +1532,7 @@ class PMF:
 
         return return_vals
 
-    def getMCData(self):
+    def get_mc_data(self):
 
         """ convenience function to get MC data
 
