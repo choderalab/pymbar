@@ -193,7 +193,7 @@ def print_results(string, E, dE, Cv, dCv, types):
             if Cv[k, i, 0] < -100000.0:
                 print("         N/A          ", end=" ")
             else:
-                print(f"    {Cv[k, i, 0]:7.4f} +/- {dCv[k, i]):6.4f}", end=" ")
+                print(f"    {Cv[k, i, 0]:7.4f} +/- {dCv[k, i]:6.4f}", end=" ")
         print()
 
 
