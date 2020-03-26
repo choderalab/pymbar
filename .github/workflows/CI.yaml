@@ -82,7 +82,7 @@ jobs:
     env:
       CI_OS: ubuntu-latest
       PACKAGE: "pymbar"
-      PYVER: "3.6"
+      PYVER: "3.7"
 
     steps:
     - name: Checkout the code
@@ -103,6 +103,8 @@ jobs:
         . devtools/github-actions/initialize_conda.sh
         conda activate test
         pylint $PACKAGE/
+      # Allow the lint to fail and not stop the other jobs
+      continue-on-error: true
 
     # TODO: Remove --exclude pymbar/old_mbar.py after deprecation
     - name: Run black check
