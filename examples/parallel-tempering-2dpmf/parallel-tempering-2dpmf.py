@@ -247,7 +247,7 @@ dx = (torsion_max - torsion_min) / float(nbins_per_torsion)
 # bin_kn[k,n] is the index of which histogram bin sample n from temperature index k belongs to
 bin_kn = np.zeros([K, N_max], dtype=int)
 nbins = 0
-bin_nonzero = []
+bin_nonzero = 0
 bin_counts = []
 bin_centers = []  # bin_centers[i] is a (phi,psi) tuple that gives the center of bin i
 count_nonzero = []
@@ -281,8 +281,8 @@ for i in range(bin_nonzero):
         f"bin {i:5d} ({centers_nonzero[i][0]:6.1f}, {centers_nonzero[i][1]:6.1f}) {count_nonzero[i]:12d} conformations"
     )
 
-Ntot = 0  # TODO: this line was one line below??? is this ok?
 x_n = np.zeros([Ntot, 2])  # the configurations
+Ntot = 0  # TODO: this line shouldn't be here? Ntot is not defind previously? is it bin_nonzero?
 for k in range(K):
     for n in range(N_k[k]):
         x_n[Ntot, 0] = phi_kn[k, n]
