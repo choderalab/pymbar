@@ -103,11 +103,15 @@ class ExponentialTestCase(object):
         N_k : np.ndarray, int
             number of samples per state
         mode : str, optional, default='u_kln'
-            If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
-            If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
-            If 'wFwR', check that len(N_k) involves only two states, and calculate the forward and reverse work distributions.
+            If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced
+            potential of sample n from state k evaluated at state l.
+            If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential
+            of sample n (in concatenated indexing) evaluated at state k.
+            If 'wFwR', check that len(N_k) involves only two states, and calculate
+            the forward and reverse work distributions.
 
-        seed: int, optional, default=None.  Provides control over the random seed for replicability.
+        seed: int, optional, default=None.
+            Provides control over the random seed for replicability.
 
         Returns
         -------
