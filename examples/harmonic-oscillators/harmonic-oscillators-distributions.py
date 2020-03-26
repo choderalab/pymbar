@@ -20,6 +20,16 @@ The dimensionless free energy is therefore
 # =============================================================================================
 # IMPORTS
 # =============================================================================================
+generateplots = True
+try:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+except ImportError:
+    print("!!! Can't import matplotlib, will not produce graphs.")
+    generateplots = False
+
 import numpy
 from pymbar import testsystems, MBAR, confidenceintervals
 from pymbar.utils import ParameterError, DataError
@@ -35,12 +45,6 @@ N_k = numpy.array([2000, 2000, 2000, 2000, 2000, 0])
 beta = 1.0  # inverse temperature for all simulations
 nreplicates = 200  # number of replicates of experiment for testing uncertainty estimate
 
-generateplots = True
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    print("Can't import matplotlib, will not produce graphs.")
-    generateplots = False
 
 observe = "position^2"  # the observable, one of 'mean square displacement','position', or 'potential energy'
 
@@ -257,7 +261,7 @@ D = confidenceintervals.anderson_darling(replicates_standobservable, numpy.sum(i
 print("Anderson-Darling Metrics (see README.md)")
 print(D)
 if generateplots:
-    confidenceintervals.QQ_plot(
+    confidenceintervals.qq_plot(
         replicates_standobservable,
         numpy.sum(ifzero),
         title="Q-Q plots of ensemble averaged observables \n with standard error estimates",
@@ -277,7 +281,7 @@ D = confidenceintervals.anderson_darling(replicates_observable, K)
 print("Anderson-Darling Metrics (see README.md)")
 print(D)
 if generateplots:
-    confidenceintervals.QQ_plot(
+    confidenceintervals.qq_plot(
         replicates_observable,
         K,
         title="Q-Q plots of ensemble averaged observables using MBAR",

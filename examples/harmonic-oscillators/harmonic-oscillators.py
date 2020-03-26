@@ -632,7 +632,7 @@ for k in range(K):
 
 print("                    ", end=" ")
 for k in range(K):
-    print(f"       {k:d}   ", format(), end=" ")
+    print(f"       {k:d}   ", end=" ")
 print("")
 print("MBAR             :", end=" ")
 print(err_mbar)
@@ -809,6 +809,7 @@ mbar_options = dict()
 mbar_options["verbose"] = True
 pmf = PMF(u_kn, N_k, mbar_options=mbar_options)
 print("Computing PMF ...")
+# TODO: What's the equivalent for the new pymbar.pmf.PMF?
 results = mbar.compute_pmf(
     u_n, bin_n, nbins, uncertainties="from-specified", pmf_reference=zeroindex
 )
@@ -914,6 +915,7 @@ for i in range(nbins):
 # Compute PMF.
 print("Computing PMF ...")
 # [f_i, df_i]
+# TODO: What's the equivalent for the new pymbar.pmf.PMF?
 results = mbar.compute_pmf(
     u_n, bin_n, nbins, uncertainties="from-specified", pmf_reference=zeroindex
 )

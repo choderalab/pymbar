@@ -7,8 +7,8 @@ expectations can be computed analytically. More examples can be found
 in [pymbar-examples](http://github.com/choderalab/pymbar-examples/).
 
 * `README.md` - this file
-* `harmonic-oscilllators.py` - a file
-* `harmonic-oscilllators-distributions.py`
+* `harmonic-oscillators.py`
+* `harmonic-oscillators-distributions.py`
 
 It also contains sample output from these scripts.
 
