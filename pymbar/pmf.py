@@ -139,7 +139,7 @@ class PMF:
 
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
-        >>> pmf(u_kn, N_k)
+        >>> pmf = PMF(u_kn, N_k)
 
         """
         for key, val in kwargs.items():
@@ -320,7 +320,7 @@ class PMF:
         >>> # Generate some test data
         >>> from pymbar import testsystems
         >>> from pymbar import PMF
-        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn',seed=0)
+        >>> x_n, u_kn, N_k, s_n = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn',seed=0)
         >>> # Select the potential we want to compute the PMF for (here, condition 0).
         >>> u_n = u_kn[0, :]
         >>> # Sort into nbins equally-populated bins
@@ -331,17 +331,17 @@ class PMF:
         >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
         >>> # Compute PMF for these unequally-sized bins.
-        >>> pmf = PMF(u_kn,N_k)
+        >>> pmf = PMF(u_kn, N_k)
         >>> histogram_parameters = dict()
         >>> histogram_parameters['bin_edges'] = [bins]
-        >>> pmf.generate_pmf(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
+        >>> _ = pmf.generate_pmf(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
         >>> results = pmf.get_pmf(x_n)
         >>> f_i = results['f_i']
-        >>> for i,x_n in enumerate(x_n):
-        >>> print(x_n,f_i[i])
+        >>> for i, x_n in enumerate(x_n):  # doctest: +SKIP
+        >>>     print(x_n, f_i[i])  # doctest: +SKIP
         >>> mbar = pmf.get_mbar()
-        >>> print(mbar.f_k)
-        >>> print(N_k)
+        >>> print(mbar.f_k)  # doctest: +SKIP
+        >>> print(N_k)  # doctest: +SKIP
 
         """
 

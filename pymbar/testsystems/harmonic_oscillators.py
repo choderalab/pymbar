@@ -11,7 +11,7 @@ class HarmonicOscillatorsTestCase(object):
     Generate energy samples with default parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase()
-    >>> [x_kn, u_kln, N_k, s_n] = testcase.sample()
+    >>> x_kn, u_kln, N_k, s_n = testcase.sample()
 
     Retrieve analytical properties.
 
@@ -23,18 +23,19 @@ class HarmonicOscillatorsTestCase(object):
 
     Generate energy samples with default parameters in one line.
 
-    >>> (x_kn, u_kln, N_k, s_n) = HarmonicOscillatorsTestCase().sample()
+    >>> x_kn, u_kln, N_k, s_n = HarmonicOscillatorsTestCase().sample()
 
     Generate energy samples with specified parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase(O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
-    >>> (x_kn, u_kln, N_k, s_n) = testcase.sample(N_k=[10, 20, 30, 40, 50])
+    >>> x_kn, u_kln, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50])
 
     Test sampling in different output modes.
 
-    >>> (x_kn, u_kln, N_k) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
-    >>> (x_n, u_kn, N_k, s_n) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
-    >>> (w_F, w_R, N_k) = testcase.sample(N_k=[40, 50], mode='wFwR')
+    >>> x_kn, u_kln, N_k = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
+    >>> x_n, u_kn, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> testcase2 = HarmonicOscillatorsTestCase(O_k=[0, 1], K_k=[1, 2])
+    >>> w_F, w_R, N_k = testcase2.sample(N_k=[40, 50], mode='wFwR')
 
     """
 
@@ -138,7 +139,7 @@ class HarmonicOscillatorsTestCase(object):
 
         if mode == 'wFwR':
 
-        w_F : np.ndarray, shape=(N_k[0]), dtype=float   
+        w_F : np.ndarray, shape=(N_k[0]), dtype=float
             Work generated switching from state 0 to 1
         w_R : np.ndaarry, shape=(N_k[1]), dtype=float
             Work generated switching from state 1 to 0

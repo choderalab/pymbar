@@ -67,7 +67,7 @@ jobs:
       run: |
         . devtools/github-actions/initialize_conda.sh
         conda activate test
-        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes $PACKAGE/tests/
+        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/
 
     - name: Run examples
       shell: bash

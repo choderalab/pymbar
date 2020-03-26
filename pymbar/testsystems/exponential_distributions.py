@@ -11,7 +11,7 @@ class ExponentialTestCase(object):
     Generate energy samples with default parameters.
 
     >>> testcase = ExponentialTestCase()
-    >>> [x_kn, u_kln, N_k] = testcase.sample()
+    >>> x_kn, u_kln, N_k = testcase.sample()
 
     Retrieve analytical properties.
 
@@ -23,18 +23,19 @@ class ExponentialTestCase(object):
 
     Generate energy samples with default parameters in one line.
 
-    >>> [x_kn, u_kln, N_k] = ExponentialTestCase().sample()
+    >>> x_kn, u_kln, N_k = ExponentialTestCase().sample()
 
     Generate energy samples with specified parameters.
 
     >>> testcase = ExponentialTestCase(rates=[1., 2., 3., 4., 5.])
-    >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50])
+    >>> x_kn, u_kln, N_k = testcase.sample(N_k=[10, 20, 30, 40, 50])
 
     Test sampling in different output modes.
 
-    >>> [x_kn, u_kln, N_k] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
-    >>> [x_n, u_kn, N_k, s_n] = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
-    >>> [w_F, w_R, N_k] = testcase.sample(N_k=[40, 50], mode='wFwR')
+    >>> x_kn, u_kln, N_k = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
+    >>> x_n, u_kn, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> testcase2 = ExponentialTestCase(rates=[4., 5.])
+    >>> w_F, w_R, N_k = testcase2.sample(N_k=[40, 50], mode='wFwR')
 
     """
 
@@ -119,9 +120,9 @@ class ExponentialTestCase(object):
         N_k : np.ndarray, shape=(n_states), dtype=float
            N_k[k] is the number of samples generated from state k
         s_n : np.ndarray, shape=(n_samples), dtype='int'
-            s_n is the state of origin of x_n           
+            s_n is the state of origin of x_n
 
-        if mode == 'u_kln':     
+        if mode == 'u_kln':
 
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
             1D harmonic oscillator positions
@@ -133,7 +134,7 @@ class ExponentialTestCase(object):
 
         if mode == 'wFwR':
 
-        w_F : np.ndarray, shape=(N_k[0]), dtype=float   
+        w_F : np.ndarray, shape=(N_k[0]), dtype=float
             Work generated switching from state 0 to 1
         w_R : np.ndaarry, shape=(N_k[1]), dtype=float
             Work generated switching from state 1 to 0
