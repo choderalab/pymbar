@@ -766,7 +766,8 @@ class PMF:
 
                 if b > 0:
                     kde = KernelDensity()  # need to create a new one so won't get refit
-                    params = self.kde.get_params()
+                    # Will take a refactor to get this correct for pylint
+                    params = self.kde.get_params()  # pylint: disable=access-member-before-definition
                     kde.set_params(**params)
 
                 kde.fit(x_nb, sample_weight=self.w_n)
@@ -1998,8 +1999,9 @@ class PMF:
                 for j in range(0, i + 1):
                     if np.abs(i - j) <= kdegree:
 
-                        def ddexpf(x, k):
-                            return db_c[i + 1](x) * db_c[j + 1](x) * expf[k](x)
+                        def ddexpf(x, k_inner):
+                            # Disable the PyLint check here because this is the behavior we want
+                            return db_c[i + 1](x) * db_c[j + 1](x) * expf[k_inner](x)  # pylint: disable=cell-var-from-loop
 
                         for k in range(K):
                             # now compute the expectation of each derivative
@@ -2008,7 +2010,7 @@ class PMF:
                                 ddexpf,
                                 xrangeij[i + 1, j + 1, 0],
                                 xrangeij[i + 1, j + 1, 1],
-                                args=(k),
+                                args=(k,),
                             )
                             h[i, j] += pE / pF[k]
 

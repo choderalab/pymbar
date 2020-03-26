@@ -5,7 +5,7 @@ from pymbar.utils import ParameterError
 from pymbar.utils_for_testing import assert_almost_equal
 
 try:
-    import sklearn
+    import sklearn  # pylint: disable=unused-import
 
     has_sklearn = True
 except ImportError:
