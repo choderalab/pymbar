@@ -119,7 +119,7 @@ def construct_nonuniform_bins(x_n, nbins):
 
 def main():
     # read biasing forces for different trajectories
-    filename = DIRECTORY / PREFIX + ".forces"
+    filename = DIRECTORY / f"{PREFIX}.forces"
     with open(filename) as infile:
         elements = infile.readline().split()
         K = len(elements)  # number of biasing forces
@@ -131,7 +131,7 @@ def main():
     print("biasing forces (in pN) = ", biasing_force_k)
 
     # Determine maximum number of snapshots in all trajectories.
-    filename = DIRECTORY / PREFIX + ".trajectories"
+    filename = DIRECTORY / f"{PREFIX}.trajectories"
     # TODO: Do this without `wc`
     T_max = int(subprocess.getoutput(f"wc -l {filename}").split()[0]) + 1
 
@@ -141,7 +141,7 @@ def main():
     x_kt = np.zeros([K, T_max])
 
     # Read the trajectories.
-    filename = DIRECTORY / PREFIX + ".trajectories"
+    filename = DIRECTORY / f"{PREFIX}.trajectories"
     print(f"Reading {filename}...")
     with open(filename) as infile:
         for line in infile:
@@ -233,6 +233,7 @@ def main():
     # Compute PMF in unbiased potential (in units of kT).
     print("Computing PMF...")
     # TODO: PMF computations is not part of MBAR now?
+    # pmf = pymbar.PMF(u_kn, )
     results = mbar.compute_pmf(u_kn, bin_kn, NBINS)
     f_i = results["f_i"]
     df_i = results["df_i"]
@@ -260,6 +261,7 @@ def main():
     for l in range(K):
         # compute PMF at state l
         # TODO: PMF computations is not part of MBAR now?
+        # pmf = pymbar.PMF(u_kn, )
         results = mbar.compute_pmf(u_kln[:, l, :], bin_kn, NBINS)
         f_i = results["f_i"]
         df_i = results["df_i"]
@@ -350,3 +352,7 @@ def main():
 
         output = subprocess.getoutput(f"gnuplot < {gnuplot_input_filename}")
         output = subprocess.getoutput(f"epstopdf {filename}")
+
+
+if __name__ == "__main__":
+    main()

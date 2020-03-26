@@ -10,14 +10,18 @@ REQUIREMENTS:
 # IMPORTS
 # =============================================================================================
 
+import sys
+import bz2
+import tempfile
 from pathlib import Path
+
 from numpy import zeros, float64
 
 try:
     import xlrd  # pure Python Excel spreadsheet (.xls) file reader
 except ImportError:
-    print("This example requires xlrd: run `pip install xlrd`")
-    raise
+    print("ERROR: This example requires xlrd, run:", "  pip install xlrd", sep="\n")
+    sys.exit()
 
 # =============================================================================================
 # PARAMETERS
@@ -45,9 +49,11 @@ def main():
     for dataset in datasets:
         print(f"Extracting data from dataset '{dataset}'...")
 
-        # Open Excel spreadsheet file.
-        workbook_filename = ORIGINAL_DATA / dataset + "_data.xls"
-        workbook = xlrd.open_workbook(workbook_filename)
+        # Extract compressed Excel spreadsheet file and load it with xlrd
+        with bz2.open(ORIGINAL_DATA / f"{dataset}_data.xls.bz2") as f:
+            with tempfile.NamedTemporaryFile(suffix=".xls") as temp:
+                temp.write(f.read())
+                workbook = xlrd.open_workbook(temp.name)
 
         # DEBUG
         print(
@@ -70,7 +76,7 @@ def main():
         print(f"{K:d} biasing forces (in pN):", biasing_force_k, sep="\n")
 
         # Write biasing forces.
-        filename = PROCESSED_DATA / dataset + ".forces"
+        filename = PROCESSED_DATA / f"{dataset}.forces"
         print(f"Writing biasing forces to '{filename}'...")
         with open(filename, "w") as outfile:
             for k in range(K):
@@ -88,7 +94,7 @@ def main():
         print(f"Read {K:d} trajectories of {T_max:d} samples each.")
 
         # Write trajectories.
-        filename = PROCESSED_DATA / dataset + ".trajectories"
+        filename = PROCESSED_DATA / f"{dataset}.trajectories"
         print(f"Writing trajectories to '{filename}'...")
         with open(filename, "w") as outfile:
             for t in range(T_max):
