@@ -742,7 +742,7 @@ def generate_pmf_data(
 
 nbinsperdim = 15
 gridscale = 0.2
-nsamples = 100000
+nsamples = 1000
 ndim = 1
 K0 = 20.0
 Ku = 100.0
