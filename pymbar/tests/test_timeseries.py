@@ -7,7 +7,7 @@ import pytest
 from pymbar.utils_for_testing import assert_almost_equal
 
 try:
-    import statsmodels.api as sm
+    import statsmodels.api as sm  # pylint: disable=unused-import
 
     HAVE_STATSMODELS = True
 except ImportError as err:

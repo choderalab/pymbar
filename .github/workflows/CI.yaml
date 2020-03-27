@@ -82,7 +82,7 @@ jobs:
     env:
       CI_OS: ubuntu-latest
       PACKAGE: "pymbar"
-      PYVER: "3.6"
+      PYVER: "3.7"
 
     steps:
     - name: Checkout the code
