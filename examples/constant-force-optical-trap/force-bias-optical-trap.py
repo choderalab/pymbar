@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 
 import pymbar  # multistate Bennett acceptance ratio analysis (provided by pymbar)
-from pymbar import timeseries  # timeseries analysis (provided by pymbar)
+from pymbar import timeseries, PMF  # timeseries analysis (provided by pymbar)
 
 # =============================================================================================
 # PARAMETERS
@@ -75,7 +75,6 @@ def construct_nonuniform_bins(x_n, nbins):
 
     # Allocate storage for results.
     bin_left_boundary_i = np.zeros([nbins + 1])
-    bin_right_boundary_i = np.zeros([nbins + 1])
     bin_center_i = np.zeros([nbins])
     bin_width_i = np.zeros([nbins])
     bin_n = np.zeros([N])
@@ -231,12 +230,17 @@ def main():
         )
 
     # Compute PMF in unbiased potential (in units of kT).
+    import pdb
+    pdb.set_trace()
     print("Computing PMF...")
-    # TODO: PMF computations is not part of MBAR now?
-    # pmf = pymbar.PMF(u_kn, )
-    results = mbar.compute_pmf(u_kn, bin_kn, NBINS)
-    f_i = results["f_i"]
-    df_i = results["df_i"]
+    pmf = PMF(u_kn, N_k)
+    histogram_parameters = dict()
+    histogram_parameters['bin_edges'] = bin_left_boundaries_i
+    pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
+    results = pmf.get_pmf(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = 0.0)
+    f_i = results['f_i']
+    df_i = results['df_i']
+
     # compute estimate of PMF including Jacobian term
     pmf_i = f_i + np.log(bin_width_i)
     # Write out unbiased estimate of PMF
