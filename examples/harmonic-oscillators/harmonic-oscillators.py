@@ -773,6 +773,7 @@ xmin = gridscale * (np.min(xrange[0][0]) - 1 / 2.0)
 xmax = gridscale * (np.max(xrange[0][1]) + 1 / 2.0)
 dx = (xmax - xmin) / nbinsperdim
 nbins = 1 + nbinsperdim ** ndim
+bin_edges = [np.linspace(xmin,xmax,nbins+1)] # list of bin edges.
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
 ibin = 1
@@ -809,20 +810,28 @@ mbar_options = dict()
 mbar_options["verbose"] = True
 pmf = PMF(u_kn, N_k, mbar_options=mbar_options)
 print("Computing PMF ...")
-# TODO: What's the equivalent for the new pymbar.pmf.PMF?
-results = mbar.compute_pmf(
-    u_n, bin_n, nbins, uncertainties="from-specified", pmf_reference=zeroindex
-)
-f_i = results["f_i"]
-df_i = results["df_i"]
+histogram_parameters = dict()
+histogram_parameters['bin_edges'] = bin_edges
+pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
+results = pmf.get_pmf(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = 0.0)
+f_i = results['f_i']
+df_i = results['df_i']
+
+# now KDE
+kde_parameters = dict()
+kde_parameters['bandwidth'] = 0.5*dx
+pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
+results_kde = pmf.get_pmf(bin_centers, uncertainties='from-specified', pmf_reference = 0.0)
+f_ik = results_kde['f_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest
 # free energy
 
 print("1D PMF:")
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
+print("(errors correspond just to the histogram estimate f_hist, not to the kernel density estimate f_kde)")
 print(
-    f"{'bin':8s} {'x':6s} {'N':8s} {'f':10s} {'true':10s} {'error':10s} {'df':10s} {'sigmas':8s}"
+    f"{'bin':8s} {'x':6s} {'N':8s} {'f_hist':10s} {'f_kde':10s} {'true':10s} {'err_h':10s} {'err_kde':10s} {'df':10s} {'sigmas':8s}"
 )
 for i in range(1, nbins):
     if i == zeroindex:
@@ -832,8 +841,8 @@ for i in range(1, nbins):
         error = pmf_analytical[i] - f_i[i]
         stdevs = np.abs(error) / df_i[i]
     print(
-        f"{i:8d} {bin_centers[i, 0]:6.2f} {bin_counts[i]:8d} {f_i[i]:10.3f} "
-        f"{pmf_analytical[i]:10.3f} {error:10.3f} {df_i[i]:10.3f} {stdevs:8.2f}"
+        f"{i:8d} {bin_centers[i, 0]:6.2f} {bin_counts[i]:8d} {f_i[i]:10.3f} {f_ik[i]:10.3f}"
+        f"{pmf_analytical[i]:10.3f} {error:10.3f} {pmf_analytical[i]-f_ik[i]:10.3f} {df_i[i]:10.3f} {stdevs:8.2f}"
     )
 
 print("============================================")
@@ -914,13 +923,21 @@ for i in range(nbins):
 
 # Compute PMF.
 print("Computing PMF ...")
-# [f_i, df_i]
-# TODO: What's the equivalent for the new pymbar.pmf.PMF?
-results = mbar.compute_pmf(
-    u_n, bin_n, nbins, uncertainties="from-specified", pmf_reference=zeroindex
-)
-f_i = results["f_i"]
-df_i = results["df_i"]
+pmf = PMF(u_kn, N_k)
+
+histogram_parameters['bin_edges'] = [np.linspace(xmin,xmax,nbinsperdim+1),np.linspace(ymin,ymax,nbinsperdim+1)] # list of histogram edges.
+pmf.generate_pmf(u_n, x_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
+delta = 0.0001  # to break ties in things being too close.
+
+results = pmf.get_pmf(bin_centers+delta, uncertainties = 'from-specified', pmf_reference = [0,0])
+f_i = results['f_i']
+df_i = results['df_i']
+
+# now kernel density estimate
+kde_parameters['bandwidth'] = 0.5*dx
+pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
+results_kde = pmf.get_pmf(bin_centers, uncertainties='from-specified',pmf_reference = [0,0])
+f_ik = results_kde['f_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest
 # free energy
@@ -928,7 +945,7 @@ print("2D PMF:")
 
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
 print(
-    f"{'bin':8s} {'x':6s} {'y':6s} {'N':8s} {'f':10s} {'true':10s} {'error':10s} {'df':10s} {'sigmas':8s}"
+    f"{'bin':8s} {'x':6s} {'y':6s} {'N':8s} {'f_hist':10s} {'f_kde':10s} {'true':10s} {'err_hist':10s} {'err_kde':10s} {'df':10s} {'sigmas':8s}"
 )
 for i in range(1, nbins):
     if i == zeroindex:
@@ -943,8 +960,10 @@ for i in range(1, nbins):
         f"{bin_centers[i, 1]:6.2f} "
         f"{bin_counts[i]:8d} "
         f"{f_i[i]:10.3f} "
+        f"{f_ik[i]:10.3f} "
         f"{pmf_analytical[i]:10.3f} "
         f"{error:10.3f} "
+        f"{pmf_analytical[i]-f_ik[i]:10.3f} "
         f"{df_i[i]:10.3f} "
         f"{stdevs:8.2f}"
     )
