@@ -742,7 +742,7 @@ def generate_pmf_data(
 
 nbinsperdim = 15
 gridscale = 0.2
-nsamples = 1000
+nsamples = 100000
 ndim = 1
 K0 = 20.0
 Ku = 100.0
@@ -804,7 +804,7 @@ bin_counts = np.zeros([nbins], int)
 for i in range(nbins):
     bin_counts[i] = (bin_n == i).sum()
 
-# Compute PMF.
+# Compute PMF, first with histograms
 print("Solving for free energies of state to initialize PMF...")
 mbar_options = dict()
 mbar_options["verbose"] = True
@@ -817,7 +817,7 @@ results = pmf.get_pmf(bin_centers[:,0], uncertainties = 'from-specified', pmf_re
 f_i = results['f_i']
 df_i = results['df_i']
 
-# now KDE
+# now estimate the PDF with a kde
 kde_parameters = dict()
 kde_parameters['bandwidth'] = 0.5*dx
 pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
@@ -831,7 +831,7 @@ print("1D PMF:")
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
 print("(errors correspond just to the histogram estimate f_hist, not to the kernel density estimate f_kde)")
 print(
-    f"{'bin':8s} {'x':6s} {'N':8s} {'f_hist':10s} {'f_kde':10s} {'true':10s} {'err_h':10s} {'err_kde':10s} {'df':10s} {'sigmas':8s}"
+    f"{'bin':>8s} {'x':>6s} {'N':>8s} {'f_hist':>10s} {'f_kde':>10s} {'true':>10s} {'err_h':>10s} {'err_kde':>10s} {'df':>10s} {'sigmas':>8s}"
 )
 for i in range(1, nbins):
     if i == zeroindex:
@@ -841,8 +841,8 @@ for i in range(1, nbins):
         error = pmf_analytical[i] - f_i[i]
         stdevs = np.abs(error) / df_i[i]
     print(
-        f"{i:8d} {bin_centers[i, 0]:6.2f} {bin_counts[i]:8d} {f_i[i]:10.3f} {f_ik[i]:10.3f}"
-        f"{pmf_analytical[i]:10.3f} {error:10.3f} {pmf_analytical[i]-f_ik[i]:10.3f} {df_i[i]:10.3f} {stdevs:8.2f}"
+        f"{i:>8d} {bin_centers[i, 0]:>6.2f} {bin_counts[i]:>8d} {f_i[i]:>10.3f} {f_ik[i]:>10.3f} "
+        f"{pmf_analytical[i]:>10.3f} {error:>10.3f} {pmf_analytical[i]-f_ik[i]:>10.3f} {df_i[i]:>10.3f} {stdevs:>8.2f}"
     )
 
 print("============================================")
@@ -921,7 +921,7 @@ bin_counts = np.zeros([nbins], int)
 for i in range(nbins):
     bin_counts[i] = (bin_n == i).sum()
 
-# Compute PMF.
+# Compute PMF, first using histograms weighted with MBAR
 print("Computing PMF ...")
 pmf = PMF(u_kn, N_k)
 
@@ -933,7 +933,7 @@ results = pmf.get_pmf(bin_centers+delta, uncertainties = 'from-specified', pmf_r
 f_i = results['f_i']
 df_i = results['df_i']
 
-# now kernel density estimate
+# now generate the kernel density estimate
 kde_parameters['bandwidth'] = 0.5*dx
 pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
 results_kde = pmf.get_pmf(bin_centers, uncertainties='from-specified',pmf_reference = [0,0])
@@ -945,7 +945,7 @@ print("2D PMF:")
 
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
 print(
-    f"{'bin':8s} {'x':6s} {'y':6s} {'N':8s} {'f_hist':10s} {'f_kde':10s} {'true':10s} {'err_hist':10s} {'err_kde':10s} {'df':10s} {'sigmas':8s}"
+    f"{'bin':>8s} {'x':>6s} {'y':>6s} {'N':>8s} {'f_hist':>10s} {'f_kde':>10s} {'true':>10s} {'err_hist':>10s} {'err_kde':>10s} {'df':>10s} {'sigmas':>8s}"
 )
 for i in range(1, nbins):
     if i == zeroindex:
@@ -955,15 +955,15 @@ for i in range(1, nbins):
         error = pmf_analytical[i] - f_i[i]
         stdevs = np.abs(error) / df_i[i]
     print(
-        f"{i:8d} "
-        f"{bin_centers[i, 0]:6.2f} "
-        f"{bin_centers[i, 1]:6.2f} "
-        f"{bin_counts[i]:8d} "
-        f"{f_i[i]:10.3f} "
-        f"{f_ik[i]:10.3f} "
-        f"{pmf_analytical[i]:10.3f} "
-        f"{error:10.3f} "
-        f"{pmf_analytical[i]-f_ik[i]:10.3f} "
-        f"{df_i[i]:10.3f} "
-        f"{stdevs:8.2f}"
+        f"{i:>8d} "
+        f"{bin_centers[i, 0]:>6.2f} "
+        f"{bin_centers[i, 1]:>6.2f} "
+        f"{bin_counts[i]:>8d} "
+        f"{f_i[i]:>10.3f} "
+        f"{f_ik[i]:>10.3f} "
+        f"{pmf_analytical[i]:>10.3f} "
+        f"{error:>10.3f} "
+        f"{pmf_analytical[i]-f_ik[i]:>10.3f} "
+        f"{df_i[i]:>10.3f} "
+        f"{stdevs:>8.2f}"
     )
