@@ -281,8 +281,9 @@ for i in range(bin_nonzero):
         f"bin {i:5d} ({centers_nonzero[i][0]:6.1f}, {centers_nonzero[i][1]:6.1f}) {count_nonzero[i]:12d} conformations"
     )
 
-x_n = np.zeros([Ntot, 2])  # the configurations
-Ntot = 0  # TODO: this line shouldn't be here? Ntot is not defind previously? is it bin_nonzero?
+x_n = np.zeros([np.sum(N_k), 2])  # the configurations
+
+Ntot = 0  
 for k in range(K):
     for n in range(N_k[k]):
         x_n[Ntot, 0] = phi_kn[k, n]
@@ -320,9 +321,9 @@ df_i = results["df_i"]
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
 print("2D PMF")
 print()
-print(f"{'bin':8s} {'phi':6s} {'psi':6s} {'N':8s} {'f':10s} {'df':10s}")
+print(f"{'bin':>8s} {'phi':>6s} {'psi':>6s} {'N':>8s} {'f':>10s} {'df':>10s}")
 
 for i in range(bin_nonzero):
     print(
-        f"{i:d} {centers_nonzero[i][0]:6.1f} {centers_nonzero[i][1]:6.1f} {count_nonzero[i]:8d} {f_i[i]:10.3f} {df_i[i]:10.3f}"
+        f"{i:>8d} {centers_nonzero[i][0]:>6.1f} {centers_nonzero[i][1]:>6.1f} {count_nonzero[i]:>8d} {f_i[i]:>10.3f} {df_i[i]:>10.3f}"
     )
