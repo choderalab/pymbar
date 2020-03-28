@@ -1092,7 +1092,7 @@ class MBAR:
             diag = np.ones(2 * K, dtype=np.float64)
             diag[0:K] = diag[K : 2 * K] = inner_results["observables"] - inner_results["Amin"]
             np.fill_diagonal(Adiag, diag)
-            Theta = Adiag * inner_results["Theta"] * Adiag
+            Theta = Adiag @ inner_results["Theta"] @ Adiag # matrix multipliction . . .
             covA_ij = np.array(
                 Theta[0:K, 0:K]
                 + Theta[K : 2 * K, K : 2 * K]
@@ -1217,7 +1217,7 @@ class MBAR:
             diag = np.ones(2 * I, dtype=np.float64)
             diag[0:I] = diag[I : 2 * I] = inner_results["observables"] - inner_results["Amin"]
             np.fill_diagonal(Adiag, diag)
-            Theta = Adiag * inner_results["Theta"] * Adiag
+            Theta = Adiag @ inner_results["Theta"] @ Adiag # matrix multiplication
 
             if compute_uncertainty:
                 covA_ij = np.array(

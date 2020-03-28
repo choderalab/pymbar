@@ -25,6 +25,7 @@ import sys
 import numpy as np
 from pymbar import testsystems, exp, exp_gauss, bar, MBAR, PMF
 from pymbar.utils import ParameterError
+import pdb
 
 # =============================================================================================
 # HELPER FUNCTIONS
@@ -133,7 +134,7 @@ print("generating samples...")
 randomsample = testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(
     O_k=O_k, K_k=K_k, beta=beta
 )
-x_kn, u_kln, N_k = randomsample.sample(N_k, mode="u_kln")
+x_kn, u_kln, N_k = randomsample.sample(N_k, mode="u_kln", seed = seed)
 
 # get the unreduced energies
 U_kln = u_kln / beta
@@ -364,6 +365,7 @@ for observe in observables:
     stdevs = np.abs(As_k_error[Nk_ne_zero] / dAs_k_estimated[Nk_ne_zero])
     print(stdevs)
 
+    pdb.set_trace()
     results = mbar.compute_expectations(
         A_kn, state_dependent=state_dependent, output="differences"
     )
@@ -750,6 +752,7 @@ print("============================================")
 print("      Test 1: 1D PMF   ")
 print("============================================")
 
+pdb.set_trace()
 xrange = [[-3, 3]]
 ndim = 1
 u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(
@@ -804,6 +807,7 @@ bin_counts = np.zeros([nbins], int)
 for i in range(nbins):
     bin_counts[i] = (bin_n == i).sum()
 
+pdb.set_trace()
 # Compute PMF, first with histograms
 print("Solving for free energies of state to initialize PMF...")
 mbar_options = dict()
