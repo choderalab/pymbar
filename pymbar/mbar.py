@@ -246,7 +246,6 @@ class MBAR:
 
         self.samestates = []
         if self.verbose:
-
             # if, for any set of data, all reduced potential energies are the same,
             # they are probably the same state.
             #
@@ -265,8 +264,8 @@ class MBAR:
             # but not clear if needed.
 
             # pick random indices
+            # indices = np.arange(maxpoint) # can uncomment this if need to remove random choices in testing.
             indices = np.random.choice(np.arange(self.N), maxpoint)
-
             for k in range(K):
                 for l in range(k):
                     diffsum = 0

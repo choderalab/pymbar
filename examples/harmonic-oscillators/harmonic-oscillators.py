@@ -365,7 +365,6 @@ for observe in observables:
     stdevs = np.abs(As_k_error[Nk_ne_zero] / dAs_k_estimated[Nk_ne_zero])
     print(stdevs)
 
-    pdb.set_trace()
     results = mbar.compute_expectations(
         A_kn, state_dependent=state_dependent, output="differences"
     )
@@ -776,7 +775,7 @@ xmin = gridscale * (np.min(xrange[0][0]) - 1 / 2.0)
 xmax = gridscale * (np.max(xrange[0][1]) + 1 / 2.0)
 dx = (xmax - xmin) / nbinsperdim
 nbins = 1 + nbinsperdim ** ndim
-bin_edges = [np.linspace(xmin,xmax,nbins+1)] # list of bin edges.
+bin_edges = [np.linspace(xmin,xmax,nbins)] # list of bin edges.
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
 ibin = 1
