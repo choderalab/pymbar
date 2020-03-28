@@ -121,8 +121,7 @@ print("The harmonic oscillators have equilibrium positions:", O_k)
 print("and spring constants:", K_k)
 print(
     "and the following number of samples will be drawn from each",
-    "(can be zero if no samples drawn):",
-    N_k,
+    "(can be zero if no samples drawn):", N_k
 )
 
 
@@ -273,7 +272,7 @@ N = np.sum(N_k)
 
 for observe in observables:
     print("============================================")
-    print(f"      Testing observable {observe}")
+    print(f"      Testing observable \'{observe}\'")
     print("============================================")
 
     if observe == "RMS displacement":
@@ -525,14 +524,14 @@ for l in range(L):
 print(stdevs)
 
 print("============================================")
-print("      Testing computeExpectation (new states)")
+print("      Testing compute_expectation (new states)")
 print("============================================")
 
 nth = 3
 # test the nth "extra" states, O_extra[nth] & K_extra[nth]
 for observe in observables:
     print("============================================")
-    print(f"      Testing observable {observe}")
+    print(f"      Testing observable \'{observe}\'")
     print("============================================")
 
     if observe == "RMS displacement":
@@ -600,11 +599,11 @@ for k in range(K):
     else:
         print("but it's not.")
 
-print("Overlap eigenvalue output")
+print("Eigenvalues of overlap matrix:")
 print(O_i)
 
 
-print("Overlap scalar output")
+print("Overlap scalar measure: (1-lambda_2)")
 print(O)
 
 print("============================================")
@@ -631,9 +630,9 @@ for k in range(K):
         err_standard[k] = np.std(A_kn[k, 0 : N_k[k]]) / np.sqrt(N_k[k] - 1)
         err_scaled[k] = np.std(A_kn[k, 0 : N_k[k]]) / np.sqrt(N_eff[k] - 1)
 
-print("                    ", end=" ")
+print("                   ", end=" ")
 for k in range(K):
-    print(f"       {k:d}   ", end=" ")
+    print(f"     {k:d}    ", end=" ")
 print("")
 print("MBAR             :", end=" ")
 print(err_mbar)
