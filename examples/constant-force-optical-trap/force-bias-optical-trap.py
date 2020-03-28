@@ -25,22 +25,22 @@ from pymbar import timeseries, PMF  # timeseries analysis (provided by pymbar)
 # PARAMETERS
 # =============================================================================================
 
-PREFIX = "20R55_4T"  # for paper
+prefix = "20R55_4T"  # for paper
 # prefix = '10R50_4T'
 # prefix = '25R50_4T'
 # prefix = '30R50_4T'
-DIRECTORY = Path("processed-data")
-TEMPERATURE = 296.15  # temperature (in K)
-NBINS = 50  # number of bins for 1D PMF
-OUTPUT_DIRECTORY = Path("output")
-PLOT_DIRECTORY = Path("plots")
+directory = Path("processed-data")
+temperature = 296.15  # temperature (in K)
+nbins = 50  # number of bins for 1D PMF
+output_directory = Path("output")
+plot_directory = Path("plots")
 
 # =============================================================================================
 # CONSTANTS
 # =============================================================================================
 
 kB = 1.381e-23  # Boltzmann constant (in J/K)
-pN_nm_to_kT = (1.0e-9) * (1.0e-12) / (kB * TEMPERATURE)  # conversion from nM pN to units of kT
+pN_nm_to_kT = (1.0e-9) * (1.0e-12) / (kB * temperature)  # conversion from nM pN to units of kT
 
 # =============================================================================================
 # SUBROUTINES
@@ -118,7 +118,7 @@ def construct_nonuniform_bins(x_n, nbins):
 
 def main():
     # read biasing forces for different trajectories
-    filename = DIRECTORY / f"{PREFIX}.forces"
+    filename = directory / f"{prefix}.forces"
     with open(filename) as infile:
         elements = infile.readline().split()
         K = len(elements)  # number of biasing forces
@@ -130,7 +130,7 @@ def main():
     print("biasing forces (in pN) = ", biasing_force_k)
 
     # Determine maximum number of snapshots in all trajectories.
-    filename = DIRECTORY / f"{PREFIX}.trajectories"
+    filename = directory / f"{prefix}.trajectories"
     # TODO: Do this without `wc`
     T_max = int(subprocess.getoutput(f"wc -l {filename}").split()[0]) + 1
 
@@ -140,7 +140,7 @@ def main():
     x_kt = np.zeros([K, T_max])
 
     # Read the trajectories.
-    filename = DIRECTORY / f"{PREFIX}.trajectories"
+    filename = directory / f"{prefix}.trajectories"
     print(f"Reading {filename}...")
     with open(filename) as infile:
         for line in infile:
@@ -161,7 +161,7 @@ def main():
     print("binning data...")
     bin_kt = np.zeros([K, T_max], int)
     bin_left_boundary_i, bin_center_i, bin_width_i, bin_assignments = construct_nonuniform_bins(
-        x_kt[all_data_indices], NBINS
+        x_kt[all_data_indices], nbins
     )
     bin_kt[all_data_indices] = bin_assignments
 
@@ -216,28 +216,29 @@ def main():
 
     # Initialize MBAR.
     print("Running MBAR...")
-    # TODO: method is not part of the MBAR signature
-    #       `method="adaptive"`
+    # TODO: change to u_kn inputs
     mbar = pymbar.MBAR(u_kln, N_k, verbose=True, relative_tolerance=1.0e-10)
 
     # Compute unbiased energies (all biasing forces are zero).
-    # u_kn[k,n] is the reduced potential energy without umbrella restraints of snapshot n of umbrella simulation k
-    u_kn = np.zeros([K, N_max])
+    # u_n[n] is the reduced potential energy without umbrella restraints of snapshot n
+    u_n = np.zeros([np.sum(N_k)])
+    x_n = np.zeros([np.sum(N_k)])
+
+    Nstart = 0
     for k in range(K):
-        #    u_kn[k,0:N_k[k]] = - pN_nm_to_kT * (0.0 - biasing_force_k[k]) * x_kn[k,0:N_k[k]]
-        u_kn[k, 0 : N_k[k]] = 0.0 + pN_nm_to_kT * biasing_force_k[k] * (
-            x_kn[k, 0 : N_k[k]] - x0_k[k]
-        )
+        #    u_n[N_k[k]:N_k[k+1]] = - pN_nm_to_kT * (0.0 - biasing_force_k[k]) * x_kn[k,0:N_k[k]]
+        u_n[Nstart : Nstart + N_k[k]] = 0.0 + pN_nm_to_kT * biasing_force_k[k] * (x_kn[k, 0 : N_k[k]] - x0_k[k])
+        x_n[Nstart : Nstart + N_k[k]] = x_kn[k,0 : N_k[k]]
+        Nstart += N_k[k]
 
     # Compute PMF in unbiased potential (in units of kT).
-    import pdb
-    pdb.set_trace()
+
     print("Computing PMF...")
-    pmf = PMF(u_kn, N_k)
+    pmf = PMF(u_kln, N_k)
     histogram_parameters = dict()
-    histogram_parameters['bin_edges'] = bin_left_boundaries_i
+    histogram_parameters['bin_edges'] = [bin_left_boundary_i] # 1D array of parameters, one entry because 1D
     pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
-    results = pmf.get_pmf(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = 0.0)
+    results = pmf.get_pmf(bin_center_i, uncertainties = 'from-lowest')
     f_i = results['f_i']
     df_i = results['df_i']
 
@@ -246,14 +247,14 @@ def main():
     # Write out unbiased estimate of PMF
     print("Unbiased PMF (in units of kT)")
     print(f"{'bin':8s} {'f':8s} {'df':8s} {'pmf':8s} {'width':8s}")
-    for i in range(NBINS):
+    for i in range(nbins):
         print(
             f"{bin_center_i[i]:8.3f} {f_i[i]:8.3f} {df_i[i]:8.3f} {pmf_i[i]:8.3f} {bin_width_i[i]:8.3f}"
         )
 
-    filename = OUTPUT_DIRECTORY / "pmf-unbiased.out"
+    filename = output_directory / "pmf-unbiased.out"
     with open(filename, "w") as outfile:
-        for i in range(NBINS):
+        for i in range(nbins):
             outfile.write(f"{bin_center_i[i]:8.3f} {pmf_i[i]:8.3f} {df_i[i]:8.3f}\n")
 
     # DEBUG
@@ -264,11 +265,15 @@ def main():
     # compute observed and expected histograms at each state
     for l in range(K):
         # compute PMF at state l
-        # TODO: PMF computations is not part of MBAR now?
-        # pmf = pymbar.PMF(u_kn, )
-        results = mbar.compute_pmf(u_kln[:, l, :], bin_kn, NBINS)
+        Nstart = 0
+        for k in range(K):
+            u_n[Nstart : Nstart + N_k[k]] = u_kln[k,l,0:N_k[k]]
+            Nstart += N_k[k]
+        pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
+        results = pmf.get_pmf(bin_center_i,uncertainties = 'from-lowest')
         f_i = results["f_i"]
         df_i = results["df_i"]
+
         # compute estimate of PMF including Jacobian term
         pmf_i = f_i + np.log(bin_width_i)
         # center pmf
@@ -277,14 +282,14 @@ def main():
         p_i = np.exp(-f_i + f_i.min())
         p_i /= p_i.sum()
         # compute observed histograms, filtering to within [x_min,x_max] range
-        N_i_observed = np.zeros([NBINS])
-        dN_i_observed = np.zeros([NBINS])
+        N_i_observed = np.zeros([nbins])
+        dN_i_observed = np.zeros([nbins])
         for t in range(T_k[l]):
             bin_index = bin_kt[l, t]
             N_i_observed[bin_index] += 1
         N = N_i_observed.sum()
         # estimate uncertainties in observed counts
-        for bin_index in range(NBINS):
+        for bin_index in range(nbins):
             dN_i_observed[bin_index] = np.sqrt(
                 g_k[l] * N_i_observed[bin_index] * (1.0 - N_i_observed[bin_index] / float(N))
             )
@@ -294,36 +299,36 @@ def main():
         dN_i_expected = np.sqrt(float(N) * p_i * (1.0 - p_i))
         # plot
         print(f"state {l:d} ({biasing_force_k[l]:f} pN)")
-        for bin_index in range(NBINS):
+        for bin_index in range(nbins):
             print(
                 f"{bin_center_i[bin_index]:8.3f} {N_i_expected[bin_index]:10f} {N_i_observed[bin_index]:10f} +- {dN_i_observed[bin_index]:10f}"
             )
 
         # Write out observed bin counts
-        filename = OUTPUT_DIRECTORY / f"counts-observed-{l:d}.out"
+        filename = output_directory / f"counts-observed-{l:d}.out"
         with open(filename, "w") as outfile:
-            for i in range(NBINS):
+            for i in range(nbins):
                 outfile.write(
                     f"{bin_center_i[i]:8.3f} {N_i_observed[i]:16f} {dN_i_observed[i]:16f}\n"
                 )
 
         # write out expected bin counts
-        filename = OUTPUT_DIRECTORY / f"counts-expected-{l:d}.out"
+        filename = output_directory / f"counts-expected-{l:d}.out"
         with open(filename, "w") as outfile:
-            for i in range(NBINS):
+            for i in range(nbins):
                 outfile.write(
                     f"{bin_center_i[i]:8.3f} {N_i_expected[i]:16f} {dN_i_expected[i]:16f}\n"
                 )
 
         # compute PMF from observed counts
         indices = np.where(N_i_observed > 0)[0]
-        pmf_i_observed = np.zeros([NBINS])
-        dpmf_i_observed = np.zeros([NBINS])
+        pmf_i_observed = np.zeros([nbins])
+        dpmf_i_observed = np.zeros([nbins])
         pmf_i_observed[indices] = -np.log(N_i_observed[indices]) + np.log(bin_width_i[indices])
         pmf_i_observed[indices] -= pmf_i_observed[indices].mean()  # shift observed PMF
         dpmf_i_observed[indices] = dN_i_observed[indices] / N_i_observed[indices]
         # write out observed PMF
-        filename = OUTPUT_DIRECTORY / f"pmf-observed-{l:d}.out"
+        filename = output_directory / f"pmf-observed-{l:d}.out"
         with open(filename, "w") as outfile:
             for i in indices:
                 outfile.write(
@@ -332,25 +337,25 @@ def main():
 
         # Write out unbiased estimate of PMF
         pmf_i -= pmf_i[indices].mean()  # shift to align with observed
-        filename = OUTPUT_DIRECTORY / f"pmf-expected-{l:d}.out"
+        filename = output_directory / f"pmf-expected-{l:d}.out"
         with open(filename, "w") as outfile:
-            for i in range(NBINS):
+            for i in range(nbins):
                 outfile.write(f"{bin_center_i[i]:8.3f} {pmf_i[i]:8.3f} {df_i[i]:8.3f}\n")
 
         # make gnuplot plots
         # TODO: Adapt to matplotlib
         biasing_force = biasing_force_k[l]
-        filename = PLOT_DIRECTORY / f"pmf-comparison-{l:d}.eps"
-        gnuplot_input = f"""
+        filename = plot_directory / f"pmf-comparison-{l:d}.eps"
+        gnuplot_input = """
     set term postscript color solid
     set output "{filename}"
-    set title "{PREFIX} - {biasing_force:.}2f pN"
+    set title "{prefix} - {biasing_force:.}2f pN"
     set xlabel "extension (nm)"
     set ylabel "potential of mean force (kT)"
-    plot "{OUTPUT_DIRECTORY}/pmf-expected-{l:d}.out" u 1:2:3 with yerrorbars t "MBAR optimal estimate", "{OUTPUT_DIRECTORY}/pmf-observed-{l:d}.out" u 1:2:3 with yerrorbars t "observed from single experiment"
+    plot "{output_directory}/pmf-expected-{l:d}.out" u 1:2:3 with yerrorbars t "MBAR optimal estimate", "{output_directory}/pmf-observed-{l:d}.out" u 1:2:3 with yerrorbars t "observed from single experiment"
     """
 
-        gnuplot_input_filename = PLOT_DIRECTORY / "gnuplot.in"
+        gnuplot_input_filename = plot_directory / "gnuplot.in"
         with open(gnuplot_input_filename, "w") as f:
             f.write(gnuplot_input)
 
