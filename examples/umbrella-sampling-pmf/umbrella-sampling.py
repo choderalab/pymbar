@@ -12,15 +12,6 @@ Reference:
     http://dx.doi.org/10.1016/j.jmb.2007.06.002
 
 
-TODO
-----
-
-There are several undefined names!
-
-* `ntot`
-* `bin_edges`
-* `chi_n`
-* `delta`
 """
 
 import numpy as np
@@ -138,18 +129,12 @@ u_kn -= u_kn.min()
 
 # compute bin centers
 bin_center_i = np.zeros([nbins])
+bin_edges = np.linspace(chi_min, chi_max, nbins + 1)
 for i in range(nbins):
-    # TODO: What is delta? This is undefined!
-    bin_center_i[i] = chi_min + delta / 2 + delta * i
+    bin_center_i[i] = 0.5 * (bin_edges[i] + bin_edges[i + 1])
 
-# Bin data
-# ntot = 0  # TODO: This was previously undefined... is this the right place for initialization?
-bin_kn = np.zeros([K, N_max], int)
-for k in range(K):
-    for n in range(N_k[k]):
-        # Compute bin assignment.
-        chi_n[ntot] = chi_kn[k, n]
-        ntot += 1
+N = np.sum(N_k)
+chi_n = pymbar.utils.kn_to_n(chi_kn, N_k=N_k)
 
 # Evaluate reduced energies in all umbrellas
 print("Evaluating reduced potential energies...")
@@ -168,16 +153,14 @@ for k in range(K):
 pmf = pymbar.PMF(u_kln, N_k, verbose=True)
 # Compute PMF in unbiased potential (in units of kT).
 histogram_parameters = {}
-# TODO: Where is `bin_edges` defined?
 histogram_parameters["bin_edges"] = [bin_edges]
-# TODO: Where is `chi_n` defined? Is it `chi_kn`?
 pmf.generate_pmf(u_kn, chi_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
 results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
 center_f_i = results["f_i"]
 center_df_i = results["df_i"]
 
 # Write out PMF
-print("PMF (in units of kT)")
+print("PMF (in units of kT), from histogramming")
 print(f"{'bin':8s} {'f':8s} {'df':8s}")
 for i in range(nbins):
     print(f"{bin_center_i[i]:8.1f} {center_f_i[i]:8.3f} {center_df_i[i]:8.3f}")
@@ -185,12 +168,12 @@ for i in range(nbins):
 # NOW KDE:
 kde_parameters = {}
 kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
-# TODO: Where is `chi_n` defined? Is it `chi_kn`?
 pmf.generate_pmf(u_kn, chi_n, pmf_type="kde", kde_parameters=kde_parameters)
 results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
 # Write out PMF for KDE
 center_f_i = results["f_i"]
-print("PMF (in units of kT)")
+print("")
+print("PMF (in units of kT), from KDE")
 print(f"{'bin':8s} {'f':8s}")
 for i in range(nbins):
     print(f"{bin_center_i[i]:8.1f} {center_f_i[i]:8.3f}")
