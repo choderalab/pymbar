@@ -72,6 +72,10 @@ jobs:
     - name: Run examples
       shell: bash
       run: |
+        if [[ ${CI_OS} == windows-* ]]; then
+          export TEMP="$GITHUB_WORKSPACE/tmp"
+          mkdir -p ${TEMP}
+        fi
         . devtools/github-actions/initialize_conda.sh
         conda activate test
         ### constant-force-optical-trap
