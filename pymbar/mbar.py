@@ -58,7 +58,6 @@ DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 # MBAR class definition
 # =========================================================================
 
-
 class MBAR:
     """
 

@@ -73,13 +73,10 @@ def self_consistent_update(u_kn, N_k, f_k):
 
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
 
-    states_with_samples = N_k > 0
+    u_kn_nonzero, N_k_nonzero, f_k_nonzero, states_with_samples = get_nonzero_states(u_kn, N_k, f_k)
 
     # Only the states with samples can contribute to the denominator term.
-    log_denominator_n = logsumexp(
-        f_k[states_with_samples] - u_kn[states_with_samples].T, b=N_k[states_with_samples], axis=1
-    )
-
+    log_denominator_n = logsumexp(f_k_nonzero - u_kn_nonzero.T, b=N_k_nonzero, axis=1)
     # All states can contribute to the numerator term.
     return -1.0 * logsumexp(-log_denominator_n - u_kn, axis=1)
 
@@ -415,7 +412,7 @@ def precondition_u_kn(u_kn, N_k, f_k):
     should give maximum precision in the objective function.
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-    u_kn = u_kn - u_kn.min(0)
+    u_kn -= u_kn.min(axis=0)  # do not use u_kn = u_kn + X, creates new u_kn array.
     u_kn += (logsumexp(f_k - u_kn.T, b=N_k, axis=1)) - N_k.dot(f_k) / float(N_k.sum())
     return u_kn
 
@@ -628,17 +625,13 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
     f_k : np.ndarray, shape=(n_states), dtype='float'
         The free energies of states
     """
-    states_with_samples = np.where(N_k > 0)[0]
 
+    u_kn_nonzero, N_k_nonzero, f_k_nonzero, states_with_samples = get_nonzero_states(u_kn,N_k,f_k)
     if len(states_with_samples) == 1:
         f_k_nonzero = np.array([0.0])
     else:
-        f_k_nonzero, all_results = solve_mbar(
-            u_kn[states_with_samples],
-            N_k[states_with_samples],
-            f_k[states_with_samples],
-            solver_protocol=solver_protocol,
-        )
+        f_k_nonzero, all_results = solve_mbar(u_kn_nonzero, N_k_nonzero,
+                                              f_k_nonzero, solver_protocol=solver_protocol)
 
     f_k[states_with_samples] = f_k_nonzero
 
@@ -649,3 +642,44 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
     f_k -= f_k[0]
 
     return f_k
+
+def get_nonzero_states(u_kn, N_k, f_k):
+    """return only nonzero states.
+
+    Parameters
+
+    u_kn : np.ndarray, shape=(n_states, n_samples), dtype='float'
+        The reduced potential energies or unnormalized probabilities
+    N_k : np.ndarray, shape=(n_states), dtype='int'
+        The number of samples in each state
+    f_k : np.ndarray, shape=(n_states), dtype='float'
+        The reduced free energies of each state
+
+    Returns
+    -------
+    u_kn_nonzero : np.ndarray, shape=(len(states_with_samples), n_samples), dtype='float'
+        The reduced potential energies or unnormalized probabilities
+    N_k : np.ndarray, shape=(len(states_with_samples), dtype='float'
+        The number of samples in each state.  Converted to float because this cast is required when log is calculated.
+    f_k : np.ndarray, shape=(len(states_with_samples), dtype='float'
+        The reduced free energies of each state
+    states_with_samples: np.ndarray, shape=(len(states_with_samples), dtype= 'int'
+        The array of states that have samples
+    """
+
+    states_with_samples = np.where(N_k > 0)[0]
+
+    # if all states are nonzero, don't copy the arrays to save memory
+
+    # if all states have samples, can save memory by passing the address of the array
+    if np.array_equal(states_with_samples,np.arange(len(N_k))):
+        u_kn_nonzero = u_kn
+        N_k_nonzero = N_k
+        f_k_nonzero = f_k
+
+    else:
+        u_kn_nonzero = u_kn[states_with_samples]
+        N_k_nonzero = N_k[states_with_samples]
+        f_k_nonzero = f_k[states_with_samples]
+
+    return u_kn_nonzero, N_k_nonzero, f_k_nonzero, states_with_samples
