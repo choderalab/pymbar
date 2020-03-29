@@ -34,7 +34,6 @@ class HarmonicOscillatorsTestCase(object):
 
     >>> x_kn, u_kln, N_k = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
     >>> x_n, u_kn, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
-    >>> w_F, w_R, N_k = testcase.sample(N_k=[40, 50], mode='wFwR')
     >>> testcase = HarmonicOscillatorsTestCase(O_k=[0, 1], K_k=[1, 2])
     >>> w_F, w_R, N_k = testcase.sample(N_k=[40, 50], mode='wFwR')
 
