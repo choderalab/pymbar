@@ -157,7 +157,7 @@ for k in range(K):
         g_cos = timeseries.statistical_inefficiency(np.cos(chi_radians))
         g_sin = timeseries.statistical_inefficiency(np.sin(chi_radians))
         print(f"g_cos = {g_cos:.1f} | g_sin = {g_sin:.1f}")
-        # g_k[k] = max(g_cos, g_sin)
+        # g_k[k] = max(g_cos, g_sin)  #TODO: switch?
         g_k[k] = 1
         print(f"Correlation time for set {k:5d} is {g_k[k]:10.3f}")
         indices = timeseries.subsample_correlated_data(chi_radians, g=g_k[k])
@@ -182,15 +182,7 @@ for i in range(nbins):
     bin_center_i[i] = 0.5 * (bin_edges[i] + bin_edges[i + 1])
 
 N = np.sum(N_k)
-x_n = np.zeros(N, np.int32)
 chi_n = pymbar.utils.kn_to_n(chi_kn, N_k=N_k)
-
-ntot = 0
-for k in range(K):
-    for n in range(N_k[k]):
-        # Compute bin assignment.
-        x_n[ntot] = chi_kn[k, n]
-        ntot += 1
 
 # Evaluate reduced energies in all umbrellas
 print("Evaluating reduced potential energies...")
@@ -207,7 +199,6 @@ for k in range(K):
 
 # initialize PMF with the data collected.
 basepmf = pymbar.PMF(u_kln, N_k, verbose=True)
-
 
 def bias_potential(x, k):
     """Define the bias potentials needed for umbrella sampling"""
@@ -228,7 +219,7 @@ def deltag(c, scalef=1, n=nspline):
 
 
 def ddeltag(c, scalef=1, n=nspline):
-    r"""derivative of the log prior above
+    """derivative of the log prior above
 
     The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
     this is unnormalized.  However, the normalization is independent of the values of the parameters, it only
@@ -444,7 +435,6 @@ plt.legend(fontsize="x-small")
 plt.title("Comparison of PMFs")
 plt.savefig(f"compare_pmf_{fig_suffix}.pdf")
 plt.clf()
-
 
 # now perform MC sampling in parameter space
 pltname = [

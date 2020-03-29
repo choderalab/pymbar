@@ -222,19 +222,23 @@ class PMF:
 
         self.mbar = pmf_mbar
 
-        self._random = np.random
-        self._seed = None
+        # TODO: eliminate this call - it's causing problems 
+        # with deepcopy, needed in some cases, since you can't
+        # copy the np.random module
+        #self._random = np.random
+        #self._seed = None
 
         if self.verbose:
             logger.info("PMF initialized")
 
-    @property
-    def seed(self):
-        return self._seed
-
-    def reset_random(self):
-        self._random = np.random
-        self._seed = None
+    #TODO: see above about not storing np.random
+    #@property
+    #def seed(self):
+    #    return self._seed
+    #
+    #def reset_random(self):
+    #    self._random = np.random
+    #    self._seed = None
 
     def generate_pmf(
         self,
@@ -358,9 +362,13 @@ class PMF:
         self.u_n = u_n
 
         if seed >= 0:
-            # Set a better seeded random state
-            self._random = np.random.RandomState(seed=seed)
-            self._seed = seed
+            np.random.seed(nseed)
+
+        #TODO: see above about storing np.random    
+        #if seed >= 0:
+        #    # Set a better seeded random state
+        #    self._random = np.random.RandomState(seed=seed)
+        #    self._seed = seed
 
         # we need to save this for calculating uncertainties.
         if not np.issubdtype(type(nbootstraps), np.integer) or nbootstraps == 1:
@@ -632,7 +640,8 @@ class PMF:
             else:
                 index = 0
                 for k in range(K):
-                    bootstrap_indices[index : index + N_k[k]] = index + self._random.randint(
+                    #TODO: address issue with storinig np.random in self
+                    bootstrap_indices[index : index + N_k[k]] = index + np.random.randint(
                         0, N_k[k], size=N_k[k]
                     )
                     index += N_k[k]
@@ -1632,9 +1641,9 @@ class PMF:
 
         self.cold = self.bspline.c
         psize = len(self.cold)
-        rchange = stepsize * self._random.normal()
+        rchange = stepsize * np.random.normal()
         cnew = self.cold.copy()
-        ci = self._random.randint(psize)
+        ci = np.random.randint(psize)
         cnew[ci] += rchange
         self.newspline.c = cnew
 
@@ -1659,7 +1668,7 @@ class PMF:
         if dlogposterior <= 0:
             accept = True
         if dlogposterior > 0:
-            if self._random.random() < np.exp(-dlogposterior):
+            if np.random.random() < np.exp(-dlogposterior):
                 accept = True
 
         if accept:
