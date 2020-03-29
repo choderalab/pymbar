@@ -51,9 +51,9 @@ def main():
 
         # Extract compressed Excel spreadsheet file and load it with xlrd
         with bz2.open(ORIGINAL_DATA / f"{dataset}_data.xls.bz2") as f:
-            with tempfile.NamedTemporaryFile(suffix=".xls") as temp:
+            with tempfile.NamedTemporaryFile(suffix=".xls", delete=False) as temp:
                 temp.write(f.read())
-                workbook = xlrd.open_workbook(temp.name)
+        workbook = xlrd.open_workbook(temp.name)
 
         # DEBUG
         print(
