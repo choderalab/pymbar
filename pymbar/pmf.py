@@ -362,7 +362,7 @@ class PMF:
         self.u_n = u_n
 
         if seed >= 0:
-            np.random.seed(nseed)
+            np.random.seed(seed)
 
         #TODO: see above about storing np.random    
         #if seed >= 0:
