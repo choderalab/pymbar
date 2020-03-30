@@ -161,7 +161,7 @@ center_df_i = results["df_i"]
 
 # Write out PMF
 print("PMF (in units of kT), from histogramming")
-print(f"{'bin':8s} {'f':8s} {'df':8s}")
+print(f"{'bin':>8s} {'f':>8s} {'df':>8s}")
 for i in range(nbins):
     print(f"{bin_center_i[i]:8.1f} {center_f_i[i]:8.3f} {center_df_i[i]:8.3f}")
 
@@ -174,6 +174,6 @@ results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
 center_f_i = results["f_i"]
 print("")
 print("PMF (in units of kT), from KDE")
-print(f"{'bin':8s} {'f':8s}")
+print(f"{'bin':>8s} {'f':>8s}")
 for i in range(nbins):
     print(f"{bin_center_i[i]:8.1f} {center_f_i[i]:8.3f}")

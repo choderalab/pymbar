@@ -71,7 +71,8 @@ T_k = np.ones(K, float) * temperature  # inital temperatures are all equal
 beta = 1.0 / (kB * temperature)  # inverse temperature of simulations (in 1/(kJ/mol))
 chi_min = -180.0  # min for PMF
 chi_max = +180.0  # max for PMF
-nbins = 30  # number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
+# number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
+nbins = 30
 
 # Allocate storage for simulation data
 N_k = np.zeros([K], np.int32)  # N_k[k] is the number of snapshots from umbrella simulation k
@@ -373,7 +374,7 @@ for methodfull in methods:
     yout = {}
     yerr = {}
     print(f"PMF (in units of kT) for {methodfull}")
-    print(f"{'bin':8s} {'f':8s} {'df':8s}")
+    print(f"{'bin':>8s} {'f':>8s} {'df':>8s}")
     results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
     for i in range(nbins):
         if results["df_i"] is not None:
