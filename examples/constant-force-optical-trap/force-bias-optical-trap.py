@@ -134,8 +134,10 @@ def main():
 
     # Determine maximum number of snapshots in all trajectories.
     filename = directory / f"{prefix}.trajectories"
-    # TODO: Do this without `wc`
-    T_max = int(subprocess.getoutput(f"wc -l {filename}").split()[0]) + 1
+    T_max = 0
+    with open(filename) as f:
+        for line in f:
+            T_max += 1
 
     # Allocate storage for original (correlated) trajectories
     T_k = np.zeros([K], int)  # T_k[k] is the number of snapshots from umbrella simulation k`
@@ -155,7 +157,7 @@ def main():
 
     # Create a list of indices of all configurations in kt-indexing.
     mask_kt = np.zeros([K, T_max], dtype=bool)
-    for k in range(0, K):
+    for k in range(K):
         mask_kt[k, 0 : T_k[k]] = True
     # Create a list from this mask.
     all_data_indices = np.where(mask_kt)
@@ -253,7 +255,7 @@ def main():
     pmf_i = f_i + np.log(bin_width_i)
     # Write out unbiased estimate of PMF
     print("Unbiased PMF (in units of kT)")
-    print(f"{'bin':8s} {'f':8s} {'df':8s} {'pmf':8s} {'width':8s}")
+    print(f"{'bin':>8s} {'f':>8s} {'df':>8s} {'pmf':>8s} {'width':>8s}")
     for i in range(nbins):
         print(
             f"{bin_center_i[i]:8.3f}",
