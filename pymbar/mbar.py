@@ -497,7 +497,7 @@ class MBAR:
 
         W = self.weights()
         O = self.N_k * (W.T @ W)
-        (eigenvals, eigevec) = linalg.eig(O)
+        eigenvals, eigevec = linalg.eig(O)
         # sort in descending order
         eigenvals = np.sort(eigenvals)[::-1]
         overlap_scalar = 1 - eigenvals[1]  # 1 minus the second largest eigenvalue
@@ -1370,7 +1370,7 @@ class MBAR:
             u_kn = self.u_kn
 
         # Retrieve N and K for convenience.
-        [K, N] = np.shape(u_kn)
+        K, N = np.shape(u_kn)
         A_in = u_kn.copy()
         state_map = np.zeros([2, K], int)
         for k in range(K):
@@ -1607,7 +1607,7 @@ class MBAR:
             # Compute singular values and right singular vectors of W without using SVD
             # Instead, we compute eigenvalues and eigenvectors of W'W.
             # Note W'W = (U S V')'(U S V') = V S' U' U S V' = V (S'S) V'
-            [S2, V] = linalg.eigh(W.T @ W)
+            S2, V = linalg.eigh(W.T @ W)
             # Set any slightly negative eigenvalues to zero.
             S2[np.where(S2 < 0.0)] = 0.0
             # Form matrix of singular values Sigma, and V.

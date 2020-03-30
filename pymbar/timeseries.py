@@ -265,7 +265,7 @@ def statistical_inefficiency_multiple(A_kn, fast=False, return_correlation_funct
         if A_kn.ndim == 1:
             A_kn_list.append(A_kn.copy())
         else:
-            [K, N] = A_kn.shape
+            K, N = A_kn.shape
             for k in range(K):
                 A_kn_list.append(A_kn[k, :].copy())
         A_kn = A_kn_list
