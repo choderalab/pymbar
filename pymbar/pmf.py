@@ -222,21 +222,21 @@ class PMF:
 
         self.mbar = pmf_mbar
 
-        # TODO: eliminate this call - it's causing problems 
+        # TODO: eliminate this call - it's causing problems
         # with deepcopy, needed in some cases, since you can't
         # copy the np.random module
-        #self._random = np.random
-        #self._seed = None
+        # self._random = np.random
+        # self._seed = None
 
         if self.verbose:
             logger.info("PMF initialized")
 
-    #TODO: see above about not storing np.random
-    #@property
-    #def seed(self):
+    # TODO: see above about not storing np.random
+    # @property
+    # def seed(self):
     #    return self._seed
     #
-    #def reset_random(self):
+    # def reset_random(self):
     #    self._random = np.random
     #    self._seed = None
 
@@ -364,8 +364,8 @@ class PMF:
         if seed >= 0:
             np.random.seed(seed)
 
-        #TODO: see above about storing np.random    
-        #if seed >= 0:
+        # TODO: see above about storing np.random
+        # if seed >= 0:
         #    # Set a better seeded random state
         #    self._random = np.random.RandomState(seed=seed)
         #    self._seed = seed
@@ -640,7 +640,7 @@ class PMF:
             else:
                 index = 0
                 for k in range(K):
-                    #TODO: address issue with storinig np.random in self
+                    # TODO: address issue with storinig np.random in self
                     bootstrap_indices[index : index + N_k[k]] = index + np.random.randint(
                         0, N_k[k], size=N_k[k]
                     )
