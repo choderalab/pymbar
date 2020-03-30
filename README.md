@@ -68,7 +68,7 @@ Expectations and associated uncertainties can easily be estimated for observable
 >>> results = mbar.compute_expectations(A_kn)
 ```
 
-where `results` is a dictionary with keys `mu`, `sigma`, and `Theta`, where `mu[i]` is the array of the estimate for the average of the observable for in state i, `sigma[i]` is the estimated standard deviation of the `mu` estimates,  and `Theta[i,j]` is the covarinace matrix of the log weights.
+where `results` is a dictionary with keys `mu`, `sigma`, and `Theta`, where `mu[i]` is the array of the estimate for the average of the observable for in state i, `sigma[i]` is the estimated standard deviation of the `mu` estimates,  and `Theta[i,j]` is the covariance matrix of the log weights.
 
 See the docstring help for these individual methods for more information on exact usage; in Python or IPython, you can view the docstrings with `help()`.
 
