@@ -126,9 +126,8 @@ def main():
     with open(filename) as infile:
         elements = infile.readline().split()
         K = len(elements)  # number of biasing forces
-        biasing_force_k = np.zeros(
-            [K]
-        )  # biasing_force_k[k] is the constant external biasing force used to collect trajectory k (in pN)
+        # biasing_force_k[k] is the constant external biasing force used to collect trajectory k (in pN)
+        biasing_force_k = np.zeros([K])
         for k in range(K):
             biasing_force_k[k] = np.float(elements[k])
     print("biasing forces (in pN) = ", biasing_force_k)
@@ -202,7 +201,8 @@ def main():
     print("x0_k = ", x0_k)
 
     # Compute bias energies in units of kT.
-    # u_kln[k,l,n] is the reduced (dimensionless) relative potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
+    # u_kln[k,l,n] is the reduced (dimensionless) relative potential energy of
+    # snapshot n from umbrella simulation k evaluated at umbrella l
     u_kln = np.zeros([K, K, N_max])
     for k in range(K):
         for l in range(K):
@@ -242,9 +242,8 @@ def main():
     print("Computing PMF...")
     pmf = PMF(u_kln, N_k)
     histogram_parameters = dict()
-    histogram_parameters["bin_edges"] = [
-        bin_left_boundary_i
-    ]  # 1D array of parameters, one entry because 1D
+    # 1D array of parameters, one entry because 1D
+    histogram_parameters["bin_edges"] = [bin_left_boundary_i]
     pmf.generate_pmf(u_n, x_n, histogram_parameters=histogram_parameters)
     results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
     f_i = results["f_i"]
@@ -257,7 +256,11 @@ def main():
     print(f"{'bin':8s} {'f':8s} {'df':8s} {'pmf':8s} {'width':8s}")
     for i in range(nbins):
         print(
-            f"{bin_center_i[i]:8.3f} {f_i[i]:8.3f} {df_i[i]:8.3f} {pmf_i[i]:8.3f} {bin_width_i[i]:8.3f}"
+            f"{bin_center_i[i]:8.3f}",
+            f"{f_i[i]:8.3f}",
+            f"{df_i[i]:8.3f}",
+            f"{pmf_i[i]:8.3f}",
+            f"{bin_width_i[i]:8.3f}",
         )
 
     filename = output_directory / "pmf-unbiased.out"
@@ -317,7 +320,9 @@ def main():
         print(f"state {l:d} ({biasing_force_k[l]:f} pN)")
         for bin_index in range(nbins):
             print(
-                f"{bin_center_i[bin_index]:8.3f} {N_i_expected[bin_index]:10f} {N_i_observed[bin_index]:10f} +- {dN_i_observed[bin_index]:10f}"
+                f"{bin_center_i[bin_index]:8.3f}",
+                f"{N_i_expected[bin_index]:10f}",
+                f"{N_i_observed[bin_index]:10f} +- {dN_i_observed[bin_index]:10f}",
             )
 
         # Write out observed bin counts
