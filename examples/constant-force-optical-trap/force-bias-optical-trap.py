@@ -17,6 +17,10 @@ import time
 from pathlib import Path
 
 import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 import pymbar  # multistate Bennett acceptance ratio analysis (provided by pymbar)
 from pymbar import timeseries, PMF  # timeseries analysis (provided by pymbar)
@@ -227,8 +231,10 @@ def main():
     Nstart = 0
     for k in range(K):
         #    u_n[N_k[k]:N_k[k+1]] = - pN_nm_to_kT * (0.0 - biasing_force_k[k]) * x_kn[k,0:N_k[k]]
-        u_n[Nstart : Nstart + N_k[k]] = 0.0 + pN_nm_to_kT * biasing_force_k[k] * (x_kn[k, 0 : N_k[k]] - x0_k[k])
-        x_n[Nstart : Nstart + N_k[k]] = x_kn[k,0 : N_k[k]]
+        u_n[Nstart : Nstart + N_k[k]] = 0.0 + pN_nm_to_kT * biasing_force_k[k] * (
+            x_kn[k, 0 : N_k[k]] - x0_k[k]
+        )
+        x_n[Nstart : Nstart + N_k[k]] = x_kn[k, 0 : N_k[k]]
         Nstart += N_k[k]
 
     # Compute PMF in unbiased potential (in units of kT).
@@ -236,11 +242,13 @@ def main():
     print("Computing PMF...")
     pmf = PMF(u_kln, N_k)
     histogram_parameters = dict()
-    histogram_parameters['bin_edges'] = [bin_left_boundary_i] # 1D array of parameters, one entry because 1D
-    pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
-    results = pmf.get_pmf(bin_center_i, uncertainties = 'from-lowest')
-    f_i = results['f_i']
-    df_i = results['df_i']
+    histogram_parameters["bin_edges"] = [
+        bin_left_boundary_i
+    ]  # 1D array of parameters, one entry because 1D
+    pmf.generate_pmf(u_n, x_n, histogram_parameters=histogram_parameters)
+    results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
+    f_i = results["f_i"]
+    df_i = results["df_i"]
 
     # compute estimate of PMF including Jacobian term
     pmf_i = f_i + np.log(bin_width_i)
@@ -257,6 +265,14 @@ def main():
         for i in range(nbins):
             outfile.write(f"{bin_center_i[i]:8.3f} {pmf_i[i]:8.3f} {df_i[i]:8.3f}\n")
 
+    fig_filename = plot_directory / f"pmf-unbiased.pdf"
+    fig, ax = plt.subplots()
+    ax.errorbar(bin_center_i, pmf_i, yerr=df_i, fmt="_ ", elinewidth=0.3)
+    ax.set_title("Unbiased estimate of PMF")
+    ax.set_ylabel("Potential of mean force (kT)")
+    ax.set_xlabel("Extension (nm)")
+    fig.savefig(fig_filename)
+
     # DEBUG
     stop_time = time.time()
     elapsed_time = stop_time - start_time
@@ -267,10 +283,10 @@ def main():
         # compute PMF at state l
         Nstart = 0
         for k in range(K):
-            u_n[Nstart : Nstart + N_k[k]] = u_kln[k,l,0:N_k[k]]
+            u_n[Nstart : Nstart + N_k[k]] = u_kln[k, l, 0 : N_k[k]]
             Nstart += N_k[k]
-        pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
-        results = pmf.get_pmf(bin_center_i,uncertainties = 'from-lowest')
+        pmf.generate_pmf(u_n, x_n, histogram_parameters=histogram_parameters)
+        results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
         f_i = results["f_i"]
         df_i = results["df_i"]
 
@@ -342,25 +358,26 @@ def main():
             for i in range(nbins):
                 outfile.write(f"{bin_center_i[i]:8.3f} {pmf_i[i]:8.3f} {df_i[i]:8.3f}\n")
 
-        # make gnuplot plots
-        # TODO: Adapt to matplotlib
+        # make plots
         biasing_force = biasing_force_k[l]
-        filename = plot_directory / f"pmf-comparison-{l:d}.eps"
-        gnuplot_input = """
-    set term postscript color solid
-    set output "{filename}"
-    set title "{prefix} - {biasing_force:.}2f pN"
-    set xlabel "extension (nm)"
-    set ylabel "potential of mean force (kT)"
-    plot "{output_directory}/pmf-expected-{l:d}.out" u 1:2:3 with yerrorbars t "MBAR optimal estimate", "{output_directory}/pmf-observed-{l:d}.out" u 1:2:3 with yerrorbars t "observed from single experiment"
-    """
-
-        gnuplot_input_filename = plot_directory / "gnuplot.in"
-        with open(gnuplot_input_filename, "w") as f:
-            f.write(gnuplot_input)
-
-        output = subprocess.getoutput(f"gnuplot < {gnuplot_input_filename}")
-        output = subprocess.getoutput(f"epstopdf {filename}")
+        fig_filename = plot_directory / f"pmf-comparison-{l:d}.pdf"
+        fig, ax = plt.subplots()
+        ax.errorbar(
+            bin_center_i, pmf_i, yerr=df_i, fmt="x ", elinewidth=0.3, label="MBAR optimal estimate"
+        )
+        ax.errorbar(
+            bin_center_i,
+            pmf_i_observed,
+            yerr=dpmf_i_observed,
+            fmt="x ",
+            elinewidth=0.3,
+            label="Observed from single experiment",
+        )
+        ax.set_title(f"{prefix.title()} - {biasing_force:.2f} pN")
+        ax.set_ylabel("Potential of mean force (kT)")
+        ax.set_xlabel("Extension (nm)")
+        ax.legend()
+        fig.savefig(fig_filename)
 
 
 if __name__ == "__main__":
