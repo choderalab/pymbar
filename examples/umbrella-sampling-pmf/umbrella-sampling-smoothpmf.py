@@ -16,10 +16,10 @@ Reference:
 """
 import copy
 from timeit import default_timer as timer
+import matplotlib
 
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from scipy.stats import multivariate_normal
-from scipy.interpolate import BSpline
 import numpy as np  # numerical array library
 
 import pymbar  # multistate Bennett acceptance ratio
@@ -200,6 +200,7 @@ for k in range(K):
 # initialize PMF with the data collected.
 basepmf = pymbar.PMF(u_kln, N_k, verbose=True)
 
+
 def bias_potential(x, k):
     """Define the bias potentials needed for umbrella sampling"""
     dchi = x - chi0_k[k]
@@ -219,7 +220,7 @@ def deltag(c, scalef=1, n=nspline):
 
 
 def ddeltag(c, scalef=1, n=nspline):
-    """derivative of the log prior above
+    r"""derivative of the log prior above
 
     The logprior is \sum_{i}^{C-1} - scalef*(c_{i+1} - c_{i})^2
     this is unnormalized.  However, the normalization is independent of the values of the parameters, it only
@@ -263,18 +264,15 @@ def dddeltag(c, scalef=1, n=nspline):
     ddlogp[lenc - 1, lenc - 1] = -1
     ddlogp = (2 * scalef / n) * ddlogp
     # the first variable is set to zero in the MAP.
-    return ddlogp[
-        1:, 1:,
-    ]
+    return ddlogp[1:, 1:]
 
 
 times = {}  # keep track of time elaped each method takes
 
 xplot = np.linspace(chi_min, chi_max, nplot)  # number of points we are plotting
 f_i_kde = None  # We check later if these have been defined or not
-xstart = np.linspace(
-    chi_min, chi_max, nbins * 3
-)  # the data we used initially to parameterize points, from the KDE
+# the data we used initially to parameterize points, from the KDE
+xstart = np.linspace(chi_min, chi_max, nbins * 3)
 
 pmfs = {}
 for methodfull in methods:
@@ -389,14 +387,13 @@ for methodfull in methods:
     if len(xplot) <= nbins:
         errorevery = 1
     else:
-        errorevery = np.floor(len(xplot) / nbins)
+        errorevery = int(np.floor(len(xplot) / nbins))
 
     if method == "histogram":
         # handle histogram differently
         perbin = nplot // nbins
-        indices = np.arange(0, nplot, perbin) + int(
-            perbin // 2
-        )  # get the errors in the rigtht palce
+        # get the errors in the rigtt place
+        indices = np.arange(0, nplot, perbin) + int(perbin // 2)
         plt.errorbar(
             xplot[indices],
             yout[method][indices],
@@ -420,12 +417,10 @@ for methodfull in methods:
         )
 
         if "-ml" in methodfull:
-            print(
-                f"AIC for {method} with {nspline:d} splines is: {pmf.get_information_criteria(type='AIC'):f}"
-            )
-            print(
-                f"BIC for {method} with {nspline:d} splines is: {pmf.get_information_criteria(type='BIC'):f}"
-            )
+            aic = pmf.get_information_criteria(type="AIC")
+            bic = pmf.get_information_criteria(type="BIC")
+            print(f"AIC for {method} with {nspline:d} splines is: {aic:f}")
+            print(f"BIC for {method} with {nspline:d} splines is: {bic:f}")
 
 plt.xlim([chi_min, chi_max])
 plt.ylim([0, 20])
@@ -467,10 +462,10 @@ for method in mc_methods:
 
     plt.figure(2)
     plt.xlim([chi_min, chi_max])
-    CI_results = pmf.get_confidence_intervals(xplot, 2.5, 97.5, reference="zero")
-    ylow = CI_results["plow"]
-    yhigh = CI_results["phigh"]
-    plt.plot(xplot, CI_results["values"], colors[method], label=descriptions[method])
+    ci_results = pmf.get_confidence_intervals(xplot, 2.5, 97.5, reference="zero")
+    ylow = ci_results["plow"]
+    yhigh = ci_results["phigh"]
+    plt.plot(xplot, ci_results["values"], colors[method], label=descriptions[method])
     plt.plot(xplot, results_ml["f_i"], colors[method_ml], label=descriptions[method_ml])
     plt.fill_between(xplot, ylow, yhigh, color=colors[method][0], alpha=0.3)
     plt.title("PMF with 95% confidence intervals")
@@ -479,11 +474,11 @@ for method in mc_methods:
 
     plt.figure(3)
     plt.xlim([chi_min, chi_max])
-    CI_results = pmf.get_confidence_intervals(xplot, 16, 84)
-    plt.plot(xplot, CI_results["values"], colors[method], label=descriptions[method])
+    ci_results = pmf.get_confidence_intervals(xplot, 16, 84)
+    plt.plot(xplot, ci_results["values"], colors[method], label=descriptions[method])
     plt.plot(xplot, results_ml["f_i"], colors[method_ml], label=descriptions[method_ml])
-    ylow = CI_results["plow"]
-    yhigh = CI_results["phigh"]
+    ylow = ci_results["plow"]
+    yhigh = ci_results["phigh"]
     plt.fill_between(xplot, ylow, yhigh, color=colors[method][0], alpha=0.3)
     plt.xlabel("Torsion angle (degrees)")
     plt.ylabel(r"PMF (units of $k_BT$)")
@@ -498,11 +493,11 @@ for method in mc_methods:
     plt.title("Spline parameter time series")
 
     # print text results
-    CI_results = pmf.get_confidence_intervals(bin_center_i, 16, 84)
-    df = (CI_results["phigh"] - CI_results["plow"]) / 2
+    ci_results = pmf.get_confidence_intervals(bin_center_i, 16, 84)
+    df = (ci_results["phigh"] - ci_results["plow"]) / 2
     print("PMF (in units of kT) with 1 sigma errors from posterior sampling")
     for i in range(nbins):
-        print(f"{bin_center_i[i]:8.1f} {CI_results['values'][i]:8.1f} {df[i]:8.1f}")
+        print(f"{bin_center_i[i]:8.1f} {ci_results['values'][i]:8.1f} {df[i]:8.1f}")
 
     for i in range(len(pltname)):
         plt.figure(i + 1)
