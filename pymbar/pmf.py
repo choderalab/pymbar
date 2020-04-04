@@ -1304,7 +1304,7 @@ class PMF:
                 dim_breakdown = [d for d in x.shape] + [self.nbootstraps]
                 fall = np.zeros(dim_breakdown)
                 for b in range(self.nbootstraps):
-                    fall[:, :, b] = self.pmf_functions[b](x) - fmin
+                    fall[:, b] = self.pmf_functions[b](x) - fmin
                 df_i = np.std(fall, axis=-1)
 
             # uncertainites "from normalization" reference is applied, since
