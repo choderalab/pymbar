@@ -412,7 +412,17 @@ def precondition_u_kn(u_kn, N_k, f_k):
     should give maximum precision in the objective function.
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-    u_kn -= u_kn.min(axis=0)  # do not use u_kn = u_kn + X, creates new u_kn array.
+    # TODO: potential memory saving opportunity.
+    # this next command creates a new u_kn array.
+    u_kn = u_kn - u_kn.min(0)
+    # In most cases, we don't need this new array, since it is internal, but in some
+    # function calls (at least compute_perturbed_energies, and some PMF calls),
+    # this array turns out to to be external data, that one
+    # does NOT want to alter.  So we'll have to keep this for now.
+    # if we could figure out a way to address than, one can use the below call,
+    # u_kn -= u_kn.min(axis=0)
+    # which does not create a new array.
+
     u_kn += (logsumexp(f_k - u_kn.T, b=N_k, axis=1)) - N_k.dot(f_k) / float(N_k.sum())
     return u_kn
 
