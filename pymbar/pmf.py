@@ -99,11 +99,11 @@ class PMF:
 
            get_kde: return the underlying kde object.
 
-           sampleParameterDistribution: Only works for pmf_type =
+           sample_parameter_distribution: Only works for pmf_type =
            'spline'. Sample the space of spline parameters according
            to the likelihood function.
 
-           getConfidenceIntervals: if sampleParameterDistribution has
+           get_confidence_intervals: if sample_parameter_distribution has
            been called, generates confidence intervals for the curves
            given the posterior distribution.
 
@@ -139,7 +139,7 @@ class PMF:
 
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
-        >>> pmf(u_kn, N_k)
+        >>> pmf = PMF(u_kn, N_k)
 
         """
         for key, val in kwargs.items():
@@ -222,19 +222,23 @@ class PMF:
 
         self.mbar = pmf_mbar
 
-        self._random = np.random
-        self._seed = None
+        # TODO: eliminate this call - it's causing problems
+        # with deepcopy, needed in some cases, since you can't
+        # copy the np.random module
+        # self._random = np.random
+        # self._seed = None
 
         if self.verbose:
             logger.info("PMF initialized")
 
-    @property
-    def seed(self):
-        return self._seed
-
-    def reset_random(self):
-        self._random = np.random
-        self._seed = None
+    # TODO: see above about not storing np.random
+    # @property
+    # def seed(self):
+    #    return self._seed
+    #
+    # def reset_random(self):
+    #    self._random = np.random
+    #    self._seed = None
 
     def generate_pmf(
         self,
@@ -320,7 +324,7 @@ class PMF:
         >>> # Generate some test data
         >>> from pymbar import testsystems
         >>> from pymbar import PMF
-        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn',seed=0)
+        >>> x_n, u_kn, N_k, s_n = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn',seed=0)
         >>> # Select the potential we want to compute the PMF for (here, condition 0).
         >>> u_n = u_kn[0, :]
         >>> # Sort into nbins equally-populated bins
@@ -331,17 +335,17 @@ class PMF:
         >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
         >>> # Compute PMF for these unequally-sized bins.
-        >>> pmf = PMF(u_kn,N_k)
+        >>> pmf = PMF(u_kn, N_k)
         >>> histogram_parameters = dict()
         >>> histogram_parameters['bin_edges'] = [bins]
-        >>> pmf.generate_pmf(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
+        >>> _ = pmf.generate_pmf(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
         >>> results = pmf.get_pmf(x_n)
         >>> f_i = results['f_i']
-        >>> for i,x_n in enumerate(x_n):
-        >>> print(x_n,f_i[i])
+        >>> for i, x_n in enumerate(x_n):  # doctest: +SKIP
+        >>>     print(x_n, f_i[i])  # doctest: +SKIP
         >>> mbar = pmf.get_mbar()
-        >>> print(mbar.f_k)
-        >>> print(N_k)
+        >>> print(mbar.f_k)  # doctest: +SKIP
+        >>> print(N_k)  # doctest: +SKIP
 
         """
 
@@ -358,9 +362,13 @@ class PMF:
         self.u_n = u_n
 
         if seed >= 0:
-            # Set a better seeded random state
-            self._random = np.random.RandomState(seed=seed)
-            self._seed = seed
+            np.random.seed(seed)
+
+        # TODO: see above about storing np.random
+        # if seed >= 0:
+        #    # Set a better seeded random state
+        #    self._random = np.random.RandomState(seed=seed)
+        #    self._seed = seed
 
         # we need to save this for calculating uncertainties.
         if not np.issubdtype(type(nbootstraps), np.integer) or nbootstraps == 1:
@@ -632,7 +640,8 @@ class PMF:
             else:
                 index = 0
                 for k in range(K):
-                    bootstrap_indices[index : index + N_k[k]] = index + self._random.randint(
+                    # TODO: address issue with storinig np.random in self
+                    bootstrap_indices[index : index + N_k[k]] = index + np.random.randint(
                         0, N_k[k], size=N_k[k]
                     )
                     index += N_k[k]
@@ -1023,20 +1032,27 @@ class PMF:
 
         """
 
-        if len(np.shape(x)) <= 1:  # if it's zero, it's a scalar.
+        if len(np.shape(x)) <= 1:  # if length is  zero, it's a scalar.
             coorddim = 1
         else:
             coorddim = np.shape(x)[1]
 
-        if self.pmf_type == "histogram":
-            if self.dims != coorddim:
-                # later, need to put coordinate check on other methods.
-                raise DataError("coordinates have inconsistent dimension with the PMF.")
+        # if it's not an array, make it one.
+        x = np.array(x)
 
         if uncertainties == "from-specified" and pmf_reference is None:
             raise ParameterError(
                 "No reference state specified for PMF using uncertainties = from-specified"
             )
+
+        # it's a 1D array, instead of a Nx1 array.  Reshape.
+        if len(np.shape(x)) <= 1:
+            x = x.reshape(-1, 1)
+
+        if self.pmf_type == "histogram":
+            if self.dims != coorddim:
+                # later, need to put coordinate check on other methods.
+                raise DataError("coordinates have inconsistent dimension with the PMF.")
 
         if self.pmf_type is None:
             raise ParameterError("pmf_type has not been set!")
@@ -1250,12 +1266,6 @@ class PMF:
 
         elif self.pmf_type == "kde":
 
-            # if it's not an array, make it one.
-            x = np.array(x)
-
-            # it's a 1D array, instead of a Nx1 array.  Reshape.
-            if len(np.shape(x)) <= 1:
-                x = x.reshape(-1, 1)
             f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
 
             if uncertainties == "from-lowest":
@@ -1283,6 +1293,10 @@ class PMF:
 
         elif self.pmf_type == "spline":
 
+            # for splines now, should only be 1D.  x is passed in as a 2D array, need to covert
+            # back to 1D array before being put in pmf_function (which will preserve shape)
+            x = x[:, 0]
+            # before being put here, needs to be converted back
             f_i = self.pmf_function(x)
 
             if uncertainties == "from-lowest":
@@ -1297,8 +1311,9 @@ class PMF:
             else:
                 dim_breakdown = [d for d in x.shape] + [self.nbootstraps]
                 fall = np.zeros(dim_breakdown)
+
                 for b in range(self.nbootstraps):
-                    fall[:, :, b] = self.pmf_functions[b](x) - fmin
+                    fall[:, b] = self.pmf_functions[b](x) - fmin
                 df_i = np.std(fall, axis=-1)
 
             # uncertainites "from normalization" reference is applied, since
@@ -1340,7 +1355,7 @@ class PMF:
         else:
             raise ParameterError("Can't return the KernelDensity object because pmf_type != kde")
 
-    def sampleParameterDistribution(
+    def sample_parameter_distribution(
         self, x_n, mc_parameters=None, decorrelate=True, verbose=True,
     ):
 
@@ -1475,7 +1490,7 @@ class PMF:
         self.mc_data["g_parameters"] = g_c  # statistical efficiency of the parametere
         self.mc_data["g"] = guse  # statistical efficiency used for subsampling
 
-    def getConfidenceIntervals(self, xplot, plow, phigh, reference="zero"):
+    def get_confidence_intervals(self, xplot, plow, phigh, reference="zero"):
         """
         Parameters
         ----------
@@ -1535,7 +1550,7 @@ class PMF:
 
         return return_vals
 
-    def getMCData(self):
+    def get_mc_data(self):
 
         """ convenience function to get MC data
 
@@ -1635,9 +1650,9 @@ class PMF:
 
         self.cold = self.bspline.c
         psize = len(self.cold)
-        rchange = stepsize * self._random.normal()
+        rchange = stepsize * np.random.normal()
         cnew = self.cold.copy()
-        ci = self._random.randint(psize)
+        ci = np.random.randint(psize)
         cnew[ci] += rchange
         self.newspline.c = cnew
 
@@ -1662,7 +1677,7 @@ class PMF:
         if dlogposterior <= 0:
             accept = True
         if dlogposterior > 0:
-            if self._random.random() < np.exp(-dlogposterior):
+            if np.random.random() < np.exp(-dlogposterior):
                 accept = True
 
         if accept:

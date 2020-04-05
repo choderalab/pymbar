@@ -21,7 +21,7 @@ This scheme is implemented in the :func:`detect_equilibration` method:
 .. code-block:: python
 
    from pymbar import timeseries
-   [t0, g, Neff_max] = timeseries.detect_equilibration(A_t) # compute indices of uncorrelated timeseries
+   t0, g, Neff_max = timeseries.detect_equilibration(A_t) # compute indices of uncorrelated timeseries
    A_t_equil = A_t[t0:]
    indices = timeseries.subsample_correlated_data(A_t_equil, g=g)
    A_n = A_t_equil[indices]
@@ -44,7 +44,7 @@ timeseries is long.
 .. code-block:: python
 
    nskip = 10 # only try every 10 samples for time origins
-   [t0, g, Neff_max] = timeseries.detect_equilibration(A_t, nskip=nskip)
+   t0, g, Neff_max = timeseries.detect_equilibration(A_t, nskip=nskip)
 
 Subsampling timeseries data
 ---------------------------
