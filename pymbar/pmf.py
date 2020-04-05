@@ -1029,20 +1029,27 @@ class PMF:
 
         """
 
-        if len(np.shape(x)) <= 1:  # if it's zero, it's a scalar.
+        if len(np.shape(x)) <= 1:  # if length is  zero, it's a scalar.
             coorddim = 1
         else:
             coorddim = np.shape(x)[1]
 
-        if self.pmf_type == "histogram":
-            if self.dims != coorddim:
-                # later, need to put coordinate check on other methods.
-                raise DataError("coordinates have inconsistent dimension with the PMF.")
+        # if it's not an array, make it one.
+        x = np.array(x)
 
         if uncertainties == "from-specified" and pmf_reference is None:
             raise ParameterError(
                 "No reference state specified for PMF using uncertainties = from-specified"
             )
+
+        # it's a 1D array, instead of a Nx1 array.  Reshape.
+        if len(np.shape(x)) <= 1:
+            x = x.reshape(-1, 1)
+
+        if self.pmf_type == "histogram":
+            if self.dims != coorddim:
+                # later, need to put coordinate check on other methods.
+                raise DataError("coordinates have inconsistent dimension with the PMF.")
 
         if self.pmf_type is None:
             raise ParameterError("pmf_type has not been set!")
@@ -1256,12 +1263,6 @@ class PMF:
 
         elif self.pmf_type == "kde":
 
-            # if it's not an array, make it one.
-            x = np.array(x)
-
-            # it's a 1D array, instead of a Nx1 array.  Reshape.
-            if len(np.shape(x)) <= 1:
-                x = x.reshape(-1, 1)
             f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
 
             if uncertainties == "from-lowest":
@@ -1289,6 +1290,10 @@ class PMF:
 
         elif self.pmf_type == "spline":
 
+            # for splines now, should only be 1D.  x is passed in as a 2D array, need to covert
+            # back to 1D array before being put in pmf_function (which will preserve shape)
+            x = x[:,0]
+            # before being put here, needs to be converted back 
             f_i = self.pmf_function(x)
 
             if uncertainties == "from-lowest":
@@ -1303,8 +1308,9 @@ class PMF:
             else:
                 dim_breakdown = [d for d in x.shape] + [self.nbootstraps]
                 fall = np.zeros(dim_breakdown)
+
                 for b in range(self.nbootstraps):
-                    fall[:, b] = self.pmf_functions[b](x) - fmin
+                    fall[:,b] = self.pmf_functions[b](x) - fmin
                 df_i = np.std(fall, axis=-1)
 
             # uncertainites "from normalization" reference is applied, since

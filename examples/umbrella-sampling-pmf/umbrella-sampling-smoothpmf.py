@@ -39,7 +39,7 @@ mc_methods = []  # which methods to run MCMC sampling on (much slower).
 # Just replace '3' with the desired degree below. 1-5 suggested.
 spline_degree = 3
 nspline = 16  # number of spline knots used for the fit.
-nbootstraps = 5  # should increase to ~50 for good statistics
+nbootstraps = 2  # should increase to ~50 for good statistics
 mc_iterations = 50000  # could take a while.
 smoothness_scalefac = 0.01
 fig_suffix = "test1"  # figure suffix for identifiability of the output!
