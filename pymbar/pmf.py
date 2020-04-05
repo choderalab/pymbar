@@ -1292,8 +1292,8 @@ class PMF:
 
             # for splines now, should only be 1D.  x is passed in as a 2D array, need to covert
             # back to 1D array before being put in pmf_function (which will preserve shape)
-            x = x[:,0]
-            # before being put here, needs to be converted back 
+            x = x[:, 0]
+            # before being put here, needs to be converted back
             f_i = self.pmf_function(x)
 
             if uncertainties == "from-lowest":
@@ -1310,7 +1310,7 @@ class PMF:
                 fall = np.zeros(dim_breakdown)
 
                 for b in range(self.nbootstraps):
-                    fall[:,b] = self.pmf_functions[b](x) - fmin
+                    fall[:, b] = self.pmf_functions[b](x) - fmin
                 df_i = np.std(fall, axis=-1)
 
             # uncertainites "from normalization" reference is applied, since
