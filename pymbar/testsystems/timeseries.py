@@ -32,7 +32,9 @@ def correlated_timeseries_example(N=10000, tau=5.0, seed=None):
 
     References
     ----------
-    .. [1] Janke W. Statistical analysis of simulations: Data correlations and error estimation.  In 'Quantum Simulations of Complex Many-Body Systems: From Theory to Algorithms'. NIC Series, VOl. 10, pages 423-445, 2002.
+    .. [1] Janke W. Statistical analysis of simulations: Data correlations and error estimation.
+           In 'Quantum Simulations of Complex Many-Body Systems: From Theory to Algorithms'.
+           NIC Series, VOl. 10, pages 423-445, 2002.
 
     Examples
     --------

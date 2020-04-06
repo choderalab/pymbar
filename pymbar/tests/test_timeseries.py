@@ -107,13 +107,13 @@ def test_statistical_inefficiency_fft_gaussian():
 
 def test_detectEquil():
     x = np.random.normal(size=10000)
-    (t, g, Neff_max) = timeseries.detect_equilibration(x)
+    t, g, Neff_max = timeseries.detect_equilibration(x)
 
 
 @has_statmodels
 def test_detectEquil_binary():
     x = np.random.normal(size=10000)
-    (t, g, Neff_max) = timeseries.detect_equilibration_binary_search(x)
+    t, g, Neff_max = timeseries.detect_equilibration_binary_search(x)
 
 
 @has_statmodels
@@ -151,7 +151,7 @@ def test_detectEquil_constant_trailing():
     x = np.random.normal(size=100) * 0.01
     x[50:] = 3.0
     # The input data is some MCMC chain where the trailing end of the chain is a constant sequence.
-    (t, g, Neff_max) = timeseries.detect_equilibration(x)
+    t, g, Neff_max = timeseries.detect_equilibration(x)
 
 
 def test_correlationFunctionMultiple():

@@ -246,7 +246,6 @@ class MBAR:
 
         self.samestates = []
         if self.verbose:
-
             # if, for any set of data, all reduced potential energies are the same,
             # they are probably the same state.
             #
@@ -265,8 +264,8 @@ class MBAR:
             # but not clear if needed.
 
             # pick random indices
+            # indices = np.arange(maxpoint) # can uncomment this if need to remove random choices in testing.
             indices = np.random.choice(np.arange(self.N), maxpoint)
-
             for k in range(K):
                 for l in range(k):
                     diffsum = 0
@@ -498,7 +497,7 @@ class MBAR:
 
         W = self.weights()
         O = self.N_k * (W.T @ W)
-        (eigenvals, eigevec) = linalg.eig(O)
+        eigenvals, eigevec = linalg.eig(O)
         # sort in descending order
         eigenvals = np.sort(eigenvals)[::-1]
         overlap_scalar = 1 - eigenvals[1]  # 1 minus the second largest eigenvalue
@@ -527,7 +526,7 @@ class MBAR:
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method,
-            or None to use default.  See help for computeAsymptoticCovarianceMatrix()
+            or None to use default.  See help for _computeAsymptoticCovarianceMatrix()
             for more information on various methods. (default: svd)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
@@ -642,7 +641,7 @@ class MBAR:
             large number of different situations.
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+            See help for _computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
         return_theta : bool, optional
@@ -1092,7 +1091,7 @@ class MBAR:
             diag = np.ones(2 * K, dtype=np.float64)
             diag[0:K] = diag[K : 2 * K] = inner_results["observables"] - inner_results["Amin"]
             np.fill_diagonal(Adiag, diag)
-            Theta = Adiag * inner_results["Theta"] * Adiag
+            Theta = Adiag @ inner_results["Theta"] @ Adiag  # matrix multipliction . . .
             covA_ij = np.array(
                 Theta[0:K, 0:K]
                 + Theta[K : 2 * K, K : 2 * K]
@@ -1217,7 +1216,7 @@ class MBAR:
             diag = np.ones(2 * I, dtype=np.float64)
             diag[0:I] = diag[I : 2 * I] = inner_results["observables"] - inner_results["Amin"]
             np.fill_diagonal(Adiag, diag)
-            Theta = Adiag * inner_results["Theta"] * Adiag
+            Theta = Adiag @ inner_results["Theta"] @ Adiag  # matrix multiplication
 
             if compute_uncertainty:
                 covA_ij = np.array(
@@ -1280,7 +1279,7 @@ class MBAR:
         if len(np.shape(u_ln)) == 3:
             u_ln = kln_to_kn(u_ln, N_k=self.N_k)
 
-        [L, N] = u_ln.shape
+        L, N = u_ln.shape
 
         # Check dimensions.
         if N < self.N:
@@ -1328,7 +1327,7 @@ class MBAR:
         ----------
         u_kn : float, NxK array
             The energies of the state that are being used.
-        uncertainty_method : string , optional
+        uncertainty_method : str , optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
         warning_cutoff : float, optional
@@ -1355,7 +1354,7 @@ class MBAR:
         --------
 
         >>> from pymbar import testsystems
-        >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
+        >>> x_n, u_kn, N_k, s_n = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
         >>> mbar = MBAR(u_kn, N_k)
         >>> results = mbar.compute_entropy_and_enthalpy()
 
@@ -1371,7 +1370,7 @@ class MBAR:
             u_kn = self.u_kn
 
         # Retrieve N and K for convenience.
-        [K, N] = np.shape(u_kn)
+        K, N = np.shape(u_kn)
         A_in = u_kn.copy()
         state_map = np.zeros([2, K], int)
         for k in range(K):
@@ -1559,7 +1558,7 @@ class MBAR:
             method = "svd-ew"
 
         # Get dimensions of weight matrix.
-        [N, K] = W.shape
+        N, K = W.shape
 
         # Check dimensions
         if K != N_k.size:
@@ -1586,9 +1585,8 @@ class MBAR:
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
-            [U, S, Vt] = linalg.svd(
-                W, full_matrices=False
-            )  # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            U, S, Vt = linalg.svd(W, full_matrices=False)
             Sigma = np.diag(S)
             V = Vt.T
 
@@ -1609,7 +1607,7 @@ class MBAR:
             # Compute singular values and right singular vectors of W without using SVD
             # Instead, we compute eigenvalues and eigenvectors of W'W.
             # Note W'W = (U S V')'(U S V') = V S' U' U S V' = V (S'S) V'
-            [S2, V] = linalg.eigh(W.T @ W)
+            S2, V = linalg.eigh(W.T @ W)
             # Set any slightly negative eigenvalues to zero.
             S2[np.where(S2 < 0.0)] = 0.0
             # Form matrix of singular values Sigma, and V.
@@ -1622,7 +1620,7 @@ class MBAR:
 
         else:
             # Raise an exception.
-            raise ParameterError("Method " + method + " unrecognized.")
+            raise ParameterError(f"Method {method} unrecognized.")
 
         return Theta
 
@@ -1632,11 +1630,14 @@ class MBAR:
         """
         Compute an initial guess at the relative free energies.
 
-        OPTIONAL ARGUMENTS
-        verbose (boolean) - If True, will print debug information (default: False)
-        method (string) - Method for initializing guess at free energies.
-        'zeros' - all free energies are initially set to zero
-        'mean-reduced-potential' - the mean reduced potential is used
+        Parameters
+        ----------
+        verbose : bool, optional=False
+            If True, will print debug information
+        method : str, optional=zeros
+            Method for initializing guess at free energies.
+            * zeros: all free energies are initially set to zero
+            * mean-reduced-potential: the mean reduced potential is used
 
         """
 
@@ -1657,7 +1658,9 @@ class MBAR:
                 means[k] = self.u_kn[k, 0 : self.N_k[k]].mean()
             if np.max(np.abs(means)) < 0.000001:
                 logger.warning(
-                    "Warning: All mean reduced potentials are close to zero. If you are using energy differences in the u_kln matrix, then the mean reduced potentials will be zero, and this is expected behavoir."
+                    "Warning: All mean reduced potentials are close to zero. "
+                    "If you are using energy differences in the u_kln matrix, "
+                    "then the mean reduced potentials will be zero, and this is expected behavoir."
                 )
             self.f_k = means
         elif method == "BAR":
