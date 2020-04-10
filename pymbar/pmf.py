@@ -387,13 +387,13 @@ class PMF:
         self.mc_data = None  # we have not sampled MC data yet.
 
         if self.pmf_type == "histogram":
-            self._setup_pmf_histogram()
+            self._setup_pmf_histogram(histogram_parameters)
                 
         elif pmf_type == "kde":
-            self._setup_pmf_kde() 
+            self._setup_pmf_kde(kde_parameters) 
 
         elif pmf_type == "spline":
-            self._setup_pmf_spline()
+            self._setup_pmf_spline(spline_parameters)
 
         else:
             raise ParameterError("pmf_type {:s} is not defined!".format(pmf_type))
@@ -454,12 +454,18 @@ class PMF:
 
         return result_vals  # should we return results under some other conditions?
 
-    def _setup_pmf_histogram(histogram_parameters):
+    def _setup_pmf_hiostogram(histogram_parameters):
 
         if "bin_edges" not in histogram_parameters:
             raise ParameterError(
                 "histogram_parameters['bin_edges'] cannot be undefined with pmf_type = histogram"
                 )
+
+        self.histogram_parametes = histogram_parameters
+        if self.nbootstraps > 0:
+            self.histogram_datas = list()
+        else:
+            self.histogram_datas = None
 
     def _generate_pmf_histogram(self, b, w_n, x):
         
@@ -567,11 +573,6 @@ class PMF:
 
             histogram_data["fbin_index"] = fbin_index
 
-            if self.nbootstraps > 0:
-                self.histogram_datas = list()
-            else:
-                self.histogram_datas = None
-
             return histogram_data
 
     def _setup_pmf_kde(kde_parameters):
@@ -599,6 +600,7 @@ class PMF:
                     )
         kde.set_params(**kde_defaults)
         
+        self.kde_parameters = kde_parameters
         if nbootstraps > 0:
             self.kdes = list()
         else:
@@ -628,10 +630,9 @@ class PMF:
     def _setup_pmf_spline(spline_parameters):
         # zero this out so we know if we haven't called it yet.
 
-        spline_data = {}
         bspline = None  #MRS TODO: what to do aboout this?
 
-        self.spline_functs = {}
+        self.spline_funcs = {}
         self.spline_funcs['f'] = self._bspline_calculate_f
         self.spline_funcs['g'] = self._bspline_calculate_g
         self.spline_funcs['h'] = self._bspline_calculate_h
@@ -666,12 +667,6 @@ class PMF:
                     raise ParameterError("d(log prior) must be included if objective is MAP")
                 if map_data["ddlogprior"] == None:
                     raise ParameterError("d^2(log prior) must be included if objective is MAP")
-
-        # need the x-range for all methods, since we need to
-        xrange = spline_parameters["xrange"]
-        # numerically integrate over this range
-        nspline = spline_parameters["nspline"]  # number of spline points.
-        kdegree = spline_parameters["kdegree"]  # degree of the spline
 
         # we need to intialize our function starting point
 
@@ -710,8 +705,22 @@ class PMF:
             if "gtol" not in spline_parameters["optimize_options"]:
                 spline_parameters["optimize_options"]["tol"] = 10 ** (-7)
 
-        if spline_parameters["spline_initialize"] == "bias_free_energies":
+        xinit, yinit = self._get_initial_spline_points()    
 
+        self.spline_data = self._get_initial_spline(xinit,yinit)
+
+        self.spline_parameters = spline_parameters
+
+        if self.nbootstraps > 0:
+            self.histogram_datas = list()
+        else:
+            self.histogram_datas = None
+
+
+    def _get_initial_spline_points(self):
+
+        spline_parameters = self.spline_parameters
+        if spline_parameters["spline_initialize"] == "bias_free_energies":
             initvals = self.mbar.f_k
             # initialize to the bias free energies
             if "bias_centers" in spline_parameters:  # if we are provided bias center, use them
@@ -724,7 +733,7 @@ class PMF:
                     tinit[0:kdegree] = xrange[0]
                     tinit[kdegree : noverfit + 1] = np.linspace(
                         xrange[0], xrange[1], num=noverfit + 1 - kdegree, endpoint=True
-                    )
+                        )
                     tinit[noverfit + 1 : noverfit + kdegree + 1] = xrange[1]
                     # problem: bin centers might not actually be sorted.
                     binit = make_lsq_spline(
@@ -745,24 +754,33 @@ class PMF:
                 xinit = spline_parameters["xinit"]
             else:
                 raise ParameterError(
-                    "spline_initialize set as explicit, but no xinit array specified"
+                "spline_initialize set as explicit, but no xinit array specified"
                 )
             if "yinit" in spline_parameters:
                 yinit = spline_parameters["yinit"]
             else:
                 raise ParameterError(
                     "spline_initialize set as explicit, but no yinit array specified"
-                )
-
+                    )
         elif spline_parameters["spline_initialize"] == "zeros":  # initialize to zero
             xinit = np.linspace(xrange[0], xrange[1], nspline + kdegree)
             yinit = np.zeros(len(xinit))
+        else:
+            raise ParameterError(
+                f"Initialization type {spline_parameters["spline_initialize"]} not recognized"
+                )
 
-        # first, construct a least squares cubic spline in the free energies to start with, set 2nd derivs zero.
-        # we assume this is decent.
+    def _get_initial_spline(xinit,yinit):
+
+        spline_data = {}
+
+        kdegree = spline_parameters["kdegree"]  # degree of the spline
+        nspline = spline_parameters["nspline"]  # number of spline points.
+        xrange = spline_parameters["xrange"]
 
         # this is kind of duplicated: figure out how to simplify.
         # t has to be of size nsplines + kdegree + 1
+
         t = np.zeros(nspline + kdegree + 1)
         t[0:kdegree] = xrange[0]
         t[kdegree : nspline + 1] = np.linspace(
@@ -773,6 +791,7 @@ class PMF:
         # initial fit function
         # problem: bin centers might not actually be sorted. Should data
         # getting to here be already sorted?
+
         sort_indices = np.argsort(xinit)
         b = make_lsq_spline(xinit[sort_indices], yinit[sort_indices], t, k=kdegree)
         # one, since the PMF is only determined up to a constant.
@@ -812,25 +831,19 @@ class PMF:
                 xrangeij[i, j, 0] = np.max([xrangei[i, 0], xrangei[j, 0]])
                 xrangeij[i, j, 1] = np.min([xrangei[i, 1], xrangei[j, 1]])
 
+        spline_data['initial_coefficients'] = xi
         spline_data['bspline_derivatives'] = db_c
         spline_data['bspline'] = b
         spline_data['xrangei'] = xrangei        
         spline_data['xrangeij'] = xrangeij        
         
-        self.spline_data = spline_data
-
-        if self.nbootstraps > 0:
-            self.histogram_datas = list()
-        else:
-            self.histogram_datas = None
-
         return spline_data
 
-    def _generate_pmf_spline(self,b, x, w_n):
+    def _generate_pmf_spline(self, b, x, w_n):
 
         if b > 0:
-            xi = self.spline_data(savexi)
-
+            xi = self.spline_data['solved_coefficients'].copy()
+            
         spline_parameters = self.spline_parameters
         func = self.spline_data.spline_funcs['f']
         grad = self.spline_data.spline_funcs['g']
@@ -867,8 +880,7 @@ class PMF:
                 options=spline_parameters["optimize_options"],
             )
             bspline = self._val_to_spline(results["x"], form="log")  #TODO: where is this saved?
-            savexi = results["x"] #TODO: where is this saved?
-            f = results["fun"] #TODO: where is this saved?
+            savexi = results["x"] 
         else:
             if "gtol" in spline_parameters["optimize_options"]:
                 tol = spline_parameters["optimize_options"]["gtol"]
@@ -923,7 +935,7 @@ class PMF:
             bspline = self._val_to_spline(xi, form="log")
 
         if b == 0:
-            savexi = xi
+            savexi = spline_data['inital_xi']
             nparameters = len(savexi)
             minus_loglike_lihood = spline_func["f"](savexi,*spline_args)
 
