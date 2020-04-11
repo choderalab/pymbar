@@ -640,8 +640,10 @@ class PMF:
             kde.set_params(**params)
         else:
             kde = self.kde
-
         kde.fit(x, sample_weight=self.w_n)
+
+        if b > 0:
+            self.kdes.append(kde)
 
     def _setup_pmf_spline(self,spline_parameters):
         # zero this out so we know if we haven't called it yet.
@@ -1125,6 +1127,11 @@ class PMF:
         bins = histogram_data["bins"]
         dims = histogram_data["dims"]
 
+        if uncertainty_method not in ["bootstrap","analytical"] and uncertainty_method is not None:
+            raise ParameterError(
+                f"Uncertainty_method {uncertainty_method} is not a valid option"
+                )            
+
         if uncertainty_method == "bootstrap":
             if self.histogram_datas is None:
                 raise ParameterError(
@@ -1167,8 +1174,6 @@ class PMF:
             # Report uncertainties in free energy difference from a given
             # point on PMF.
 
-            df_i = np.zeros(len(histogram_data["f"]), np.float64)
-
             if reference_point == "from-lowest":
                 # Determine bin index with lowest free energy.
                 j = histogram_data["f"].argmin()
@@ -1179,13 +1184,18 @@ class PMF:
                     "reference point method of 'all-differences' is not yet supported for histogram "
                     "PMF types (not implemented)"
                 )
+            f_i = histogram_data["f"] - histogram_data["f"][j]
+
+            # now calculate uncertainty for these reference_method approaches.
+            df_i = np.zeros(len(histogram_data["f"]), np.float64)
 
             if uncertainty_method == "analytical":
+                K = self.mbar.K
                 # Compute uncertainties in free energy at each gridpoint by
                 # forming matrix of W_nk.
-                N_k = np.zeros([self.mbar.K + nbins], np.int64)
+                N_k = np.zeros([K + nbins], np.int64)
                 N_k[0:K] = self.mbar.N_k
-                W_nk = np.zeros([self.mbar.N, mbar.K + nbins], np.float64)
+                W_nk = np.zeros([self.mbar.N, K + nbins], np.float64)
                 W_nk[:, 0:K] = np.exp(self.mbar.Log_W_nk)
                 
                 log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n) 
@@ -1218,7 +1228,6 @@ class PMF:
 
                     df_i = np.std(fall, axis=1)
                 # Shift free energies so that state j has zero free energy.
-            f_i = histogram_data["f"] - histogram_data["f"][j]
 
         elif reference_point == "from-normalization":
             # Determine uncertainties from normalization that \sum_i p_i = 1.
@@ -1243,7 +1252,7 @@ class PMF:
             # df_i = np.sqrt(d2f_i)
 
             raise ParameterError(
-                "uncertainty method 'from-normalization' is not currently supported for histograms"
+                "uncertainty_method 'from-normalization' is not currently supported for histograms"
             )
 
         fx_vals = np.zeros(len(x))
@@ -1278,7 +1287,8 @@ class PMF:
 
             # Return dimensionless free energy and uncertainty.
             result_vals["f_i"] = fx_vals
-            result_vals["df_i"] = dfx_vals
+            if uncertainty_method is not None:
+                result_vals["df_i"] = dfx_vals
 
         if reference_point == "all-differences":
             if uncertainty_method == "analytical":
@@ -1307,7 +1317,7 @@ class PMF:
                             dfxij_vals[i, j] = df_ij[vi, vj]
                         else:
                             dfxij_vals[i, j] = np.nan
-            else:
+            elif uncertainty_method == "bootstrap":
                 dfxij_vals = np.zeros(
                     [len(histogram_data["f"]), len(istogram_data["f"])]
                 )
@@ -1323,9 +1333,9 @@ class PMF:
                         histogram_datas[b]["f"] - hhistogram_data[b]["f"].transpose()
                     )
                 dfxij_vals = np.std(fall, axis=2)
-
-            # Return dimensionless free energy and uncertainty.
-            result_vals["df_ij"] = dfxij_vals
+            if uncertainty_method is not None:
+                # Return dimensionless free energy and uncertainty.
+                result_vals["df_ij"] = dfxij_vals
 
         return result_vals
 
