@@ -812,7 +812,7 @@ print("Computing PMF ...")
 histogram_parameters = dict()
 histogram_parameters['bin_edges'] = bin_edges
 pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
-results = pmf.get_pmf(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = 0.0)
+results = pmf.get_pmf(bin_centers[:,0], reference_point = 'from-specified', pmf_reference = 0.0)
 f_i = results['f_i']
 df_i = results['df_i']
 
@@ -820,7 +820,7 @@ df_i = results['df_i']
 kde_parameters = dict()
 kde_parameters['bandwidth'] = 0.5*dx
 pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, uncertainties='from-specified', pmf_reference = 0.0)
+results_kde = pmf.get_pmf(bin_centers, reference_point='from-specified', pmf_reference = 0.0)
 f_ik = results_kde['f_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest
@@ -928,14 +928,14 @@ histogram_parameters['bin_edges'] = [np.linspace(xmin,xmax,nbinsperdim+1),np.lin
 pmf.generate_pmf(u_n, x_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
 delta = 0.0001  # to break ties in things being too close.
 
-results = pmf.get_pmf(bin_centers+delta, uncertainties = 'from-specified', pmf_reference = [0,0])
+results = pmf.get_pmf(bin_centers+delta, reference_point = 'from-specified', pmf_reference = [0,0])
 f_i = results['f_i']
 df_i = results['df_i']
 
 # now generate the kernel density estimate
 kde_parameters['bandwidth'] = 0.5*dx
 pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, uncertainties='from-specified',pmf_reference = [0,0])
+results_kde = pmf.get_pmf(bin_centers, reference_point='from-specified',pmf_reference = [0,0])
 f_ik = results_kde['f_i']
 
 # Show free energy and uncertainty of each occupied bin relative to lowest
