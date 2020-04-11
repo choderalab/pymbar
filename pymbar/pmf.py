@@ -424,27 +424,27 @@ class PMF:
 
             # Compute unnormalized log weights for the given reduced potential
             # u_n, needed for all methods.
-            log_w_n = mbar._computeUnnormalizedLogWeights(self.u_n[bootstrap_indices])
+            log_w_nb = mbar._computeUnnormalizedLogWeights(self.u_n[bootstrap_indices])
             # calculate a few other things used for multiple methods
-            max_log_w_n = np.max(log_w_n)  # we need to solve underflow.
-            w_nb = np.exp(log_w_n - max_log_w_n)
-            w_nb = self.w_n / np.sum(self.w_n)  # nomalize the weights
+            max_log_w_nb = np.max(log_w_nb)  # we need to solve underflow.
+            w_nb = np.exp(log_w_nb - max_log_w_nb)
+            w_nb = w_nb / np.sum(w_nb)  # normalize the weights
             # normalized weights for all states.
             w_knb = np.exp(mbar.Log_W_nk)
 
             if b == 0:
                 self.w_n = w_nb
-                self.w_kn = w_kn
+                self.w_kn = w_knb
 
             if self.pmf_type == "histogram":
-                self._generate_pmf_histogram(b, x_nb, w_nb)
+                # not clear if need to pass both w_nb and log_w_nb, but saves some processing
+                self._generate_pmf_histogram(b, x_nb, w_nb, log_w_nb) 
 
-            elif self.mf_type == "kde":
-                self._generate_kde_histogram(b,x_nb,w_nb)
+            elif self.pmf_type == "kde":
+                self._generate_pmf_kde(b, x_nb, w_nb)
 
             elif self.pmf_type == "spline":
-
-                self._generate_pmf_spline(b, w_n, self.spline_parameters, spline_funcs)
+                self._generate_pmf_spline(b, x_nb, w_nb)
                 
         # we put the timings outside, since the switch / common stuff is really
         # low.
@@ -454,21 +454,22 @@ class PMF:
 
         return result_vals  # should we return results under some other conditions?
 
-    def _setup_pmf_hiostogram(histogram_parameters):
+    def _setup_pmf_histogram(self,histogram_parameters):
 
         if "bin_edges" not in histogram_parameters:
             raise ParameterError(
                 "histogram_parameters['bin_edges'] cannot be undefined with pmf_type = histogram"
                 )
 
-        self.histogram_parametes = histogram_parameters
+        self.histogram_parameters = histogram_parameters
+ 
         if self.nbootstraps > 0:
             self.histogram_datas = list()
         else:
             self.histogram_datas = None
 
-    def _generate_pmf_histogram(self, b, w_n, x):
-        
+    def _generate_pmf_histogram(self, b, x, w_nb, log_w_nb):
+
         # store the data that will be regenerated each time.
         # We will not try to regenerate the bin locations each time,
         # as that would make it hard to calculate uncertainties.
@@ -477,6 +478,8 @@ class PMF:
         histogram_parameters = self.histogram_parameters
         bins = histogram_parameters["bin_edges"]
         dims = len(bins)
+
+        histogram_data = {}
         histogram_data["dims"] = dims # store the dimensionality for checking later.
         histogram_data["bins"] = bins  # save for other functions.
 
@@ -486,96 +489,100 @@ class PMF:
         if len(np.shape(x)) == 1:
             x = x.reshape(-1, 1)
 
-            bin_n = np.zeros(x.shape, np.int64)
+        bin_n = np.zeros(x.shape, np.int64)
 
-            for d in range(dims):
-                # bins returns 0 as out of bin.  We want to use -1 as out
-                # of bin
-                bin_n[:, d] = np.digitize(x[:, d], bins[d]) - 1
+        for d in range(dims):
+            # bins returns 0 as out of bin.  We want to use -1 as out
+            # of bin
+            bin_n[:, d] = np.digitize(x[:, d], bins[d]) - 1
 
-            histogram_data["bin_n"] = bin_n  # bin counts
+        histogram_data["bin_n"] = bin_n  # bin counts
 
-            # now we need to loop over the bin_n and identify and label the
-            # nonzero bins.
+        # now we need to loop over the bin_n and identify and label the
+        # nonzero bins.
 
-            # a list of the bins with at least one sample in them.
-            nonzero_bins = list()
-            # for each sample, the index of the nonzero_bins element it
-            # belongs to.
-            nonzero_bins_index = np.zeros(self.N, dtype=int)
-            for n in range(self.N):
-                if np.any(bin_n[n] < 0):
-                    nonzero_bins_index[n] = -1
-                    continue  # this sample is out of grid
-                if dims == 1:
-                    ind2 = bin_n[n]  # which bin sample n is in
-                else:
-                    # which bin (labeled N-d) sample n is in
-                    ind2 = tuple(bin_n[n])
-                if ind2 not in nonzero_bins:
-                    # this bin has a sample.  Add it to the list
-                    nonzero_bins.append(ind2)
-                nonzero_bins_index[n] = nonzero_bins.index(
-                    ind2
-                )  # the index of the nonzero bins
+        # a list of the bins with at least one sample in them.
+        nonzero_bins = list()
 
-            histogram_data["nbins"] = (
-                np.int(np.max(nonzero_bins_index)) + 1
-            )  # the total number of nonzero bins
-            histogram_data["bin_n"] = nonzero_bins_index
+        # for each sample, the index of the nonzero_bins element it
+        # belongs to.
+        nonzero_bins_index = np.zeros(self.N, dtype=int)
+        for n in range(self.N):
+            if np.any(bin_n[n] < 0):
+                nonzero_bins_index[n] = -1
+                continue  # this sample is out of grid
+            if dims == 1:
+                ind2 = bin_n[n]  # which bin sample n is in
+            else:
+                # which bin (labeled N-d) sample n is in
+                ind2 = tuple(bin_n[n])
+            if ind2 not in nonzero_bins:
+                # this bin has a sample.  Add it to the list
+                nonzero_bins.append(ind2)
+            nonzero_bins_index[n] = nonzero_bins.index(
+                ind2
+            )  # the index of the nonzero bins
 
-            # Compute the free energies for these histogram states with
-            # samples
+        histogram_data["nbins"] = (
+            np.int(np.max(nonzero_bins_index)) + 1
+        )  # the total number of nonzero bins
+        histogram_data["bin_n"] = nonzero_bins_index
 
-            f_i = np.zeros([histogram_data["nbins"]], np.float64)
-            df_i = np.zeros([histogram_data["nbins"]], np.float64)
+        # Compute the free energies for these histogram states with
+        # samples
 
-            for i in range(histogram_data["nbins"]):
-                # Get linear n-indices of samples that fall in this bin.
-                indices = np.where(histogram_data["bin_n"] == i)
+        f_i = np.zeros([histogram_data["nbins"]], np.float64)
+        df_i = np.zeros([histogram_data["nbins"]], np.float64)
 
-                # Sanity check.
-                if len(indices) == 0:
-                    raise DataError(
-                        "WARNING: bin %d has no samples -- all bins must have at least one sample."
-                        % i
-                     )
+        for i in range(histogram_data["nbins"]):
+            # Get linear n-indices of samples that fall in this bin.
+            indices = np.where(histogram_data["bin_n"] == i)
 
-                # Compute dimensionless free energy of occupying state i.
-                f_i[i] = -logsumexp(log_w_n[indices])
+            # Sanity check.
+            if len(indices) == 0:
+                raise DataError(
+                    "WARNING: bin %d has no samples -- all bins must have at least one sample."
+                    % i
+                 )
 
-            # store the free energies for this bin
-            histogram_data["f"] = f_i
+            # Compute dimensionless free energy of occupying state i.
+            f_i[i] = -logsumexp(log_w_nb[indices])
 
-            # now assign back the free energy from the sample_only bins to
-            # all of the bins.
+        # store the free energies for this bin
+        histogram_data["f"] = f_i
 
-            # rebuild the graph from the edges.
-            corner_vectors = list()
-            returnsize = list()
-            for d in range(dims):
-                maxv = len(bins[d]) - 1
-                corner_vectors.append(np.arange(0, maxv))
-                returnsize.append(maxv)
-            # iterator giving all bin locations in N dimensions.
-            gridpoints = it.product(*corner_vectors)
+        # now assign back the free energy from the sample_only bins to
+        # all of the bins.
 
-            # index in self.f where the free energy for this gridpoint is
-            # stored
-            fbin_index = np.zeros(np.array(returnsize), int)
-            for g in gridpoints:
-                if g in nonzero_bins:
-                    fbin_index[g] = nonzero_bins.index(g)
-                else:
-                    # no free energy for this index, since there are no
-                    # points.
-                    fbin_index[g] = -1
+        # rebuild the graph from the edges.
+        corner_vectors = list()
+        returnsize = list()
+        for d in range(dims):
+            maxv = len(bins[d]) - 1
+            corner_vectors.append(np.arange(0, maxv))
+            returnsize.append(maxv)
+        # iterator giving all bin locations in N dimensions.
+        gridpoints = it.product(*corner_vectors)
 
-            histogram_data["fbin_index"] = fbin_index
+        # index in self.f where the free energy for this gridpoint is
+        # stored
+        fbin_index = np.zeros(np.array(returnsize), int)
+        for g in gridpoints:
+            if g in nonzero_bins:
+                fbin_index[g] = nonzero_bins.index(g)
+            else:
+                # no free energy for this index, since there are no
+                # points.
+                fbin_index[g] = -1
 
-            return histogram_data
+        histogram_data["fbin_index"] = fbin_index
 
-    def _setup_pmf_kde(kde_parameters):
+        if b == 0:
+            self.histogram_data = histogram_data
+        else:
+            self.histogram_datas.append(histogram_data)
+
+    def _setup_pmf_kde(self,kde_parameters):
 
         try:
             from sklearn.neighbors import KernelDensity
@@ -601,7 +608,7 @@ class PMF:
         kde.set_params(**kde_defaults)
         
         self.kde_parameters = kde_parameters
-        if nbootstraps > 0:
+        if self.nbootstraps > 0:
             self.kdes = list()
         else:
             self.kdes = None
@@ -615,6 +622,15 @@ class PMF:
         if len(np.shape(x)) == 1:
             x = x.reshape(-1, 1)
 
+        #TODO: figure out if this should be called each bootstrap run or not (shouldn't cost?)
+        #basically, just need to have KernelDensity defined here.
+        try:
+            from sklearn.neighbors import KernelDensity
+        except ImportError:
+            raise ImportError(
+                "Cannot use 'kde' type PMF without the scikit-learn module. Could not import sklearn"
+                )
+
         if b > 0:
             kde = KernelDensity()  # need to create a new one so won't get refit
             # Will take a refactor to get this correct for pylint
@@ -623,19 +639,12 @@ class PMF:
                 )
             kde.set_params(**params)
         else:
-            kde = original_kde
+            kde = self.kde
 
         kde.fit(x, sample_weight=self.w_n)
 
-    def _setup_pmf_spline(spline_parameters):
+    def _setup_pmf_spline(self,spline_parameters):
         # zero this out so we know if we haven't called it yet.
-
-        bspline = None  #MRS TODO: what to do aboout this?
-
-        self.spline_funcs = {}
-        self.spline_funcs['f'] = self._bspline_calculate_f
-        self.spline_funcs['g'] = self._bspline_calculate_g
-        self.spline_funcs['h'] = self._bspline_calculate_h
 
         if "objective" not in spline_parameters:
             spline_parameters["objective"] = "ml"  # default
@@ -647,11 +656,18 @@ class PMF:
                 "objective may only be 'ml' or 'map': you have selected {:s}".format(objective)
             )
 
-        if objective == "ml":  # we are doing maximum likelihood minimization, overwrite log prior
-            map_data['logprior'] = None
-            map_data['dlogprior'] = None
-            map_data['ddlogprior'] = None
-
+        if objective == "ml":  # we are doing maximum likelihood minimization, shouldn't be any prior defined
+            if "map_data" in spline_parameters:
+                if spline_parameters["map_data"] is not None:
+                    raise ParameterError(
+                        "if 'objective' is 'ml' then 'map_data' structure containing priors should not be included"
+                        )
+            # Fill them in with Nones, so the code logic can proceed
+            spline_parameters["map_data"] = {}
+            spline_parameters["map_data"]["logprior"] = None
+            spline_parameters["map_data"]["dlogprior"] = None
+            spline_parameters["map_data"]["ddlogprior"] = None
+             
         elif objective == "map":
             if "map_data" not in spline_parameters:
                 raise ParameterError(
@@ -682,10 +698,11 @@ class PMF:
                 
             if "tol" in spline_parameters["optimize_options"]:
                 # scipy doesn't like 'tol' within options
-                scipy_tol = spline_parameters["optimize_options"]["tol"]
+                spline_parameters["scipy_tol"] = spline_parameters["optimize_options"]["tol"]
                 spline_parameters["optimize_options"].pop("tol", None)
             else:
-                scipy_tol = None  # this is just the default anyway.
+                spline_parameters["scipy_tol"] = None  # this is just the default anyway.
+
             if spline_parameters["optimization_algorithm"] not in [
                 "Newton-CG",
                 "CG",
@@ -705,11 +722,11 @@ class PMF:
             if "gtol" not in spline_parameters["optimize_options"]:
                 spline_parameters["optimize_options"]["tol"] = 10 ** (-7)
 
+        self.spline_parameters = spline_parameters
+
         xinit, yinit = self._get_initial_spline_points()    
 
         self.spline_data = self._get_initial_spline(xinit,yinit)
-
-        self.spline_parameters = spline_parameters
 
         if self.nbootstraps > 0:
             self.histogram_datas = list()
@@ -766,13 +783,18 @@ class PMF:
             xinit = np.linspace(xrange[0], xrange[1], nspline + kdegree)
             yinit = np.zeros(len(xinit))
         else:
+            spline_initialization = spline_parameters["spline_initialize"]
             raise ParameterError(
-                f"Initialization type {spline_parameters["spline_initialize"]} not recognized"
+                f"Initialization type {spline_initialization} not recognized"
                 )
 
-    def _get_initial_spline(xinit,yinit):
+        return xinit, yinit
+
+    def _get_initial_spline(self,xinit,yinit):
 
         spline_data = {}
+
+        spline_parameters = self.spline_parameters
 
         kdegree = spline_parameters["kdegree"]  # degree of the spline
         nspline = spline_parameters["nspline"]  # number of spline points.
@@ -841,13 +863,15 @@ class PMF:
 
     def _generate_pmf_spline(self, b, x, w_n):
 
-        if b > 0:
-            xi = self.spline_data['solved_coefficients'].copy()
-            
+        if b == 0:
+            xi = self.spline_data['initial_coefficients'].copy()
+        else:
+            xi = self.spline_data['first_coefficients'].copy()
+
         spline_parameters = self.spline_parameters
-        func = self.spline_data.spline_funcs['f']
-        grad = self.spline_data.spline_funcs['g']
-        hess = self.spline_data.spline_funcs['h']
+        func = self._bspline_calculate_f
+        grad = self._bspline_calculate_g
+        hess = self._bspline_calculate_h
 
         if spline_parameters["optimization_algorithm"] != "Custom-NR":
             if spline_parameters["optimization_algorithm"] == "Newton-CG":
@@ -856,17 +880,17 @@ class PMF:
                 hessian = None
             
             spline_args = (
-                w_n,
                 x,
-                spline_parameters['nspline'],
-                spline_parameters['kdegree'],
-                spline_parameters['spline_weights'],
-                spline_parameers['xrange'],
-                self.spline_data['xrangei'],
-                self.spline_data['xrangeij'],
-                spline_parameters.map_data["logprior"],
-                spline_parameters.map_data["dlogprior"],
-                spline_parameters.map_data["ddlogprior"]
+                w_n,
+                spline_parameters["nspline"],
+                spline_parameters["kdegree"],
+                spline_parameters["spline_weights"],
+                spline_parameters["xrange"],
+                self.spline_data["xrangei"],
+                self.spline_data["xrangeij"],
+                spline_parameters["map_data"]["logprior"],
+                spline_parameters["map_data"]["dlogprior"],
+                spline_parameters["map_data"]["ddlogprior"]
                 )
             
             results = minimize(
@@ -875,7 +899,7 @@ class PMF:
                 args=spline_args,
                 method=spline_parameters["optimization_algorithm"],
                 jac=grad,
-                tol=scipy_tol,
+                tol=spline_parameters["scipy_tol"],
                 hess=hess,
                 options=spline_parameters["optimize_options"],
             )
@@ -933,11 +957,12 @@ class PMF:
                         "f = {:.10f}. gradient norm = {:.10f}".format(f, np.sqrt(dg))
                     )
             bspline = self._val_to_spline(xi, form="log")
+            savexi = xi
 
         if b == 0:
-            savexi = spline_data['inital_xi']
+            self.spline_data['first_coefficients'] = savexi
             nparameters = len(savexi)
-            minus_loglike_lihood = spline_func["f"](savexi,*spline_args)
+            minus_loglike_lihood = func(savexi,*spline_args)
 
             # now store BIC and AIC
             results = self._calculate_information_criteria(nparameters,minus_log_likelihood)
@@ -1046,23 +1071,21 @@ class PMF:
             x = x.reshape(-1, 1)
 
         if self.pmf_type == "histogram":
-            if self.dims != coorddim:
+            if self.histogram_data['dims'] != coorddim:
                 # later, need to put coordinate check on other methods.
                 raise DataError("query coordinates have inconsistent dimension with the PMF.")
 
-        get_pmf_options = (x, reference_point, pmf_reference_uncertainty_method)    
         if self.pmf_type == "histogram":
-            result_vals = get_pmf_histogram(*get_pmf_options)
+            result_vals = self._get_pmf_histogram(x, reference_point, pmf_reference, uncertainty_method)    
 
         elif self.pmf_type == "kde":
             #TODO: check dimensionality here
-            result_vals = get_pmf_kde(*get_pmf_options)
+            result_vals = self._get_pmf_kde(x, reference_point, pmf_reference, uncertainty_method)  
 
         elif self.pmf_type == "spline":
             if coordim != 1:
                 raise DataError("splines PMF only supported in 1D")
-            result_vals = get_pmf_spline(*get_pmf_options)
-
+            result_vals = self._get_pmf_spline(x,reference_point, pmf_reference, uncertainty_method)
         else:
             raise ParameterError("pmf_type {self.pmf_type} is not supported")
 
@@ -1098,7 +1121,10 @@ class PMF:
         else:
             raise ParameterError("Can't return the KernelDensity object because pmf_type != kde")
 
-    def get_pmf_histogram(self, x, reference_point = "from-lowest", uncertainty_method = None):
+    def _get_pmf_histogram(self, x, reference_point = "from-lowest", pmf_reference = None, uncertainty_method = None):
+
+        # set up structure for return data
+        result_vals = {}
 
         # figure out which bins the values are in.
         histogram_data = self.histogram_data
@@ -1308,18 +1334,18 @@ class PMF:
             # Return dimensionless free energy and uncertainty.
             result_vals["df_ij"] = dfxij_vals
 
-        return results_vals
+        return result_vals
 
-    def get_pmf_kde(self, x, reference_point = "from-normalization", pmf_reference = None, uncertainty_method = None):
+    def _get_pmf_kde(self, x, reference_point = "from-normalization", pmf_reference = None, uncertainty_method = None):
 
-        results_vals = {}
-        f_i = -kde.score_samples(x)  # gives the LOG density, which is what we want.
+        result_vals = {}
+        f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
 
         if reference_point == "from-lowest":
             fmin = np.min(f_i)
             f_i = f_i - fmin
         elif reference_point == "from-specified":
-            fmin = -kde.score_samples(np.array(pmf_reference).reshape(1, -1))
+            fmin = -self.kde.score_samples(np.array(pmf_reference).reshape(1, -1))
             f_i = f_i - fmin
         elif reference_point == 'from-normalization':
             # uncertainites "from normalization" reference is already applied, since
@@ -1344,7 +1370,7 @@ class PMF:
 
             fall = np.zeros([len(x), nbootstraps])
             for b in range(nbootstraps):
-                fall[:, b] = -kdes[b].score_samples(x) - fmin
+                fall[:, b] = -self.kdes[b].score_samples(x) - fmin
             df_i = np.std(fall, axis=1)
         else:
             raise ParameterError(f"Uncertainty method {uncertainty_method} for kde is not implemented")
@@ -1353,7 +1379,7 @@ class PMF:
 
         return result_vals
 
-    def get_pmf_spline(self, x, reference_point = "from_lowest", uncertainty_method = None):
+    def _get_pmf_spline(self, x, reference_point = "from_lowest", uncertainty_method = None):
         
         result_vals = {}
         # for splines now, should only be 1D.  x is passed in as a 2D array, need to covert
@@ -1431,7 +1457,7 @@ class PMF:
         if pmf_type != "spline":
             ParameterError("Sampling of posterior is only supported for spline type")
 
-        if self.bspline is None:
+        if self.spline_data['bspline'] is None:
             ParameterError(
                 "Need to generate a splined PMF using GeneratePMF before performing MCMC sampling"
             )
@@ -1456,20 +1482,21 @@ class PMF:
         sample_every = mc_parameters["sample_every"]
         print_every = mc_parameters["print_every"]
         logprior = mc_parameters["logprior"]
+        bspline = self.spline_data["bspline"]
 
         # ensure normalization of spline
         def prob(x):
-            return np.exp(-self.bspline(x))
+            return np.exp(-bspline(x))
 
         norm = self._integrate(spline_parameters["spline_weights"], prob, xrange[0], xrange[1])
-        self.bspline.c = self.bspline.c + np.log(norm)
+        bspline.c = bspline.c + np.log(norm)
 
         self.mc_data = dict()
         # make a copy of the original spline to preserve it.
-        self.mc_data["original_spline"] = BSpline(self.bspline.t, self.bspline.c, self.bspline.k)
+        self.mc_data["original_spline"] = BSpline(bspline.t, bspline.c, bspline.k)
 
         # this might not work as well for probability
-        c = self.bspline.c
+        c = bspline.c
         crange = np.max(c) - np.min(c)
         dc = fraction_change * crange
 
@@ -1488,7 +1515,7 @@ class PMF:
                 print(
                     "MC Step {:d} of {:d}".format(n, niterations),
                     str(results["logposterior"]),
-                    str(self.bspline.c),
+                    str(bspline.c),
                 )
 
         # We now have a distribution of samples of parameters sampled according
@@ -1852,7 +1879,9 @@ class PMF:
         nspline,
         kdegree,
         spline_weights,
-        spline_data,
+        xrange,
+        xrangei,
+        xrangeij,
         logprior,
         dlogprior,
         ddlogprior,
@@ -1869,9 +1898,9 @@ class PMF:
         kdegree: degree of spline
         spline_weights: type of spline weighting (i.e. choice of maximum likelihood)
         dlogprior: derivative of logprior with respect to the parameters, for use with MAP estimates
-        spline_data['xrange']: range the PMF is defined over
-        spline_data['xrangei:'] range the ith basis function of the spline is defined over
-        spline_data['xrangeij']: range in x and y the 2d integration of basis functions i and j are defined over.
+        xrange: range the PMF is defined over
+        xrangei: range the ith basis function of the spline is defined over
+        xrangeij: range in x and y the 2d integration of basis functions i and j are defined over.
         NOTE: xrangeij is not used, but used to keep consistent call arguments among f,g,h calls.
         logprior: log of the prior for MAP   Not needed here, but included for consistent arguments
         dlogprior: d(log prior)/xi for MAP.
@@ -2131,11 +2160,12 @@ class PMF:
 
         """
 
+        template_bspline = self.spline_data['bspline']
         # create new spline with values
         xnew = np.zeros(len(x) + 1)
-        xnew[0] = (self.bspline).c[0]
+        xnew[0] = (template_bspline).c[0]
         xnew[1:] = x
-        bspline = BSpline((self.bspline).t, xnew, (self.bspline).k)
+        bspline = BSpline((template_bspline).t, xnew, (template_bspline).k)
         if form == "exp":
             return lambda x: -np.log(bspline(x))
         elif form == "log":
