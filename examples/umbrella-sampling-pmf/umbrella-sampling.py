@@ -155,7 +155,7 @@ pmf = pymbar.PMF(u_kln, N_k, verbose=True)
 histogram_parameters = {}
 histogram_parameters["bin_edges"] = [bin_edges]
 pmf.generate_pmf(u_kn, chi_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
-results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
+results = pmf.get_pmf(bin_center_i, reference_point="from-lowest")
 center_f_i = results["f_i"]
 center_df_i = results["df_i"]
 
@@ -169,7 +169,7 @@ for i in range(nbins):
 kde_parameters = {}
 kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
 pmf.generate_pmf(u_kn, chi_n, pmf_type="kde", kde_parameters=kde_parameters)
-results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
+results = pmf.get_pmf(bin_center_i, reference_point="from-lowest")
 # Write out PMF for KDE
 center_f_i = results["f_i"]
 print("")

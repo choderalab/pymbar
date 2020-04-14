@@ -120,7 +120,8 @@ print("The harmonic oscillators have equilibrium positions:", O_k)
 print("and spring constants:", K_k)
 print(
     "and the following number of samples will be drawn from each",
-    "(can be zero if no samples drawn):", N_k
+    "(can be zero if no samples drawn):",
+    N_k,
 )
 
 
@@ -132,7 +133,7 @@ print("generating samples...")
 randomsample = testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(
     O_k=O_k, K_k=K_k, beta=beta
 )
-x_kn, u_kln, N_k = randomsample.sample(N_k, mode="u_kln", seed = seed)
+x_kn, u_kln, N_k = randomsample.sample(N_k, mode="u_kln", seed=seed)
 
 # get the unreduced energies
 U_kln = u_kln / beta
@@ -271,7 +272,7 @@ N = np.sum(N_k)
 
 for observe in observables:
     print("============================================")
-    print(f"      Testing observable \'{observe}\'")
+    print(f"      Testing observable '{observe}'")
     print("============================================")
 
     if observe == "RMS displacement":
@@ -530,7 +531,7 @@ nth = 3
 # test the nth "extra" states, O_extra[nth] & K_extra[nth]
 for observe in observables:
     print("============================================")
-    print(f"      Testing observable \'{observe}\'")
+    print(f"      Testing observable '{observe}'")
     print("============================================")
 
     if observe == "RMS displacement":
@@ -772,7 +773,7 @@ xmin = gridscale * (np.min(xrange[0][0]) - 1 / 2.0)
 xmax = gridscale * (np.max(xrange[0][1]) + 1 / 2.0)
 dx = (xmax - xmin) / nbinsperdim
 nbins = 1 + nbinsperdim ** ndim
-bin_edges = [np.linspace(xmin,xmax,nbins)] # list of bin edges.
+bin_edges = [np.linspace(xmin, xmax, nbins)]  # list of bin edges.
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
 ibin = 1
@@ -810,25 +811,27 @@ mbar_options["verbose"] = True
 pmf = PMF(u_kn, N_k, mbar_options=mbar_options)
 print("Computing PMF ...")
 histogram_parameters = dict()
-histogram_parameters['bin_edges'] = bin_edges
-pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
-results = pmf.get_pmf(bin_centers[:,0], uncertainties = 'from-specified', pmf_reference = 0.0)
-f_i = results['f_i']
-df_i = results['df_i']
+histogram_parameters["bin_edges"] = bin_edges
+pmf.generate_pmf(u_n, x_n, histogram_parameters=histogram_parameters)
+results = pmf.get_pmf(bin_centers[:, 0], reference_point="from-specified", pmf_reference=0.0)
+f_i = results["f_i"]
+df_i = results["df_i"]
 
 # now estimate the PDF with a kde
 kde_parameters = dict()
-kde_parameters['bandwidth'] = 0.5*dx
-pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, uncertainties='from-specified', pmf_reference = 0.0)
-f_ik = results_kde['f_i']
+kde_parameters["bandwidth"] = 0.5 * dx
+pmf.generate_pmf(u_n, x_n, pmf_type="kde", kde_parameters=kde_parameters)
+results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified", pmf_reference=0.0)
+f_ik = results_kde["f_i"]
 
 # Show free energy and uncertainty of each occupied bin relative to lowest
 # free energy
 
 print("1D PMF:")
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
-print("(errors correspond just to the histogram estimate f_hist, not to the kernel density estimate f_kde)")
+print(
+    "(errors correspond just to the histogram estimate f_hist, not to the kernel density estimate f_kde)"
+)
 print(
     f"{'bin':>8s} {'x':>6s} {'N':>8s} {'f_hist':>10s} {'f_kde':>10s} {'true':>10s} {'err_h':>10s} {'err_kde':>10s} {'df':>10s} {'sigmas':>8s}"
 )
@@ -924,19 +927,22 @@ for i in range(nbins):
 print("Computing PMF ...")
 pmf = PMF(u_kn, N_k)
 
-histogram_parameters['bin_edges'] = [np.linspace(xmin,xmax,nbinsperdim+1),np.linspace(ymin,ymax,nbinsperdim+1)] # list of histogram edges.
-pmf.generate_pmf(u_n, x_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
+histogram_parameters["bin_edges"] = [
+    np.linspace(xmin, xmax, nbinsperdim + 1),
+    np.linspace(ymin, ymax, nbinsperdim + 1),
+]  # list of histogram edges.
+pmf.generate_pmf(u_n, x_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
 delta = 0.0001  # to break ties in things being too close.
 
-results = pmf.get_pmf(bin_centers+delta, uncertainties = 'from-specified', pmf_reference = [0,0])
-f_i = results['f_i']
-df_i = results['df_i']
+results = pmf.get_pmf(bin_centers + delta, reference_point="from-specified", pmf_reference=[0, 0])
+f_i = results["f_i"]
+df_i = results["df_i"]
 
 # now generate the kernel density estimate
-kde_parameters['bandwidth'] = 0.5*dx
-pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, uncertainties='from-specified',pmf_reference = [0,0])
-f_ik = results_kde['f_i']
+kde_parameters["bandwidth"] = 0.5 * dx
+pmf.generate_pmf(u_n, x_n, pmf_type="kde", kde_parameters=kde_parameters)
+results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified", pmf_reference=[0, 0])
+f_ik = results_kde["f_i"]
 
 # Show free energy and uncertainty of each occupied bin relative to lowest
 # free energy

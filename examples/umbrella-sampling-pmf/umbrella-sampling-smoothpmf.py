@@ -32,7 +32,7 @@ optimize_options = {"disp": True, "tol": 10 ** (-8)}
 # histogram is self explanatory.  'kde' is a kernel density approximation. Currently it uses a
 # Gaussian kernel, but this can be adjusted in the kde_parameters section below.
 
-methods = ["unbiased-ml","histogram", "kde","biased-ml"]
+methods = ["unbiased-ml", "histogram", "kde", "biased-ml"]
 # mc_methods = ['unbiased-map'] # which methods to run MCMC sampling on (much slower).
 mc_methods = []  # which methods to run MCMC sampling on (much slower).
 # The code supports arbitrary powers of of B-splines (that are supported by scipy
@@ -311,7 +311,7 @@ for methodfull in methods:
         )
 
         # save this for initializing other types
-        results = pmf.get_pmf(xstart, uncertainties="from-lowest")
+        results = pmf.get_pmf(xstart, reference_point="from-lowest")
         f_i_kde = results["f_i"]  # kde results
 
     if method in ["unbiased", "biased", "simple"]:
@@ -375,14 +375,14 @@ for methodfull in methods:
     yerr = {}
     print(f"PMF (in units of kT) for {methodfull}")
     print(f"{'bin':>8s} {'f':>8s} {'df':>8s}")
-    results = pmf.get_pmf(bin_center_i, uncertainties="from-lowest")
+    results = pmf.get_pmf(bin_center_i, reference_point="from-lowest")
     for i in range(nbins):
         if results["df_i"] is not None:
             print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f} {results['df_i'][i]:8.1f}")
         else:
             print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f}")
 
-    results = pmf.get_pmf(xplot, uncertainties="from-lowest")
+    results = pmf.get_pmf(xplot, reference_point="from-lowest")
     yout[methodfull] = results["f_i"]
     yerr[methodfull] = results["df_i"]
     if len(xplot) <= nbins:
@@ -459,7 +459,7 @@ for method in mc_methods:
     # plot maximum likelihood as well
     method_ml = method.replace("map", "ml")
     pmf_ml = pmfs[method_ml]
-    results_ml = pmf_ml.get_pmf(xplot, uncertainties="from-lowest")
+    results_ml = pmf_ml.get_pmf(xplot, reference_point="from-lowest")
 
     plt.figure(2)
     plt.xlim([chi_min, chi_max])
