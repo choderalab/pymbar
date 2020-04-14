@@ -1132,7 +1132,7 @@ class PMF:
         if uncertainty_method not in ["bootstrap","analytical"] and uncertainty_method is not None:
             raise ParameterError(
                 f"Uncertainty_method {uncertainty_method} is not a valid option"
-                )            
+                )
 
         if uncertainty_method == "bootstrap":
             if self.histogram_datas is None:
@@ -1176,7 +1176,7 @@ class PMF:
 
             if reference_point == "from-lowest":
                 # Determine bin index with lowest free energy.
-                j = histogram_data["f"].argmin() 
+                j = histogram_data["f"].argmin()
             elif reference_point == "from-specified":
                 j = histogram_data["fbin_index"][tuple(pmf_ref_grid)]
             elif reference_point == "all-differences":

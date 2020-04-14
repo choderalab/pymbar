@@ -813,7 +813,7 @@ print("Computing PMF ...")
 histogram_parameters = dict()
 histogram_parameters['bin_edges'] = bin_edges
 pmf.generate_pmf(u_n, x_n, histogram_parameters = histogram_parameters)
-results = pmf.get_pmf(bin_centers[:,0], reference_point = 'from-specified', 
+results = pmf.get_pmf(bin_centers[:,0], reference_point = 'from-specified',
                       pmf_reference = 0.0, uncertainty_method = "analytical")
 f_ih = results['f_i']
 df_ih = results['df_i']
@@ -822,7 +822,7 @@ df_ih = results['df_i']
 kde_parameters = dict()
 kde_parameters['bandwidth'] = dx/3.0
 pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', nbootstraps = 100, kde_parameters = kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified", 
+results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified",
                           pmf_reference = 0.0, uncertainty_method = "bootstrap")
 f_ik = results_kde['f_i']
 df_ik = results_kde['df_i']
@@ -833,7 +833,7 @@ df_ik = results_kde['df_i']
 print("1D PMF:")
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
 print(
-    f"{'bin':>8s} {'x':>6s} {'N':>8s} {'true':>10s}" 
+    f"{'bin':>8s} {'x':>6s} {'N':>8s} {'true':>10s}"
     f"{'f_hist':>10s} {'err_hist':>10s} {'df_hist':>10s} {'sig_hist':>8s}"
     f"{'f_kde':>10s} {'err_kde':>10s} {'df_kde':>10s} {'sig_kde':>8s}"
     )
@@ -942,16 +942,15 @@ histogram_parameters["bin_edges"] = [
 pmf.generate_pmf(u_n, x_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
 delta = 0.0001  # to break ties in things being too close.
 
-results = pmf.get_pmf(bin_centers+delta, reference_point = 'from-specified', 
+results = pmf.get_pmf(bin_centers+delta, reference_point = 'from-specified',
                       pmf_reference = [0,0], uncertainty_method = "analytical")
 f_i = results['f_i']
 df_i = results['df_i']
 
 # now generate the kernel density estimate
 kde_parameters['bandwidth'] = 0.5*dx
-# kind of a low number of bootstraps
-pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters) 
-results_kde = pmf.get_pmf(bin_centers, reference_point='from-specified', 
+pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', kde_parameters = kde_parameters)
+results_kde = pmf.get_pmf(bin_centers, reference_point='from-specified',
                           pmf_reference = [0,0])
 f_ik = results_kde['f_i']
 

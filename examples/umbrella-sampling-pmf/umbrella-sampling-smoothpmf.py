@@ -311,7 +311,7 @@ for methodfull in methods:
         )
 
         # save this for initializing other types
-        results = pmf.get_pmf(xstart, reference_point="from-lowest")
+        results = pmf.get_pmf(xstart, reference_point="from-lowest", uncertainty_method=None)
         f_i_kde = results["f_i"]  # kde results
 
     if method in ["unbiased", "biased", "simple"]:
@@ -382,7 +382,7 @@ for methodfull in methods:
         else:
             print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f}")
 
-    results = pmf.get_pmf(xplot, reference_point="from-lowest")
+    results = pmf.get_pmf(xplot, reference_point="from-lowest", uncertainty_method = "analytical")
     yout[methodfull] = results["f_i"]
     yerr[methodfull] = results["df_i"]
     if len(xplot) <= nbins:
@@ -459,7 +459,7 @@ for method in mc_methods:
     # plot maximum likelihood as well
     method_ml = method.replace("map", "ml")
     pmf_ml = pmfs[method_ml]
-    results_ml = pmf_ml.get_pmf(xplot, reference_point="from-lowest")
+    results_ml = pmf_ml.get_pmf(xplot, reference_point="from-lowest", uncertainty_method = None)
 
     plt.figure(2)
     plt.xlim([chi_min, chi_max])
