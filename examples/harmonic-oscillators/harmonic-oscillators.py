@@ -819,8 +819,8 @@ df_ih = results['df_i']
 
 # now estimate the PDF with a kde
 kde_parameters = dict()
-kde_parameters['bandwidth'] = 0.5*dx
-pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', nbootstraps = 200, kde_parameters = kde_parameters)
+kde_parameters['bandwidth'] = dx/3.0
+pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', nbootstraps = 100, kde_parameters = kde_parameters)
 results_kde = pmf.get_pmf(bin_centers, reference_point='from-specified', 
                           pmf_reference = 0.0, uncertainty_method = "bootstrap")
 f_ik = results_kde['f_i']

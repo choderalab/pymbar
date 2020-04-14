@@ -521,12 +521,13 @@ class PMF:
                 nonzero_bins.append(ind2)
             nonzero_bins_index[n] = nonzero_bins.index(
                 ind2
-            )  # the index of the nonzero bins
-
+            )  # the index of the nonzero bins, in order it was encountered.
+        
         histogram_data["nbins"] = (
             np.int(np.max(nonzero_bins_index)) + 1
         )  # the total number of nonzero bins
         histogram_data["bin_n"] = nonzero_bins_index
+        histogram_data["fbins"] = nonzero_bins
 
         # Compute the free energies for these histogram states with
         # samples
@@ -564,7 +565,7 @@ class PMF:
         # iterator giving all bin locations in N dimensions.
         gridpoints = it.product(*corner_vectors)
 
-        # index in self.f where the free energy for this gridpoint is
+        # index in f_i where the free energy for this gridpoint is
         # stored
         fbin_index = np.zeros(np.array(returnsize), int)
         for g in gridpoints:
@@ -1121,8 +1122,9 @@ class PMF:
         # set up structure for return data
         result_vals = {}
 
-        # figure out which bins the values are in.
         histogram_data = self.histogram_data
+        histogram_datas = self.histogram_datas
+
         nbins = histogram_data["nbins"]
         bins = histogram_data["bins"]
         dims = histogram_data["dims"]
@@ -1140,6 +1142,7 @@ class PMF:
             else:
                 nbootstraps = len(self.histogram_datas)
 
+        # figure out which bins the values are in.
         if dims == 1:
             # what gridpoint does each x fall into?
             # -1 and nbinsperdim are out of range
@@ -1171,12 +1174,9 @@ class PMF:
  
         if reference_point in ["from-lowest","from-specified","all-differences"]:
 
-            # Report uncertainties in free energy difference from a given
-            # point on PMF.
-
             if reference_point == "from-lowest":
                 # Determine bin index with lowest free energy.
-                j = histogram_data["f"].argmin()
+                j = histogram_data["f"].argmin() 
             elif reference_point == "from-specified":
                 j = histogram_data["fbin_index"][tuple(pmf_ref_grid)]
             elif reference_point == "all-differences":
@@ -1214,8 +1214,10 @@ class PMF:
                     
                 # Compute uncertainties with respect to difference in free energy
                 # from this state j.
+                import pdb
+                pdb.set_trace()
                 for i in range(nbins):
-                    df_i[i] = math.sqrt(
+                    df_i[histogram_data["fbins"][i]] = math.sqrt(
                         Theta_ij[K + i, K + i]
                         + Theta_ij[K + j, K + j]
                         - 2.0 * Theta_ij[K + i, K + j]
@@ -1224,9 +1226,10 @@ class PMF:
             elif uncertainty_method == "bootstrap":
                 fall = np.zeros([len(histogram_data["f"]), nbootstraps])
                 for b in range(nbootstraps):
-                    fall[:, b] = histogram_datas[b]["f"] - histogram_datas[b]["f"][j]
-
-                    df_i = np.std(fall, axis=1)
+                    h = histogram_datas[b] # just to make this shorter
+                    for i in range(nbins):
+                        fall[h["fbins"][i], b] = h["f"][i] - h["f"][j]
+                df_i = np.std(fall, axis=1)
                 # Shift free energies so that state j has zero free energy.
 
         elif reference_point == "from-normalization":
@@ -1285,10 +1288,10 @@ class PMF:
                 fx_vals[i] = np.nan
                 dfx_vals[i] = np.nan
 
-            # Return dimensionless free energy and uncertainty.
-            result_vals["f_i"] = fx_vals
-            if uncertainty_method is not None:
-                result_vals["df_i"] = dfx_vals
+        # Return dimensionless free energy and uncertainty.
+        result_vals["f_i"] = fx_vals
+        if uncertainty_method is not None:
+            result_vals["df_i"] = dfx_vals
 
         if reference_point == "all-differences":
             if uncertainty_method == "analytical":
@@ -1317,9 +1320,9 @@ class PMF:
                             dfxij_vals[i, j] = df_ij[vi, vj]
                         else:
                             dfxij_vals[i, j] = np.nan
-            elif uncertainty_method == "bootstrap":
+            elif uncertainty_method == "bootstrap":  # TODO: check this is working!
                 dfxij_vals = np.zeros(
-                    [len(histogram_data["f"]), len(istogram_data["f"])]
+                    [len(histogram_data["f"]), len(histogram_data["f"])]
                 )
                 fall = np.zeros(
                     [
@@ -1329,8 +1332,10 @@ class PMF:
                     ]
                 )
                 for b in range(nbootstraps):
-                    fall[:, b] = (
-                        histogram_datas[b]["f"] - hhistogram_data[b]["f"].transpose()
+                    h = histgram_datas[b]
+                    for i in range(nbins):
+                        fall[h['fbins'][i],h['fbins'][j],b] = (
+                            histogram_datas[b]["f"] - histogram_datas[b]["f"].transpose()
                     )
                 dfxij_vals = np.std(fall, axis=2)
             if uncertainty_method is not None:
