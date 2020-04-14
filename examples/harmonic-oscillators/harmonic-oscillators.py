@@ -120,7 +120,8 @@ print("The harmonic oscillators have equilibrium positions:", O_k)
 print("and spring constants:", K_k)
 print(
     "and the following number of samples will be drawn from each",
-    "(can be zero if no samples drawn):", N_k
+    "(can be zero if no samples drawn):",
+    N_k,
 )
 
 
@@ -132,7 +133,7 @@ print("generating samples...")
 randomsample = testsystems.harmonic_oscillators.HarmonicOscillatorsTestCase(
     O_k=O_k, K_k=K_k, beta=beta
 )
-x_kn, u_kln, N_k = randomsample.sample(N_k, mode="u_kln", seed = seed)
+x_kn, u_kln, N_k = randomsample.sample(N_k, mode="u_kln", seed=seed)
 
 # get the unreduced energies
 U_kln = u_kln / beta
@@ -271,7 +272,7 @@ N = np.sum(N_k)
 
 for observe in observables:
     print("============================================")
-    print(f"      Testing observable \'{observe}\'")
+    print(f"      Testing observable '{observe}'")
     print("============================================")
 
     if observe == "RMS displacement":
@@ -530,7 +531,7 @@ nth = 3
 # test the nth "extra" states, O_extra[nth] & K_extra[nth]
 for observe in observables:
     print("============================================")
-    print(f"      Testing observable \'{observe}\'")
+    print(f"      Testing observable '{observe}'")
     print("============================================")
 
     if observe == "RMS displacement":
@@ -772,7 +773,7 @@ xmin = gridscale * (np.min(xrange[0][0]) - 1 / 2.0)
 xmax = gridscale * (np.max(xrange[0][1]) + 1 / 2.0)
 dx = (xmax - xmin) / nbinsperdim
 nbins = 1 + nbinsperdim ** ndim
-bin_edges = [np.linspace(xmin,xmax,nbins)] # list of bin edges.
+bin_edges = [np.linspace(xmin, xmax, nbins)]  # list of bin edges.
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
 ibin = 1
@@ -821,7 +822,7 @@ df_ih = results['df_i']
 kde_parameters = dict()
 kde_parameters['bandwidth'] = dx/3.0
 pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', nbootstraps = 100, kde_parameters = kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, reference_point='from-specified', 
+results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified", 
                           pmf_reference = 0.0, uncertainty_method = "bootstrap")
 f_ik = results_kde['f_i']
 df_ik = results_kde['df_i']
@@ -934,8 +935,11 @@ for i in range(nbins):
 print("Computing PMF ...")
 pmf = PMF(u_kn, N_k)
 
-histogram_parameters['bin_edges'] = [np.linspace(xmin,xmax,nbinsperdim+1),np.linspace(ymin,ymax,nbinsperdim+1)] # list of histogram edges.
-pmf.generate_pmf(u_n, x_n, pmf_type = 'histogram', histogram_parameters = histogram_parameters)
+histogram_parameters["bin_edges"] = [
+    np.linspace(xmin, xmax, nbinsperdim + 1),
+    np.linspace(ymin, ymax, nbinsperdim + 1),
+]  # list of histogram edges.
+pmf.generate_pmf(u_n, x_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
 delta = 0.0001  # to break ties in things being too close.
 
 results = pmf.get_pmf(bin_centers+delta, reference_point = 'from-specified', 

@@ -162,7 +162,7 @@ def pmf_1d():
 
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
-    results = pmf.get_pmf(bin_centers, reference_point ="from-specified", pmf_reference=0.0)
+    results = pmf.get_pmf(bin_centers, reference_point="from-specified", pmf_reference=0.0)
 
     payload["pmf"] = pmf
     payload["u_kn"] = u_kn
@@ -318,7 +318,9 @@ def test_1d_pmf_histogram(pmf_1d, reference_point):
     histogram_parameters = dict()
     histogram_parameters["bin_edges"] = pmf_1d["bin_edges"]
     pmf.generate_pmf(pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters)
-    results = pmf.get_pmf(pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0)
+    results = pmf.get_pmf(
+        pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0
+    )
     f_ih = results["f_i"]
     df_ih = results["df_i"]
 
@@ -487,7 +489,9 @@ def test_2d_pmf_histogram(pmf_2d, reference_point):
     )
 
     results = pmf.get_pmf(
-        pmf_2d["bin_centers"] + pmf_2d["delta"], reference_point=reference_point, pmf_reference=[0, 0]
+        pmf_2d["bin_centers"] + pmf_2d["delta"],
+        reference_point=reference_point,
+        pmf_reference=[0, 0],
     )
     f_ih = results["f_i"]
     df_ih = pmf_2d["reference_df_i"]
@@ -529,7 +533,9 @@ def test_2d_pmf_kde(pmf_2d, gen_kwargs, reference_point):
     )
     # I don't know if this needs the +delta
     results_kde = pmf.get_pmf(
-        pmf_2d["bin_centers"] + pmf_2d["delta"], reference_point=reference_point, pmf_reference=[0, 0]
+        pmf_2d["bin_centers"] + pmf_2d["delta"],
+        reference_point=reference_point,
+        pmf_reference=[0, 0],
     )
 
     f_ik = results_kde["f_i"]
