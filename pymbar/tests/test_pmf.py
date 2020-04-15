@@ -278,8 +278,6 @@ def pmf_2d():
 
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
-    import pdb 
-    pdb.set_trace()
     results = pmf.get_pmf(
         bin_centers + delta, reference_point="from-specified", pmf_reference=[0, 0], uncertainty_method = 'analytical'
     )
@@ -426,7 +424,8 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
         **gen_kwargs
     )
     # Something wrong with unbiased state?
-    results_spline = pmf.get_pmf(bin_centers, reference_point=reference_point, pmf_reference=0.0)
+    results_spline = pmf.get_pmf(bin_centers, reference_point=reference_point, 
+                                 pmf_reference=0.0, uncertainty_method=None)
     f_is = results_spline["f_i"]
     # df_ih = results_spline['df_i']
     # Just use the reference for now
@@ -434,8 +433,6 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
     if df_ih is None:
         df_ih = pmf_1d["reference_df_i"]
 
-    import pdb
-    pdb.set_trace()
     z = np.zeros(pmf_1d["nbins"])
     for i in range(0, pmf_1d["nbins"]):
         if df_ih[i] != 0:
