@@ -734,8 +734,11 @@ class PMF:
     def _get_initial_spline_points(self):
 
         spline_parameters = self.spline_parameters
+        nspline = spline_parameters['nspline']
+        kdegree = spline_parameters['kdegree']
+        xrange = spline_parameters['xrange']
+
         if spline_parameters["spline_initialize"] == "bias_free_energies":
-            initvals = self.mbar.f_k
             # initialize to the bias free energies
             if "bias_centers" in spline_parameters:  # if we are provided bias center, use them
                 bias_centers = spline_parameters["bias_centers"]
@@ -910,7 +913,9 @@ class PMF:
                 # still not great error handling.  Requires something
                 # close.
 
-                if not firsttime:
+                if firsttime == True:
+                    firsttime = False
+                else:
                     count = 0
                     # we went too far!  Pull back.
                     while (f >= fold * (1.1) and count < 5) or (np.isinf(f)):
@@ -921,8 +926,7 @@ class PMF:
                         xold = xi.copy()
                         f = func(xi, *spline_args)
                         count += 1
-                else:
-                    firsttime = False
+
                 fold = f
                 xold = xi.copy()
 
@@ -1008,7 +1012,7 @@ class PMF:
             raise ParameterError("Information criteria of type '{:s}' not defined".format(type))
 
     def get_pmf(
-        self, x, reference_point="from-lowest", uncertainty_method=None, pmf_reference=None
+        self, x, reference_point="from-lowest", pmf_reference=None, uncertainty_method=None
     ):
         """
         Returns values of the PMF at the specified x points.
@@ -1212,8 +1216,6 @@ class PMF:
 
                 # Compute uncertainties with respect to difference in free energy
                 # from this state j.
-                import pdb
-                pdb.set_trace()
                 for i in range(nbins):
                     df_i[histogram_data["fbins"][i]] = math.sqrt(
                         Theta_ij[K + i, K + i]

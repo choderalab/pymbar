@@ -162,7 +162,7 @@ def pmf_1d():
 
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
-    results = pmf.get_pmf(bin_centers, reference_point="from-specified", pmf_reference=0.0)
+    results = pmf.get_pmf(bin_centers, reference_point="from-specified", pmf_reference=0.0, uncertainty_method = 'analytical')
 
     payload["pmf"] = pmf
     payload["u_kn"] = u_kn
@@ -278,8 +278,10 @@ def pmf_2d():
 
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
+    import pdb 
+    pdb.set_trace()
     results = pmf.get_pmf(
-        bin_centers + delta, reference_point="from-specified", pmf_reference=[0, 0]
+        bin_centers + delta, reference_point="from-specified", pmf_reference=[0, 0], uncertainty_method = 'analytical'
     )
 
     payload["pmf"] = pmf
@@ -319,7 +321,7 @@ def test_1d_pmf_histogram(pmf_1d, reference_point):
     histogram_parameters["bin_edges"] = pmf_1d["bin_edges"]
     pmf.generate_pmf(pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters)
     results = pmf.get_pmf(
-        pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0
+        pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0, uncertainty_method = "analytical"
     )
     f_ih = results["f_i"]
     df_ih = results["df_i"]
@@ -344,7 +346,7 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, reference_point):
         pmf_1d["u_n"], pmf_1d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
     )
     results_kde = pmf.get_pmf(
-        pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0
+        pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0, uncertainty_method=None
     )
     f_ik = results_kde["f_i"]
     # df_ih = results_kde['df_i']
@@ -432,6 +434,8 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
     if df_ih is None:
         df_ih = pmf_1d["reference_df_i"]
 
+    import pdb
+    pdb.set_trace()
     z = np.zeros(pmf_1d["nbins"])
     for i in range(0, pmf_1d["nbins"]):
         if df_ih[i] != 0:
