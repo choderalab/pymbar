@@ -414,10 +414,10 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
     spline_parameters["objective"] = "ml"
     spline_parameters["map_data"] = None
 
-    # TODO: Is this u_kn for spline or u_n like all the others? Right now I have it as u_kn as thats what it was
+    # TODO: Is this u_kn for spline or u_n like all the others? Right now I have it as u_kn as that's what it was
     # no analytical uncertainty for kde yet, have to use bootstraps
     pmf.generate_pmf(
-        pmf_1d["u_kn"],
+        pmf_1d["u_n"],
         pmf_1d["x_n"],
         pmf_type="spline",
         spline_parameters=spline_parameters,

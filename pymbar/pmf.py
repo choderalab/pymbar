@@ -540,7 +540,7 @@ class PMF:
             # Sanity check.
             if len(indices) == 0:
                 raise DataError(
-                    "WARNING: bin %d has no samples -- all bins must have at least one sample." % i
+                    f"WARNING: bin {i} has no samples -- all bins must have at least one sample."
                 )
 
             # Compute dimensionless free energy of occupying state i.
@@ -913,7 +913,7 @@ class PMF:
                 # still not great error handling.  Requires something
                 # close.
 
-                if firsttime == True:
+                if firsttime:
                     firsttime = False
                 else:
                     count = 0
@@ -1217,7 +1217,7 @@ class PMF:
                 # Compute uncertainties with respect to difference in free energy
                 # from this state j.
                 for i in range(nbins):
-                    df_i[histogram_data["fbins"][i]] = math.sqrt(
+                    df_i[i] = math.sqrt(
                         Theta_ij[K + i, K + i]
                         + Theta_ij[K + j, K + j]
                         - 2.0 * Theta_ij[K + i, K + j]
@@ -1228,7 +1228,7 @@ class PMF:
                 for b in range(nbootstraps):
                     h = histogram_datas[b] # just to make this shorter
                     for i in range(nbins):
-                        fall[h["fbins"][i], b] = h["f"][i] - h["f"][j]
+                        fall[i, b] = h["f"][i] - h["f"][j]
                 df_i = np.std(fall, axis=1)
                 # Shift free energies so that state j has zero free energy.
 
@@ -1334,7 +1334,7 @@ class PMF:
                 for b in range(nbootstraps):
                     h = histgram_datas[b]
                     for i in range(nbins):
-                        fall[h['fbins'][i],h['fbins'][j],b] = (
+                        fall[i,j,b] = (
                             histogram_datas[b]["f"] - histogram_datas[b]["f"].transpose()
                     )
                 dfxij_vals = np.std(fall, axis=2)
