@@ -375,14 +375,18 @@ for methodfull in methods:
     yerr = {}
     print(f"PMF (in units of kT) for {methodfull}")
     print(f"{'bin':>8s} {'f':>8s} {'df':>8s}")
-    results = pmf.get_pmf(bin_center_i, reference_point="from-lowest")
+    if method == "histogram":
+        uncertainty_method = "analytical"
+    else:
+        uncertainty_method = "bootstrap"
+    results = pmf.get_pmf(bin_center_i, reference_point="from-lowest", uncertainty_method=uncertainty_method)
     for i in range(nbins):
-        if results["df_i"] is not None:
+        if 'df_i' in results and results['df_i'] is not None:
             print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f} {results['df_i'][i]:8.1f}")
         else:
             print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f}")
 
-    results = pmf.get_pmf(xplot, reference_point="from-lowest", uncertainty_method = "analytical")
+    results = pmf.get_pmf(xplot, reference_point="from-lowest", uncertainty_method=uncertainty_method)
     yout[methodfull] = results["f_i"]
     yerr[methodfull] = results["df_i"]
     if len(xplot) <= nbins:
