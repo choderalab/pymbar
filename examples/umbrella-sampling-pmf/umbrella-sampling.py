@@ -155,7 +155,7 @@ pmf = pymbar.PMF(u_kln, N_k, verbose=True)
 histogram_parameters = {}
 histogram_parameters["bin_edges"] = [bin_edges]
 pmf.generate_pmf(u_kn, chi_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
-results = pmf.get_pmf(bin_center_i, reference_point="from-lowest")
+results = pmf.get_pmf(bin_center_i, reference_point="from-lowest", uncertainty_method="analytical")
 center_f_i = results["f_i"]
 center_df_i = results["df_i"]
 
