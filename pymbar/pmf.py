@@ -284,7 +284,7 @@ class PMF:
               Defaults will be used if nothing changed.
 
         spline_parameters:
-            - 'fit_type': which type of fit to use:
+            - 'spline_weights': which type of fit to use:
                 -- 'biasedstates' - sum of log likelihood over all weighted states
                 -- 'unbiasedstate' - log likelihood of the single unbiased state
                 -- 'simplesum': sum of log likelihoods from the biased simulation. Essentially equivalent to vFEP (York et al.)
@@ -468,7 +468,7 @@ class PMF:
         else:
             self.histogram_datas = None
 
-    def _generate_pmf_histogram(self, b, x, w_nb, log_w_nb):
+    def _generate_pmf_histogram(self, b, x_n, w_nb, log_w_nb):
 
         # store the data that will be regenerated each time.
         # We will not try to regenerate the bin locations each time,
@@ -486,15 +486,15 @@ class PMF:
         # create the bins from the data.
         # it's a 1D array, instead of a Nx1 array.  Reshape.
 
-        if len(np.shape(x)) == 1:
-            x = x.reshape(-1, 1)
+        if len(np.shape(x_n)) == 1:
+            x_n = x_n.reshape(-1, 1)
 
-        bin_n = np.zeros(x.shape, np.int64)
+        bin_n = np.zeros(x_n.shape, np.int64)
 
         for d in range(dims):
             # bins returns 0 as out of bin.  We want to use -1 as out
             # of bin
-            bin_n[:, d] = np.digitize(x[:, d], bins[d]) - 1
+            bin_n[:, d] = np.digitize(x_n[:, d], bins[d]) - 1
 
         histogram_data["bin_n"] = bin_n  # bin counts
 
@@ -611,12 +611,12 @@ class PMF:
 
         self.kde = kde
 
-    def _generate_pmf_kde(self, b, x, w_n):
+    def _generate_pmf_kde(self, b, x_n, w_n):
 
         # reshape data if needed.
         # it's a 1D array, instead of a Nx1 array.  Reshape.
-        if len(np.shape(x)) == 1:
-            x = x.reshape(-1, 1)
+        if len(np.shape(x_n)) == 1:
+            x_n = x_n.reshape(-1, 1)
 
         # TODO: figure out if this should be called each bootstrap run or not (shouldn't cost?)
         # basically, just need to have KernelDensity defined here.
@@ -634,7 +634,7 @@ class PMF:
             kde.set_params(**params)
         else:
             kde = self.kde
-        kde.fit(x, sample_weight=self.w_n)
+        kde.fit(x_n, sample_weight=self.w_n)
 
         if b > 0:
             self.kdes.append(kde)
@@ -859,7 +859,7 @@ class PMF:
 
         return spline_data
 
-    def _generate_pmf_spline(self, b, x, w_n):
+    def _generate_pmf_spline(self, b, x_n, w_n):
 
         if b == 0:
             xi = self.spline_data["initial_coefficients"].copy()
@@ -878,10 +878,7 @@ class PMF:
             else:
                 hessian = None
 
-            spline_args = (
-                x,
-                w_n,
-            )
+            spline_args = (x_n, w_n)
 
             results = minimize(
                 func,
@@ -1778,9 +1775,7 @@ class PMF:
         results["logposterior"] = self.previous_logposterior
         return results
 
-    def _bspline_calculate_f(
-        self, xi, w_n, x_n,
-    ):
+    def _bspline_calculate_f(self, xi, x_n, w_n):
 
         """ Calculate the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
@@ -1845,6 +1840,7 @@ class PMF:
             f += np.dot(integral_scaling, np.log(pF))
 
         elif spline_weights == "unbiasedstate":  # just KL divergence of the unbiased potential
+            # may need to recast w_n
             f = N * np.dot(w_n, bloc(x_n))
 
             def expf(x):
@@ -1866,9 +1862,7 @@ class PMF:
 
         return f
 
-    def _bspline_calculate_g(
-        self, xi, w_n, x_n,
-    ):
+    def _bspline_calculate_g(self, xi, x_n, w_n):
         """Calculate the gradient of the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
         Parameters
@@ -1987,9 +1981,7 @@ class PMF:
         self.spline_data["bspline_pE"] = pE
         return g
 
-    def _bspline_calculate_h(
-        self, xi, w_n, x_n,
-    ):
+    def _bspline_calculate_h(self, xi, x_n, w_n):
 
         """ Calculate the Hessian of the maximum likelihood / KL divergence of the PMF represented using B-splines.
 
