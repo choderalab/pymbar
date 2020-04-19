@@ -473,7 +473,7 @@ class PMF:
         # store the data that will be regenerated each time.
         # We will not try to regenerate the bin locations each time,
         # as that would make it hard to calculate uncertainties.
-        # We will just recalculate the populations.
+        # We will just recalculate the populations of each bin.
 
         histogram_parameters = self.histogram_parameters
         bins = histogram_parameters["bin_edges"]
@@ -490,53 +490,28 @@ class PMF:
             x_n = x_n.reshape(-1, 1)
 
         bin_n = np.zeros(x_n.shape, np.int64)
-
+        bin_length = np.zeros(dims)
         for d in range(dims):
+            bin_length[d] = len(bins[d])
             # bins returns 0 as out of bin.  We want to use -1 as out
-            # of bin
+            # of bin instead.
             bin_n[:, d] = np.digitize(x_n[:, d], bins[d]) - 1
+            
+        histogram_data["bin_n"] = bin_n  # bin counts in each bin
 
-        histogram_data["bin_n"] = bin_n  # bin counts
+        # label the bins, and figure out which have samples.
+        # find index of the nonzero_bins element it
 
-        # now we need to loop over the bin_n and identify and label the
-        # nonzero bins.
-
-        # a list of the bins with at least one sample in them.
-        nonzero_bins = list()
-
-        # for each sample, the index of the nonzero_bins element it
-        # belongs to.
-        nonzero_bins_index = np.zeros(self.N, dtype=int)
-        for n in range(self.N):
-            if np.any(bin_n[n] < 0):
-                nonzero_bins_index[n] = -1
-                continue  # this sample is out of grid
-            if dims == 1:
-                ind2 = bin_n[n]  # which bin sample n is in
-            else:
-                # which bin (labeled N-d) sample n is in
-                ind2 = tuple(bin_n[n])
-            if ind2 not in nonzero_bins:
-                # this bin has a sample.  Add it to the list
-                nonzero_bins.append(ind2)
-            nonzero_bins_index[n] = nonzero_bins.index(ind2)  # the index of the nonzero bins
-
-        histogram_data["nbins"] = (
-            np.int(np.max(nonzero_bins_index)) + 1
-        )  # the total number of nonzero bins
-        histogram_data["bin_n"] = nonzero_bins_index
-        histogram_data["fbins"] = nonzero_bins
-
-        # Compute the free energies for these histogram states with
-        # samples
+        # Compute the free energies for the histogram bins
+        # with samples. We cannot calculate free energes
+        # for bins w/o samples.
 
         f_i = np.zeros([histogram_data["nbins"]], np.float64)
-        df_i = np.zeros([histogram_data["nbins"]], np.float64)
 
         for i in range(histogram_data["nbins"]):
             # Get linear n-indices of samples that fall in this bin.
             indices = np.where(histogram_data["bin_n"] == i)
-
+            
             # Sanity check.
             if len(indices) == 0:
                 raise DataError(
@@ -548,32 +523,6 @@ class PMF:
 
         # store the free energies for this bin
         histogram_data["f"] = f_i
-
-        # now assign back the free energy from the sample_only bins to
-        # all of the bins.
-
-        # rebuild the graph from the edges.
-        corner_vectors = list()
-        returnsize = list()
-        for d in range(dims):
-            maxv = len(bins[d]) - 1
-            corner_vectors.append(np.arange(0, maxv))
-            returnsize.append(maxv)
-        # iterator giving all bin locations in N dimensions.
-        gridpoints = it.product(*corner_vectors)
-
-        # index in f_i where the free energy for this gridpoint is
-        # stored
-        fbin_index = np.zeros(np.array(returnsize), int)
-        for g in gridpoints:
-            if g in nonzero_bins:
-                fbin_index[g] = nonzero_bins.index(g)
-            else:
-                # no free energy for this index, since there are no
-                # points.
-                fbin_index[g] = -1
-
-        histogram_data["fbin_index"] = fbin_index
 
         if b == 0:
             self.histogram_data = histogram_data
@@ -1125,6 +1074,62 @@ class PMF:
 
         histogram_data = self.histogram_data
         histogram_datas = self.histogram_datas
+
+        # now assign back the free energy from the sample_only bins to
+        # all of the bins.
+
+        # rebuild the graph from the edges.
+        corner_vectors = list()
+        returnsize = list()
+        for d in range(dims):
+            maxv = len(bins[d]) - 1
+            corner_vectors.append(np.arange(0, maxv))
+            returnsize.append(maxv)
+        # iterator giving all bin locations in N dimensions.
+        gridpoints = it.product(*corner_vectors)
+
+        # index in f_i where the free energy for this gridpoint is
+        # stored
+        fbin_index = np.zeros(np.array(returnsize), int)
+        for g in gridpoints:
+            if g in nonzero_bins:
+                fbin_index[g] = nonzero_bins.index(g)
+            else:
+                # no free energy for this index, since there are no
+                # points.
+                fbin_index[g] = -1
+
+        histogram_data["fbin_index"] = fbin_index
+
+        nonzero_bins = ()
+        nonzero_bins_indices = ()
+        nonzero_bins_index = np.zeros(self.N)
+
+        import pdb
+        pdb.set_trace()
+        for n in range(self.N):
+            if np.any(bin_n[n] < 0): # this sample is out of grid
+                nonzero_bins_index[n] = -1
+                nonzero_bins_indices.append(-1) 
+            else: 
+                if dims == 1:
+                    bin = (bin_n[n])  # which bin sample n is in (1-D label)
+                else:
+                    bin = tuple(bin_n[n])  # which bin (labeled N-D) sample n is in
+                # how do we label the bins? if N-dimensional:
+                # bins[0] + bins[1]*bin_length[1]**1 + bins[2]*bin_length[2]**2
+                nonzero_bins_index[n] = np.sum([bin_n[n][d]*bin_length[d]**d for d in range(dims)])
+                if bin not in nonzero_bins:
+                    nonzero_bins.append(bin)
+                    nonzero_bins_indices.append(nonzero_bins_index[n])
+
+        import pdb
+        pdb.set_trace()
+        histogram_data["nbins"] = (
+            np.int(np.max(nonzero_bins_index)) + 1
+        )  # the total number of nonzero bins
+        histogram_data["fbins"] = nonzero_bins
+        histogram_data["bin_n"] = nonzero_bins_index # integer index of each bin
 
         nbins = histogram_data["nbins"]
         bins = histogram_data["bins"]
