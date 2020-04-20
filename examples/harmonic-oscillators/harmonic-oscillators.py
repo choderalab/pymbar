@@ -822,7 +822,7 @@ df_ih = results['df_i']
 kde_parameters = dict()
 kde_parameters['bandwidth'] = dx/3.0
 pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', nbootstraps = 20, kde_parameters = kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified",
+results_kde = pmf.get_pmf(bin_centers, reference_point = "from-specified",
                           pmf_reference = 0.0, uncertainty_method = "bootstrap")
 f_ik = results_kde['f_i']
 df_ik = results_kde['df_i']

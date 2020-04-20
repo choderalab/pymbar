@@ -23,7 +23,6 @@ A module implementing calculation of potentials of mean force from biased simula
 
 import logging
 import math
-import itertools as it
 import numpy as np
 import pymbar
 
@@ -1224,7 +1223,6 @@ class PMF:
                     h = histogram_datas[b] # just to make this shorter
                     fall[:, b] = h["f"] - h["f"][j]
                 df_i = np.std(fall, axis=1)
-                # Shift free energies so that state j has zero free energy.
 
         elif reference_point == "from-normalization":
             # Determine uncertainties from normalization that \sum_i p_i = 1.
