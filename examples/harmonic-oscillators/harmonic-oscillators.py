@@ -821,7 +821,7 @@ df_ih = results['df_i']
 # now estimate the PDF with a kde
 kde_parameters = dict()
 kde_parameters['bandwidth'] = dx/3.0
-pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', nbootstraps =20, kde_parameters = kde_parameters)
+pmf.generate_pmf(u_n, x_n, pmf_type = 'kde', nbootstraps = 20, kde_parameters = kde_parameters)
 results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified",
                           pmf_reference = 0.0, uncertainty_method = "bootstrap")
 f_ik = results_kde['f_i']
@@ -839,16 +839,18 @@ print(
     )
 
 for i in range(1, nbins):
-    if i == zeroindex:
-        stdevs_h = 0
-        stdevs_k = 0
-        df_ih[0] = 0
-        df_ik[0] = 0
-    else:
-        error_h = pmf_analytical[i] - f_ih[i]
-        error_k = pmf_analytical[i] - f_ik[i]
+    error_h = pmf_analytical[i] - f_ih[i]
+    error_k = pmf_analytical[i] - f_ik[i]
+    if df_ih[i] > 0:
         stdevs_h = np.abs(error_h) / df_ih[i]
+    else:
+        stdevs_h = 0
+        
+    if df_ik[i] > 0:
         stdevs_k = np.abs(error_k) / df_ik[i]
+    else:
+        stdevs_k = 0
+
     print(
         f"{i:>8d} {bin_centers[i, 0]:>6.2f} {bin_counts[i]:>8d} {pmf_analytical[i]:>10.3f}"
         f"{f_ih[i]:>10.3f} {error_h:>10.3f} {df_ih[i]:>10.3f} {stdevs_h:>8.2f}"
@@ -969,7 +971,10 @@ for i in range(1, nbins):
         df_i[0] = 0
     else:
         error = pmf_analytical[i] - f_i[i]
-        stdevs = np.abs(error) / df_i[i]
+        if df_i[i] > 0:
+            stdevs = np.abs(error) / df_i[i]
+        else:
+            stdevs = np.nan
     print(
         f"{i:>8d} "
         f"{bin_centers[i, 0]:>6.2f} "

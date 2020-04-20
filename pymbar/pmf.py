@@ -489,8 +489,8 @@ class PMF:
         if len(np.shape(x_n)) == 1:
             x_n = x_n.reshape(-1, 1)
 
-        bin_n = np.zeros(x_n.shape, np.int64)
-        bin_length = np.zeros(dims)
+        bin_n = np.zeros(x_n.shape, int)
+        bin_length = np.zeros(dims, int)
         for d in range(dims):
             bin_length[d] = len(bins[d])
             # bins returns 0 as out of bin.  We want to use -1 as out
@@ -499,18 +499,59 @@ class PMF:
             
         histogram_data["bin_n"] = bin_n  # bin counts in each bin
 
-        # label the bins, and figure out which have samples.
-        # find index of the nonzero_bins element it
+        # number each of the bins with samples with an integer
+        # Assign each sample this integer label (in addition to the tuple label)
+
+        nonzero_bins = list()
+        bin_label = {}
+        sample_label = np.zeros(self.N,int)
+
+        for n in range(self.N):
+            bin = tuple(bin_n[n])  # which bin (labeled N-D) sample n is in
+            if np.any(bin_n[n] < 0): # this sample is out of grid
+                sample_label[n] = -1
+            else: 
+                # how do we label the bins? if N-dimensional:
+                # bins[0] + bins[1]*bin_length[1]**1 + bins[2]*bin_length[2]**2
+                sample_label[n] = int(np.sum([bin_n[n][d]*bin_length[d]**d for d in range(dims)]))
+            if bin not in nonzero_bins:
+                nonzero_bins.append(bin) 
+                bin_label[bin] = sample_label[n]
+        histogram_data['nonzero_bins'] = nonzero_bins
+        histogram_data['sample_label'] = sample_label
+
+        # problem with bins above:
+        #        
+        # all over bootstraps, not all nonzero bins will occur, as in some bootstraps,
+        # some labels won't appear. 
+        # However, if they appear in the list of nonzero bins, they will have the same labels.
+        # that may be OK, since we are only really interested in 
+        # uncertainties for the ones that have nonzero samples in the original list.
+
+        # Need to come up with an order for the labels for all bootstraps, so free energies
+        # are always assigned.
+
+        if b==0:
+            bin_order = {}
+            i = 0
+            for bv in bin_label.values():
+                if bv not in bin_order:
+                    bin_order[bv] = i
+                    i += 1
+            histogram_data['bin_order'] = bin_order
+            histogram_data['bin_label'] = bin_label      
+        else:
+            bin_order = self.histogram_data['bin_order']
 
         # Compute the free energies for the histogram bins
         # with samples. We cannot calculate free energes
         # for bins w/o samples.
 
-        f_i = np.zeros([histogram_data["nbins"]], np.float64)
+        f_i = np.zeros(len(bin_label), np.float64)
 
-        for i in range(histogram_data["nbins"]):
+        for i, label in enumerate(bin_label.values()):
             # Get linear n-indices of samples that fall in this bin.
-            indices = np.where(histogram_data["bin_n"] == i)
+            indices = np.where(sample_label == label)
             
             # Sanity check.
             if len(indices) == 0:
@@ -519,7 +560,7 @@ class PMF:
                 )
 
             # Compute dimensionless free energy of occupying state i.
-            f_i[i] = -logsumexp(log_w_nb[indices])
+            f_i[bin_order[label]] = -logsumexp(log_w_nb[indices])
 
         # store the free energies for this bin
         histogram_data["f"] = f_i
@@ -1069,72 +1110,6 @@ class PMF:
         self, x, reference_point="from-lowest", pmf_reference=None, uncertainty_method=None
     ):
 
-        # set up structure for return data
-        result_vals = {}
-
-        histogram_data = self.histogram_data
-        histogram_datas = self.histogram_datas
-
-        # now assign back the free energy from the sample_only bins to
-        # all of the bins.
-
-        # rebuild the graph from the edges.
-        corner_vectors = list()
-        returnsize = list()
-        for d in range(dims):
-            maxv = len(bins[d]) - 1
-            corner_vectors.append(np.arange(0, maxv))
-            returnsize.append(maxv)
-        # iterator giving all bin locations in N dimensions.
-        gridpoints = it.product(*corner_vectors)
-
-        # index in f_i where the free energy for this gridpoint is
-        # stored
-        fbin_index = np.zeros(np.array(returnsize), int)
-        for g in gridpoints:
-            if g in nonzero_bins:
-                fbin_index[g] = nonzero_bins.index(g)
-            else:
-                # no free energy for this index, since there are no
-                # points.
-                fbin_index[g] = -1
-
-        histogram_data["fbin_index"] = fbin_index
-
-        nonzero_bins = ()
-        nonzero_bins_indices = ()
-        nonzero_bins_index = np.zeros(self.N)
-
-        import pdb
-        pdb.set_trace()
-        for n in range(self.N):
-            if np.any(bin_n[n] < 0): # this sample is out of grid
-                nonzero_bins_index[n] = -1
-                nonzero_bins_indices.append(-1) 
-            else: 
-                if dims == 1:
-                    bin = (bin_n[n])  # which bin sample n is in (1-D label)
-                else:
-                    bin = tuple(bin_n[n])  # which bin (labeled N-D) sample n is in
-                # how do we label the bins? if N-dimensional:
-                # bins[0] + bins[1]*bin_length[1]**1 + bins[2]*bin_length[2]**2
-                nonzero_bins_index[n] = np.sum([bin_n[n][d]*bin_length[d]**d for d in range(dims)])
-                if bin not in nonzero_bins:
-                    nonzero_bins.append(bin)
-                    nonzero_bins_indices.append(nonzero_bins_index[n])
-
-        import pdb
-        pdb.set_trace()
-        histogram_data["nbins"] = (
-            np.int(np.max(nonzero_bins_index)) + 1
-        )  # the total number of nonzero bins
-        histogram_data["fbins"] = nonzero_bins
-        histogram_data["bin_n"] = nonzero_bins_index # integer index of each bin
-
-        nbins = histogram_data["nbins"]
-        bins = histogram_data["bins"]
-        dims = histogram_data["dims"]
-
         if uncertainty_method not in ["bootstrap","analytical"] and uncertainty_method is not None:
             raise ParameterError(
                 f"Uncertainty_method {uncertainty_method} is not a valid option"
@@ -1147,6 +1122,18 @@ class PMF:
                 )
             else:
                 nbootstraps = len(self.histogram_datas)
+
+        # set up structure for return data
+        result_vals = {}
+
+        # retrive data for each bootstrap
+        histogram_data = self.histogram_data
+        histogram_datas = self.histogram_datas
+
+        bins = histogram_data["bins"]
+        dims = histogram_data["dims"]
+        bin_order = histogram_data['bin_order']
+        nbins = len(bin_order)
 
         # figure out which bins the values are in.
         if dims == 1:
@@ -1171,7 +1158,7 @@ class PMF:
                     pmf_ref_grid[d] = np.digitize(pmf_reference[d], bins[d]) - 1
                     if pmf_ref_grid[d] == -1 or pmf_ref_grid[d] == len(bins[d]):
                         raise ParameterError(
-                            "Specified reference point coordinate {:f} in dim {:d} grid point is out of the defined free energy region [{:f},{:f}]".format(
+                            "Specified reference point coordinate {:f} in dim {:d} grid point is out of the PMF region [{:f},{:f}]".format(
                                 pmf_ref_grid[d], d, np.min(bins[d]), np.max(bins[d])
                             )
                         )
@@ -1181,10 +1168,13 @@ class PMF:
         if reference_point in ["from-lowest", "from-specified", "all-differences"]:
 
             if reference_point == "from-lowest":
-                # Determine bin index with lowest free energy.
+                # Determine free energy with lowest free energy to serve as reference point
                 j = histogram_data["f"].argmin()
             elif reference_point == "from-specified":
-                j = histogram_data["fbin_index"][tuple(pmf_ref_grid)]
+                # find the label of this bin
+                ref_bin_label = histogram_data["bin_label"][tuple(pmf_ref_grid)]
+                #then find the invariant free energy index of this bin
+                j = bin_order[ref_bin_label]
             elif reference_point == "all-differences":
                 raise ParameterError(
                     "reference point method of 'all-differences' is not yet supported for histogram "
@@ -1205,12 +1195,15 @@ class PMF:
                 W_nk[:, 0:K] = np.exp(self.mbar.Log_W_nk)
 
                 log_w_n = self.mbar._computeUnnormalizedLogWeights(self.u_n)
-                for i in range(nbins):  # loop over the nonzero bins, internal numbering
+
+                # loop over the nonzero bins
+                for label in histogram_data['bin_label'].values():
                     # Get indices of samples that fall in this bin.
-                    indices = np.where(histogram_data["bin_n"] == i)
+                    indices = np.where(histogram_data["sample_label"] == label)
 
                     # Compute normalized weights for this state.
-                    W_nk[indices, K + i] = np.exp(log_w_n[indices] + histogram_data["f"][i])
+                    flabel = bin_order[label]
+                    W_nk[indices, K + flabel] = np.exp(log_w_n[indices] + self.histogram_data["f"][flabel])
 
                 # Compute asymptotic covariance matrix using specified
                 # method.
@@ -1229,8 +1222,7 @@ class PMF:
                 fall = np.zeros([len(histogram_data["f"]), nbootstraps])
                 for b in range(nbootstraps):
                     h = histogram_datas[b] # just to make this shorter
-                    for i in range(nbins):
-                        fall[i, b] = h["f"][i] - h["f"][j]
+                    fall[:, b] = h["f"] - h["f"][j]
                 df_i = np.std(fall, axis=1)
                 # Shift free energies so that state j has zero free energy.
 
@@ -1279,13 +1271,10 @@ class PMF:
                 dfx_vals[i] = np.nan
                 continue
 
-            if dims == 1:
-                findex = histogram_data["fbin_index"][l]
-            else:
-                findex = histogram_data["fbin_index"][tuple(l)]
-            if findex >= 0:
-                fx_vals[i] = f_i[findex]
-                dfx_vals[i] = df_i[findex]
+            bin_label = histogram_data["bin_label"][tuple(l)]
+            if bin_label >= 0:
+                fx_vals[i] = f_i[bin_order[bin_label]]
+                dfx_vals[i] = df_i[bin_order[bin_label]]
             else:
                 fx_vals[i] = np.nan
                 dfx_vals[i] = np.nan
@@ -1308,20 +1297,18 @@ class PMF:
 
                 dfxij_vals = np.zeros([len(x), len(x)])
 
-                findexs = list()
+                bin_is = ()
                 for i, l in enumerate(loc_indices):
-                    if dims == 1:
-                        findex = histogram_data["fbin_index"][l]
-                    else:
-                        findex = histogram_data["fbin_index"][tuple(l)]
-                    findexs.append(findex)
+                    bin_i = histogram_data['bin_order'][self.histogram_data["bin_label"][tuple(l)]]
+                bin_is.append(bin_i)
 
-                for i, vi in enumerate(findexs):
-                    for j, vj in enumerate(findexs):
+                for i, vi in bin_is:
+                    for j, vj in bin_i:
                         if vi != -1 and vj != 1:
                             dfxij_vals[i, j] = df_ij[vi, vj]
                         else:
                             dfxij_vals[i, j] = np.nan
+
             elif uncertainty_method == "bootstrap":  # TODO: check this is working!
                 dfxij_vals = np.zeros(
                     [len(histogram_data["f"]), len(histogram_data["f"])]
