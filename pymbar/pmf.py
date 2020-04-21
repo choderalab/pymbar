@@ -178,10 +178,10 @@ class PMF:
         self.K = K  # number of thermodynamic states energies are evaluated at
         # N = \sum_{k=1}^K N_k is the total number of samples
         self.N = N  # maximum number of configurations
-
+        
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
-
+        
         if timings:
             self.timings = True
 
@@ -232,7 +232,7 @@ class PMF:
 
         if self.verbose:
             logger.info("PMF initialized")
-
+            
     # TODO: see above about not storing np.random
     # @property
     # def seed(self):
@@ -251,13 +251,14 @@ class PMF:
         kde_parameters=None,
         spline_parameters=None,
         nbootstraps=0,
-        seed=-1,
-    )
+        seed=-1
+        ):
+
         """
         Given an intialized MBAR object, a set of points,
         the desired energies at that point, and a method, generate
         an object that contains the PMF information.
-
+        
         Parameters
         ----------
 
@@ -269,7 +270,7 @@ class PMF:
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
-        pmf_type: str
+        pmxf_type: str
              options = 'histogram', 'kde', 'spline'
 
         histogram_parameters:
@@ -1550,33 +1551,23 @@ class PMF:
         # determine the range of the bspline at the start of the
         # process: changes are made as fractions of this
 
+        if self.pmf_type != "spline":
+            ParameterError("Sampling of posterior is only supported for spline type")
+
         spline_parameters = self.spline_parameters
-
-        pmf_type = self.pmf_type
-
-        if pmf_type != "spline":
-            ParameterError("Keyword 'pmf_type' must be spline")
-
-        K = self.mbar.K
-        spline_weights = spline_parameters["spline_weights"]
 
         if spline_parameters is None:
             ParameterError("Must specify spline_parameters to sample the distributions")
 
         spline_weights = spline_parameters["spline_weights"]
 
-        w_n = self.w_n
-
         # need the x-range for all methods, since we need to
         xrange = spline_parameters["xrange"]
         # numerically integrate over this range
 
-        if pmf_type != "spline":
-            ParameterError("Sampling of posterior is only supported for spline type")
-
         if self.spline_data["bspline"] is None:
             ParameterError(
-                "Need to generate a splined PMF using GeneratePMF before performing MCMC sampling"
+                "Need to generate an initial splined PMF using generate_pmf before performing MCMC sampling"
             )
 
         if mc_parameters is None:
@@ -1599,7 +1590,11 @@ class PMF:
         sample_every = mc_parameters["sample_every"]
         print_every = mc_parameters["print_every"]
         logprior = mc_parameters["logprior"]
-        bspline = self.spline_data["bspline"]
+
+        # create a new copy of the spline for MC sampling.
+        self.mc_data = dict()
+        self.mc_data["bspline"] = self.spline_data["bspline"].copy()  
+        bspline = self.mc_data["bspline"]
 
         # ensure normalization of spline
         def prob(x):
@@ -1608,7 +1603,6 @@ class PMF:
         norm = self._integrate(prob, xrange[0], xrange[1])
         bspline.c = bspline.c + np.log(norm)
 
-        self.mc_data = dict()
         # make a copy of the original spline to preserve it.
         self.mc_data["original_spline"] = BSpline(bspline.t, bspline.c, bspline.k)
 
@@ -1617,19 +1611,18 @@ class PMF:
         crange = np.max(c) - np.min(c)
         dc = fraction_change * crange
 
-        self.naccept = 0
+        self.mc_data["naccept"] = 0
         csamples = np.zeros([len(c), int(niterations) // int(sample_every)])
         logposteriors = np.zeros(int(niterations) // int(sample_every))
-        self.first_step = True
+        self.mc_data["first_step"] = True
 
-        w_n = self.w_n
         for n in range(niterations):
-            results = self._MCStep(x_n, w_n, dc, xrange, spline_weights, logprior)
+            results = self._MC_step(x_n, self.w_n, dc, xrange, spline_weights, logprior)
             if n % sample_every == 0:
                 csamples[:, n // sample_every] = results["c"]
                 logposteriors[n // sample_every] = results["logposterior"]
             if n % print_every == 0 and verbose:
-                print(
+                logger.info(
                     "MC Step {:d} of {:d}".format(n, niterations),
                     str(results["logposterior"]),
                     str(bspline.c),
@@ -1671,7 +1664,7 @@ class PMF:
         self.mc_data["samples"] = csamples
         self.mc_data["logposteriors"] = logposteriors
         self.mc_data["mc_parameters"] = mc_parameters
-        self.mc_data["acceptance ratio"] = self.naccept / niterations
+        self.mc_data["acceptance ratio"] = self.mc_data['naccept'] / niterations
         if verbose:
             logger.info("Acceptance rate: {:5.3f}".format(self.mc_data["acceptance ratio"]))
         self.mc_data["nequil"] = t_mc  # the start of the "equilibrated" data set
@@ -1770,7 +1763,7 @@ class PMF:
         if spline_weights in ["simplesum", "biasedstates"]:
             loglikelihood = 0
 
-            for k in range(self.K):
+            for k in range(K):
                 x_kn = x_n[self.mbar.x_kindices == k]
 
                 def splinek(x, kf=k):
@@ -1793,7 +1786,7 @@ class PMF:
 
         return loglikelihood
 
-    def _MCStep(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
+    def _MC_step(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
 
         """ sample over the posterior space of the PMF as splined.
 
@@ -1825,41 +1818,44 @@ class PMF:
 
         """
 
-        if self.first_step:
-            c = self.bspline.c
-            self.previous_logposterior = self._get_MC_loglikelihood(
-                x_n, w_n, spline_weights, self.bspline, xrange
-            ) - logprior(c)
-            cold = self.bspline.c
-            self.first_step = True
-            # create an extra one we can carry around
-            self.newspline = BSpline(self.bspline.t, self.bspline.c, self.bspline.k)
+        mc_data = self.mc_data # keep it shorter
+        bspline = self.mc_data["bspline"]
 
-        self.cold = self.bspline.c
-        psize = len(self.cold)
+        if self.mc_data["first_step"]:
+            c = bspline.c
+            mc_data["previous_logposterior"] = self._get_MC_loglikelihood(
+                x_n, w_n, self.spline_parameters["spline_weights"], 
+                bspline, self.spline_parameters['xrange']) - logprior(c)
+            cold = bspline.c
+            mc_data["first_step"] = True
+            # create an extra one we can carry around
+            mc_data["newspline"] = BSpline(bspline.t, bspline.c, bspline.k)
+
+        mc_data["cold"] = bspline.c
+        psize = len(mc_data["cold"])
         rchange = stepsize * np.random.normal()
-        cnew = self.cold.copy()
+        cnew = mc_data["cold"].copy()
         ci = np.random.randint(psize)
         cnew[ci] += rchange
-        self.newspline.c = cnew
+        mc_data["newspline"].c = cnew
 
         # determine the change in the integral
         def prob(x):
-            return np.exp(-self.newspline(x))
+            return np.exp(-mc_data["newspline"](x))
 
         new_integral = self._integrate(prob, xrange[0], xrange[1])
 
         cnew = cnew + np.log(new_integral)
 
-        self.newspline.c = cnew  # this spline should now be normalized.
+        mc_data["newspline"].c = cnew  # this spline should now be normalized.
 
         # now calculate the change in log likelihood
         loglikelihood = self._get_MC_loglikelihood(
-            x_n, w_n, spline_weights, self.newspline, xrange
+            x_n, w_n, spline_weights, mc_data["newspline"], xrange
         )
 
         newlogposterior = loglikelihood - logprior(cnew)
-        dlogposterior = newlogposterior - (self.previous_logposterior)
+        dlogposterior = newlogposterior - (mc_data["previous_logposterior"])
         accept = False
         if dlogposterior <= 0:
             accept = True
@@ -1868,13 +1864,13 @@ class PMF:
                 accept = True
 
         if accept:
-            self.bspline.c = self.newspline.c
-            self.cold = self.bspline.c
-            self.previous_logposterior = newlogposterior
-            self.naccept = self.naccept + 1
+            mc_data["bspline"].c = mc_data["newspline"].c
+            mc_data["cold"] = bspline.c
+            mc_data["previous_logposterior"] = newlogposterior
+            mc_data["naccept"] = mc_data["naccept"] + 1
         results = dict()
-        results["c"] = self.bspline.c
-        results["logposterior"] = self.previous_logposterior
+        results["c"] = mc_data["bspline"].c
+        results["logposterior"] = mc_data["previous_logposterior"]
         return results
 
     def _bspline_calculate_f(self, xi, x_n, w_n):
