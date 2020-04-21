@@ -1593,7 +1593,10 @@ class PMF:
 
         # create a new copy of the spline for MC sampling.
         self.mc_data = dict()
-        self.mc_data["bspline"] = self.spline_data["bspline"].copy()  
+
+        # we would like to make this below a copy, but BSpline doesn't have copy.
+
+        self.mc_data["bspline"] = self.spline_data["bspline"] 
         bspline = self.mc_data["bspline"]
 
         # ensure normalization of spline
@@ -1609,12 +1612,19 @@ class PMF:
         # this might not work as well for probability
         c = bspline.c
         crange = np.max(c) - np.min(c)
+
+        # if the range is flat, increase to a minimum
+        if np.abs(crange/np.max(c)) < 10**(-2):
+            crange = np.max(c)*10**(-2)
         dc = fraction_change * crange
 
         self.mc_data["naccept"] = 0
         csamples = np.zeros([len(c), int(niterations) // int(sample_every)])
         logposteriors = np.zeros(int(niterations) // int(sample_every))
         self.mc_data["first_step"] = True
+
+        import pdb
+        pdb.set_trace()
 
         for n in range(niterations):
             results = self._MC_step(x_n, self.w_n, dc, xrange, spline_weights, logprior)
