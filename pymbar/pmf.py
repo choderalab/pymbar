@@ -26,7 +26,6 @@ import math
 import numpy as np
 import pymbar
 
-from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, ParameterError, DataError, logsumexp
 from pymbar import timeseries
 
