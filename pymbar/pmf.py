@@ -1864,7 +1864,7 @@ class PMF:
         self.mc_data["mc_parameters"] = mc_parameters
         self.mc_data["acceptance_ratio"] = self.mc_data["naccept"] / niterations
         if verbose:
-            logger.info("Acceptance rate: {:5.3f}".format(self.mc_data["acceptance ratio"]))
+            logger.info("Acceptance rate: {:5.3f}".format(self.mc_data["acceptance_ratio"]))
         self.mc_data["nequil"] = t_mc  # the start of the "equilibrated" data set
         self.mc_data["g_logposterior"] = g_mc  # statistical efficiency of the log posterior
         self.mc_data["g_parameters"] = g_c  # statistical efficiency of the parametere
