@@ -270,7 +270,7 @@ class PMF:
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
-        pmxf_type: str
+        pmf_type: str
              options = 'histogram', 'kde', 'spline'
 
         histogram_parameters:
@@ -496,11 +496,11 @@ class PMF:
         x: ndarray, length self.N
             The data points used in this bootstrap
         
-        w_nb: ndarray, length self.N
-            The weights 
 
-        log_w_nb: ndarray, length self.N
-            Normalized log weights
+        log_w_n : np.ndarray, float, shape=(self.N)
+     
+            Normalized log weights for each sample for the state in which we want the PMF 
+            (usually, the unbiased state).  Doing it outside the loop to avoid redoing it each time.
         
         Returns
         -------
@@ -663,6 +663,32 @@ class PMF:
 
     def _generate_pmf_kde(self, b, x_n, w_n):
 
+        """
+        Given an pmf object with the kde data set up, determine 
+        the information necessary to define a PMF using a kernel density approximation
+        
+        Parameters
+        ----------
+
+        b : int
+
+            Which bootstrap this is: b==0 is the initial value with the "untouched" data.
+
+        x_n : np.ndarray, float, shape=(N,D)
+            x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
+
+        w_n : np.ndarray, float, shape=(sself.N)
+     
+            Weights for each sample for the state in which we want the PMF (usually, the unbiased state)
+
+        Returns
+        -------
+        None
+
+        Data is stored in self.kde or self.kdes (for bootstrap replicates).
+
+        """
+
         # reshape data if needed.
         # it's a 1D array, instead of a Nx1 array.  Reshape.
         if len(np.shape(x_n)) == 1:
@@ -810,10 +836,10 @@ class PMF:
 
         Returns
         -------
-        xinit: ndarray, float:
-            x-values of spline to fit
-        yinit: ndarray, float:
-            y-values of spline to fit
+        xinit: ndarray, float
+            x-values of spline to be fit for start of minimizaton
+        yinit: ndarray, float, shape
+            y-values of spline to be fit for start of minimizaton
         
         """
 
@@ -962,6 +988,30 @@ class PMF:
         return spline_data
 
     def _generate_pmf_spline(self, b, x_n, w_n):
+
+
+        """
+        Given an pmf object with the spline set up, determine 
+        the information necessary to define a PMF.
+        
+        Parameters
+        ----------
+
+        b : int
+
+            Which bootstrap this is: b==0 is the initial value with the "untouched" data.
+
+        x_n : np.ndarray, float, shape=(N,D)
+            x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
+
+
+        Returns
+        -------
+        None
+
+        Data is stored in self.pmf_function or self.pmf_functions (for bootstrap replicates).
+
+        """
 
         if b == 0:
             xi = self.spline_data["initial_coefficients"].copy()
@@ -1221,6 +1271,39 @@ class PMF:
     def _get_pmf_histogram(
         self, x, reference_point="from-lowest", pmf_reference=None, uncertainty_method=None
     ):
+        """
+
+        Returns values of the PMF at the specified x points for histogram PMFs.
+    
+        Parameters
+        ----------
+
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+
+        reference_point : str, optional
+            Method for reporting values and uncertainties (default: 'from-lowest')
+
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-specified' - same as from lowest, but from a user specified point
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
+
+        uncertainty_method : str, optional
+            Method for computing uncertainties (default: None)
+
+        pmf_reference :
+            an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
+
+        Returns
+        -------
+        dict
+            'f_i' : np.ndarray, float, shape=(K)
+                result_vals['f_i'][i] is the dimensionless free energy of the x_i point, relative to the reference point
+            'df_i' : np.ndarray, float, shape=(K)
+                result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
+                Only included if uncertainty_method is not None
+
+        """
 
         if uncertainty_method not in ["bootstrap","analytical"] and uncertainty_method is not None:
             raise ParameterError(
@@ -1447,6 +1530,39 @@ class PMF:
     def _get_pmf_kde(
         self, x, reference_point="from-normalization", pmf_reference=None, uncertainty_method=None
     ):
+        """
+
+        Returns values of the PMF at the specified x points for kde PMFs.
+    
+        Parameters
+        ----------
+
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+
+        reference_point : str, optional
+            Method for reporting values and uncertainties (default: 'from-lowest')
+
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-specified' - same as from lowest, but from a user specified point
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
+
+        uncertainty_method : str, optional
+            Method for computing uncertainties (default: None)
+
+        pmf_reference :
+            an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
+
+        Returns
+        -------
+        dict
+            'f_i' : np.ndarray, float, shape=(K)
+                result_vals['f_i'][i] is the dimensionless free energy of the x_i point, relative to the reference point
+            'df_i' : np.ndarray, float, shape=(K)
+                result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
+                Only included if uncertainty_method is not None
+
+        """
 
         result_vals = {}
         f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
@@ -1498,6 +1614,39 @@ class PMF:
     def _get_pmf_spline(
         self, x, reference_point="from_lowest", pmf_reference=0.0, uncertainty_method=None
     ):
+        """
+
+        Returns values of the PMF at the specified x points for spline PMFs.
+    
+        Parameters
+        ----------
+
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+
+        reference_point : str, optional
+            Method for reporting values and uncertainties (default: 'from-lowest')
+
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-specified' - same as from lowest, but from a user specified point
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
+
+        uncertainty_method : str, optional
+            Method for computing uncertainties (default: None)
+
+        pmf_reference :
+            an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
+
+        Returns
+        -------
+        dict
+            'f_i' : np.ndarray, float, shape=(K)
+                result_vals['f_i'][i] is the dimensionless free energy of the x_i point, relative to the reference point
+            'df_i' : np.ndarray, float, shape=(K)
+                result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
+                Only included if uncertainty_method is not None
+
+        """
 
         result_vals = {}
         # for splines now, should only be 1D.  x is passed in as a 2D array, need to covert
@@ -1547,6 +1696,26 @@ class PMF:
     def sample_parameter_distribution(
         self, x_n, mc_parameters=None, decorrelate=True, verbose=True,
     ):
+        """
+
+        Samples the valus of the spline parameters with MC.
+    
+        Parameters
+        ----------
+
+        x_n : numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        
+        decorrelate : boolean, 
+            Whether to decorrelate the time series of points.
+        
+        verbose : whether to be verbose.
+
+        Returns
+        -------
+            None
+
+
+        """
 
         # determine the range of the bspline at the start of the
         # process: changes are made as fractions of this
@@ -1565,7 +1734,7 @@ class PMF:
         xrange = spline_parameters["xrange"]
         # numerically integrate over this range
 
-        if self.spline_data["bspline"] is None:
+        if self.pmf_function is None:
             ParameterError(
                 "Need to generate an initial splined PMF using generate_pmf before performing MCMC sampling"
             )
@@ -1596,7 +1765,7 @@ class PMF:
 
         # we would like to make this below a copy, but BSpline doesn't have copy.
 
-        self.mc_data["bspline"] = self.spline_data["bspline"] 
+        self.mc_data["bspline"] = self.pmf_function 
         bspline = self.mc_data["bspline"]
 
         # ensure normalization of spline
@@ -1612,10 +1781,6 @@ class PMF:
         # this might not work as well for probability
         c = bspline.c
         crange = np.max(c) - np.min(c)
-
-        # if the range is flat, increase to a minimum
-        if np.abs(crange/np.max(c)) < 10**(-2):
-            crange = np.max(c)*10**(-2)
         dc = fraction_change * crange
 
         self.mc_data["naccept"] = 0
@@ -1623,16 +1788,14 @@ class PMF:
         logposteriors = np.zeros(int(niterations) // int(sample_every))
         self.mc_data["first_step"] = True
 
-        import pdb
-        pdb.set_trace()
-
         for n in range(niterations):
             results = self._MC_step(x_n, self.w_n, dc, xrange, spline_weights, logprior)
             if n % sample_every == 0:
                 csamples[:, n // sample_every] = results["c"]
                 logposteriors[n // sample_every] = results["logposterior"]
             if n % print_every == 0 and verbose:
-                logger.info(
+                #logger.info(
+                print(
                     "MC Step {:d} of {:d}".format(n, niterations),
                     str(results["logposterior"]),
                     str(bspline.c),
@@ -1744,7 +1907,11 @@ class PMF:
 
     def get_mc_data(self):
 
-        """ convenience function to get MC data
+        """ convenience function to retrieve MC data
+
+        Parameters
+        ----------
+        None
 
         Returns
         -------
@@ -1766,6 +1933,14 @@ class PMF:
             return self.mc_data
 
     def _get_MC_loglikelihood(self, x_n, w_n, spline_weights, spline, xrange):
+
+        """
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
 
         N = self.N
         K = self.K

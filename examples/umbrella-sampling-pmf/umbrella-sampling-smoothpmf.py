@@ -33,16 +33,14 @@ optimize_options = {"disp": True, "tol": 10 ** (-8)}
 # histogram is self explanatory.  'kde' is a kernel density approximation. Currently it uses a
 # Gaussian kernel, but this can be adjusted in the kde_parameters section below.
 
-methods = ["histogram", "kde", "unbiased-ml"]
-methods = ["unbiased-ml"]
-# mc_methods = ['unbiased-map'] # which methods to run MCMC sampling on (much slower).
-mc_methods = ['unbiased-ml']  # which methods to run MCMC sampling on (much slower).
+methods = ["histogram","kde","unbiased-ml","unbiased-map"]
+mc_methods = ["unbiased-map"] # which methods to run MCMC sampling on (much slower).
 # The code supports arbitrary powers of of B-splines (that are supported by scipy
 # Just replace '3' with the desired degree below. 1-5 suggested.
 spline_degree = 3
-nspline = 11  # number of spline knots used for the fit.
+nspline = 16  # number of spline knots used for the fit.
 nbootstraps = 5  # should increase to ~50 for good statistics
-mc_iterations = 5000  # could take a while.
+mc_iterations = 5000  # could take a while?
 smoothness_scalefac = 0.01
 fig_suffix = "test1"  # figure suffix for identifiability of the output!
 
