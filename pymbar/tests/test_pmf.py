@@ -16,7 +16,9 @@ beta = 1.0
 z_scale_factor = 12.0
 
 
-def generate_pmf_data(ndim=1, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, xrange=None):
+def generate_pmf_data(
+    ndim=1, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, xrange=None
+):
 
     x0 = np.zeros([ndim])  # center of base potential
     numbrellas = 1
@@ -85,13 +87,17 @@ def generate_pmf_data(ndim=1, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, x
         )  # reduced potential due to umbrella k
         u_kn[k, :] = u_n + uu
 
-    pmf_const = K0 / 2.0  # using a quadratic surface, so has same multpliciative value everywhere.
+    pmf_const = (
+        K0 / 2.0
+    )  # using a quadratic surface, so has same multpliciative value everywhere.
 
     def bias_potential(x, k_bias):
         dx = x - xu_i[k_bias, :]
         return beta * (Ku / 2.0) * np.dot(dx, dx)
 
-    bias_potentials = [(lambda x, klocal=k: bias_potential(x, klocal)) for k in range(numbrellas)]
+    bias_potentials = [
+        (lambda x, klocal=k: bias_potential(x, klocal)) for k in range(numbrellas)
+    ]
 
     return u_kn, u_n, x_n, f_k_analytical, pmf_const, bias_potentials
 
@@ -162,7 +168,12 @@ def pmf_1d():
 
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
-    results = pmf.get_pmf(bin_centers, reference_point="from-specified", pmf_reference=0.0, uncertainty_method = 'analytical')
+    results = pmf.get_pmf(
+        bin_centers,
+        reference_point="from-specified",
+        pmf_reference=0.0,
+        uncertainty_method="analytical",
+    )
 
     payload["pmf"] = pmf
     payload["u_kn"] = u_kn
@@ -279,7 +290,10 @@ def pmf_2d():
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
     results = pmf.get_pmf(
-        bin_centers + delta, reference_point="from-specified", pmf_reference=[0, 0], uncertainty_method = 'analytical'
+        bin_centers + delta,
+        reference_point="from-specified",
+        pmf_reference=[0, 0],
+        uncertainty_method="analytical",
     )
 
     payload["pmf"] = pmf
@@ -307,7 +321,9 @@ def pmf_2d():
     [
         "from-lowest",
         "from-specified",
-        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param(
+            "from-normalization", marks=pytest.mark.xfail(raises=ParameterError)
+        ),
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
@@ -317,9 +333,14 @@ def test_1d_pmf_histogram(pmf_1d, reference_point):
 
     histogram_parameters = dict()
     histogram_parameters["bin_edges"] = pmf_1d["bin_edges"]
-    pmf.generate_pmf(pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters)
+    pmf.generate_pmf(
+        pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters
+    )
     results = pmf.get_pmf(
-        pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0, uncertainty_method = "analytical"
+        pmf_1d["bin_centers"],
+        reference_point=reference_point,
+        pmf_reference=0.0,
+        uncertainty_method="analytical",
     )
     f_ih = results["f_i"]
     df_ih = results["df_i"]
@@ -341,10 +362,17 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, reference_point):
     kde_parameters["bandwidth"] = 0.5 * pmf_1d["dx"]
     # no analytical uncertainty for kde yet, have to use bootstraps
     pmf.generate_pmf(
-        pmf_1d["u_n"], pmf_1d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
+        pmf_1d["u_n"],
+        pmf_1d["x_n"],
+        pmf_type="kde",
+        kde_parameters=kde_parameters,
+        **gen_kwargs
     )
     results_kde = pmf.get_pmf(
-        pmf_1d["bin_centers"], reference_point=reference_point, pmf_reference=0.0, uncertainty_method=None
+        pmf_1d["bin_centers"],
+        reference_point=reference_point,
+        pmf_reference=0.0,
+        uncertainty_method=None,
     )
     f_ik = results_kde["f_i"]
     # df_ih = results_kde['df_i']
@@ -372,7 +400,9 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, reference_point):
     [
         "from-lowest",
         "from-specified",
-        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param(
+            "from-normalization", marks=pytest.mark.xfail(raises=ParameterError)
+        ),
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
@@ -403,7 +433,9 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
     spline_parameters["spline_initialize"] = "explicit"
 
     spline_parameters["xinit"] = bin_centers[:, 0]
-    spline_parameters["yinit"] = pmf_analytical  # cheat by starting with "true" answer - for speed
+    spline_parameters[
+        "yinit"
+    ] = pmf_analytical  # cheat by starting with "true" answer - for speed
 
     spline_parameters["xrange"] = pmf_1d["xrange"][0]
     spline_parameters["fkbias"] = pmf_1d["bias_potentials"]
@@ -423,8 +455,12 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
         **gen_kwargs
     )
     # Something wrong with unbiased state?
-    results_spline = pmf.get_pmf(bin_centers, reference_point=reference_point, 
-                                 pmf_reference=0.0, uncertainty_method=None)
+    results_spline = pmf.get_pmf(
+        bin_centers,
+        reference_point=reference_point,
+        pmf_reference=0.0,
+        uncertainty_method=None,
+    )
     f_is = results_spline["f_i"]
     # df_ih = results_spline['df_i']
     # Just use the reference for now
@@ -467,7 +503,9 @@ def test_1d_pmf_spline_bootstraped(pmf_1d):
     [
         "from-lowest",
         "from-specified",
-        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param(
+            "from-normalization", marks=pytest.mark.xfail(raises=ParameterError)
+        ),
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
@@ -516,7 +554,9 @@ def test_2d_pmf_histogram(pmf_2d, reference_point):
     [
         "from-lowest",
         "from-specified",
-        pytest.param("from-normalization", marks=pytest.mark.xfail(raises=ParameterError)),
+        pytest.param(
+            "from-normalization", marks=pytest.mark.xfail(raises=ParameterError)
+        ),
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
@@ -529,7 +569,11 @@ def test_2d_pmf_kde(pmf_2d, gen_kwargs, reference_point):
     kde_parameters = dict()
     kde_parameters["bandwidth"] = 0.5 * pmf_2d["dx"]
     pmf.generate_pmf(
-        pmf_2d["u_n"], pmf_2d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
+        pmf_2d["u_n"],
+        pmf_2d["x_n"],
+        pmf_type="kde",
+        kde_parameters=kde_parameters,
+        **gen_kwargs
     )
     # I don't know if this needs the +delta
     results_kde = pmf.get_pmf(
