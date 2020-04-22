@@ -90,7 +90,7 @@ jobs:
         ### umbrella-sampling-pmf
         cd ../umbrella-sampling-pmf
         python umbrella-sampling.py
-        python umbrella-sampling-smoothpmf.py
+        python umbrella-sampling-advanced-pmf.py
 
     - name: CodeCov
       uses: codecov/codecov-action@v1
