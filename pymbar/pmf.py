@@ -73,9 +73,7 @@ class PMF:
 
     # =========================================================================
 
-    def __init__(
-        self, u_kn, N_k, verbose=False, mbar_options=None, timings=True, **kwargs
-    ):
+    def __init__(self, u_kn, N_k, verbose=False, mbar_options=None, timings=True, **kwargs):
         """Initialize a potential of mean force calculation by performing
         multistate Bennett acceptance ratio (MBAR) on a set of
         simulation data from umbrella sampling at K states.
@@ -147,9 +145,7 @@ class PMF:
         """
         for key, val in kwargs.items():
             logging.warning(
-                "Warning: parameter {:s}={:s} is unrecognized and unused.".format(
-                    key, val
-                )
+                "Warning: parameter {:s}={:s} is unrecognized and unused.".format(key, val)
             )
 
         # Store local copies of necessary data.
@@ -414,15 +410,13 @@ class PMF:
                 index = 0
                 for k in range(K):
                     # TODO: address issue with storinig np.random in self
-                    bootstrap_indices[
-                        index : index + N_k[k]
-                    ] = index + np.random.randint(0, N_k[k], size=N_k[k])
+                    bootstrap_indices[index : index + N_k[k]] = index + np.random.randint(
+                        0, N_k[k], size=N_k[k]
+                    )
                     index += N_k[k]
                     # recompute MBAR.
                     mbar = pymbar.MBAR(
-                        self.u_kn[:, bootstrap_indices],
-                        self.N_k,
-                        initial_f_k=self.mbar.f_k,
+                        self.u_kn[:, bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k,
                     )
                     x_nb = x_n[bootstrap_indices]
 
@@ -654,9 +648,7 @@ class PMF:
         # make sure we didn't pass any arguments that DON'T belong here
         for k in kde_parameters:
             if k not in kde_defaults:
-                raise ParameterError(
-                    "Warning: {:s} is not a parameter in KernelDensity".format(k)
-                )
+                raise ParameterError("Warning: {:s} is not a parameter in KernelDensity".format(k))
         kde.set_params(**kde_defaults)
 
         self.kde_parameters = kde_parameters
@@ -712,9 +704,7 @@ class PMF:
         if b > 0:
             kde = KernelDensity()  # need to create a new one so won't get refit
             # Will take a refactor to get this correct for pylint
-            params = (
-                self.kde.get_params()
-            )  # pylint: disable=access-member-before-definition
+            params = self.kde.get_params()  # pylint: disable=access-member-before-definition
             kde.set_params(**params)
         else:
             kde = self.kde
@@ -750,9 +740,7 @@ class PMF:
 
         if objective not in ["ml", "map"]:
             raise ParameterError(
-                "objective may only be 'ml' or 'map': you have selected {:s}".format(
-                    objective
-                )
+                "objective may only be 'ml' or 'map': you have selected {:s}".format(objective)
             )
 
         if (
@@ -779,17 +767,11 @@ class PMF:
             else:
                 map_data = spline_parameters["map_data"]
                 if map_data["logprior"] == None:
-                    raise ParameterError(
-                        "log prior must be included if objective is MAP"
-                    )
+                    raise ParameterError("log prior must be included if objective is MAP")
                 if map_data["dlogprior"] == None:
-                    raise ParameterError(
-                        "d(log prior) must be included if objective is MAP"
-                    )
+                    raise ParameterError("d(log prior) must be included if objective is MAP")
                 if map_data["ddlogprior"] == None:
-                    raise ParameterError(
-                        "d^2(log prior) must be included if objective is MAP"
-                    )
+                    raise ParameterError("d^2(log prior) must be included if objective is MAP")
 
         # we need to intialize our function starting point
 
@@ -805,14 +787,10 @@ class PMF:
 
             if "tol" in spline_parameters["optimize_options"]:
                 # scipy doesn't like 'tol' within options
-                spline_parameters["scipy_tol"] = spline_parameters["optimize_options"][
-                    "tol"
-                ]
+                spline_parameters["scipy_tol"] = spline_parameters["optimize_options"]["tol"]
                 spline_parameters["optimize_options"].pop("tol", None)
             else:
-                spline_parameters[
-                    "scipy_tol"
-                ] = None  # this is just the default anyway.
+                spline_parameters["scipy_tol"] = None  # this is just the default anyway.
 
             if spline_parameters["optimization_algorithm"] not in [
                 "Newton-CG",
@@ -870,9 +848,7 @@ class PMF:
 
         if spline_parameters["spline_initialize"] == "bias_free_energies":
             # initialize to the bias free energies
-            if (
-                "bias_centers" in spline_parameters
-            ):  # if we are provided bias center, use them
+            if "bias_centers" in spline_parameters:  # if we are provided bias center, use them
                 bias_centers = spline_parameters["bias_centers"]
                 sort_indices = np.argsort(bias_centers)
                 K = self.mbar.K
@@ -886,10 +862,7 @@ class PMF:
                     tinit[noverfit + 1 : noverfit + kdegree + 1] = xrange[1]
                     # problem: bin centers might not actually be sorted.
                     binit = make_lsq_spline(
-                        bias_centers[sort_indices],
-                        initivals[sort_indices],
-                        tinit,
-                        k=kdegree,
+                        bias_centers[sort_indices], initivals[sort_indices], tinit, k=kdegree,
                     )
                     xinit = np.linspace(xrange[0], xrange[1], num=2 * nspline)
                     yinit = binit(xinit)
@@ -919,9 +892,7 @@ class PMF:
             yinit = np.zeros(len(xinit))
         else:
             spline_initialization = spline_parameters["spline_initialize"]
-            raise ParameterError(
-                f"Initialization type {spline_initialization} not recognized"
-            )
+            raise ParameterError(f"Initialization type {spline_initialization} not recognized")
 
         return xinit, yinit
 
@@ -1071,9 +1042,7 @@ class PMF:
                 hess=hess,
                 options=spline_parameters["optimize_options"],
             )
-            bspline = self._val_to_spline(
-                results["x"], form="log"
-            )  # TODO: where is this saved?
+            bspline = self._val_to_spline(results["x"], form="log")  # TODO: where is this saved?
             savexi = results["x"]
         else:
             if "gtol" in spline_parameters["optimize_options"]:
@@ -1124,9 +1093,7 @@ class PMF:
                 xi = xold - dx
                 if spline_parameters["optimize_options"]["disp"]:
                     dg = np.sqrt(np.dot(g, g))
-                    logger.info(
-                        "f = {:.10f}. gradient norm = {:.10f}".format(f, np.sqrt(dg))
-                    )
+                    logger.info("f = {:.10f}. gradient norm = {:.10f}".format(f, np.sqrt(dg)))
             bspline = self._val_to_spline(xi, form="log")
             savexi = xi
 
@@ -1211,16 +1178,10 @@ class PMF:
         elif type in ["bayesian", "Bayesian", "BIC", "bic"]:
             return self.spline_data["bic"]
         else:
-            raise ParameterError(
-                "Information criteria of type '{:s}' not defined".format(type)
-            )
+            raise ParameterError("Information criteria of type '{:s}' not defined".format(type))
 
     def get_pmf(
-        self,
-        x,
-        reference_point="from-lowest",
-        pmf_reference=None,
-        uncertainty_method=None,
+        self, x, reference_point="from-lowest", pmf_reference=None, uncertainty_method=None,
     ):
         """
         Returns values of the PMF at the specified x points.
@@ -1275,9 +1236,7 @@ class PMF:
         if self.pmf_type == "histogram":
             if self.histogram_data["dims"] != coord_dim:
                 # later, need to put coordinate check on other methods.
-                raise DataError(
-                    "query coordinates have inconsistent dimension with the PMF."
-                )
+                raise DataError("query coordinates have inconsistent dimension with the PMF.")
 
         if self.pmf_type == "histogram":
             result_vals = self._get_pmf_histogram(
@@ -1286,9 +1245,7 @@ class PMF:
 
         elif self.pmf_type == "kde":
             # TODO: check dimensionality here
-            result_vals = self._get_pmf_kde(
-                x, reference_point, pmf_reference, uncertainty_method
-            )
+            result_vals = self._get_pmf_kde(x, reference_point, pmf_reference, uncertainty_method)
 
         elif self.pmf_type == "spline":
             if coord_dim != 1:
@@ -1311,9 +1268,7 @@ class PMF:
         if self.mbar is not None:
             return self.mbar
         else:
-            raise DataError(
-                "MBAR in the PMF object is not initialized, cannot return it."
-            )
+            raise DataError("MBAR in the PMF object is not initialized, cannot return it.")
 
     def get_kde(self):
         """ return the KernelDensity object if it exists.
@@ -1331,16 +1286,10 @@ class PMF:
                     "Can't return the KernelDensity object because kde not yet defined"
                 )
         else:
-            raise ParameterError(
-                "Can't return the KernelDensity object because pmf_type != kde"
-            )
+            raise ParameterError("Can't return the KernelDensity object because pmf_type != kde")
 
     def _get_pmf_histogram(
-        self,
-        x,
-        reference_point="from-lowest",
-        pmf_reference=None,
-        uncertainty_method=None,
+        self, x, reference_point="from-lowest", pmf_reference=None, uncertainty_method=None,
     ):
         """
         Returns values of the PMF at the specified x points for histogram PMFs.
@@ -1379,9 +1328,7 @@ class PMF:
             uncertainty_method not in ["bootstrap", "analytical"]
             and uncertainty_method is not None
         ):
-            raise ParameterError(
-                f"Uncertainty_method {uncertainty_method} is not a valid option"
-            )
+            raise ParameterError(f"Uncertainty_method {uncertainty_method} is not a valid option")
 
         if uncertainty_method == "bootstrap":
             if self.histogram_datas is None:
@@ -1559,9 +1506,7 @@ class PMF:
                 # well.
                 diag = Theta_ij.diagonal()
                 dii = diag[K, K + nbins]  # appears broken?  Not used?
-                d2f_ij = (
-                    dii + dii.transpose() - 2 * Theta_ij[K : K + nbins, K : K + nbins]
-                )
+                d2f_ij = dii + dii.transpose() - 2 * Theta_ij[K : K + nbins, K : K + nbins]
 
                 # unsquare uncertainties
                 df_ij = np.sqrt(d2f_ij)
@@ -1570,9 +1515,7 @@ class PMF:
 
                 bin_is = ()
                 for i, l in enumerate(loc_indices):
-                    bin_i = histogram_data["bin_order"][
-                        self.histogram_data["bin_label"][tuple(l)]
-                    ]
+                    bin_i = histogram_data["bin_order"][self.histogram_data["bin_label"][tuple(l)]]
                 bin_is.append(bin_i)
 
                 for i, vi in bin_is:
@@ -1583,18 +1526,13 @@ class PMF:
                             dfxij_vals[i, j] = np.nan
 
             elif uncertainty_method == "bootstrap":  # TODO: check this is working!
-                dfxij_vals = np.zeros(
-                    [len(histogram_data["f"]), len(histogram_data["f"])]
-                )
-                fall = np.zeros(
-                    [len(histogram_data["f"]), len(histogram_data["f"]), nbootstraps,]
-                )
+                dfxij_vals = np.zeros([len(histogram_data["f"]), len(histogram_data["f"])])
+                fall = np.zeros([len(histogram_data["f"]), len(histogram_data["f"]), nbootstraps,])
                 for b in range(nbootstraps):
                     h = histgram_datas[b]
                     for i in range(nbins):
                         fall[i, j, b] = (
-                            histogram_datas[b]["f"]
-                            - histogram_datas[b]["f"].transpose()
+                            histogram_datas[b]["f"] - histogram_datas[b]["f"].transpose()
                         )
                 dfxij_vals = np.std(fall, axis=2)
             if uncertainty_method is not None:
@@ -1604,11 +1542,7 @@ class PMF:
         return result_vals
 
     def _get_pmf_kde(
-        self,
-        x,
-        reference_point="from-normalization",
-        pmf_reference=None,
-        uncertainty_method=None,
+        self, x, reference_point="from-normalization", pmf_reference=None, uncertainty_method=None,
     ):
         """
 
@@ -1645,9 +1579,7 @@ class PMF:
         """
 
         result_vals = {}
-        f_i = -self.kde.score_samples(
-            x
-        )  # gives the LOG density, which is what we want.
+        f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
 
         if reference_point == "from-lowest":
             fmin = np.min(f_i)
@@ -1694,11 +1626,7 @@ class PMF:
         return result_vals
 
     def _get_pmf_spline(
-        self,
-        x,
-        reference_point="from_lowest",
-        pmf_reference=0.0,
-        uncertainty_method=None,
+        self, x, reference_point="from_lowest", pmf_reference=0.0, uncertainty_method=None,
     ):
         """
 
@@ -1912,23 +1840,17 @@ class PMF:
         if decorrelate:
             t_mc, g_mc, Neff = timeseries.detect_equilibration(logposteriors)
             logger.info(
-                "First equilibration sample is {:d} of {:d}".format(
-                    t_mc, len(logposteriors)
-                )
+                "First equilibration sample is {:d} of {:d}".format(t_mc, len(logposteriors))
             )
             equil_logp = logposteriors[t_mc:]
             g_mc = timeseries.statistical_inefficiency(equil_logp)
             if verbose:
-                logger.info(
-                    "Statistical inefficiency of log posterior is {:.3g}".format(g_mc)
-                )
+                logger.info("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
             g_c = np.zeros(len(c))
             for nc in range(len(c)):
                 g_c[nc] = timeseries.statistical_inefficiency(csamples[nc, t_mc:])
             if verbose:
-                logger.info(
-                    "Time series for spline parameters are: {:s}".format(str(g_c))
-                )
+                logger.info("Time series for spline parameters are: {:s}".format(str(g_c)))
             maxgc = np.max(g_c)
             meangc = np.mean(g_c)
             guse = g_mc  # doesn't affect the distribution that much
@@ -1936,22 +1858,16 @@ class PMF:
             logposteriors = equil_logp[indices]
             csamples = (csamples[:, t_mc:])[:, indices]
             if verbose:
-                logger.info(
-                    "samples after decorrelation: {:d}".format(np.shape(csamples)[1])
-                )
+                logger.info("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
 
         self.mc_data["samples"] = csamples
         self.mc_data["logposteriors"] = logposteriors
         self.mc_data["mc_parameters"] = mc_parameters
         self.mc_data["acceptance_ratio"] = self.mc_data["naccept"] / niterations
         if verbose:
-            logger.info(
-                "Acceptance rate: {:5.3f}".format(self.mc_data["acceptance ratio"])
-            )
+            logger.info("Acceptance rate: {:5.3f}".format(self.mc_data["acceptance ratio"]))
         self.mc_data["nequil"] = t_mc  # the start of the "equilibrated" data set
-        self.mc_data[
-            "g_logposterior"
-        ] = g_mc  # statistical efficiency of the log posterior
+        self.mc_data["g_logposterior"] = g_mc  # statistical efficiency of the log posterior
         self.mc_data["g_parameters"] = g_c  # statistical efficiency of the parametere
         self.mc_data["g"] = guse  # statistical efficiency used for subsampling
 
@@ -1980,9 +1896,7 @@ class PMF:
 
         """
         if self.mc_data is None:
-            raise DataError(
-                "No MC sampling has been done, cannot construct confidence intervals"
-            )
+            raise DataError("No MC sampling has been done, cannot construct confidence intervals")
 
         # determine confidence intervals
         nplot = len(xplot)  # number of data points to plot.
@@ -2048,9 +1962,7 @@ class PMF:
         """
 
         if self.mc_data is None:
-            raise DataError(
-                "No MC sampling has been done, cannot construct confidence intervals"
-            )
+            raise DataError("No MC sampling has been done, cannot construct confidence intervals")
         else:
             return self.mc_data
 
@@ -2099,9 +2011,7 @@ class PMF:
                 def expk(x, kf=k):
                     return np.exp(-splinek(x, kf))
 
-                normalize = np.log(
-                    self._integrate(expk, xrange[0], xrange[1], args=(k))
-                )
+                normalize = np.log(self._integrate(expk, xrange[0], xrange[1], args=(k)))
                 if spline_weights == "simplesum":
                     loglikelihood += (N / K) * np.mean(splinek(x_kn))
                     loglikelihood += (N / K) * normalize
@@ -2231,9 +2141,7 @@ class PMF:
         N_k = mbar.N_k
         N = self.N
 
-        bloc = self._val_to_spline(
-            xi
-        )  # convert the spline coefficients into a spline object
+        bloc = self._val_to_spline(xi)  # convert the spline coefficients into a spline object
         spline_weights = self.spline_parameters[
             "spline_weights"
         ]  # how to weight the integrated splines in the final likelihood
@@ -2272,9 +2180,7 @@ class PMF:
             # subtract the free energy (add log partition function)
             f += np.dot(integral_scaling, np.log(pF))
 
-        elif (
-            spline_weights == "unbiasedstate"
-        ):  # just KL divergence of the unbiased potential
+        elif spline_weights == "unbiasedstate":  # just KL divergence of the unbiased potential
             # may need to recast w_n
             f = N * np.dot(w_n, bloc(x_n))
 
@@ -2327,9 +2233,7 @@ class PMF:
         N_k = mbar.N_k
         N = self.N
 
-        bloc = self._val_to_spline(
-            xi
-        )  # convert the spline coefficients into a spline object
+        bloc = self._val_to_spline(xi)  # convert the spline coefficients into a spline object
         spline_weights = self.spline_parameters[
             "spline_weights"
         ]  # how to weight the integrated splines in the final likelihood
@@ -2381,9 +2285,7 @@ class PMF:
                 for i in range(nspline - 1):
                     # Boltzmann weighted derivative with each biasing function
                     # now compute the expectation of each derivative
-                    pE = self._integrate(
-                        dexpf, xrangei[i + 1, 0], xrangei[i + 1, 1], args=(k)
-                    )
+                    pE = self._integrate(dexpf, xrangei[i + 1, 0], xrangei[i + 1, 1], args=(k))
 
                     # normalize the expectation
                     gkquad[i, k] = pE / pF[k]
@@ -2451,9 +2353,7 @@ class PMF:
         N_k = mbar.N_k
         N = self.N
 
-        bloc = self._val_to_spline(
-            xi
-        )  # convert the spline coefficients into a spline object
+        bloc = self._val_to_spline(xi)  # convert the spline coefficients into a spline object
         spline_weights = self.spline_parameters[
             "spline_weights"
         ]  # how to weight the integrated splines in the final likelihood
@@ -2518,9 +2418,7 @@ class PMF:
 
                         # now compute the expectation of each derivative
                         pE = self._integrate(
-                            ddexpf,
-                            xrangeij[i + 1, j + 1, 0],
-                            xrangeij[i + 1, j + 1, 1],
+                            ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1],
                         )
                         h[i, j] += N * pE / pF
 
@@ -2536,9 +2434,7 @@ class PMF:
         return h
 
     @staticmethod
-    def _integrate(
-        func, xlow, xhigh, args=(), method="quad"
-    ):  # could add more ability to specify
+    def _integrate(func, xlow, xhigh, args=(), method="quad"):  # could add more ability to specify
         """
         wrapper for integration in case we decide to replace quad with something analytical
         """
@@ -2546,9 +2442,7 @@ class PMF:
             # just use scipy quadrature
             results = quad(func, xlow, xhigh, args)[0]
         else:
-            raise ParameterError(
-                "integration method {:s} not yet implemented".format(method)
-            )
+            raise ParameterError("integration method {:s} not yet implemented".format(method))
         return results
 
     def _val_to_spline(self, x, form=None):
