@@ -228,10 +228,6 @@ class PMF:
         # self._random = np.random
         # self._seed = None
 
-        # These attributes might be used later; hopefully their presence does not break code
-        self.histogram_data = None
-        self.histogram_datas = None
-
         if self.verbose:
             logger.info("PMF initialized")
 
@@ -481,6 +477,7 @@ class PMF:
 
         self.histogram_parameters = histogram_parameters
 
+        self.histogram_data = None
         if self.nbootstraps > 0:
             self.histogram_datas = list()
         else:
@@ -850,6 +847,7 @@ class PMF:
         xrange = spline_parameters["xrange"]
 
         if spline_parameters["spline_initialize"] == "bias_free_energies":
+            initvals = self.mbar.f_k
             # initialize to the bias free energies
             if "bias_centers" in spline_parameters:  # if we are provided bias center, use them
                 bias_centers = spline_parameters["bias_centers"]
@@ -865,17 +863,17 @@ class PMF:
                     tinit[noverfit + 1 : noverfit + kdegree + 1] = xrange[1]
                     # problem: bin centers might not actually be sorted.
                     binit = make_lsq_spline(
-                        bias_centers[sort_indices], initivals[sort_indices], tinit, k=kdegree,
+                        bias_centers[sort_indices], initvals[sort_indices], tinit, k=kdegree,
                     )
                     xinit = np.linspace(xrange[0], xrange[1], num=2 * nspline)
                     yinit = binit(xinit)
                 else:
                     xinit = bias_centers[sort_indices]
-                    yinit = initivals[sort_indices]
+                    yinit = initvals[sort_indices]
             else:
                 # assume equally spaced bias scenters
                 xinit = np.linspace(xrange[0], xrange[1], self.mbar.K + 1)[1:-1]
-                yinit = initivals
+                yinit = initvals
 
         elif spline_parameters["spline_initialize"] == "explicit":
             if "xinit" in spline_parameters:
