@@ -2397,11 +2397,8 @@ class PMF:
 
                         def ddexpf(x, k_inner):
                             # Disable the PyLint check here because this is the behavior we want
-                            return (
-                                db_c[i + 1](x)  # pylint: disable=cell-var-from-loop
-                                * db_c[j + 1](x)  # pylint: disable=cell-var-from-loop
-                                * expf[k_inner](x)
-                            )
+                            # pylint: disable=cell-var-from-loop
+                            return db_c[i + 1](x) * db_c[j + 1](x) * expf[k_inner](x)
 
                         for k in range(K):
                             # now compute the expectation of each derivative
