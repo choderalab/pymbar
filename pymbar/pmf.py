@@ -106,7 +106,7 @@ class PMF:
            been called, generates confidence intervals for the curves
            given the posterior distribution.
 
-           
+
         Parameters
         ----------
         u_kn : np.ndarray, float, shape=(K, N_max)
@@ -228,6 +228,10 @@ class PMF:
         # self._random = np.random
         # self._seed = None
 
+        # These attributes might be used later; hopefully their presence does not break code
+        self.histogram_data = None
+        self.histogram_datas = None
+
         if self.verbose:
             logger.info("PMF initialized")
 
@@ -256,7 +260,7 @@ class PMF:
         Given an intialized MBAR object, a set of points,
         the desired energies at that point, and a method, generate
         an object that contains the PMF information.
-        
+
         Parameters
         ----------
 
@@ -294,8 +298,8 @@ class PMF:
             - 'objective': - 'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
 
         nbootstraps : int, 0 or > 1, Default: 0
-            Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done. Required if 
-            one uses uncertainty_method = 'bootstrap' in get_pmf 
+            Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done. Required if
+            one uses uncertainty_method = 'bootstrap' in get_pmf
 
         seed : int, Default: -1
             Set the randomization seed. Settting should get the
@@ -312,7 +316,7 @@ class PMF:
         -----
         * pmf_type = 'histogram':
             * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
-            * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states . . . 
+            * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states . . .
             * the potential is given by u_n within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
 
         Examples
@@ -460,7 +464,7 @@ class PMF:
         ----------
         histogram_parameters: dict()
             A options:values dictonary for parameters to create the PMF using histogramss
-        
+
         Returns
         -------
         None
@@ -489,15 +493,15 @@ class PMF:
         ----------
         b: int
             the bootstrap sample this is on (for non-bootstrap methods, will be 0)
-        
+
         x_n: ndarray, length self.N
             The data point set used in this bootstrap
 
         log_w_n : np.ndarray, float, shape=(self.N)
-     
-            Normalized log weights for each sample for the state in which we want the PMF 
+
+            Normalized log weights for each sample for the state in which we want the PMF
             (usually, the unbiased state).  Doing it outside the loop to avoid redoing it each time.
-        
+
         Returns
         -------
         None
@@ -619,7 +623,7 @@ class PMF:
         kde_parameters: dict()
             A options:values dictonary for parameters to create the PMF using the kernel density approach.
             Parameters are passsed on to sklearn KernelDensity.
-        
+
         Returns
         -------
         None
@@ -661,9 +665,9 @@ class PMF:
     def _generate_pmf_kde(self, b, x_n, w_n):
 
         """
-        Given an pmf object with the kde data set up, determine 
+        Given an pmf object with the kde data set up, determine
         the information necessary to define a PMF using a kernel density approximation
-        
+
         Parameters
         ----------
 
@@ -675,7 +679,7 @@ class PMF:
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
         w_n : np.ndarray, float, shape=(sself.N)
-     
+
             Weights for each sample for the state in which we want the PMF (usually, the unbiased state)
 
         Returns
@@ -721,8 +725,8 @@ class PMF:
         ----------
         spline_parameters: dict()
             A options:values dictonary for parameters to create the PMF using the spline approach.
-            Parameters are explained in docstring of 
-        
+            Parameters are explained in docstring of
+
         Returns
         -------
         None
@@ -837,7 +841,7 @@ class PMF:
             x-values of spline to be fit for start of minimizaton
         yinit: ndarray, float, shape
             y-values of spline to be fit for start of minimizaton
-        
+
         """
 
         spline_parameters = self.spline_parameters
@@ -912,7 +916,7 @@ class PMF:
         Returns
         -------
         spline_data: dict() of information used in optimizing the spline parameters
-        
+
         """
 
         spline_data = {}
@@ -987,9 +991,9 @@ class PMF:
     def _generate_pmf_spline(self, b, x_n, w_n):
 
         """
-        Given an pmf object with the spline set up, determine 
+        Given an pmf object with the spline set up, determine
         the information necessary to define a PMF.
-        
+
         Parameters
         ----------
 
@@ -1001,9 +1005,9 @@ class PMF:
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
         w_n : np.ndarray, float, shape=(sself.N)
-     
+
             Weights for each sample for the state in which we want the PMF (usually, the unbiased state)
-     
+
         Returns
         -------
         None
@@ -1066,11 +1070,13 @@ class PMF:
                 else:
                     count = 0
                     # we went too far!  Pull back.
+                    # pylint: disable=used-before-assignment,undefined-variable
                     while (f >= fold * (1.1) and count < 5) or (np.isinf(f)):
                         f = fold
                         # let's not step as far:
                         dx = 0.9 * dx
-                        xi = xold - dx  # step back 90% of dx
+                        # step back 90% of dx
+                        xi = xold - dx
                         xold = xi.copy()
                         f = func(xi, *spline_args)
                         count += 1
@@ -1118,10 +1124,10 @@ class PMF:
 
         """
         Calculate and store various informaton criterias
-        
+
         Parameters
         ----------
-        
+
         nparameters : int, number of parameters in the model
 
         minus_log_likelihood : float, minus the log likelihood of the model.
@@ -1131,8 +1137,8 @@ class PMF:
         Results
         -------
 
-        results : dict of results.  Keys are "aic" (Akaike information critera) 
-        and "bic" (Bayesian information criteria), values   
+        results : dict of results.  Keys are "aic" (Akaike information critera)
+        and "bic" (Bayesian information criteria), values
 
         """
         results = {}
@@ -1292,7 +1298,7 @@ class PMF:
     ):
         """
         Returns values of the PMF at the specified x points for histogram PMFs.
-    
+
         Parameters
         ----------
 
@@ -1528,7 +1534,7 @@ class PMF:
                 dfxij_vals = np.zeros([len(histogram_data["f"]), len(histogram_data["f"])])
                 fall = np.zeros([len(histogram_data["f"]), len(histogram_data["f"]), nbootstraps,])
                 for b in range(nbootstraps):
-                    h = histgram_datas[b]
+                    h = histogram_datas[b]
                     for i in range(nbins):
                         fall[i, j, b] = (
                             histogram_datas[b]["f"] - histogram_datas[b]["f"].transpose()
@@ -1546,7 +1552,7 @@ class PMF:
         """
 
         Returns values of the PMF at the specified x points for kde PMFs.
-    
+
         Parameters
         ----------
 
@@ -1630,7 +1636,7 @@ class PMF:
         """
 
         Returns values of the PMF at the specified x points for spline PMFs.
-    
+
         Parameters
         ----------
 
@@ -1712,7 +1718,7 @@ class PMF:
         """
 
         Samples the valus of the spline parameters with MC.
-    
+
         Parameters
         ----------
 
@@ -1722,19 +1728,19 @@ class PMF:
             A dictionary of Monte Carlo parameters:
 
             niteratons : int, number of iterations of the Monte Carlo procedure
-            
+
             fraction_change: float, which fraction of the range of input parameters is used to make new MC moves.
 
             sample_every : int, the frequency in steps at which the MC timeseries is saved.
 
             print_every : int, the frequency in steps aat which the MC timeseries is saved to log.
-        
+
             logprior: function, the function of parameters.  Must take a single argument, array the size of parameters
                       in in the same order as a used by the internal functions.
 
-        decorrelate : boolean, 
+        decorrelate : boolean,
             Whether to decorrelate the time series of output points
-        
+
         verbose : Whether to print high levels of information to the logger
 
         Returns
@@ -1890,7 +1896,7 @@ class PMF:
             plow : ndarray of float, len(xplot) value of the parameter at plow percentile of the distribution at each x in xplot.
             phigh: ndarray of float, value of the parameter at phigh percentile of the distribution at each x in xplot.
             median: ndarray of float, value of the parameter at the median of the distribution at each x in xplot.
-            values: ndarray of float, shape [niterations//sample_every, len(xplot)] of the PMF saved during 
+            values: ndarray of float, shape [niterations//sample_every, len(xplot)] of the PMF saved during
                     the MCMC sampling at each input value of xplot.
 
         """
@@ -1975,13 +1981,13 @@ class PMF:
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
         w_n : np.ndarray, float, shape=(sself.N)
-     
+
             Weights for each sample for the state in which we want the PMF (usually, the unbiased state)
 
         spline_weights : string
             which type of fit to the likelihood to use (see `generate_pmf` options)
 
-        spline : function of ndarray argument  
+        spline : function of ndarray argument
             function current value of the spline for which likelihood is being calculated
 
         xrange : float, shape=(2)
@@ -1990,7 +1996,7 @@ class PMF:
         Returns
         -------
 
-        loglikelihood : float 
+        loglikelihood : float
            loglikelihood of this spline
 
         """
