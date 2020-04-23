@@ -11,4 +11,4 @@ http://dx.doi.org/10.1016/j.jmb.2007.06.002
 
 Run the included `umbrella-sampling.py` code.  `umbrella-sampling.sample_output` gives the expected output of the program.
 
-The code `umbrella-sampling-smoothpmf.py` demonstrates significant additional functionality (in beta), but takes significantly longer to run.
+The code `umbrella-sampling-advaced-pmf.py` demonstrates significant additional functionality (in beta), but takes significantly longer to run.

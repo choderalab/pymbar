@@ -283,7 +283,7 @@ for i in range(bin_nonzero):
 
 x_n = np.zeros([np.sum(N_k), 2])  # the configurations
 
-Ntot = 0  
+Ntot = 0
 for k in range(K):
     for n in range(N_k[k]):
         x_n[Ntot, 0] = phi_kn[k, n]
@@ -314,7 +314,7 @@ u_kn = target_beta * U_kn
 histogram_parameters = {}
 histogram_parameters["bin_edges"] = bin_edges
 pmf.generate_pmf(u_kn, x_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
-results = pmf.get_pmf(np.array(centers_nonzero), uncertainties="from-lowest")
+results = pmf.get_pmf(np.array(centers_nonzero), reference_point="from-lowest", uncertainty_method = 'analytical')
 f_i = results["f_i"]
 df_i = results["df_i"]
 

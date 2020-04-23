@@ -162,7 +162,12 @@ def pmf_1d():
 
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
-    results = pmf.get_pmf(bin_centers, uncertainties="from-specified", pmf_reference=0.0)
+    results = pmf.get_pmf(
+        bin_centers,
+        reference_point="from-specified",
+        pmf_reference=0.0,
+        uncertainty_method="analytical",
+    )
 
     payload["pmf"] = pmf
     payload["u_kn"] = u_kn
@@ -279,7 +284,10 @@ def pmf_2d():
     # Make a quick calculation to get reference uncertainties
     pmf.generate_pmf(u_n, x_n, histogram_parameters={"bin_edges": bin_edges})
     results = pmf.get_pmf(
-        bin_centers + delta, uncertainties="from-specified", pmf_reference=[0, 0]
+        bin_centers + delta,
+        reference_point="from-specified",
+        pmf_reference=[0, 0],
+        uncertainty_method="analytical",
     )
 
     payload["pmf"] = pmf
@@ -303,7 +311,7 @@ def pmf_2d():
 
 
 @pytest.mark.parametrize(
-    "uncertainties",
+    "reference_point",
     [
         "from-lowest",
         "from-specified",
@@ -311,14 +319,19 @@ def pmf_2d():
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
-def test_1d_pmf_histogram(pmf_1d, uncertainties):
+def test_1d_pmf_histogram(pmf_1d, reference_point):
 
     pmf = pmf_1d["pmf"]
 
     histogram_parameters = dict()
     histogram_parameters["bin_edges"] = pmf_1d["bin_edges"]
     pmf.generate_pmf(pmf_1d["u_n"], pmf_1d["x_n"], histogram_parameters=histogram_parameters)
-    results = pmf.get_pmf(pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0)
+    results = pmf.get_pmf(
+        pmf_1d["bin_centers"],
+        reference_point=reference_point,
+        pmf_reference=0.0,
+        uncertainty_method="analytical",
+    )
     f_ih = results["f_i"]
     df_ih = results["df_i"]
 
@@ -331,7 +344,7 @@ def test_1d_pmf_histogram(pmf_1d, uncertainties):
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
 
-def base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
+def base_1d_pmf_kde(pmf_1d, gen_kwargs, reference_point):
 
     pmf = pmf_1d["pmf"]
 
@@ -342,7 +355,10 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
         pmf_1d["u_n"], pmf_1d["x_n"], pmf_type="kde", kde_parameters=kde_parameters, **gen_kwargs
     )
     results_kde = pmf.get_pmf(
-        pmf_1d["bin_centers"], uncertainties=uncertainties, pmf_reference=0.0
+        pmf_1d["bin_centers"],
+        reference_point=reference_point,
+        pmf_reference=0.0,
+        uncertainty_method=None,
     )
     f_ik = results_kde["f_i"]
     # df_ih = results_kde['df_i']
@@ -366,7 +382,7 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
 )
 @pytest.mark.parametrize("gen_kwargs", [{}, {"seed": 10}])
 @pytest.mark.parametrize(
-    "uncertainties",
+    "reference_point",
     [
         "from-lowest",
         "from-specified",
@@ -374,8 +390,8 @@ def base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
-def test_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties):
-    base_1d_pmf_kde(pmf_1d, gen_kwargs, uncertainties)
+def test_1d_pmf_kde(pmf_1d, gen_kwargs, reference_point):
+    base_1d_pmf_kde(pmf_1d, gen_kwargs, reference_point)
 
 
 @pytest.mark.skipif(
@@ -388,7 +404,7 @@ def test_1d_pmf_kde_bootstraped(pmf_1d):
     base_1d_pmf_kde(pmf_1d, {"nbootstraps": 2}, "from-lowest")
 
 
-def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
+def base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
 
     pmf = pmf_1d["pmf"]
     bin_centers = pmf_1d["bin_centers"]
@@ -396,7 +412,7 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
 
     # now spline
     spline_parameters = dict()
-    spline_parameters["spline_weights"] = "simplesum"  # fastest spline method
+    spline_parameters["spline_weights"] = "unbiasedstate"  # fastest spline method
     spline_parameters["nspline"] = 4
     spline_parameters["spline_initialize"] = "explicit"
 
@@ -412,17 +428,18 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
     spline_parameters["objective"] = "ml"
     spline_parameters["map_data"] = None
 
-    # TODO: Is this u_kn for spline or u_n like all the others? Right now I have it as u_kn as thats what it was
     # no analytical uncertainty for kde yet, have to use bootstraps
     pmf.generate_pmf(
-        pmf_1d["u_kn"],
+        pmf_1d["u_n"],
         pmf_1d["x_n"],
         pmf_type="spline",
         spline_parameters=spline_parameters,
         **gen_kwargs
     )
     # Something wrong with unbiased state?
-    results_spline = pmf.get_pmf(bin_centers, uncertainties=uncertainties, pmf_reference=0.0)
+    results_spline = pmf.get_pmf(
+        bin_centers, reference_point=reference_point, pmf_reference=0.0, uncertainty_method=None,
+    )
     f_is = results_spline["f_i"]
     # df_ih = results_spline['df_i']
     # Just use the reference for now
@@ -441,7 +458,7 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
 
 @pytest.mark.parametrize("gen_kwargs", [{}, {"seed": 10}])
 @pytest.mark.parametrize(
-    "uncertainties",
+    "reference_point",
     [
         "from-lowest",
         # Lots of things are wrong with this, not going to debug it at this time.
@@ -450,8 +467,8 @@ def base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
         # pytest.param('all-differences', marks=pytest.mark.xfail)
     ],
 )
-def test_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties):
-    base_1d_pmf_spline(pmf_1d, gen_kwargs, uncertainties)
+def test_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point):
+    base_1d_pmf_spline(pmf_1d, gen_kwargs, reference_point)
 
 
 def test_1d_pmf_spline_bootstraped(pmf_1d):
@@ -461,7 +478,7 @@ def test_1d_pmf_spline_bootstraped(pmf_1d):
 
 
 @pytest.mark.parametrize(
-    "uncertainties",
+    "reference_point",
     [
         "from-lowest",
         "from-specified",
@@ -469,7 +486,7 @@ def test_1d_pmf_spline_bootstraped(pmf_1d):
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
-def test_2d_pmf_histogram(pmf_2d, uncertainties):
+def test_2d_pmf_histogram(pmf_2d, reference_point):
 
     """ testing pmf_generate_pmf and pmf_get_pmf in 2D """
 
@@ -487,7 +504,9 @@ def test_2d_pmf_histogram(pmf_2d, uncertainties):
     )
 
     results = pmf.get_pmf(
-        pmf_2d["bin_centers"] + pmf_2d["delta"], uncertainties=uncertainties, pmf_reference=[0, 0]
+        pmf_2d["bin_centers"] + pmf_2d["delta"],
+        reference_point=reference_point,
+        pmf_reference=[0, 0],
     )
     f_ih = results["f_i"]
     df_ih = pmf_2d["reference_df_i"]
@@ -508,7 +527,7 @@ def test_2d_pmf_histogram(pmf_2d, uncertainties):
 )
 @pytest.mark.parametrize("gen_kwargs", [{}, {"seed": 10}])
 @pytest.mark.parametrize(
-    "uncertainties",
+    "reference_point",
     [
         "from-lowest",
         "from-specified",
@@ -516,7 +535,7 @@ def test_2d_pmf_histogram(pmf_2d, uncertainties):
         pytest.param("all-differences", marks=pytest.mark.xfail(raises=ParameterError)),
     ],
 )
-def test_2d_pmf_kde(pmf_2d, gen_kwargs, uncertainties):
+def test_2d_pmf_kde(pmf_2d, gen_kwargs, reference_point):
 
     pmf = pmf_2d["pmf"]
     pmf_analytical = pmf_2d["pmf_analytical"]
@@ -529,7 +548,9 @@ def test_2d_pmf_kde(pmf_2d, gen_kwargs, uncertainties):
     )
     # I don't know if this needs the +delta
     results_kde = pmf.get_pmf(
-        pmf_2d["bin_centers"] + pmf_2d["delta"], uncertainties=uncertainties, pmf_reference=[0, 0]
+        pmf_2d["bin_centers"] + pmf_2d["delta"],
+        reference_point=reference_point,
+        pmf_reference=[0, 0],
     )
 
     f_ik = results_kde["f_i"]
