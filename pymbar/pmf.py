@@ -477,9 +477,9 @@ class PMF:
 
         # code expects that the bin edges consist in an list of
         # arrays. But for 1D, we should be able to just input a single array.
-        if len(np.shape(histogram_parameters['bin_edges'])) == 1:
-            histogram_parameters['bin_edges'] = [histogram_parameters['bin_edges']]
-        
+        if len(np.shape(histogram_parameters["bin_edges"])) == 1:
+            histogram_parameters["bin_edges"] = [histogram_parameters["bin_edges"]]
+
         self.histogram_parameters = histogram_parameters
 
         self.histogram_data = None
