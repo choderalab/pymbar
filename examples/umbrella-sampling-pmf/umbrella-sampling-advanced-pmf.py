@@ -300,7 +300,7 @@ for methodfull in methods:
 
     if method == "histogram":
         histogram_parameters = {}
-        histogram_parameters["bin_edges"] = [bin_edges]
+        histogram_parameters["bin_edges"] = bin_edges
         pmf.generate_pmf(
             u_kn,
             chi_n,

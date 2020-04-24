@@ -475,6 +475,11 @@ class PMF:
                 "histogram_parameters['bin_edges'] cannot be undefined with pmf_type = histogram"
             )
 
+        # code expects that the bin edges consist in an list of
+        # arrays. But for 1D, we should be able to just input a single array.
+        if len(np.shape(histogram_parameters['bin_edges'])) == 1:
+            histogram_parameters['bin_edges'] = [histogram_parameters['bin_edges']]
+        
         self.histogram_parameters = histogram_parameters
 
         self.histogram_data = None
