@@ -1316,7 +1316,9 @@ class PMF:
         """
 
         if np.shape(x)[1] != self.histogram_data["dims"]:
-            raise DataError("query coordinates have inconsistent dimension with the data the PMF is fit to.")
+            raise DataError(
+                "query coordinates have inconsistent dimension with the data the PMF is fit to."
+            )
 
         if (
             uncertainty_method not in ["bootstrap", "analytical"]
@@ -1573,7 +1575,9 @@ class PMF:
         """
 
         if np.shape(x)[1] != np.shape(self.kde.sample())[1]:
-            raise DataError("query coordinates have inconsistent dimension with the data the PMF is fit to.")
+            raise DataError(
+                "query coordinates have inconsistent dimension with the data the PMF is fit to."
+            )
 
         result_vals = {}
         f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
