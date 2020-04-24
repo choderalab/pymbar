@@ -1219,27 +1219,17 @@ class PMF:
 
         """
 
-        if len(np.shape(x)) <= 1:  # if length is  zero, it's a scalar.
-            coord_dim = 1
-        else:
-            coord_dim = np.shape(x)[1]
-
         # if it's not an array, make it one.
         x = np.array(x)
-
-        if reference_point == "from-specified" and pmf_reference is None:
-            raise ParameterError(
-                "No reference state specified for PMF using uncertainty_method = from-specified"
-            )
 
         # it's a 1D array, instead of a Nx1 array.  Reshape.
         if len(np.shape(x)) <= 1:
             x = x.reshape(-1, 1)
 
-        if self.pmf_type == "histogram":
-            if self.histogram_data["dims"] != coord_dim:
-                # later, need to put coordinate check on other methods.
-                raise DataError("query coordinates have inconsistent dimension with the PMF.")
+        if reference_point == "from-specified" and pmf_reference is None:
+            logger.info(
+                "No reference state specified for PMF, using uncertainty_method = from-specified"
+            )
 
         if self.pmf_type == "histogram":
             result_vals = self._get_pmf_histogram(
@@ -1251,8 +1241,6 @@ class PMF:
             result_vals = self._get_pmf_kde(x, reference_point, pmf_reference, uncertainty_method)
 
         elif self.pmf_type == "spline":
-            if coord_dim != 1:
-                raise DataError("splines PMF only supported in 1D")
             result_vals = self._get_pmf_spline(
                 x, reference_point, pmf_reference, uncertainty_method
             )
@@ -1326,6 +1314,11 @@ class PMF:
                 Only included if uncertainty_method is not None
 
         """
+
+        if np.shape(x)[1] != self.histogram_data["dims"]:
+            raise DataError(
+                "query coordinates have inconsistent dimension with the data the PMF is fit to."
+            )
 
         if (
             uncertainty_method not in ["bootstrap", "analytical"]
@@ -1581,6 +1574,11 @@ class PMF:
 
         """
 
+        if np.shape(x)[1] != np.shape(self.kde.sample())[1]:
+            raise DataError(
+                "query coordinates have inconsistent dimension with the data the PMF is fit to."
+            )
+
         result_vals = {}
         f_i = -self.kde.score_samples(x)  # gives the LOG density, which is what we want.
 
@@ -1663,7 +1661,10 @@ class PMF:
                 result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
                 Only included if uncertainty_method is not None
 
-        """
+                """
+
+        if np.shape(x)[1] != 1:
+            raise DataError("splines PMF only supported in 1D")
 
         result_vals = {}
         # for splines now, should only be 1D.  x is passed in as a 2D array, need to covert
