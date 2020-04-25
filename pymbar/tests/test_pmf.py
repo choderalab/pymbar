@@ -128,7 +128,7 @@ def pmf_1d():
     xmax = gridscale * (np.max(xrange[0][1]) + 1 / 2.0)
     dx = (xmax - xmin) / nbinsperdim
     nbins = nbinsperdim ** ndim
-    bin_edges = [np.linspace(xmin, xmax, nbins + 1)]  # list of bin edges.
+    bin_edges = np.linspace(xmin, xmax, nbins + 1)  # list of bin edges.
     bin_centers = np.zeros([nbins, ndim])
 
     ibin = 0
