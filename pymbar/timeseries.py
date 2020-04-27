@@ -58,7 +58,7 @@ __license__ = "MIT"
 import logging
 import math
 import numpy as np
-from pymbar.utils import ParameterError
+from pymbar.utils import ParameterError, log_level
 
 # =============================================================================================
 # Issue warning on import.
@@ -734,16 +734,19 @@ def subsample_correlated_data(A_t, g=None, fast=False, conservative=False, verbo
     # Compute the statistical inefficiency for the timeseries.
     if not g:
         if verbose:
-            logger.info("Computing statistical inefficiency...")
+            with log_level(__name__, logging.INFO):
+                logger.info("Computing statistical inefficiency...")
         g = statistical_inefficiency(A_t, A_t, fast=fast)
         if verbose:
-            logger.info("g = {:f}".format(g))
+            with log_level(__name__, logging.INFO):
+                logger.info("g = {:f}".format(g))
 
     if conservative:
         # Round g up to determine the stride we can use to pick out regularly-spaced uncorrelated samples.
         stride = int(math.ceil(g))
         if verbose:
-            logger.info("conservative subsampling: using stride of {:d}".format(stride))
+            with log_level(__name__, logging.INFO):
+                logger.info("conservative subsampling: using stride of {:d}".format(stride))
 
         # Assemble list of indices of uncorrelated snapshots.
         indices = range(0, T, stride)
@@ -758,17 +761,19 @@ def subsample_correlated_data(A_t, g=None, fast=False, conservative=False, verbo
                 indices.append(t)
             n += 1
         if verbose:
-            logger.info("standard subsampling: using average stride of {:f}".format(g))
+            with log_level(__name__, logging.INFO):
+                logger.info("standard subsampling: using average stride of {:f}".format(g))
 
     # Number of samples in subsampled timeseries.
     N = len(indices)
 
     if verbose:
-        logger.info(
-            "The resulting subsampled set has {:d} samples (original timeseries had {:d}).".format(
-                N, T
+        with log_level(__name__, logging.INFO):
+            logger.info(
+                "The resulting subsampled set has {:d} samples (original timeseries had {:d}).".format(
+                    N, T
+                )
             )
-        )
 
     # Return the list of indices of uncorrelated snapshots.
     return indices

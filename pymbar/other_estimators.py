@@ -48,7 +48,7 @@ __license__ = "MIT"
 # =============================================================================================
 import logging
 import numpy as np
-from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
+from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp, log_level
 
 logger = logging.getLogger(__name__)
 
@@ -277,7 +277,8 @@ def bar(
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
             # There may be a better way to do this, and the above bracket should rarely fail.
             if verbose:
-                logger.info("Initial brackets did not actually bracket, widening them")
+                with log_level(__name__, logging.INFO):
+                    logger.info("Initial brackets did not actually bracket, widening them")
             FAve = (UpperB + LowerB) / 2
             UpperB = UpperB - max(abs(UpperB - FAve), 0.1)
             LowerB = LowerB + max(abs(LowerB - FAve), 0.1)
@@ -304,7 +305,8 @@ def bar(
             if FNew == 0:
                 # Convergence is achieved.
                 if verbose:
-                    logger.info("Convergence achieved.")
+                    with log_level(__name__, logging.INFO):
+                        logger.info("Convergence achieved.")
                 relative_change = 10 ** (-15)
                 break
 
@@ -322,18 +324,21 @@ def bar(
         if DeltaF == 0.0:
             # The free energy difference appears to be zero -- return.
             if verbose:
-                logger.info("The free energy difference appears to be zero.")
+                with log_level(__name__, logging.INFO):
+                    logger.info("The free energy difference appears to be zero.")
             break
 
         if iterated_solution:
             relative_change = abs((DeltaF - DeltaF_old) / DeltaF)
             if verbose:
-                logger.info("relative_change = {:12.3f}".format(relative_change))
+                with log_level(__name__, logging.INFO):
+                    logger.info("relative_change = {:12.3f}".format(relative_change))
 
             if (iteration > 0) and (relative_change < relative_tolerance):
                 # Convergence is achieved.
                 if verbose:
-                    logger.info("Convergence achieved.")
+                    with log_level(__name__, logging.INFO):
+                        logger.info("Convergence achieved.")
                 break
 
         if method == "false-position" or method == "bisection":
@@ -350,17 +355,19 @@ def bar(
                 raise BoundsError(message)
 
         if verbose:
-            logger.info("iteration {:5d}: DeltaF = {:16.3f}".format(iteration, DeltaF))
+            with log_level(__name__, logging.INFO):
+                logger.info("iteration {:5d}: DeltaF = {:16.3f}".format(iteration, DeltaF))
 
     # Report convergence, or warn user if not achieved.
     if iterated_solution:
         if iteration < maximum_iterations:
             if verbose:
-                logger.info(
-                    "Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)".format(
-                        relative_change, iteration, nfunc
+                with log_level(__name__, logging.INFO):
+                    logger.info(
+                        "Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)".format(
+                            relative_change, iteration, nfunc
+                        )
                     )
-                )
         else:
             message = "WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = {:d}".format(
                 relative_change, relative_tolerance, maximum_iterations
@@ -519,14 +526,16 @@ def bar(
             raise ParameterError(message)
 
         if verbose:
-            logger.info("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
+            with log_level(__name__, logging.INFO):
+                logger.info("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
         result_vals["Delta_f"] = DeltaF
         result_vals["dDelta_f"] = dDeltaF
         return result_vals
 
     else:
         if verbose:
-            logger.info("DeltaF = {:8.3f}".format(DeltaF))
+            with log_level(__name__, logging.INFO):
+                logger.info("DeltaF = {:8.3f}".format(DeltaF))
         result_vals["Delta_f"] = DeltaF
         return result_vals
 
