@@ -60,14 +60,10 @@ descriptions["simple"] = "vFEP"
 descriptions["biased-ml"] = "biased states maximum likelihood"
 descriptions["biased-map"] = "biased states maximum a posteriori"
 
-optimization_algorithm = (
-    "Newton-CG"  # other good options are 'L-BFGS-B' and 'Custom-NR'
-)
+optimization_algorithm = "Newton-CG"  # other good options are 'L-BFGS-B' and 'Custom-NR'
 # optimization_algorithm = 'Custom-NR'  #other good options are 'L-BFGS-B' and 'Custom-NR'
 # below - information to load the data.
-temperature = (
-    300  # assume a single temperature -- can be overridden with data from center.dat
-)
+temperature = 300  # assume a single temperature -- can be overridden with data from center.dat
 # Parameters
 K = 26  # number of umbrellas
 N_max = 501  # maximum number of snapshots/simulation
@@ -79,9 +75,7 @@ chi_max = +180.0  # max for PMF
 nbins = 30
 
 # Allocate storage for simulation data
-N_k = np.zeros(
-    [K], np.int32
-)  # N_k[k] is the number of snapshots from umbrella simulation k
+N_k = np.zeros([K], np.int32)  # N_k[k] is the number of snapshots from umbrella simulation k
 # K_k[k] is the spring constant (in kJ/mol/deg**2) for umbrella simulation k
 K_k = np.zeros([K], np.float64)
 # chi0_k[k] is the spring center location (in deg) for umbrella simulation k
@@ -135,9 +129,7 @@ for k in range(K):
             n += 1
     N_k[k] = n
 
-    if (
-        different_temperatures
-    ):  # if different temperatures are specified the metadata file,
+    if different_temperatures:  # if different temperatures are specified the metadata file,
         # then we need the energies to compute the PMF
         # Read energies
         filename = f"data/prod{k:d}_energies.xvg"
@@ -315,17 +307,11 @@ for methodfull in methods:
         # set the sigma for the spline.
         kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
         pmf.generate_pmf(
-            u_kn,
-            chi_n,
-            pmf_type="kde",
-            kde_parameters=kde_parameters,
-            nbootstraps=nbootstraps,
+            u_kn, chi_n, pmf_type="kde", kde_parameters=kde_parameters, nbootstraps=nbootstraps,
         )
 
         # save this for initializing other types
-        results = pmf.get_pmf(
-            xstart, reference_point="from-lowest", uncertainty_method=None
-        )
+        results = pmf.get_pmf(xstart, reference_point="from-lowest", uncertainty_method=None)
         f_i_kde = results["f_i"]  # kde results
 
     if method in ["unbiased", "biased", "simple"]:
@@ -394,15 +380,11 @@ for methodfull in methods:
     else:
         uncertainty_method = "bootstrap"
     results = pmf.get_pmf(
-        bin_center_i,
-        reference_point="from-lowest",
-        uncertainty_method=uncertainty_method,
+        bin_center_i, reference_point="from-lowest", uncertainty_method=uncertainty_method,
     )
     for i in range(nbins):
         if "df_i" in results and results["df_i"] is not None:
-            print(
-                f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f} {results['df_i'][i]:8.1f}"
-            )
+            print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f} {results['df_i'][i]:8.1f}")
         else:
             print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f}")
 
@@ -475,9 +457,7 @@ for method in mc_methods:
         "print_every": 50,
     }
 
-    pmf.sample_parameter_distribution(
-        chi_n, mc_parameters=mc_parameters, decorrelate=True
-    )
+    pmf.sample_parameter_distribution(chi_n, mc_parameters=mc_parameters, decorrelate=True)
 
     mc_results = pmf.get_mc_data()
 
@@ -487,9 +467,7 @@ for method in mc_methods:
     # plot maximum likelihood as well
     method_ml = method.replace("map", "ml")
     pmf_ml = pmfs[method_ml]
-    results_ml = pmf_ml.get_pmf(
-        xplot, reference_point="from-lowest", uncertainty_method=None
-    )
+    results_ml = pmf_ml.get_pmf(xplot, reference_point="from-lowest", uncertainty_method=None)
 
     plt.figure(2)
     plt.xlim([chi_min, chi_max])

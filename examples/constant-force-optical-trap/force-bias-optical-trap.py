@@ -247,7 +247,9 @@ def main():
     # 1D array of parameters, one entry because 1D
     histogram_parameters["bin_edges"] = bin_left_boundary_i
     pmf.generate_pmf(u_n, x_n, histogram_parameters=histogram_parameters)
-    results = pmf.get_pmf(bin_center_i, reference_point="from-lowest", uncertainty_method="analytical")
+    results = pmf.get_pmf(
+        bin_center_i, reference_point="from-lowest", uncertainty_method="analytical"
+    )
     f_i = results["f_i"]
     df_i = results["df_i"]
 
@@ -291,7 +293,9 @@ def main():
             u_n[Nstart : Nstart + N_k[k]] = u_kln[k, l, 0 : N_k[k]]
             Nstart += N_k[k]
         pmf.generate_pmf(u_n, x_n, histogram_parameters=histogram_parameters)
-        results = pmf.get_pmf(bin_center_i, reference_point="from-lowest", uncertainty_method="analytical")
+        results = pmf.get_pmf(
+            bin_center_i, reference_point="from-lowest", uncertainty_method="analytical"
+        )
         f_i = results["f_i"]
         df_i = results["df_i"]
 
