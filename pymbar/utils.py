@@ -411,14 +411,14 @@ class PerLevelFormatter(logging.Formatter):
     def __init__(self, fmt="%(levelno)d: %(message)s", datefmt=None, style="%", **kwargs):
         super().__init__(fmt=fmt, datefmt=datefmt, style=style, **kwargs)
 
-    def format(self, record, *args, **kwargs):
+    def format(self, record):
 
         # Save the original format configured by the user
         # when the logger formatter was instantiated
         format_orig = self._style._fmt
         self._style._fmt = self.FORMATS.get(record.levelno, self._style._fmt)
         # Call the original formatter class to do the grunt work
-        result = super().format(record, *args, **kwargs)
+        result = super().format(record)
         # Restore the original format configured by the user
         self._style._fmt = format_orig
 
