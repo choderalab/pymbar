@@ -945,7 +945,7 @@ for i in range(nbins):
 print("Computing PMF ...")
 pmf = PMF(u_kn, N_k)
 
-# for 2D bins, we input a list of bind edges.
+# for 2D bins, we input a list of the bin edges in each dimension.
 histogram_parameters["bin_edges"] = [
     np.linspace(xmin, xmax, nbinsperdim + 1),
     np.linspace(ymin, ymax, nbinsperdim + 1),
