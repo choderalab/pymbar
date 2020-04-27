@@ -310,7 +310,7 @@ def generate_confidence_intervals(replicates, K):
                     logger.warning(replicate["error"])
                     logger.warning("destimated")
                     logger.warning(replicate["destimated"])
-                    raise ArithmaticError("Encountered isnan in computation")
+                    raise ArithmeticError("Encountered isnan in computation")
                 else:
                     if abs(replicate["error"]) <= alpha * replicate["destimated"]:
                         a += 1.0
@@ -325,7 +325,7 @@ def generate_confidence_intervals(replicates, K):
                         logger.warning(replicate["error"])
                         logger.warning("destimated")
                         logger.warning(replicate["destimated"])
-                        raise ArithmaticError("Encountered isnan in computation")
+                        raise ArithmeticError("Encountered isnan in computation")
                     else:
                         if abs(replicate["error"][i]) <= alpha * replicate["destimated"][i]:
                             a += 1.0
@@ -343,7 +343,7 @@ def generate_confidence_intervals(replicates, K):
                             logger.warning(replicate["error"])
                             logger.warning("ij_estimated")
                             logger.warning(replicate["destimated"])
-                            raise ArithmaticError("Encountered isnan in computation")
+                            raise ArithmeticError("Encountered isnan in computation")
                         else:
                             if (
                                 abs(replicate["error"][i, j])
