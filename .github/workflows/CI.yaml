@@ -134,4 +134,4 @@ jobs:
       run: |
         . devtools/github-actions/initialize_conda.sh
         conda activate test
-        black --check -l 99 $PACKAGE/ --exclude pymbar/old_mbar.py
+        black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py
