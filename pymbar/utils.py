@@ -25,6 +25,7 @@
 
 from itertools import zip_longest
 import warnings
+
 import numpy as np
 import numexpr
 
@@ -390,7 +391,7 @@ def check_w_normalized(W, N_k, tolerance=1.0e-4):
 
 # ============================================================================================
 # Exception classes
-# =============================================================================================
+# ============================================================================================
 
 
 class ParameterError(Exception):

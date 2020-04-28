@@ -262,7 +262,9 @@ def bar(
             # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
             # consider returning more information about failure
             logger.warning(
-                "BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty."
+                "BAR is likely to be inaccurate because of poor overlap. "
+                "Improve the sampling, or decrease the spacing betweeen states. "
+                "For now, guessing that the free energy difference is 0 with no uncertainty."
             )
             if compute_uncertainty:
                 result_vals["Delta_f"] = 0.0
@@ -276,8 +278,9 @@ def bar(
         while FUpperB * FLowerB > 0:
             # if they have the same sign, they do not bracket.  Widen the bracket until they have opposite signs.
             # There may be a better way to do this, and the above bracket should rarely fail.
-            if verbose:
-                logger.info("Initial brackets did not actually bracket, widening them")
+            logger.info(
+                "Initial brackets did not actually bracket, widening them", force_emit=verbose
+            )
             FAve = (UpperB + LowerB) / 2
             UpperB = UpperB - max(abs(UpperB - FAve), 0.1)
             LowerB = LowerB + max(abs(LowerB - FAve), 0.1)
@@ -303,8 +306,7 @@ def bar(
 
             if FNew == 0:
                 # Convergence is achieved.
-                if verbose:
-                    logger.info("Convergence achieved.")
+                logger.info("Convergence achieved.", force_emit=verbose)
                 relative_change = 10 ** (-15)
                 break
 
@@ -321,19 +323,16 @@ def bar(
         # Check for convergence.
         if DeltaF == 0.0:
             # The free energy difference appears to be zero -- return.
-            if verbose:
-                logger.info("The free energy difference appears to be zero.")
+            logger.info("The free energy difference appears to be zero.", force_emit=verbose)
             break
 
         if iterated_solution:
             relative_change = abs((DeltaF - DeltaF_old) / DeltaF)
-            if verbose:
-                logger.info("relative_change = {:12.3f}".format(relative_change))
+            logger.info("relative_change = {:12.3f}".format(relative_change), force_emit=verbose)
 
             if (iteration > 0) and (relative_change < relative_tolerance):
                 # Convergence is achieved.
-                if verbose:
-                    logger.info("Convergence achieved.")
+                logger.info("Convergence achieved.", force_emit=verbose)
                 break
 
         if method == "false-position" or method == "bisection":
@@ -349,18 +348,19 @@ def bar(
                 message = "WARNING: Cannot determine bound on free energy"
                 raise BoundsError(message)
 
-        if verbose:
-            logger.info("iteration {:5d}: DeltaF = {:16.3f}".format(iteration, DeltaF))
+        logger.info(
+            "iteration {:5d}: DeltaF = {:16.3f}".format(iteration, DeltaF), force_emit=verbose
+        )
 
     # Report convergence, or warn user if not achieved.
     if iterated_solution:
         if iteration < maximum_iterations:
-            if verbose:
-                logger.info(
-                    "Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)".format(
-                        relative_change, iteration, nfunc
-                    )
-                )
+            logger.info(
+                "Converged to tolerance of {:e} in {:d} iterations ({:d} function evaluations)".format(
+                    relative_change, iteration, nfunc
+                ),
+                force_emit=verbose,
+            )
         else:
             message = "WARNING: Did not converge to within specified tolerance. max_delta = {:f}, TOLERANCE = {:f}, MAX_ITS = {:d}".format(
                 relative_change, relative_tolerance, maximum_iterations
@@ -518,15 +518,13 @@ def bar(
             )
             raise ParameterError(message)
 
-        if verbose:
-            logger.info("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF))
+        logger.info("DeltaF = {:8.3f} +- {:8.3f}".format(DeltaF, dDeltaF), force_emit=verbose)
         result_vals["Delta_f"] = DeltaF
         result_vals["dDelta_f"] = dDeltaF
         return result_vals
 
     else:
-        if verbose:
-            logger.info("DeltaF = {:8.3f}".format(DeltaF))
+        logger.info("DeltaF = {:8.3f}".format(DeltaF), force_emit=verbose)
         result_vals["Delta_f"] = DeltaF
         return result_vals
 
