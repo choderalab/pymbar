@@ -28,9 +28,9 @@ __license__ = "MIT"
 __maintainer__ = "Levi N. Naden, Michael R. Shirts and John D. Chodera"
 __email__ = "levi.naden@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
 
-from pymbar.utils import configure_logging
+from pymbar.logging_utils import setup_logging
 
-configure_logging()
+setup_logging()
 
 from pymbar import timeseries, testsystems, confidenceintervals
 from pymbar.mbar import MBAR

@@ -24,9 +24,7 @@
 ##############################################################################
 
 from itertools import zip_longest
-from contextlib import contextmanager
 import warnings
-import logging
 
 import numpy as np
 import numexpr
@@ -389,68 +387,6 @@ def check_w_normalized(W, N_k, tolerance=1.0e-4):
         )
 
     return
-
-
-# ============================================================================================
-# Logging utilities
-# ============================================================================================
-
-# Custom formatter
-class PerLevelFormatter(logging.Formatter):
-    """
-    Adapted from https://stackoverflow.com/a/14859558
-    """
-
-    FORMATS = {
-        logging.ERROR: "ERROR! %(message)s",
-        logging.WARNING: "WARNING: %(message)s",
-        logging.INFO: "%(message)s",
-        logging.DEBUG: "Debug: %(module)s: %(lineno)d: %(message)s",
-    }
-
-    def __init__(self, fmt="%(levelno)d: %(message)s", datefmt=None, style="%", **kwargs):
-        super().__init__(fmt=fmt, datefmt=datefmt, style=style, **kwargs)
-
-    def format(self, record):
-
-        # Save the original format configured by the user
-        # when the logger formatter was instantiated
-        format_orig = self._style._fmt
-        self._style._fmt = self.FORMATS.get(record.levelno, self._style._fmt)
-        # Call the original formatter class to do the grunt work
-        result = super().format(record)
-        # Restore the original format configured by the user
-        self._style._fmt = format_orig
-
-        return result
-
-
-def configure_logging(level=logging.WARNING):
-    """
-    Basic configuration for the project, with a custom formatter
-    """
-    logger = logging.getLogger(__name__.split(".", 1)[0])
-    logger.setLevel(level)
-
-    handler = logging.StreamHandler()
-    formatter = PerLevelFormatter()
-    handler.setFormatter(formatter)
-
-    logger.addHandler(handler)
-
-
-@contextmanager
-def log_level(name, level=logging.INFO):
-    """
-    Context manager to change the logging level for a block.
-    """
-    logger = logging.getLogger(name)
-    current_level = logger.getEffectiveLevel()
-    logger.setLevel(level)
-    try:
-        yield
-    finally:
-        logger.setLevel(current_level)
 
 
 # ============================================================================================

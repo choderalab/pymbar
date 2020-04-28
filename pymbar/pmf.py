@@ -26,7 +26,7 @@ import math
 import numpy as np
 import pymbar
 
-from pymbar.utils import kln_to_kn, ParameterError, DataError, logsumexp, log_level
+from pymbar.utils import kln_to_kn, ParameterError, DataError, logsumexp
 from pymbar import timeseries
 
 # bunch of imports needed for doing newton optimization of B-splines
@@ -228,9 +228,7 @@ class PMF:
         # self._random = np.random
         # self._seed = None
 
-        if self.verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("PMF initialized")
+        logger.info("PMF initialized", force_emit=verbose)
 
     # TODO: see above about not storing np.random
     # @property
@@ -1830,13 +1828,13 @@ class PMF:
             if n % sample_every == 0:
                 csamples[:, n // sample_every] = results["c"]
                 logposteriors[n // sample_every] = results["logposterior"]
-            if n % print_every == 0 and verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info(
-                        "MC Step {:d} of {:d}".format(n, niterations),
-                        str(results["logposterior"]),
-                        str(bspline.c),
-                    )
+            if n % print_every == 0:
+                logger.info(
+                    "MC Step {:d} of {:d}".format(n, niterations),
+                    str(results["logposterior"]),
+                    str(bspline.c),
+                    force_emit=verbose,
+                )
 
         # We now have a distribution of samples of parameters sampled according
         # to the posterior.
@@ -1845,9 +1843,7 @@ class PMF:
         t_mc = 0
         g_mc = None
 
-        if verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("Done MC sampling")
+        logger.info("Done MC sampling", force_emit=verbose)
 
         if decorrelate:
             t_mc, g_mc, Neff = timeseries.detect_equilibration(logposteriors)
@@ -1856,32 +1852,24 @@ class PMF:
             )
             equil_logp = logposteriors[t_mc:]
             g_mc = timeseries.statistical_inefficiency(equil_logp)
-            if verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info("Statistical inefficiency of log posterior is {:.3g}".format(g_mc))
+            logger.info("Statistical inefficiency of log posterior is {:.3g}".format(g_mc), force_emit=verbose)
             g_c = np.zeros(len(c))
             for nc in range(len(c)):
                 g_c[nc] = timeseries.statistical_inefficiency(csamples[nc, t_mc:])
-            if verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info("Time series for spline parameters are: {:s}".format(str(g_c)))
+            logger.info("Time series for spline parameters are: {:s}".format(str(g_c)), force_emit=verbose)
             maxgc = np.max(g_c)
             meangc = np.mean(g_c)
             guse = g_mc  # doesn't affect the distribution that much
             indices = timeseries.subsample_correlated_data(equil_logp, g=guse)
             logposteriors = equil_logp[indices]
             csamples = (csamples[:, t_mc:])[:, indices]
-            if verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
+            logger.info("samples after decorrelation: {:d}".format(np.shape(csamples)[1]), force_emit=verbose)
 
         self.mc_data["samples"] = csamples
         self.mc_data["logposteriors"] = logposteriors
         self.mc_data["mc_parameters"] = mc_parameters
         self.mc_data["acceptance_ratio"] = self.mc_data["naccept"] / niterations
-        if verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("Acceptance rate: {:5.3f}".format(self.mc_data["acceptance_ratio"]))
+        logger.info("Acceptance rate: {:5.3f}".format(self.mc_data["acceptance_ratio"]), force_emit=verbose)
         self.mc_data["nequil"] = t_mc  # the start of the "equilibrated" data set
         self.mc_data["g_logposterior"] = g_mc  # statistical efficiency of the log posterior
         self.mc_data["g_parameters"] = g_c  # statistical efficiency of the parametere

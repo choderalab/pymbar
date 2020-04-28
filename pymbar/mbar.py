@@ -49,7 +49,6 @@ from pymbar.utils import (
     DataError,
     logsumexp,
     check_w_normalized,
-    log_level,
 )
 
 logger = logging.getLogger(__name__)
@@ -217,9 +216,9 @@ class MBAR:
 
         K, N = np.shape(u_kn)
 
-        if verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("K (total states) = {:d}, total samples = {:d}".format(K, N))
+        logger.info(
+            "K (total states) = {:d}, total samples = {:d}".format(K, N), force_emit=verbose
+        )
 
         if np.sum(self.N_k) != N:
             raise ParameterError(
@@ -287,10 +286,8 @@ class MBAR:
                         logger.warning(dedent(msg[1:]))
 
         # Print number of samples from each state.
-        if self.verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("N_k = ")
-                logger.info(self.N_k)
+        logger.info("N_k = ", force_emit=verbose)
+        logger.info(self.N_k, force_emit=verbose)
 
         # Determine list of k indices for which N_k != 0
         self.states_with_samples = np.where(self.N_k != 0)[0]
@@ -298,9 +295,9 @@ class MBAR:
 
         # Number of states with samples.
         self.K_nonzero = self.states_with_samples.size
-        if verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("There are {:d} states with samples.".format(self.K_nonzero))
+        logger.info(
+            "There are {:d} states with samples.".format(self.K_nonzero), force_emit=verbose
+        )
 
         # Initialize estimate of relative dimensionless free energy of each state to zero.
         # Note that f_k[0] will be constrained to be zero throughout.
@@ -310,9 +307,7 @@ class MBAR:
         # If an initial guess of the relative dimensionless free energies is
         # specified, start with that.
         if initial_f_k is not None:
-            if self.verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info("Initializing f_k with provided initial guess.")
+            logger.info("Initializing f_k with provided initial guess.", force_emit=verbose)
             # Cast to np array.
             initial_f_k = np.array(initial_f_k, dtype=np.float64)
             # Check shape
@@ -322,22 +317,19 @@ class MBAR:
                 )
             # Initialize f_k with provided guess.
             self.f_k = initial_f_k
-            if self.verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info(self.f_k)
+            logger.info(self.f_k, force_emit=verbose)
             # Shift all free energies such that f_0 = 0.
             self.f_k[:] = self.f_k[:] - self.f_k[0]
         else:
             # Initialize estimate of relative dimensionless free energies.
             self._initializeFreeEnergies(verbose, method=initialize)
 
-            if self.verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info(
-                        "Initial dimensionless free energies with method {:s}".format(initialize)
-                    )
-                    logger.info("f_k = ")
-                    logger.info(self.f_k)
+            logger.info(
+                "Initial dimensionless free energies with method {:s}".format(initialize),
+                force_emit=verbose,
+            )
+            logger.info("f_k = ", force_emit=verbose)
+            logger.info(self.f_k, force_emit=verbose)
 
         if solver_protocol is None:
             solver_protocol = ({"method": None},)
@@ -355,15 +347,10 @@ class MBAR:
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
-        if self.verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("Final dimensionless free energies")
-                logger.info("f_k = ")
-                logger.info(self.f_k)
-
-        if self.verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("MBAR initialization complete.")
+        logger.info("Final dimensionless free energies", force_emit=verbose)
+        logger.info("f_k = ", force_emit=verbose)
+        logger.info(self.f_k, force_emit=verbose)
+        logger.info("MBAR initialization complete.", force_emit=verbose)
 
     @property
     def W_nk(self):
@@ -449,16 +436,16 @@ class MBAR:
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
             N_eff[k] = 1 / np.sum(w ** 2)
-            if verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info(
-                        "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
-                    )
-                    logger.info(
-                        "Efficiency for state {:d} is {:6f}/{:d} = {:10.4f}".format(
-                            k, N_eff[k], len(w), N_eff[k] / len(w)
-                        )
-                    )
+            logger.info(
+                "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k]),
+                force_emit=verbose,
+            )
+            logger.info(
+                "Efficiency for state {:d} is {:6f}/{:d} = {:10.4f}".format(
+                    k, N_eff[k], len(w), N_eff[k] / len(w)
+                ),
+                force_emit=verbose,
+            )
 
         return N_eff
 
@@ -1369,9 +1356,7 @@ class MBAR:
         >>> results = mbar.compute_entropy_and_enthalpy()
 
         """
-        if verbose:
-            with log_level(__name__, logging.INFO):
-                logger.info("Computing average energy and entropy by MBAR.")
+        logger.info("Computing average energy and entropy by MBAR.", force_emit=verbose)
 
         dims = len(np.shape(u_kn))
         if dims == 3:
@@ -1653,18 +1638,15 @@ class MBAR:
         """
         if method == "zeros":
             # Use zeros for initial free energies.
-            if verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info("Initializing free energies to zero.")
+            logger.info("Initializing free energies to zero.", force_emit=verbose)
             self.f_k[:] = 0.0
         elif method == "mean-reduced-potential":
             # Compute initial guess at free energies from the mean reduced
             # potential from each state
-            if verbose:
-                with log_level(__name__, logging.INFO):
-                    logger.info(
-                        "Initializing free energies with mean reduced potential for each state."
-                    )
+            logger.info(
+                "Initializing free energies with mean reduced potential for each state.",
+                force_emit=verbose,
+            )
             means = np.zeros([self.K], float)
             for k in self.states_with_samples:
                 means[k] = self.u_kn[k, 0 : self.N_k[k]].mean()
