@@ -278,7 +278,7 @@ beta_k = 1 / (kB * temp_k)
 print("--Computing reduced energies...")
 
 # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
-u_kln = np.zeros([K, K, NUM_ITERATIONS])
+u_kn = np.zeros([K, np.sum(N_k)])
 # u_kln is reduced pot. ener. of segment n of temp k evaluated at temp l
 E_kn_samp = np.zeros([K, NUM_ITERATIONS])
 # we add +1 to the bootstrap number, as the zeroth bootstrap sample is the original
@@ -303,9 +303,11 @@ for n in range(n_boots_work):
                 booti = np.random.randint(Nall_k[k], size=Nall_k[k])
             E_kn_samp[k, 0 : Nall_k[k]] = E_kn[k, booti]
 
-    for k in range(K):
-        for l in range(K):
-            u_kln[k, l, 0 : Nall_k[k]] = beta_k[l] * E_kn_samp[k, 0 : Nall_k[k]]
+    for l in range(K):
+        nsum = 0
+        for k in range(K):
+            u_kn[l, nsum : nsum + Nall_k[k]] = beta_k[l] * E_kn_samp[k, 0 : Nall_k[k]]
+            nsum = nsum + Nall_k[k]
 
     # ------------------------------------------------------------------------
     # Initialize MBAR
@@ -325,7 +327,7 @@ for n in range(n_boots_work):
         initial_f_k = mbar.f_k  # start from the previous final free energies to speed convergence
 
     mbar = pymbar.MBAR(
-        u_kln, Nall_k, verbose=False, relative_tolerance=1e-12, initial_f_k=initial_f_k
+        u_kn, Nall_k, verbose=False, relative_tolerance=1e-12, initial_f_k=initial_f_k
     )
 
     # ------------------------------------------------------------------------
@@ -334,23 +336,23 @@ for n in range(n_boots_work):
 
     print("")
     print("Computing Expectations for E...")
-    E_kln = u_kln  # not a copy, we are going to write over it, but we don't need it any more.
+    E_kn = u_kn  # not a copy, we are going to write over it, but we don't need it any more.
     for k in range(K):
         # get the 'unreduced' potential -- we can't take differences of reduced potentials
         # because the beta is different; math is much more confusing with derivatives of the reduced potentials.
-        E_kln[:, k, :] *= beta_k[k] ** (-1)
-    results = mbar.compute_expectations(E_kln, state_dependent=True)
+        E_kn[k, :] *= beta_k[k] ** (-1)
+    results = mbar.compute_expectations(E_kn, state_dependent=True)
     E_expect = results["mu"]
     dE_expect = results["sigma"]
     allE_expect[:, n] = E_expect[:]
 
     # expectations for the differences, which we need for numerical derivatives
-    results = mbar.compute_expectations(E_kln, output="differences", state_dependent=True)
+    results = mbar.compute_expectations(E_kn, output="differences", state_dependent=True)
     DeltaE_expect = results["mu"]
     dDeltaE_expect = results["sigma"]
     print("Computing Expectations for E^2...")
 
-    results = mbar.compute_expectations(E_kln ** 2, state_dependent=True)
+    results = mbar.compute_expectations(E_kn ** 2, state_dependent=True)
     E2_expect = results["mu"]
     dE2_expect = results["sigma"]
     allE2_expect[:, n] = E2_expect[:]

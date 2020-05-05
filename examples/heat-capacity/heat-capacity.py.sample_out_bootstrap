@@ -11,10 +11,7 @@ Initializing MBAR:
 --N = number of Energies per Temperature = 693
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 
 Computing Heat Capacity as ( <E^2> - <E>^2 ) / ( R*T^2 ) and as d<E>/dT
 WARNING: only the first derivative (dT) analytic error estimates can currently be trusted.
@@ -226,1603 +223,1003 @@ Temperature    dA        <E> +/- d<E>       Cv +/- dCv (var)     Cv +/- dCv (dT)
 Bootstrap: 1/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 2/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 3/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 4/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 5/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 6/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 7/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 8/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 9/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 10/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 11/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 12/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 13/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 14/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 15/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 16/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 17/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 18/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 19/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 20/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 21/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 22/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 23/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 24/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 25/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 26/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 27/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 28/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 29/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 30/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 31/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 32/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 33/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 34/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 35/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 36/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 37/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 38/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 39/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 40/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 41/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 42/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 43/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 44/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 45/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 46/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 47/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 48/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 49/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 50/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 51/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 52/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 53/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 54/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 55/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 56/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 57/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 58/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 59/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 60/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 61/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 62/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 63/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 64/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 65/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 66/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 67/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 68/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 69/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 70/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 71/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 72/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 73/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 74/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 75/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 76/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 77/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 78/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 79/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 80/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 81/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 82/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 83/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 84/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 85/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 86/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 87/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 88/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 89/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 90/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 91/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 92/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 93/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 94/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 95/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 96/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 97/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 98/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 99/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 100/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 101/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 102/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 103/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 104/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 105/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 106/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 107/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 108/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 109/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 110/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 111/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 112/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 113/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 114/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 115/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 116/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 117/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 118/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 119/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 120/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 121/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 122/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 123/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 124/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 125/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 126/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 127/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 128/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 129/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 130/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 131/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 132/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 133/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 134/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 135/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 136/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 137/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 138/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 139/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 140/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 141/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 142/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 143/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 144/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 145/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 146/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 147/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 148/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 149/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 150/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 151/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 152/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 153/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 154/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 155/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 156/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 157/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 158/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 159/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 160/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 161/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 162/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 163/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 164/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 165/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 166/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 167/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 168/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 169/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 170/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 171/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 172/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 173/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 174/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 175/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 176/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 177/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 178/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 179/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 180/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 181/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 182/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 183/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 184/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 185/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 186/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 187/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 188/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 189/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 190/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 191/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 192/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 193/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 194/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 195/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 196/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 197/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 198/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 199/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap: 200/200
 
 Computing Expectations for E...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Computing Expectations for E^2...
-Warning: dim=3 for (state_dependent==True) matrices for observables and dim=2 for (state_dependent==False) observables are deprecated; we suggest you convert to NxK form instead of NxKxK form.
 Bootstrap Error Estimates
 Temperature    dA        <E> +/- d<E>       Cv +/- dCv (var)     Cv +/- dCv (dT)     Cv +/- dCv (ddT) 
 ------------------------------------------------------------------------------------------------------
- 280.000    0.000   242.517 +/- 1.443      1.5319 +/- 0.0681      1.5398 +/- 0.0680          N/A           
- 280.427   -0.370   243.174 +/- 1.434      1.5477 +/- 0.0680      1.5477 +/- 0.0680      1.5477 +/- 0.0680 
- 280.854   -0.740   243.839 +/- 1.426      1.5634 +/- 0.0679      1.5634 +/- 0.0679      1.5634 +/- 0.0679 
- 281.281   -1.112   244.510 +/- 1.417      1.5789 +/- 0.0678      1.5789 +/- 0.0678      1.5789 +/- 0.0678 
- 281.709   -1.485   245.187 +/- 1.408      1.5942 +/- 0.0677      1.5941 +/- 0.0677      1.5942 +/- 0.0677 
- 282.136   -1.859   245.872 +/- 1.400      1.6093 +/- 0.0676      1.6092 +/- 0.0676      1.6092 +/- 0.0676 
- 282.563   -2.234   246.562 +/- 1.391      1.6241 +/- 0.0675      1.6241 +/- 0.0675      1.6241 +/- 0.0675 
- 282.990   -2.610   247.259 +/- 1.383      1.6387 +/- 0.0674      1.6387 +/- 0.0674      1.6387 +/- 0.0674 
- 283.417   -2.987   247.962 +/- 1.375      1.6531 +/- 0.0673      1.6530 +/- 0.0673      1.6530 +/- 0.0673 
- 283.844   -3.365   248.671 +/- 1.366      1.6671 +/- 0.0672      1.6671 +/- 0.0672      1.6671 +/- 0.0672 
- 284.271   -3.745   249.386 +/- 1.358      1.6809 +/- 0.0671      1.6809 +/- 0.0670      1.6809 +/- 0.0670 
- 284.698   -4.125   250.107 +/- 1.349      1.6944 +/- 0.0669      1.6944 +/- 0.0669      1.6944 +/- 0.0669 
- 285.126   -4.507   250.834 +/- 1.341      1.7076 +/- 0.0668      1.7076 +/- 0.0668      1.7076 +/- 0.0668 
- 285.553   -4.890   251.566 +/- 1.333      1.7205 +/- 0.0666      1.7204 +/- 0.0666      1.7205 +/- 0.0666 
- 285.980   -5.273   252.303 +/- 1.325      1.7331 +/- 0.0665      1.7330 +/- 0.0665      1.7330 +/- 0.0665 
- 286.407   -5.659   253.046 +/- 1.316      1.7453 +/- 0.0664      1.7452 +/- 0.0663      1.7453 +/- 0.0664 
- 286.834   -6.045   253.794 +/- 1.308      1.7572 +/- 0.0662      1.7571 +/- 0.0662      1.7572 +/- 0.0662 
- 287.261   -6.432   254.547 +/- 1.300      1.7688 +/- 0.0661      1.7687 +/- 0.0660      1.7687 +/- 0.0661 
- 287.688   -6.821   255.305 +/- 1.292      1.7800 +/- 0.0659      1.7800 +/- 0.0659      1.7800 +/- 0.0659 
- 288.116   -7.210   256.068 +/- 1.284      1.7909 +/- 0.0657      1.7909 +/- 0.0657      1.7909 +/- 0.0657 
- 288.543   -7.601   256.835 +/- 1.276      1.8015 +/- 0.0656      1.8015 +/- 0.0656      1.8015 +/- 0.0656 
- 288.970   -7.993   257.607 +/- 1.268      1.8118 +/- 0.0654      1.8117 +/- 0.0654      1.8118 +/- 0.0654 
- 289.397   -8.386   258.383 +/- 1.260      1.8218 +/- 0.0653      1.8217 +/- 0.0652      1.8217 +/- 0.0652 
- 289.824   -8.781   259.163 +/- 1.252      1.8315 +/- 0.0651      1.8314 +/- 0.0651      1.8314 +/- 0.0651 
- 290.251   -9.176   259.947 +/- 1.244      1.8409 +/- 0.0649      1.8408 +/- 0.0649      1.8409 +/- 0.0649 
- 290.678   -9.573   260.736 +/- 1.236      1.8501 +/- 0.0648      1.8501 +/- 0.0647      1.8501 +/- 0.0647 
- 291.106   -9.971   261.528 +/- 1.228      1.8591 +/- 0.0646      1.8591 +/- 0.0646      1.8591 +/- 0.0646 
- 291.533  -10.370   262.324 +/- 1.220      1.8679 +/- 0.0644      1.8679 +/- 0.0644      1.8679 +/- 0.0644 
- 291.960  -10.770   263.123 +/- 1.213      1.8767 +/- 0.0642      1.8766 +/- 0.0642      1.8767 +/- 0.0642 
- 292.387  -11.172   263.927 +/- 1.205      1.8853 +/- 0.0641      1.8853 +/- 0.0641      1.8853 +/- 0.0641 
- 292.814  -11.574   264.734 +/- 1.198      1.8940 +/- 0.0639      1.8940 +/- 0.0639      1.8940 +/- 0.0639 
- 293.241  -11.978   265.545 +/- 1.190      1.9028 +/- 0.0637      1.9028 +/- 0.0637      1.9028 +/- 0.0637 
- 293.668  -12.383   266.360 +/- 1.183      1.9117 +/- 0.0636      1.9118 +/- 0.0636      1.9118 +/- 0.0636 
- 294.095  -12.789   267.178 +/- 1.176      1.9210 +/- 0.0634      1.9210 +/- 0.0634      1.9210 +/- 0.0634 
- 294.523  -13.197   268.001 +/- 1.169      1.9306 +/- 0.0633      1.9307 +/- 0.0633      1.9306 +/- 0.0633 
- 294.950  -13.606   268.827 +/- 1.162      1.9407 +/- 0.0631      1.9408 +/- 0.0631      1.9408 +/- 0.0631 
- 295.377  -14.015   269.659 +/- 1.155      1.9515 +/- 0.0630      1.9517 +/- 0.0630      1.9516 +/- 0.0630 
- 295.804  -14.426   270.495 +/- 1.149      1.9632 +/- 0.0629      1.9634 +/- 0.0628      1.9633 +/- 0.0628 
- 296.231  -14.839   271.336 +/- 1.143      1.9759 +/- 0.0627      1.9762 +/- 0.0627      1.9760 +/- 0.0627 
- 296.658  -15.252   272.183 +/- 1.136      1.9899 +/- 0.0626      1.9902 +/- 0.0626      1.9901 +/- 0.0626 
- 297.085  -15.667   273.036 +/- 1.131      2.0055 +/- 0.0626      2.0058 +/- 0.0625      2.0056 +/- 0.0626 
- 297.513  -16.083   273.896 +/- 1.125      2.0228 +/- 0.0625      2.0232 +/- 0.0625      2.0230 +/- 0.0625 
- 297.940  -16.500   274.764 +/- 1.120      2.0423 +/- 0.0625      2.0428 +/- 0.0625      2.0426 +/- 0.0625 
- 298.367  -16.919   275.641 +/- 1.115      2.0644 +/- 0.0625      2.0649 +/- 0.0625      2.0646 +/- 0.0625 
- 298.794  -17.339   276.528 +/- 1.110      2.0893 +/- 0.0626      2.0899 +/- 0.0626      2.0896 +/- 0.0626 
- 299.221  -17.760   277.427 +/- 1.106      2.1177 +/- 0.0627      2.1183 +/- 0.0627      2.1180 +/- 0.0627 
- 299.648  -18.182   278.338 +/- 1.102      2.1500 +/- 0.0630      2.1507 +/- 0.0630      2.1504 +/- 0.0630 
- 300.075  -18.606   279.264 +/- 1.098      2.1868 +/- 0.0633      2.1877 +/- 0.0633      2.1872 +/- 0.0633 
- 300.503  -19.031   280.207 +/- 1.095      2.2288 +/- 0.0638      2.2298 +/- 0.0639      2.2293 +/- 0.0638 
- 300.930  -19.457   281.169 +/- 1.093      2.2768 +/- 0.0645      2.2780 +/- 0.0645      2.2774 +/- 0.0645 
- 301.357  -19.885   282.153 +/- 1.091      2.3316 +/- 0.0654      2.3329 +/- 0.0654      2.3322 +/- 0.0654 
- 301.784  -20.315   283.162 +/- 1.090      2.3941 +/- 0.0666      2.3955 +/- 0.0666      2.3948 +/- 0.0666 
- 302.211  -20.746   284.199 +/- 1.089      2.4653 +/- 0.0681      2.4669 +/- 0.0681      2.4661 +/- 0.0681 
- 302.638  -21.178   285.269 +/- 1.089      2.5464 +/- 0.0700      2.5483 +/- 0.0701      2.5474 +/- 0.0700 
- 303.065  -21.612   286.376 +/- 1.091      2.6388 +/- 0.0724      2.6409 +/- 0.0724      2.6398 +/- 0.0724 
- 303.492  -22.047   287.525 +/- 1.093      2.7437 +/- 0.0753      2.7461 +/- 0.0754      2.7449 +/- 0.0754 
- 303.920  -22.485   288.722 +/- 1.096      2.8629 +/- 0.0789      2.8655 +/- 0.0790      2.8641 +/- 0.0790 
- 304.347  -22.924   289.973 +/- 1.101      2.9978 +/- 0.0833      3.0008 +/- 0.0833      2.9993 +/- 0.0833 
- 304.774  -23.365   291.286 +/- 1.108      3.1505 +/- 0.0884      3.1538 +/- 0.0885      3.1521 +/- 0.0885 
- 305.201  -23.808   292.668 +/- 1.116      3.3230 +/- 0.0945      3.3266 +/- 0.0946      3.3248 +/- 0.0945 
- 305.628  -24.253   294.128 +/- 1.126      3.5173 +/- 0.1015      3.5213 +/- 0.1017      3.5193 +/- 0.1016 
- 306.055  -24.700   295.676 +/- 1.139      3.7358 +/- 0.1097      3.7403 +/- 0.1098      3.7380 +/- 0.1097 
- 306.482  -25.150   297.323 +/- 1.155      3.9810 +/- 0.1189      3.9858 +/- 0.1191      3.9833 +/- 0.1190 
- 306.910  -25.602   299.081 +/- 1.174      4.2553 +/- 0.1294      4.2606 +/- 0.1295      4.2578 +/- 0.1294 
- 307.337  -26.057   300.962 +/- 1.197      4.5613 +/- 0.1410      4.5671 +/- 0.1412      4.5641 +/- 0.1411 
- 307.764  -26.514   302.982 +/- 1.224      4.9018 +/- 0.1539      4.9080 +/- 0.1540      4.9048 +/- 0.1539 
- 308.191  -26.975   305.155 +/- 1.256      5.2792 +/- 0.1679      5.2858 +/- 0.1681      5.2824 +/- 0.1680 
- 308.618  -27.439   307.498 +/- 1.294      5.6961 +/- 0.1832      5.7031 +/- 0.1833      5.6995 +/- 0.1832 
- 309.045  -27.907   310.027 +/- 1.338      6.1547 +/- 0.1995      6.1619 +/- 0.1996      6.1582 +/- 0.1995 
- 309.472  -28.378   312.762 +/- 1.389      6.6567 +/- 0.2167      6.6642 +/- 0.2168      6.6604 +/- 0.2168 
- 309.899  -28.854   315.720 +/- 1.447      7.2037 +/- 0.2347      7.2113 +/- 0.2347      7.2074 +/- 0.2347 
- 310.327  -29.334   318.922 +/- 1.513      7.7963 +/- 0.2532      7.8039 +/- 0.2532      7.7999 +/- 0.2532 
- 310.754  -29.819   322.387 +/- 1.588      8.4343 +/- 0.2718      8.4416 +/- 0.2717      8.4378 +/- 0.2718 
- 311.181  -30.309   326.133 +/- 1.671      9.1164 +/- 0.2902      9.1233 +/- 0.2901      9.1197 +/- 0.2901 
- 311.608  -30.805   330.181 +/- 1.762      9.8401 +/- 0.3080      9.8463 +/- 0.3077      9.8430 +/- 0.3078 
- 312.035  -31.306   334.545 +/- 1.861     10.6013 +/- 0.3244     10.6066 +/- 0.3240     10.6038 +/- 0.3242 
- 312.462  -31.815   339.241 +/- 1.967     11.3942 +/- 0.3391     11.3983 +/- 0.3386     11.3961 +/- 0.3388 
- 312.889  -32.330   344.282 +/- 2.079     12.2113 +/- 0.3513     12.2138 +/- 0.3506     12.2124 +/- 0.3510 
- 313.317  -32.853   349.675 +/- 2.197     13.0430 +/- 0.3604     13.0436 +/- 0.3596     13.0431 +/- 0.3600 
- 313.744  -33.383   355.425 +/- 2.317     13.8780 +/- 0.3658     13.8763 +/- 0.3650     13.8769 +/- 0.3654 
- 314.171  -33.922   361.529 +/- 2.439     14.7029 +/- 0.3671     14.6988 +/- 0.3662     14.7007 +/- 0.3666 
- 314.598  -34.469   367.982 +/- 2.559     15.5032 +/- 0.3640     15.4964 +/- 0.3629     15.4996 +/- 0.3634 
- 315.025  -35.026   374.768 +/- 2.677     16.2629 +/- 0.3562     16.2534 +/- 0.3552     16.2580 +/- 0.3557 
- 315.452  -35.593   381.866 +/- 2.788     16.9657 +/- 0.3442     16.9535 +/- 0.3432     16.9595 +/- 0.3437 
- 315.879  -36.169   389.250 +/- 2.890     17.5953 +/- 0.3286     17.5805 +/- 0.3276     17.5878 +/- 0.3281 
- 316.307  -36.756   396.885 +/- 2.981     18.1362 +/- 0.3105     18.1191 +/- 0.3095     18.1275 +/- 0.3100 
- 316.734  -37.353   404.729 +/- 3.058     18.5745 +/- 0.2915     18.5554 +/- 0.2906     18.5649 +/- 0.2911 
- 317.161  -37.960   412.736 +/- 3.121     18.8986 +/- 0.2739     18.8782 +/- 0.2731     18.8883 +/- 0.2735 
- 317.588  -38.579   420.856 +/- 3.166     19.1002 +/- 0.2601     19.0789 +/- 0.2594     19.0895 +/- 0.2598 
- 318.015  -39.208   429.035 +/- 3.193     19.1742 +/- 0.2524     19.1527 +/- 0.2517     19.1634 +/- 0.2520 
- 318.442  -39.849   437.218 +/- 3.202     19.1193 +/- 0.2520     19.0983 +/- 0.2513     19.1088 +/- 0.2517 
- 318.869  -40.500   445.350 +/- 3.193     18.9383 +/- 0.2588     18.9183 +/- 0.2581     18.9284 +/- 0.2584 
- 319.296  -41.161   453.379 +/- 3.167     18.6375 +/- 0.2711     18.6191 +/- 0.2703     18.6284 +/- 0.2707 
- 319.724  -41.833   461.256 +/- 3.125     18.2265 +/- 0.2867     18.2101 +/- 0.2858     18.2184 +/- 0.2862 
- 320.151  -42.515   468.936 +/- 3.070     17.7174 +/- 0.3031     17.7034 +/- 0.3022     17.7105 +/- 0.3026 
- 320.578  -43.207   476.379 +/- 3.002     17.1245 +/- 0.3184     17.1130 +/- 0.3175     17.1189 +/- 0.3179 
- 321.005  -43.909   483.555 +/- 2.925     16.4631 +/- 0.3313     16.4544 +/- 0.3303     16.4589 +/- 0.3308 
- 321.432  -44.619   490.436 +/- 2.841     15.7493 +/- 0.3408     15.7431 +/- 0.3398     15.7464 +/- 0.3403 
- 321.859  -45.338   497.004 +/- 2.752     14.9985 +/- 0.3464     14.9948 +/- 0.3455     14.9969 +/- 0.3460 
- 322.286  -46.065   503.245 +/- 2.661     14.2257 +/- 0.3482     14.2244 +/- 0.3474     14.2252 +/- 0.3478 
- 322.714  -46.799   509.155 +/- 2.570     13.4446 +/- 0.3462     13.4452 +/- 0.3455     13.4451 +/- 0.3459 
- 323.141  -47.541   514.731 +/- 2.481     12.6672 +/- 0.3409     12.6695 +/- 0.3403     12.6685 +/- 0.3406 
- 323.568  -48.290   519.978 +/- 2.395     11.9037 +/- 0.3326     11.9075 +/- 0.3321     11.9058 +/- 0.3324 
- 323.995  -49.046   524.904 +/- 2.314     11.1629 +/- 0.3219     11.1678 +/- 0.3215     11.1655 +/- 0.3217 
- 324.422  -49.807   529.519 +/- 2.238     10.4515 +/- 0.3094     10.4572 +/- 0.3091     10.4545 +/- 0.3092 
- 324.849  -50.574   533.837 +/- 2.169      9.7744 +/- 0.2955      9.7808 +/- 0.2953      9.7778 +/- 0.2954 
- 325.276  -51.346   537.874 +/- 2.106      9.1355 +/- 0.2807      9.1422 +/- 0.2805      9.1390 +/- 0.2806 
- 325.704  -52.124   541.647 +/- 2.050      8.5368 +/- 0.2654      8.5437 +/- 0.2653      8.5404 +/- 0.2654 
- 326.131  -52.905   545.173 +/- 2.001      7.9795 +/- 0.2501      7.9865 +/- 0.2501      7.9831 +/- 0.2501 
- 326.558  -53.692   548.469 +/- 1.958      7.4638 +/- 0.2350      7.4707 +/- 0.2350      7.4674 +/- 0.2350 
- 326.985  -54.482   551.555 +/- 1.922      6.9891 +/- 0.2203      6.9958 +/- 0.2204      6.9925 +/- 0.2204 
- 327.412  -55.276   554.446 +/- 1.891      6.5542 +/- 0.2063      6.5606 +/- 0.2064      6.5575 +/- 0.2064 
- 327.839  -56.073   557.159 +/- 1.866      6.1574 +/- 0.1932      6.1635 +/- 0.1933      6.1605 +/- 0.1932 
- 328.266  -56.874   559.711 +/- 1.845      5.7969 +/- 0.1809      5.8026 +/- 0.1810      5.7998 +/- 0.1810 
- 328.693  -57.679   562.116 +/- 1.829      5.4704 +/- 0.1697      5.4758 +/- 0.1698      5.4732 +/- 0.1697 
- 329.121  -58.486   564.389 +/- 1.816      5.1758 +/- 0.1594      5.1808 +/- 0.1595      5.1784 +/- 0.1595 
- 329.548  -59.296   566.542 +/- 1.807      4.9108 +/- 0.1502      4.9153 +/- 0.1503      4.9131 +/- 0.1502 
- 329.975  -60.109   568.588 +/- 1.801      4.6729 +/- 0.1419      4.6771 +/- 0.1420      4.6751 +/- 0.1420 
- 330.402  -60.924   570.537 +/- 1.797      4.4601 +/- 0.1347      4.4639 +/- 0.1347      4.4620 +/- 0.1347 
- 330.829  -61.742   572.401 +/- 1.796      4.2701 +/- 0.1283      4.2736 +/- 0.1284      4.2719 +/- 0.1283 
- 331.256  -62.562   574.188 +/- 1.797      4.1010 +/- 0.1228      4.1041 +/- 0.1229      4.1026 +/- 0.1229 
- 331.683  -63.385   575.907 +/- 1.799      3.9507 +/- 0.1181      3.9536 +/- 0.1182      3.9522 +/- 0.1182 
- 332.111  -64.210   577.566 +/- 1.803      3.8176 +/- 0.1142      3.8201 +/- 0.1142      3.8189 +/- 0.1142 
- 332.538  -65.037   579.171 +/- 1.808      3.6998 +/- 0.1108      3.7021 +/- 0.1109      3.7010 +/- 0.1109 
- 332.965  -65.866   580.728 +/- 1.815      3.5959 +/- 0.1081      3.5980 +/- 0.1081      3.5969 +/- 0.1081 
- 333.392  -66.697   582.244 +/- 1.822      3.5044 +/- 0.1059      3.5063 +/- 0.1059      3.5053 +/- 0.1059 
- 333.819  -67.530   583.724 +/- 1.830      3.4240 +/- 0.1041      3.4257 +/- 0.1041      3.4249 +/- 0.1041 
- 334.246  -68.365   585.171 +/- 1.839      3.3536 +/- 0.1027      3.3551 +/- 0.1027      3.3544 +/- 0.1027 
- 334.673  -69.202   586.590 +/- 1.849      3.2921 +/- 0.1016      3.2934 +/- 0.1016      3.2927 +/- 0.1016 
- 335.101  -70.041   587.984 +/- 1.859      3.2384 +/- 0.1008      3.2395 +/- 0.1008      3.2390 +/- 0.1008 
- 335.528  -70.882   589.357 +/- 1.869      3.1917 +/- 0.1002      3.1927 +/- 0.1002      3.1922 +/- 0.1002 
- 335.955  -71.724   590.712 +/- 1.880      3.1511 +/- 0.0998      3.1520 +/- 0.0998      3.1516 +/- 0.0998 
- 336.382  -72.569   592.050 +/- 1.892      3.1160 +/- 0.0996      3.1168 +/- 0.0996      3.1164 +/- 0.0996 
- 336.809  -73.415   593.374 +/- 1.903      3.0857 +/- 0.0996      3.0863 +/- 0.0996      3.0860 +/- 0.0996 
- 337.236  -74.263   594.686 +/- 1.915      3.0595 +/- 0.0996      3.0601 +/- 0.0996      3.0598 +/- 0.0996 
- 337.663  -75.113   595.988 +/- 1.927      3.0370 +/- 0.0998      3.0375 +/- 0.0998      3.0373 +/- 0.0998 
- 338.090  -75.964   597.281 +/- 1.940      3.0177 +/- 0.1000      3.0182 +/- 0.1000      3.0179 +/- 0.1000 
- 338.518  -76.818   598.567 +/- 1.952      3.0011 +/- 0.1003      3.0015 +/- 0.1003      3.0013 +/- 0.1003 
- 338.945  -77.673   599.845 +/- 1.965      2.9869 +/- 0.1007      2.9872 +/- 0.1007      2.9871 +/- 0.1007 
- 339.372  -78.529   601.119 +/- 1.977      2.9747 +/- 0.1011      2.9750 +/- 0.1011      2.9748 +/- 0.1011 
- 339.799  -79.388   602.387 +/- 1.990      2.9642 +/- 0.1016      2.9644 +/- 0.1016      2.9643 +/- 0.1016 
- 340.226  -80.248   603.651 +/- 2.003      2.9551 +/- 0.1021      2.9553 +/- 0.1021      2.9552 +/- 0.1021 
- 340.653  -81.110   604.911 +/- 2.015      2.9471 +/- 0.1026      2.9473 +/- 0.1026      2.9472 +/- 0.1026 
- 341.080  -81.973   606.169 +/- 2.028      2.9401 +/- 0.1032      2.9402 +/- 0.1032      2.9402 +/- 0.1032 
- 341.508  -82.838   607.423 +/- 2.041      2.9338 +/- 0.1038      2.9339 +/- 0.1037      2.9339 +/- 0.1038 
- 341.935  -83.705   608.675 +/- 2.054      2.9281 +/- 0.1044      2.9282 +/- 0.1043      2.9282 +/- 0.1043 
- 342.362  -84.574   609.925 +/- 2.066      2.9228 +/- 0.1050      2.9229 +/- 0.1049      2.9228 +/- 0.1050 
- 342.789  -85.444   611.172 +/- 2.079      2.9178 +/- 0.1056      2.9178 +/- 0.1056      2.9178 +/- 0.1056 
- 343.216  -86.316   612.417 +/- 2.092      2.9128 +/- 0.1062      2.9128 +/- 0.1062      2.9128 +/- 0.1062 
- 343.643  -87.190   613.660 +/- 2.104      2.9079 +/- 0.1069      2.9079 +/- 0.1068      2.9079 +/- 0.1069 
- 344.070  -88.065   614.901 +/- 2.117      2.9029 +/- 0.1075      2.9029 +/- 0.1075      2.9029 +/- 0.1075 
- 344.497  -88.942   616.140 +/- 2.130      2.8978 +/- 0.1082      2.8977 +/- 0.1082      2.8977 +/- 0.1082 
- 344.925  -89.821   617.377 +/- 2.142      2.8923 +/- 0.1088      2.8923 +/- 0.1088      2.8923 +/- 0.1088 
- 345.352  -90.701   618.611 +/- 2.154      2.8866 +/- 0.1095      2.8865 +/- 0.1095      2.8866 +/- 0.1095 
- 345.779  -91.583   619.843 +/- 2.167      2.8805 +/- 0.1101      2.8804 +/- 0.1101      2.8805 +/- 0.1101 
- 346.206  -92.466   621.072 +/- 2.179      2.8740 +/- 0.1108      2.8739 +/- 0.1108      2.8739 +/- 0.1108 
- 346.633  -93.351   622.298 +/- 2.192      2.8670 +/- 0.1115      2.8669 +/- 0.1114      2.8669 +/- 0.1114 
- 347.060  -94.238   623.521 +/- 2.204      2.8595 +/- 0.1121      2.8594 +/- 0.1121      2.8594 +/- 0.1121 
- 347.487  -95.126   624.741 +/- 2.216      2.8514 +/- 0.1127      2.8514 +/- 0.1127      2.8514 +/- 0.1127 
- 347.915  -96.016   625.957 +/- 2.228      2.8429 +/- 0.1134      2.8428 +/- 0.1133      2.8428 +/- 0.1134 
- 348.342  -96.908   627.169 +/- 2.241      2.8337 +/- 0.1140      2.8336 +/- 0.1140      2.8336 +/- 0.1140 
- 348.769  -97.801   628.377 +/- 2.253      2.8239 +/- 0.1146      2.8238 +/- 0.1146      2.8239 +/- 0.1146 
- 349.196  -98.695   629.581 +/- 2.265      2.8136 +/- 0.1152      2.8135 +/- 0.1152      2.8135 +/- 0.1152 
- 349.623  -99.591   630.781 +/- 2.278      2.8026 +/- 0.1158      2.8025 +/- 0.1157      2.8026 +/- 0.1158 
- 350.050 -100.489   631.975 +/- 2.290      2.7910 +/- 0.1163      2.7909 +/- 0.1163      2.7910 +/- 0.1163 
- 350.477 -101.389   633.165 +/- 2.303      2.7789 +/- 0.1169      2.7788 +/- 0.1168      2.7788 +/- 0.1169 
- 350.905 -102.289   634.349 +/- 2.315      2.7661 +/- 0.1174      2.7660 +/- 0.1174      2.7660 +/- 0.1174 
- 351.332 -103.192   635.528 +/- 2.328      2.7527 +/- 0.1179      2.7526 +/- 0.1179      2.7527 +/- 0.1179 
- 351.759 -104.096   636.701 +/- 2.340      2.7387 +/- 0.1184      2.7386 +/- 0.1183      2.7387 +/- 0.1183 
- 352.186 -105.001   637.867 +/- 2.353      2.7242 +/- 0.1188      2.7241 +/- 0.1188      2.7241 +/- 0.1188 
- 352.613 -105.908   639.028 +/- 2.366      2.7090 +/- 0.1192      2.7090 +/- 0.1192      2.7090 +/- 0.1192 
- 353.040 -106.816   640.182 +/- 2.379      2.6934 +/- 0.1196      2.6933 +/- 0.1196      2.6933 +/- 0.1196 
- 353.467 -107.726   641.329 +/- 2.392      2.6772 +/- 0.1200      2.6771 +/- 0.1200      2.6771 +/- 0.1200 
- 353.894 -108.637   642.469 +/- 2.405      2.6604 +/- 0.1203      2.6604 +/- 0.1203      2.6604 +/- 0.1203 
- 354.322 -109.550   643.601 +/- 2.418      2.6432 +/- 0.1206      2.6431 +/- 0.1206      2.6432 +/- 0.1206 
- 354.749 -110.464   644.727 +/- 2.432      2.6255 +/- 0.1209      2.6254 +/- 0.1209      2.6255 +/- 0.1209 
- 355.176 -111.380   645.844 +/- 2.445      2.6073 +/- 0.1212      2.6073 +/- 0.1211      2.6073 +/- 0.1212 
- 355.603 -112.297   646.954 +/- 2.459      2.5887 +/- 0.1214      2.5887 +/- 0.1214      2.5887 +/- 0.1214 
- 356.030 -113.215   648.056 +/- 2.473      2.5697 +/- 0.1215      2.5696 +/- 0.1215      2.5697 +/- 0.1215 
- 356.457 -114.135   649.149 +/- 2.487      2.5503 +/- 0.1217      2.5502 +/- 0.1217      2.5503 +/- 0.1217 
- 356.884 -115.056   650.234 +/- 2.502      2.5305 +/- 0.1218      2.5304 +/- 0.1218      2.5305 +/- 0.1218 
- 357.312 -115.979   651.311 +/- 2.516      2.5104 +/- 0.1219      2.5103 +/- 0.1218      2.5103 +/- 0.1219 
- 357.739 -116.902   652.379 +/- 2.531      2.4899 +/- 0.1219      2.4899 +/- 0.1219      2.4899 +/- 0.1219 
- 358.166 -117.828   653.438 +/- 2.546      2.4691 +/- 0.1219      2.4691 +/- 0.1219      2.4691 +/- 0.1219 
- 358.593 -118.754   654.488 +/- 2.561      2.4481 +/- 0.1219      2.4481 +/- 0.1219      2.4481 +/- 0.1219 
- 359.020 -119.682   655.529 +/- 2.576      2.4268 +/- 0.1218      2.4268 +/- 0.1218      2.4268 +/- 0.1218 
- 359.447 -120.611   656.561 +/- 2.591      2.4053 +/- 0.1217      2.4053 +/- 0.1217      2.4053 +/- 0.1217 
- 359.874 -121.541   657.584 +/- 2.607      2.3835 +/- 0.1216      2.3835 +/- 0.1216      2.3835 +/- 0.1216 
- 360.302 -122.473   658.597 +/- 2.623      2.3616 +/- 0.1214      2.3616 +/- 0.1214      2.3616 +/- 0.1214 
- 360.729 -123.406   659.601 +/- 2.639      2.3395 +/- 0.1212      2.3395 +/- 0.1212      2.3395 +/- 0.1212 
- 361.156 -124.340   660.596 +/- 2.655      2.3173 +/- 0.1210      2.3173 +/- 0.1210      2.3173 +/- 0.1210 
- 361.583 -125.275   661.581 +/- 2.671      2.2949 +/- 0.1207      2.2949 +/- 0.1207      2.2949 +/- 0.1207 
- 362.010 -126.211   662.556 +/- 2.688      2.2725 +/- 0.1204      2.2725 +/- 0.1204      2.2725 +/- 0.1204 
- 362.437 -127.149   663.522 +/- 2.704      2.2499 +/- 0.1201      2.2499 +/- 0.1201      2.2499 +/- 0.1201 
- 362.864 -128.088   664.478 +/- 2.721      2.2273 +/- 0.1198      2.2273 +/- 0.1197      2.2273 +/- 0.1198 
- 363.291 -129.028   665.425 +/- 2.738      2.2047 +/- 0.1194      2.2047 +/- 0.1194      2.2047 +/- 0.1194 
- 363.719 -129.969   666.362 +/- 2.756      2.1820 +/- 0.1190      2.1820 +/- 0.1190      2.1820 +/- 0.1190 
- 364.146 -130.911   667.289 +/- 2.773      2.1593 +/- 0.1186      2.1593 +/- 0.1185      2.1593 +/- 0.1186 
- 364.573 -131.854   668.206 +/- 2.790      2.1366 +/- 0.1181      2.1366 +/- 0.1181      2.1366 +/- 0.1181 
- 365.000 -132.799   669.114 +/- 2.808      2.1139 +/- 0.1176      2.1253 +/- 0.1179          N/A           
+ 280.000    0.000   242.517 +/- 1.194      1.5319 +/- 0.1067      1.5398 +/- 0.1074          N/A           
+ 280.427   -0.320   243.174 +/- 1.218      1.5477 +/- 0.1082      1.5477 +/- 0.1082      1.5477 +/- 0.1082 
+ 280.854   -0.639   243.839 +/- 1.245      1.5634 +/- 0.1096      1.5634 +/- 0.1096      1.5634 +/- 0.1096 
+ 281.281   -0.959   244.510 +/- 1.273      1.5789 +/- 0.1112      1.5789 +/- 0.1112      1.5789 +/- 0.1112 
+ 281.709   -1.278   245.187 +/- 1.303      1.5942 +/- 0.1127      1.5941 +/- 0.1127      1.5942 +/- 0.1127 
+ 282.136   -1.598   245.872 +/- 1.334      1.6093 +/- 0.1143      1.6092 +/- 0.1143      1.6092 +/- 0.1143 
+ 282.563   -1.917   246.562 +/- 1.367      1.6241 +/- 0.1159      1.6241 +/- 0.1159      1.6241 +/- 0.1159 
+ 282.990   -2.237   247.259 +/- 1.402      1.6387 +/- 0.1176      1.6387 +/- 0.1176      1.6387 +/- 0.1176 
+ 283.417   -2.556   247.962 +/- 1.438      1.6531 +/- 0.1193      1.6530 +/- 0.1193      1.6530 +/- 0.1193 
+ 283.844   -2.876   248.671 +/- 1.476      1.6671 +/- 0.1210      1.6671 +/- 0.1210      1.6671 +/- 0.1210 
+ 284.271   -3.196   249.386 +/- 1.515      1.6809 +/- 0.1228      1.6809 +/- 0.1228      1.6809 +/- 0.1228 
+ 284.698   -3.515   250.107 +/- 1.555      1.6944 +/- 0.1246      1.6944 +/- 0.1246      1.6944 +/- 0.1246 
+ 285.126   -3.835   250.834 +/- 1.597      1.7076 +/- 0.1264      1.7076 +/- 0.1264      1.7076 +/- 0.1264 
+ 285.553   -4.154   251.566 +/- 1.641      1.7205 +/- 0.1283      1.7204 +/- 0.1283      1.7205 +/- 0.1283 
+ 285.980   -4.474   252.303 +/- 1.685      1.7331 +/- 0.1303      1.7330 +/- 0.1303      1.7330 +/- 0.1303 
+ 286.407   -4.793   253.046 +/- 1.731      1.7453 +/- 0.1322      1.7452 +/- 0.1322      1.7453 +/- 0.1322 
+ 286.834   -5.113   253.794 +/- 1.779      1.7572 +/- 0.1343      1.7571 +/- 0.1343      1.7572 +/- 0.1343 
+ 287.261   -5.432   254.547 +/- 1.828      1.7688 +/- 0.1363      1.7687 +/- 0.1363      1.7687 +/- 0.1363 
+ 287.688   -5.752   255.305 +/- 1.878      1.7800 +/- 0.1384      1.7800 +/- 0.1384      1.7800 +/- 0.1384 
+ 288.116   -6.071   256.068 +/- 1.929      1.7909 +/- 0.1406      1.7909 +/- 0.1406      1.7909 +/- 0.1406 
+ 288.543   -6.391   256.835 +/- 1.982      1.8015 +/- 0.1428      1.8015 +/- 0.1428      1.8015 +/- 0.1428 
+ 288.970   -6.711   257.607 +/- 2.036      1.8118 +/- 0.1451      1.8117 +/- 0.1451      1.8118 +/- 0.1451 
+ 289.397   -7.030   258.383 +/- 2.092      1.8218 +/- 0.1474      1.8217 +/- 0.1474      1.8217 +/- 0.1474 
+ 289.824   -7.350   259.163 +/- 2.148      1.8315 +/- 0.1497      1.8314 +/- 0.1497      1.8314 +/- 0.1497 
+ 290.251   -7.669   259.947 +/- 2.206      1.8409 +/- 0.1521      1.8408 +/- 0.1521      1.8409 +/- 0.1521 
+ 290.678   -7.989   260.736 +/- 2.266      1.8501 +/- 0.1546      1.8501 +/- 0.1546      1.8501 +/- 0.1546 
+ 291.106   -8.308   261.528 +/- 2.327      1.8591 +/- 0.1571      1.8591 +/- 0.1571      1.8591 +/- 0.1571 
+ 291.533   -8.628   262.324 +/- 2.389      1.8679 +/- 0.1597      1.8679 +/- 0.1597      1.8679 +/- 0.1597 
+ 291.960   -8.947   263.123 +/- 2.452      1.8767 +/- 0.1623      1.8766 +/- 0.1623      1.8767 +/- 0.1623 
+ 292.387   -9.267   263.927 +/- 2.517      1.8853 +/- 0.1650      1.8853 +/- 0.1650      1.8853 +/- 0.1650 
+ 292.814   -9.587   264.734 +/- 2.583      1.8940 +/- 0.1678      1.8940 +/- 0.1678      1.8940 +/- 0.1678 
+ 293.241   -9.906   265.545 +/- 2.650      1.9028 +/- 0.1706      1.9028 +/- 0.1706      1.9028 +/- 0.1706 
+ 293.668  -10.226   266.360 +/- 2.719      1.9117 +/- 0.1734      1.9118 +/- 0.1735      1.9118 +/- 0.1734 
+ 294.095  -10.545   267.178 +/- 2.789      1.9210 +/- 0.1764      1.9210 +/- 0.1764      1.9210 +/- 0.1764 
+ 294.523  -10.865   268.001 +/- 2.860      1.9306 +/- 0.1794      1.9307 +/- 0.1794      1.9306 +/- 0.1794 
+ 294.950  -11.184   268.827 +/- 2.933      1.9407 +/- 0.1825      1.9408 +/- 0.1825      1.9408 +/- 0.1825 
+ 295.377  -11.504   269.659 +/- 3.008      1.9515 +/- 0.1856      1.9517 +/- 0.1856      1.9516 +/- 0.1856 
+ 295.804  -11.823   270.495 +/- 3.084      1.9632 +/- 0.1889      1.9634 +/- 0.1889      1.9633 +/- 0.1889 
+ 296.231  -12.143   271.336 +/- 3.161      1.9759 +/- 0.1922      1.9762 +/- 0.1922      1.9760 +/- 0.1922 
+ 296.658  -12.462   272.183 +/- 3.240      1.9899 +/- 0.1955      1.9902 +/- 0.1955      1.9901 +/- 0.1955 
+ 297.085  -12.782   273.036 +/- 3.320      2.0055 +/- 0.1990      2.0058 +/- 0.1990      2.0056 +/- 0.1990 
+ 297.513  -13.102   273.896 +/- 3.402      2.0228 +/- 0.2025      2.0232 +/- 0.2025      2.0230 +/- 0.2025 
+ 297.940  -13.421   274.764 +/- 3.486      2.0423 +/- 0.2061      2.0428 +/- 0.2062      2.0426 +/- 0.2062 
+ 298.367  -13.741   275.641 +/- 3.571      2.0644 +/- 0.2099      2.0649 +/- 0.2099      2.0646 +/- 0.2099 
+ 298.794  -14.060   276.528 +/- 3.658      2.0893 +/- 0.2136      2.0899 +/- 0.2137      2.0896 +/- 0.2136 
+ 299.221  -14.380   277.427 +/- 3.746      2.1177 +/- 0.2175      2.1183 +/- 0.2175      2.1180 +/- 0.2175 
+ 299.648  -14.699   278.338 +/- 3.836      2.1500 +/- 0.2215      2.1507 +/- 0.2215      2.1504 +/- 0.2215 
+ 300.075  -15.019   279.264 +/- 3.928      2.1868 +/- 0.2256      2.1877 +/- 0.2256      2.1872 +/- 0.2256 
+ 300.503  -15.338   280.207 +/- 4.022      2.2288 +/- 0.2297      2.2298 +/- 0.2297      2.2293 +/- 0.2297 
+ 300.930  -15.658   281.169 +/- 4.117      2.2768 +/- 0.2340      2.2780 +/- 0.2340      2.2774 +/- 0.2340 
+ 301.357  -15.978   282.153 +/- 4.214      2.3316 +/- 0.2383      2.3329 +/- 0.2384      2.3322 +/- 0.2384 
+ 301.784  -16.297   283.162 +/- 4.313      2.3941 +/- 0.2428      2.3955 +/- 0.2428      2.3948 +/- 0.2428 
+ 302.211  -16.617   284.199 +/- 4.414      2.4653 +/- 0.2474      2.4669 +/- 0.2474      2.4661 +/- 0.2474 
+ 302.638  -16.936   285.269 +/- 4.517      2.5464 +/- 0.2521      2.5483 +/- 0.2521      2.5474 +/- 0.2521 
+ 303.065  -17.256   286.376 +/- 4.622      2.6388 +/- 0.2568      2.6409 +/- 0.2569      2.6398 +/- 0.2569 
+ 303.492  -17.575   287.525 +/- 4.728      2.7437 +/- 0.2617      2.7461 +/- 0.2618      2.7449 +/- 0.2617 
+ 303.920  -17.895   288.722 +/- 4.837      2.8629 +/- 0.2667      2.8655 +/- 0.2668      2.8641 +/- 0.2668 
+ 304.347  -18.214   289.973 +/- 4.948      2.9978 +/- 0.2719      3.0008 +/- 0.2719      2.9993 +/- 0.2719 
+ 304.774  -18.534   291.286 +/- 5.061      3.1505 +/- 0.2771      3.1538 +/- 0.2771      3.1521 +/- 0.2771 
+ 305.201  -18.853   292.668 +/- 5.176      3.3230 +/- 0.2825      3.3266 +/- 0.2825      3.3248 +/- 0.2825 
+ 305.628  -19.173   294.128 +/- 5.294      3.5173 +/- 0.2879      3.5213 +/- 0.2880      3.5193 +/- 0.2879 
+ 306.055  -19.493   295.676 +/- 5.413      3.7358 +/- 0.2935      3.7403 +/- 0.2936      3.7380 +/- 0.2935 
+ 306.482  -19.812   297.323 +/- 5.535      3.9810 +/- 0.2993      3.9858 +/- 0.2993      3.9833 +/- 0.2993 
+ 306.910  -20.132   299.081 +/- 5.659      4.2553 +/- 0.3051      4.2606 +/- 0.3051      4.2578 +/- 0.3051 
+ 307.337  -20.451   300.962 +/- 5.786      4.5613 +/- 0.3110      4.5671 +/- 0.3111      4.5641 +/- 0.3111 
+ 307.764  -20.771   302.982 +/- 5.915      4.9018 +/- 0.3171      4.9080 +/- 0.3171      4.9048 +/- 0.3171 
+ 308.191  -21.090   305.155 +/- 6.047      5.2792 +/- 0.3233      5.2858 +/- 0.3233      5.2824 +/- 0.3233 
+ 308.618  -21.410   307.498 +/- 6.181      5.6961 +/- 0.3296      5.7031 +/- 0.3297      5.6995 +/- 0.3296 
+ 309.045  -21.729   310.027 +/- 6.317      6.1547 +/- 0.3361      6.1619 +/- 0.3361      6.1582 +/- 0.3361 
+ 309.472  -22.049   312.762 +/- 6.456      6.6567 +/- 0.3426      6.6642 +/- 0.3427      6.6604 +/- 0.3426 
+ 309.899  -22.369   315.720 +/- 6.598      7.2037 +/- 0.3493      7.2113 +/- 0.3493      7.2074 +/- 0.3493 
+ 310.327  -22.688   318.922 +/- 6.743      7.7963 +/- 0.3561      7.8039 +/- 0.3561      7.7999 +/- 0.3561 
+ 310.754  -23.008   322.387 +/- 6.890      8.4343 +/- 0.3630      8.4416 +/- 0.3630      8.4378 +/- 0.3630 
+ 311.181  -23.327   326.133 +/- 7.040      9.1164 +/- 0.3700      9.1233 +/- 0.3700      9.1197 +/- 0.3700 
+ 311.608  -23.647   330.181 +/- 7.192      9.8401 +/- 0.3771      9.8463 +/- 0.3771      9.8430 +/- 0.3771 
+ 312.035  -23.966   334.545 +/- 7.348     10.6013 +/- 0.3843     10.6066 +/- 0.3844     10.6038 +/- 0.3843 
+ 312.462  -24.286   339.241 +/- 7.507     11.3942 +/- 0.3917     11.3983 +/- 0.3917     11.3961 +/- 0.3917 
+ 312.889  -24.605   344.282 +/- 7.668     12.2113 +/- 0.3991     12.2138 +/- 0.3991     12.2124 +/- 0.3991 
+ 313.317  -24.925   349.675 +/- 7.832     13.0430 +/- 0.4066     13.0436 +/- 0.4066     13.0431 +/- 0.4066 
+ 313.744  -25.244   355.425 +/- 8.000     13.8780 +/- 0.4141     13.8763 +/- 0.4141     13.8769 +/- 0.4141 
+ 314.171  -25.564   361.529 +/- 8.170     14.7029 +/- 0.4218     14.6988 +/- 0.4218     14.7007 +/- 0.4218 
+ 314.598  -25.884   367.982 +/- 8.343     15.5032 +/- 0.4295     15.4964 +/- 0.4295     15.4996 +/- 0.4295 
+ 315.025  -26.203   374.768 +/- 8.520     16.2629 +/- 0.4373     16.2534 +/- 0.4373     16.2580 +/- 0.4373 
+ 315.452  -26.523   381.866 +/- 8.699     16.9657 +/- 0.4451     16.9535 +/- 0.4451     16.9595 +/- 0.4451 
+ 315.879  -26.842   389.250 +/- 8.882     17.5953 +/- 0.4530     17.5805 +/- 0.4530     17.5878 +/- 0.4530 
+ 316.307  -27.162   396.885 +/- 9.068     18.1362 +/- 0.4609     18.1191 +/- 0.4609     18.1275 +/- 0.4609 
+ 316.734  -27.481   404.729 +/- 9.257     18.5745 +/- 0.4689     18.5554 +/- 0.4689     18.5649 +/- 0.4689 
+ 317.161  -27.801   412.736 +/- 9.449     18.8986 +/- 0.4768     18.8782 +/- 0.4768     18.8883 +/- 0.4768 
+ 317.588  -28.120   420.856 +/- 9.644     19.1002 +/- 0.4848     19.0789 +/- 0.4848     19.0895 +/- 0.4848 
+ 318.015  -28.440   429.035 +/- 9.842     19.1742 +/- 0.4928     19.1527 +/- 0.4928     19.1634 +/- 0.4928 
+ 318.442  -28.760   437.218 +/- 10.044     19.1193 +/- 0.5007     19.0983 +/- 0.5007     19.1088 +/- 0.5007 
+ 318.869  -29.079   445.350 +/- 10.248     18.9383 +/- 0.5087     18.9183 +/- 0.5087     18.9284 +/- 0.5087 
+ 319.296  -29.399   453.379 +/- 10.456     18.6375 +/- 0.5166     18.6191 +/- 0.5166     18.6284 +/- 0.5166 
+ 319.724  -29.718   461.256 +/- 10.667     18.2265 +/- 0.5245     18.2101 +/- 0.5244     18.2184 +/- 0.5244 
+ 320.151  -30.038   468.936 +/- 10.880     17.7174 +/- 0.5323     17.7034 +/- 0.5323     17.7105 +/- 0.5323 
+ 320.578  -30.357   476.379 +/- 11.097     17.1245 +/- 0.5400     17.1130 +/- 0.5400     17.1189 +/- 0.5400 
+ 321.005  -30.677   483.555 +/- 11.317     16.4631 +/- 0.5477     16.4544 +/- 0.5477     16.4589 +/- 0.5477 
+ 321.432  -30.996   490.436 +/- 11.540     15.7493 +/- 0.5553     15.7431 +/- 0.5553     15.7464 +/- 0.5553 
+ 321.859  -31.316   497.004 +/- 11.766     14.9985 +/- 0.5628     14.9948 +/- 0.5628     14.9969 +/- 0.5628 
+ 322.286  -31.635   503.245 +/- 11.994     14.2257 +/- 0.5702     14.2244 +/- 0.5702     14.2252 +/- 0.5702 
+ 322.714  -31.955   509.155 +/- 12.226     13.4446 +/- 0.5775     13.4452 +/- 0.5775     13.4451 +/- 0.5775 
+ 323.141  -32.275   514.731 +/- 12.460     12.6672 +/- 0.5846     12.6695 +/- 0.5846     12.6685 +/- 0.5846 
+ 323.568  -32.594   519.978 +/- 12.697     11.9037 +/- 0.5917     11.9075 +/- 0.5916     11.9058 +/- 0.5917 
+ 323.995  -32.914   524.904 +/- 12.937     11.1629 +/- 0.5986     11.1678 +/- 0.5985     11.1655 +/- 0.5985 
+ 324.422  -33.233   529.519 +/- 13.179     10.4515 +/- 0.6053     10.4572 +/- 0.6053     10.4545 +/- 0.6053 
+ 324.849  -33.553   533.837 +/- 13.424      9.7744 +/- 0.6119      9.7808 +/- 0.6118      9.7778 +/- 0.6118 
+ 325.276  -33.872   537.874 +/- 13.671      9.1355 +/- 0.6183      9.1422 +/- 0.6182      9.1390 +/- 0.6183 
+ 325.704  -34.192   541.647 +/- 13.921      8.5368 +/- 0.6245      8.5437 +/- 0.6245      8.5404 +/- 0.6245 
+ 326.131  -34.511   545.173 +/- 14.173      7.9795 +/- 0.6306      7.9865 +/- 0.6305      7.9831 +/- 0.6306 
+ 326.558  -34.831   548.469 +/- 14.427      7.4638 +/- 0.6365      7.4707 +/- 0.6364      7.4674 +/- 0.6364 
+ 326.985  -35.151   551.555 +/- 14.683      6.9891 +/- 0.6422      6.9958 +/- 0.6421      6.9925 +/- 0.6421 
+ 327.412  -35.470   554.446 +/- 14.941      6.5542 +/- 0.6477      6.5606 +/- 0.6476      6.5575 +/- 0.6476 
+ 327.839  -35.790   557.159 +/- 15.201      6.1574 +/- 0.6530      6.1635 +/- 0.6529      6.1605 +/- 0.6529 
+ 328.266  -36.109   559.711 +/- 15.463      5.7969 +/- 0.6581      5.8026 +/- 0.6580      5.7998 +/- 0.6580 
+ 328.693  -36.429   562.116 +/- 15.726      5.4704 +/- 0.6630      5.4758 +/- 0.6629      5.4732 +/- 0.6629 
+ 329.121  -36.748   564.389 +/- 15.991      5.1758 +/- 0.6677      5.1808 +/- 0.6676      5.1784 +/- 0.6676 
+ 329.548  -37.068   566.542 +/- 16.258      4.9108 +/- 0.6722      4.9153 +/- 0.6721      4.9131 +/- 0.6721 
+ 329.975  -37.387   568.588 +/- 16.525      4.6729 +/- 0.6765      4.6771 +/- 0.6764      4.6751 +/- 0.6764 
+ 330.402  -37.707   570.537 +/- 16.795      4.4601 +/- 0.6805      4.4639 +/- 0.6805      4.4620 +/- 0.6805 
+ 330.829  -38.026   572.401 +/- 17.065      4.2701 +/- 0.6844      4.2736 +/- 0.6844      4.2719 +/- 0.6844 
+ 331.256  -38.346   574.188 +/- 17.336      4.1010 +/- 0.6881      4.1041 +/- 0.6881      4.1026 +/- 0.6881 
+ 331.683  -38.666   575.907 +/- 17.609      3.9507 +/- 0.6916      3.9536 +/- 0.6915      3.9522 +/- 0.6916 
+ 332.111  -38.985   577.566 +/- 17.882      3.8176 +/- 0.6949      3.8201 +/- 0.6948      3.8189 +/- 0.6949 
+ 332.538  -39.305   579.171 +/- 18.155      3.6998 +/- 0.6980      3.7021 +/- 0.6979      3.7010 +/- 0.6979 
+ 332.965  -39.624   580.728 +/- 18.430      3.5959 +/- 0.7009      3.5980 +/- 0.7008      3.5969 +/- 0.7008 
+ 333.392  -39.944   582.244 +/- 18.705      3.5044 +/- 0.7036      3.5063 +/- 0.7035      3.5053 +/- 0.7036 
+ 333.819  -40.263   583.724 +/- 18.980      3.4240 +/- 0.7061      3.4257 +/- 0.7061      3.4249 +/- 0.7061 
+ 334.246  -40.583   585.171 +/- 19.256      3.3536 +/- 0.7085      3.3551 +/- 0.7084      3.3544 +/- 0.7084 
+ 334.673  -40.902   586.590 +/- 19.532      3.2921 +/- 0.7106      3.2934 +/- 0.7106      3.2927 +/- 0.7106 
+ 335.101  -41.222   587.984 +/- 19.808      3.2384 +/- 0.7126      3.2395 +/- 0.7126      3.2390 +/- 0.7126 
+ 335.528  -41.542   589.357 +/- 20.084      3.1917 +/- 0.7145      3.1927 +/- 0.7144      3.1922 +/- 0.7144 
+ 335.955  -41.861   590.712 +/- 20.360      3.1511 +/- 0.7161      3.1520 +/- 0.7161      3.1516 +/- 0.7161 
+ 336.382  -42.181   592.050 +/- 20.635      3.1160 +/- 0.7176      3.1168 +/- 0.7176      3.1164 +/- 0.7176 
+ 336.809  -42.500   593.374 +/- 20.911      3.0857 +/- 0.7190      3.0863 +/- 0.7189      3.0860 +/- 0.7189 
+ 337.236  -42.820   594.686 +/- 21.186      3.0595 +/- 0.7202      3.0601 +/- 0.7201      3.0598 +/- 0.7201 
+ 337.663  -43.139   595.988 +/- 21.461      3.0370 +/- 0.7212      3.0375 +/- 0.7211      3.0373 +/- 0.7212 
+ 338.090  -43.459   597.281 +/- 21.735      3.0177 +/- 0.7221      3.0182 +/- 0.7220      3.0179 +/- 0.7221 
+ 338.518  -43.778   598.567 +/- 22.008      3.0011 +/- 0.7228      3.0015 +/- 0.7228      3.0013 +/- 0.7228 
+ 338.945  -44.098   599.845 +/- 22.281      2.9869 +/- 0.7235      2.9872 +/- 0.7234      2.9871 +/- 0.7234 
+ 339.372  -44.418   601.119 +/- 22.553      2.9747 +/- 0.7239      2.9750 +/- 0.7239      2.9748 +/- 0.7239 
+ 339.799  -44.737   602.387 +/- 22.825      2.9642 +/- 0.7243      2.9644 +/- 0.7242      2.9643 +/- 0.7242 
+ 340.226  -45.057   603.651 +/- 23.095      2.9551 +/- 0.7245      2.9553 +/- 0.7244      2.9552 +/- 0.7244 
+ 340.653  -45.376   604.911 +/- 23.365      2.9471 +/- 0.7245      2.9473 +/- 0.7245      2.9472 +/- 0.7245 
+ 341.080  -45.696   606.169 +/- 23.633      2.9401 +/- 0.7245      2.9402 +/- 0.7244      2.9402 +/- 0.7245 
+ 341.508  -46.015   607.423 +/- 23.901      2.9338 +/- 0.7243      2.9339 +/- 0.7242      2.9339 +/- 0.7243 
+ 341.935  -46.335   608.675 +/- 24.167      2.9281 +/- 0.7240      2.9282 +/- 0.7239      2.9282 +/- 0.7240 
+ 342.362  -46.654   609.925 +/- 24.432      2.9228 +/- 0.7236      2.9229 +/- 0.7235      2.9228 +/- 0.7235 
+ 342.789  -46.974   611.172 +/- 24.696      2.9178 +/- 0.7230      2.9178 +/- 0.7229      2.9178 +/- 0.7230 
+ 343.216  -47.293   612.417 +/- 24.959      2.9128 +/- 0.7223      2.9128 +/- 0.7223      2.9128 +/- 0.7223 
+ 343.643  -47.613   613.660 +/- 25.220      2.9079 +/- 0.7215      2.9079 +/- 0.7215      2.9079 +/- 0.7215 
+ 344.070  -47.933   614.901 +/- 25.480      2.9029 +/- 0.7206      2.9029 +/- 0.7205      2.9029 +/- 0.7206 
+ 344.497  -48.252   616.140 +/- 25.739      2.8978 +/- 0.7195      2.8977 +/- 0.7195      2.8977 +/- 0.7195 
+ 344.925  -48.572   617.377 +/- 25.996      2.8923 +/- 0.7184      2.8923 +/- 0.7183      2.8923 +/- 0.7184 
+ 345.352  -48.891   618.611 +/- 26.252      2.8866 +/- 0.7171      2.8865 +/- 0.7171      2.8866 +/- 0.7171 
+ 345.779  -49.211   619.843 +/- 26.506      2.8805 +/- 0.7157      2.8804 +/- 0.7157      2.8805 +/- 0.7157 
+ 346.206  -49.530   621.072 +/- 26.758      2.8740 +/- 0.7142      2.8739 +/- 0.7142      2.8739 +/- 0.7142 
+ 346.633  -49.850   622.298 +/- 27.009      2.8670 +/- 0.7127      2.8669 +/- 0.7126      2.8669 +/- 0.7126 
+ 347.060  -50.169   623.521 +/- 27.259      2.8595 +/- 0.7110      2.8594 +/- 0.7109      2.8594 +/- 0.7109 
+ 347.487  -50.489   624.741 +/- 27.507      2.8514 +/- 0.7092      2.8514 +/- 0.7091      2.8514 +/- 0.7092 
+ 347.915  -50.809   625.957 +/- 27.753      2.8429 +/- 0.7073      2.8428 +/- 0.7073      2.8428 +/- 0.7073 
+ 348.342  -51.128   627.169 +/- 27.998      2.8337 +/- 0.7054      2.8336 +/- 0.7053      2.8336 +/- 0.7053 
+ 348.769  -51.448   628.377 +/- 28.241      2.8239 +/- 0.7033      2.8238 +/- 0.7033      2.8239 +/- 0.7033 
+ 349.196  -51.767   629.581 +/- 28.482      2.8136 +/- 0.7013      2.8135 +/- 0.7012      2.8135 +/- 0.7012 
+ 349.623  -52.087   630.781 +/- 28.722      2.8026 +/- 0.6991      2.8025 +/- 0.6991      2.8026 +/- 0.6991 
+ 350.050  -52.406   631.975 +/- 28.960      2.7910 +/- 0.6970      2.7909 +/- 0.6969      2.7910 +/- 0.6970 
+ 350.477  -52.726   633.165 +/- 29.196      2.7789 +/- 0.6948      2.7788 +/- 0.6948      2.7788 +/- 0.6948 
+ 350.905  -53.045   634.349 +/- 29.431      2.7661 +/- 0.6926      2.7660 +/- 0.6926      2.7660 +/- 0.6926 
+ 351.332  -53.365   635.528 +/- 29.664      2.7527 +/- 0.6904      2.7526 +/- 0.6904      2.7527 +/- 0.6904 
+ 351.759  -53.684   636.701 +/- 29.896      2.7387 +/- 0.6883      2.7386 +/- 0.6883      2.7387 +/- 0.6883 
+ 352.186  -54.004   637.867 +/- 30.126      2.7242 +/- 0.6863      2.7241 +/- 0.6862      2.7241 +/- 0.6862 
+ 352.613  -54.324   639.028 +/- 30.354      2.7090 +/- 0.6843      2.7090 +/- 0.6843      2.7090 +/- 0.6843 
+ 353.040  -54.643   640.182 +/- 30.581      2.6934 +/- 0.6825      2.6933 +/- 0.6824      2.6933 +/- 0.6824 
+ 353.467  -54.963   641.329 +/- 30.806      2.6772 +/- 0.6808      2.6771 +/- 0.6808      2.6771 +/- 0.6808 
+ 353.894  -55.282   642.469 +/- 31.030      2.6604 +/- 0.6793      2.6604 +/- 0.6793      2.6604 +/- 0.6793 
+ 354.322  -55.602   643.601 +/- 31.252      2.6432 +/- 0.6781      2.6431 +/- 0.6781      2.6432 +/- 0.6781 
+ 354.749  -55.921   644.727 +/- 31.473      2.6255 +/- 0.6772      2.6254 +/- 0.6772      2.6255 +/- 0.6772 
+ 355.176  -56.241   645.844 +/- 31.693      2.6073 +/- 0.6766      2.6073 +/- 0.6766      2.6073 +/- 0.6766 
+ 355.603  -56.560   646.954 +/- 31.912      2.5887 +/- 0.6765      2.5887 +/- 0.6765      2.5887 +/- 0.6765 
+ 356.030  -56.880   648.056 +/- 32.129      2.5697 +/- 0.6769      2.5696 +/- 0.6769      2.5697 +/- 0.6769 
+ 356.457  -57.200   649.149 +/- 32.346      2.5503 +/- 0.6777      2.5502 +/- 0.6778      2.5503 +/- 0.6778 
+ 356.884  -57.519   650.234 +/- 32.561      2.5305 +/- 0.6793      2.5304 +/- 0.6793      2.5305 +/- 0.6793 
+ 357.312  -57.839   651.311 +/- 32.776      2.5104 +/- 0.6815      2.5103 +/- 0.6815      2.5103 +/- 0.6815 
+ 357.739  -58.158   652.379 +/- 32.990      2.4899 +/- 0.6845      2.4899 +/- 0.6846      2.4899 +/- 0.6845 
+ 358.166  -58.478   653.438 +/- 33.204      2.4691 +/- 0.6884      2.4691 +/- 0.6884      2.4691 +/- 0.6884 
+ 358.593  -58.797   654.488 +/- 33.417      2.4481 +/- 0.6932      2.4481 +/- 0.6932      2.4481 +/- 0.6932 
+ 359.020  -59.117   655.529 +/- 33.630      2.4268 +/- 0.6990      2.4268 +/- 0.6990      2.4268 +/- 0.6990 
+ 359.447  -59.436   656.561 +/- 33.843      2.4053 +/- 0.7059      2.4053 +/- 0.7059      2.4053 +/- 0.7059 
+ 359.874  -59.756   657.584 +/- 34.056      2.3835 +/- 0.7138      2.3835 +/- 0.7139      2.3835 +/- 0.7139 
+ 360.302  -60.075   658.597 +/- 34.269      2.3616 +/- 0.7230      2.3616 +/- 0.7230      2.3616 +/- 0.7230 
+ 360.729  -60.395   659.601 +/- 34.482      2.3395 +/- 0.7333      2.3395 +/- 0.7333      2.3395 +/- 0.7333 
+ 361.156  -60.715   660.596 +/- 34.697      2.3173 +/- 0.7447      2.3173 +/- 0.7447      2.3173 +/- 0.7447 
+ 361.583  -61.034   661.581 +/- 34.912      2.2949 +/- 0.7572      2.2949 +/- 0.7573      2.2949 +/- 0.7572 
+ 362.010  -61.354   662.556 +/- 35.128      2.2725 +/- 0.7708      2.2725 +/- 0.7708      2.2725 +/- 0.7708 
+ 362.437  -61.673   663.522 +/- 35.346      2.2499 +/- 0.7854      2.2499 +/- 0.7854      2.2499 +/- 0.7854 
+ 362.864  -61.993   664.478 +/- 35.565      2.2273 +/- 0.8007      2.2273 +/- 0.8007      2.2273 +/- 0.8007 
+ 363.291  -62.312   665.425 +/- 35.786      2.2047 +/- 0.8168      2.2047 +/- 0.8167      2.2047 +/- 0.8167 
+ 363.719  -62.632   666.362 +/- 36.009      2.1820 +/- 0.8333      2.1820 +/- 0.8332      2.1820 +/- 0.8332 
+ 364.146  -62.951   667.289 +/- 36.233      2.1593 +/- 0.8501      2.1593 +/- 0.8500      2.1593 +/- 0.8500 
+ 364.573  -63.271   668.206 +/- 36.460      2.1366 +/- 0.8669      2.1366 +/- 0.8667      2.1366 +/- 0.8668 
+ 365.000  -63.591   669.114 +/- 36.689      2.1139 +/- 0.8834      2.1253 +/- 0.8752          N/A           
