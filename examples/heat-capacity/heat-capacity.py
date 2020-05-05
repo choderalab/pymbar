@@ -503,6 +503,8 @@ if n_boots > 0:
     dCv_boot = np.zeros([K, NTYPES])
     dE_boot = np.zeros([K])
 
+    import pdb
+    pdb.set_trace()
     for k in range(K):
         for i in range(NTYPES):
             # for these averages, don't include the first one, because it's the non-bootstrapped one.
