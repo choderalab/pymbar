@@ -260,10 +260,10 @@ K = len(temp_k)
 
 # Number of samples (n) for each state (k) = number of iterations/energies
 Nall_k = np.zeros([K], dtype=int)
-E_kn = np.zeros([K, NUM_ITERATIONS])
+E_kn_files = np.zeros([K, NUM_ITERATIONS])
 
 for k in range(originalK):
-    E_kn[k, 0 : N_k[k]] = E_from_file[k, 0 : N_k[k]]
+    E_kn_files[k, 0 : N_k[k]] = E_from_file[k, 0 : N_k[k]]
     Nall_k[k] = N_k[k]
 
 # ------------------------------------------------------------------------
@@ -294,6 +294,7 @@ dE_expect = np.zeros([K])
 for n in range(n_boots_work):
     if n > 0:
         print(f"Bootstrap: {n:d}/{n_boots:d}")
+
     for k in range(K):
         # resample the results:
         if Nall_k[k] > 0:
@@ -301,14 +302,13 @@ for n in range(n_boots_work):
                 booti = np.array(range(N_k[k]))
             else:
                 booti = np.random.randint(Nall_k[k], size=Nall_k[k])
-            E_kn_samp[k, 0 : Nall_k[k]] = E_kn[k, booti]
+            E_kn_samp[k, 0 : Nall_k[k]] = E_kn_files[k, booti]
 
     for l in range(K):
         nsum = 0
         for k in range(K):
             u_kn[l, nsum : nsum + Nall_k[k]] = beta_k[l] * E_kn_samp[k, 0 : Nall_k[k]]
             nsum = nsum + Nall_k[k]
-
     # ------------------------------------------------------------------------
     # Initialize MBAR
     # ------------------------------------------------------------------------
@@ -336,7 +336,7 @@ for n in range(n_boots_work):
 
     print("")
     print("Computing Expectations for E...")
-    E_kn = u_kn  # not a copy, we are going to write over it, but we don't need it any more.
+    E_kn = u_kn.copy()
     for k in range(K):
         # get the 'unreduced' potential -- we can't take differences of reduced potentials
         # because the beta is different; math is much more confusing with derivatives of the reduced potentials.
@@ -503,8 +503,6 @@ if n_boots > 0:
     dCv_boot = np.zeros([K, NTYPES])
     dE_boot = np.zeros([K])
 
-    import pdb
-    pdb.set_trace()
     for k in range(K):
         for i in range(NTYPES):
             # for these averages, don't include the first one, because it's the non-bootstrapped one.
