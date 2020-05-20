@@ -23,7 +23,7 @@ The dimensionless free energy is therefore
 
 import sys
 import numpy as np
-from pymbar import testsystems, exp, exp_gauss, bar, MBAR, PMF
+from pymbar import testsystems, exp, exp_gauss, bar, MBAR, FES
 from pymbar.utils import ParameterError
 
 # =============================================================================================
@@ -644,7 +644,7 @@ print("Standard (scaled):", end=" ")
 print(err_standard * np.sqrt(N_k / N_eff))
 
 print("============================================")
-print("      Testing PMF functions   ")
+print("      Testing free energy surface functions   ")
 print("============================================")
 
 # For 2-D, The equilibrium distribution is given analytically by
@@ -667,7 +667,7 @@ print("============================================")
 #   f(beta,K) - fzero   = -Ku*Ko / 2(Ko+Ku)  = 1/(1/(Ku/2) + 1/(K0/2))
 
 
-def generate_pmf_data(
+def generate_fes_data(
     ndim=1, nbinsperdim=15, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, xrange=((-3, 3),)
 ):
 
@@ -747,12 +747,12 @@ ndim = 1
 K0 = 20.0
 Ku = 100.0
 print("============================================")
-print("      Test 1: 1D PMF   ")
+print("      Test 1: 1D free energy profile   ")
 print("============================================")
 
 xrange = [[-3, 3]]
 ndim = 1
-u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(
+u_kn, u_n, x_n, f_k_analytical = generate_fes_data(
     K0=K0,
     Ku=Ku,
     ndim=ndim,
@@ -777,10 +777,10 @@ bin_edges = np.linspace(xmin, xmax, nbins)  # list of bin edges.
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
 ibin = 1
-pmf_analytical = np.zeros([nbins], np.float64)
+fes_analytical = np.zeros([nbins], np.float64)
 minmu2 = 1000000
 zeroindex = 0
-# construct the bins and the pmf
+# construct the bins and the fes
 for i in range(nbinsperdim):
     xbin = xmin + dx * (i + 0.5)
     bin_centers[ibin, 0] = xbin
@@ -788,11 +788,11 @@ for i in range(nbinsperdim):
     if mu2 < minmu2:
         minmu2 = mu2
         zeroindex = ibin
-    pmf_analytical[ibin] = K0 * mu2 / 2.0
+    fes_analytical[ibin] = K0 * mu2 / 2.0
     ibin += 1
-fzero = pmf_analytical[zeroindex]
-pmf_analytical -= fzero
-pmf_analytical[0] = 0
+fzero = fes_analytical[zeroindex]
+fes_analytical -= fzero
+fes_analytical[0] = 0
 
 bin_n = np.zeros([numbrellas * nsamples], int)
 # Determine indices of those within bounds.
@@ -804,19 +804,19 @@ bin_counts = np.zeros([nbins], int)
 for i in range(nbins):
     bin_counts[i] = (bin_n == i).sum()
 
-# Compute PMF, first with histograms
-print("Solving for free energies of state to initialize PMF...")
+# Compute fre energy profile, first with histograms
+print("Solving for free energies of state to initialize free energy profile...")
 mbar_options = dict()
 mbar_options["verbose"] = True
-pmf = PMF(u_kn, N_k, mbar_options=mbar_options)
-print("Computing PMF ...")
+fes = FES(u_kn, N_k, mbar_options=mbar_options)
+print("Computing FES ...")
 histogram_parameters = dict()
 histogram_parameters["bin_edges"] = bin_edges
-pmf.generate_pmf(u_n, x_n, histogram_parameters=histogram_parameters)
-results = pmf.get_pmf(
+fes.generate_fes(u_n, x_n, histogram_parameters=histogram_parameters)
+results = fes.get_fes(
     bin_centers[:, 0],
     reference_point="from-specified",
-    pmf_reference=0.0,
+    fes_reference=0.0,
     uncertainty_method="analytical",
 )
 f_ih = results["f_i"]
@@ -825,11 +825,11 @@ df_ih = results["df_i"]
 # now estimate the PDF with a kde
 kde_parameters = dict()
 kde_parameters["bandwidth"] = dx / 3.0
-pmf.generate_pmf(u_n, x_n, pmf_type="kde", nbootstraps=20, kde_parameters=kde_parameters)
-results_kde = pmf.get_pmf(
+fes.generate_fes(u_n, x_n, fes_type="kde", nbootstraps=20, kde_parameters=kde_parameters)
+results_kde = fes.get_fes(
     bin_centers,
     reference_point="from-specified",
-    pmf_reference=0.0,
+    fes_reference=0.0,
     uncertainty_method="bootstrap",
 )
 f_ik = results_kde["f_i"]
@@ -838,7 +838,7 @@ df_ik = results_kde["df_i"]
 # Show free energy and uncertainty of each occupied bin relative to lowest
 # free energy
 
-print("1D PMF:")
+print("1D FES:")
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
 print(
     f"{'bin':>8s} {'x':>6s} {'N':>8s} {'true':>10s}"
@@ -847,8 +847,8 @@ print(
 )
 
 for i in range(1, nbins):
-    error_h = pmf_analytical[i] - f_ih[i]
-    error_k = pmf_analytical[i] - f_ik[i]
+    error_h = fes_analytical[i] - f_ih[i]
+    error_k = fes_analytical[i] - f_ik[i]
     if df_ih[i] > 0:
         stdevs_h = np.abs(error_h) / df_ih[i]
     else:
@@ -860,19 +860,19 @@ for i in range(1, nbins):
         stdevs_k = 0
 
     print(
-        f"{i:>8d} {bin_centers[i, 0]:>6.2f} {bin_counts[i]:>8d} {pmf_analytical[i]:>10.3f}"
+        f"{i:>8d} {bin_centers[i, 0]:>6.2f} {bin_counts[i]:>8d} {fes_analytical[i]:>10.3f}"
         f"{f_ih[i]:>10.3f} {error_h:>10.3f} {df_ih[i]:>10.3f} {stdevs_h:>8.2f}"
         f"{f_ik[i]:>10.3f} {error_k:>10.3f} {df_ik[i]:>10.3f} {stdevs_k:>8.2f}"
     )
 
 print("============================================")
-print("      Test 2: 2D PMF   ")
+print("      Test 2: 2D free energy surface  ")
 print("============================================")
 
 xrange = [[-3, 3], [-3, 3]]
 ndim = 2
 nsamples = 300
-u_kn, u_n, x_n, f_k_analytical = generate_pmf_data(
+u_kn, u_n, x_n, f_k_analytical = generate_fes_data(
     K0=K0,
     Ku=Ku,
     ndim=ndim,
@@ -908,10 +908,10 @@ nbins = 1 + nbinsperdim ** ndim
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
 ibin = 1  # first reserved for something outside.
-pmf_analytical = np.zeros([nbins], np.float64)
+fes_analytical = np.zeros([nbins], np.float64)
 minmu2 = 1000000
 zeroindex = 0
-# construct the bins and the pmf
+# construct the bins and the fes
 for i in range(nbinsperdim):
     xbin = xmin + dx * (i + 0.5)
     for j in range(nbinsperdim):
@@ -923,10 +923,10 @@ for i in range(nbinsperdim):
         if mu2 < minmu2:
             minmu2 = mu2
             zeroindex = ibin
-        pmf_analytical[ibin] = K0 * mu2 / 2.0
+        fes_analytical[ibin] = K0 * mu2 / 2.0
         ibin += 1
-fzero = pmf_analytical[zeroindex]
-pmf_analytical -= fzero
+fzero = fes_analytical[zeroindex]
+fes_analytical -= fzero
 
 bin_n = np.zeros([numbrellas * nsamples], int)
 # Determine indices of those within bounds.
@@ -941,22 +941,22 @@ bin_counts = np.zeros([nbins], int)
 for i in range(nbins):
     bin_counts[i] = (bin_n == i).sum()
 
-# Compute PMF, first using histograms weighted with MBAR
-print("Computing PMF ...")
-pmf = PMF(u_kn, N_k)
+# Compute free energy surface, first using histograms weighted with MBAR
+print("Computing free energy surface ...")
+fes = FES(u_kn, N_k)
 
 # for 2D bins, we input a list of the bin edges in each dimension.
 histogram_parameters["bin_edges"] = [
     np.linspace(xmin, xmax, nbinsperdim + 1),
     np.linspace(ymin, ymax, nbinsperdim + 1),
 ]  # list of histogram edges.
-pmf.generate_pmf(u_n, x_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
+fes.generate_fes(u_n, x_n, fes_type="histogram", histogram_parameters=histogram_parameters)
 delta = 0.0001  # to break ties in things being too close.
 
-results = pmf.get_pmf(
+results = fes.get_fes(
     bin_centers + delta,
     reference_point="from-specified",
-    pmf_reference=[0, 0],
+    fes_reference=[0, 0],
     uncertainty_method="analytical",
 )
 f_i = results["f_i"]
@@ -964,13 +964,13 @@ df_i = results["df_i"]
 
 # now generate the kernel density estimate
 kde_parameters["bandwidth"] = 0.5 * dx
-pmf.generate_pmf(u_n, x_n, pmf_type="kde", kde_parameters=kde_parameters)
-results_kde = pmf.get_pmf(bin_centers, reference_point="from-specified", pmf_reference=[0, 0])
+fes.generate_fes(u_n, x_n, fes_type="kde", kde_parameters=kde_parameters)
+results_kde = fes.get_fes(bin_centers, reference_point="from-specified", fes_reference=[0, 0])
 f_ik = results_kde["f_i"]
 
 # Show free energy and uncertainty of each occupied bin relative to lowest
 # free energy
-print("2D PMF:")
+print("2D FES:")
 
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
 print("Uncertainties only calculated for histogram methods")
@@ -982,7 +982,7 @@ for i in range(1, nbins):
         stdevs = 0
         df_i[0] = 0
     else:
-        error = pmf_analytical[i] - f_i[i]
+        error = fes_analytical[i] - f_i[i]
         if df_i[i] > 0:
             stdevs = np.abs(error) / df_i[i]
         else:
@@ -994,9 +994,9 @@ for i in range(1, nbins):
         f"{bin_counts[i]:>8d} "
         f"{f_i[i]:>10.3f} "
         f"{f_ik[i]:>10.3f} "
-        f"{pmf_analytical[i]:>10.3f} "
+        f"{fes_analytical[i]:>10.3f} "
         f"{error:>10.3f} "
-        f"{pmf_analytical[i]-f_ik[i]:>10.3f} "
+        f"{fes_analytical[i]-f_ik[i]:>10.3f} "
         f"{df_i[i]:>10.3f} "
         f"{stdevs:>8.2f}"
     )

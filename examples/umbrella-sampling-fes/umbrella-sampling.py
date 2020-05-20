@@ -1,5 +1,5 @@
 """
-Example illustrating the application of MBAR to compute a 1D PMF from an umbrella sampling simulation.
+Example illustrating the application of MBAR to compute a 1D free energy profile from an umbrella sampling simulation.
 
 The data represents an umbrella sampling simulation for the chi torsion of
 a valine sidechain in lysozyme L99A with benzene bound in the cavity.
@@ -29,9 +29,9 @@ K = 26  # number of umbrellas
 N_max = 501  # maximum number of snapshots/simulation
 T_k = np.ones(K, float) * temperature  # inital temperatures are all equal
 beta = 1.0 / (kB * temperature)  # inverse temperature of simulations (in 1/(kJ/mol))
-chi_min = -180.0  # min for PMF
-chi_max = +180.0  # max for PMF
-nbins = 36  # number of bins for 1D PMF
+chi_min = -180.0  # min for free energy profile
+chi_max = +180.0  # max for free energy profile
+nbins = 36  # number of bins for 1D free energy profile
 
 # Allocate storage for simulation data
 # N_k[k] is the number of snapshots from umbrella simulation k
@@ -87,7 +87,7 @@ for k in range(K):
     N_k[k] = n
 
     if different_temperatures:  # if different temperatures are specified the metadata file,
-        # then we need the energies to compute the PMF
+        # then we need the energies to compute the free energy profile
         # Read energies
         filename = f"data/prod{k:d}_energies.xvg"
         print(f"Reading {filename}...")
@@ -149,18 +149,18 @@ for k in range(K):
         # Compute energy of snapshot n from simulation k in umbrella potential l
         u_kln[k, :, n] = u_kn[k, n] + beta_k[k] * (K_k / 2.0) * dchi ** 2
 
-# initialize PMF with the data collected
-pmf = pymbar.PMF(u_kln, N_k, verbose=True)
-# Compute PMF in unbiased potential (in units of kT).
+# initialize free energy profile with the data collected
+fes = pymbar.FES(u_kln, N_k, verbose=True)
+# Compute free energy profile in unbiased potential (in units of kT).
 histogram_parameters = {}
 histogram_parameters["bin_edges"] = bin_edges
-pmf.generate_pmf(u_kn, chi_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
-results = pmf.get_pmf(bin_center_i, reference_point="from-lowest", uncertainty_method="analytical")
+fes.generate_fes(u_kn, chi_n, fes_type="histogram", histogram_parameters=histogram_parameters)
+results = fes.get_fes(bin_center_i, reference_point="from-lowest", uncertainty_method="analytical")
 center_f_i = results["f_i"]
 center_df_i = results["df_i"]
 
-# Write out PMF
-print("PMF (in units of kT), from histogramming")
+# Write out free energy profile
+print("free energy profile (in units of kT), from histogramming")
 print(f"{'bin':>8s} {'f':>8s} {'df':>8s}")
 for i in range(nbins):
     print(f"{bin_center_i[i]:8.1f} {center_f_i[i]:8.3f} {center_df_i[i]:8.3f}")
@@ -168,12 +168,12 @@ for i in range(nbins):
 # NOW KDE:
 kde_parameters = {}
 kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
-pmf.generate_pmf(u_kn, chi_n, pmf_type="kde", kde_parameters=kde_parameters)
-results = pmf.get_pmf(bin_center_i, reference_point="from-lowest")
-# Write out PMF for KDE
+fes.generate_fes(u_kn, chi_n, fes_type="kde", kde_parameters=kde_parameters)
+results = fes.get_fes(bin_center_i, reference_point="from-lowest")
+# Write out free energy profile from KDE
 center_f_i = results["f_i"]
 print("")
-print("PMF (in units of kT), from KDE")
+print("free energy profile (in units of kT), from KDE")
 print(f"{'bin':>8s} {'f':>8s}")
 for i in range(nbins):
     print(f"{bin_center_i[i]:8.1f} {center_f_i[i]:8.3f}")

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-Estimate 2D potential of mean force for alanine dipeptide parallel tempering data using MBAR.
+Estimate 2D free energy surface for alanine dipeptide parallel tempering data using MBAR.
 
 PROTOCOL
 
@@ -11,7 +11,7 @@ PROTOCOL
 * The `pymbar` class is initialized to compute the dimensionless free energies at each temperature using MBAR
 * The torsions are binned into sequentially labeled bins in two dimensions
 * The relative free energies and uncertainties of these torsion bins at the temperature of interest is estimated
-* The 2D PMF is written out
+* The 2D free energy surface is written out
 
 REFERENCES
 
@@ -47,7 +47,7 @@ free_energies_filename = "f_k.out"
 potential_energies_filename = DATA_DIRECTORY / "energies" / "potential-energies"
 trajectory_segment_length = 20  # number of snapshots in each contiguous trajectory segment
 niterations = 500  # number of iterations to use
-target_temperature = 302  # target temperature for 2D PMF (in K)
+target_temperature = 302  # target temperature for 2D free energy surface (in K)
 nbins_per_torsion = 10  # number of bins per torsion dimension
 
 # ===================================================================================================
@@ -230,7 +230,7 @@ for k in range(K):
         u_kln[k, l, 0 : N_k[k]] = beta_k[l] * U_kn[k, 0 : N_k[k]]
 
 # ===================================================================================================
-# Bin torsions into histogram bins for PMF calculation
+# Bin torsions into histogram bins for free energy surface calculation
 # ===================================================================================================
 
 # Here, we bin the (phi,psi) samples into bins in a 2D histogram.
@@ -294,34 +294,34 @@ bin_edges = []
 for i in range(2):
     bin_edges.append(np.linspace(torsion_min, torsion_max, nbins_per_torsion + 1))
 
-# Initialize PMF with data collected
-pmf = pymbar.PMF(u_kln, N_k)
+# Initialize free energy surface with data collected
+fes = pymbar.FES(u_kln, N_k)
 
 # ===================================================================================================
-# Compute PMF at the desired temperature.
+# Compute free energy surface at the desired temperature.
 # ===================================================================================================
 
-print("Computing potential of mean force...")
+print("Computing free energy surface...")
 
 # Compute reduced potential energies at the temperaure of interest
 target_beta = 1.0 / (kB * target_temperature)
 u_kn = target_beta * U_kn
-# Compute PMF at this temperature, returning dimensionless free energies and uncertainties.
+# Compute FES at this temperature, returning dimensionless free energies and uncertainties.
 # f_i[i] is the dimensionless free energy of bin i (in kT) at the temperature of interest
 # df_i[i,j] is an estimate of the covariance in the estimate of (f_i[i] - f_j[j], with reference
 # the lowest free energy state.
-# Compute PMF in unbiased potential (in units of kT).
+# Compute FES in unbiased potential (in units of kT).
 histogram_parameters = {}
 histogram_parameters["bin_edges"] = bin_edges
-pmf.generate_pmf(u_kn, x_n, pmf_type="histogram", histogram_parameters=histogram_parameters)
-results = pmf.get_pmf(
+fes.generate_fes(u_kn, x_n, fes_type="histogram", histogram_parameters=histogram_parameters)
+results = fes.get_fes(
     np.array(centers_nonzero), reference_point="from-lowest", uncertainty_method="analytical"
 )
 f_i = results["f_i"]
 df_i = results["df_i"]
 
 # Show free energy and uncertainty of each occupied bin relative to lowest free energy
-print("2D PMF")
+print("2D free energy surface")
 print()
 print(f"{'bin':>8s} {'phi':>6s} {'psi':>6s} {'N':>8s} {'f':>10s} {'df':>10s}")
 
