@@ -809,7 +809,7 @@ print("Solving for free energies of state to initialize free energy profile...")
 mbar_options = dict()
 mbar_options["verbose"] = True
 fes = FES(u_kn, N_k, mbar_options=mbar_options)
-print("Computing FES ...")
+print("Computing free energy profile ...")
 histogram_parameters = dict()
 histogram_parameters["bin_edges"] = bin_edges
 fes.generate_fes(u_n, x_n, histogram_parameters=histogram_parameters)
@@ -838,7 +838,7 @@ df_ik = results_kde["df_i"]
 # Show free energy and uncertainty of each occupied bin relative to lowest
 # free energy
 
-print("1D FES:")
+print("1D free energy profile:")
 print(f"{bin_counts[0]:d} counts out of {numbrellas * nsamples:d} counts not in any bin")
 print(
     f"{'bin':>8s} {'x':>6s} {'N':>8s} {'true':>10s}"
