@@ -1,5 +1,5 @@
 ##############################################################################
-# pymbar: A Python Library for MBAR (PMF module)
+# pymbar: A Python Library for MBAR (FES module)
 #
 # Copyright 2019 University of Colorado Boulder
 #
@@ -17,7 +17,7 @@
 ##############################################################################
 
 """
-A module implementing calculation of potentials of mean force from biased simulations.
+A module implementing calculation of free energy surfaces (profiles) from biased simulations.
 
 """
 
@@ -41,14 +41,14 @@ from timeit import default_timer as timer  # may remove timing?
 logger = logging.getLogger(__name__)
 
 # =========================================================================
-# PMF class definition
+# FES class definition
 # =========================================================================
 
 
-class PMF:
+class FES:
     """
 
-    Methods for generating potentials of mean force with statistical uncertainties.
+    Methods for generating free energy surfaces (profile) with statistical uncertainties.
 
     Notes
     -----
@@ -64,7 +64,7 @@ class PMF:
     http://dx.doi.org/10.1063/1.2978177
 
     [2] Shirts MR and Ferguson AF. Statistically optimal continuous
-    potentials of mean force from umbrella sampling and multistate
+    free energy surfaces from umbrella sampling and multistate
     reweighting
     https://arxiv.org/abs/2001.01170
 
@@ -73,7 +73,7 @@ class PMF:
     # =========================================================================
 
     def __init__(self, u_kn, N_k, verbose=False, mbar_options=None, timings=True, **kwargs):
-        """Initialize a potential of mean force calculation by performing
+        """Initialize a free energy surface calculation by performing
         multistate Bennett acceptance ratio (MBAR) on a set of
         simulation data from umbrella sampling at K states.
 
@@ -82,23 +82,23 @@ class PMF:
         minutes, depending upon the quantity of data.
 
         This creates an internal mbar object that is used to create
-        the potential of means force.
+        the free energy surface.
 
         External methods are:
 
            __init__: initialized MBAR for the umbrella samples, and processes parameters
 
-           generate_pmf: given an intialized MBAR object, a set of points,
+           generate_fes: given an intialized MBAR object, a set of points,
                         the desired energies at that point, and a method, generate
-                        an object that contains the PMF information.
+                        an object that contains the FES information.
 
-           get_pmf: given coordinates, generate the PMF at each coordinate (and uncertainty)
+           get_fes: given coordinates, generate the FES at each coordinate (and uncertainty)
 
            get_mbar: return the underlying mbar object.
 
            get_kde: return the underlying kde object.
 
-           sample_parameter_distribution: Only works for pmf_type =
+           sample_parameter_distribution: Only works for fes_type =
            'spline'. Sample the space of spline parameters according
            to the likelihood function.
 
@@ -139,7 +139,7 @@ class PMF:
 
         >>> from pymbar import testsystems
         >>> (x_n, u_kn, N_k, s_n) = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn')
-        >>> pmf = PMF(u_kn, N_k)
+        >>> fes = FES(u_kn, N_k)
 
         """
         for key, val in kwargs.items():
@@ -184,7 +184,7 @@ class PMF:
             self.timings = True
 
         if mbar_options == None:
-            pmf_mbar = pymbar.MBAR(u_kn, N_k)
+            fes_mbar = pymbar.MBAR(u_kn, N_k)
         else:
             # if the dictionary does not define the option, add it in
             required_mbar_options = (
@@ -208,7 +208,7 @@ class PMF:
             if mbar_options["initialize"] is None:
                 mbar_options["initialize"] = "zeros"
 
-            pmf_mbar = pymbar.MBAR(
+            fes_mbar = pymbar.MBAR(
                 u_kn,
                 N_k,
                 maximum_iterations=mbar_options["maximum_iterations"],
@@ -220,7 +220,7 @@ class PMF:
                 x_kindices=mbar_options["x_kindices"],
             )
 
-        self.mbar = pmf_mbar
+        self.mbar = fes_mbar
 
         # TODO: eliminate this call - it's causing problems
         # with deepcopy, needed in some cases, since you can't
@@ -229,7 +229,7 @@ class PMF:
         # self._seed = None
 
         if self.verbose:
-            logger.info("PMF initialized")
+            logger.info("FES initialized")
 
     # TODO: see above about not storing np.random
     # @property
@@ -240,11 +240,11 @@ class PMF:
     #    self._random = np.random
     #    self._seed = None
 
-    def generate_pmf(
+    def generate_fes(
         self,
         u_n,
         x_n,
-        pmf_type="histogram",
+        fes_type="histogram",
         histogram_parameters=None,
         kde_parameters=None,
         spline_parameters=None,
@@ -255,20 +255,20 @@ class PMF:
         """
         Given an intialized MBAR object, a set of points,
         the desired energies at that point, and a method, generate
-        an object that contains the PMF information.
+        an object that contains the FES information.
 
         Parameters
         ----------
 
         u_n : np.ndarray, float, shape=(N)
-            u_n[n] is the reduced potential energy of snapshot n of state for which the PMF is to be computed.
-            Often, it will be one of the states in of u_kn, used in initializing the PMF object, but we want
+            u_n[n] is the reduced potential energy of snapshot n of state for which the FES is to be computed.
+            Often, it will be one of the states in of u_kn, used in initializing the FES object, but we want
             to allow more generality.
 
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
-        pmf_type: str
+        fes_type: str
              options = 'histogram', 'kde', 'spline'
 
         histogram_parameters:
@@ -295,7 +295,7 @@ class PMF:
 
         nbootstraps : int, 0 or > 1, Default: 0
             Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done. Required if
-            one uses uncertainty_method = 'bootstrap' in get_pmf
+            one uses uncertainty_method = 'bootstrap' in get_fes
 
         seed : int, Default: -1
             Set the randomization seed. Settting should get the
@@ -306,11 +306,11 @@ class PMF:
         Returns
         -------
         dict, optional
-            if 'timings' is set to True in __init__, returns the time taken to generate the PMF
+            if 'timings' is set to True in __init__, returns the time taken to generate the FES
 
         Notes
         -----
-        * pmf_type = 'histogram':
+        * fes_type = 'histogram':
             * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
             * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states . . .
             * the potential is given by u_n within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
@@ -320,9 +320,9 @@ class PMF:
 
         >>> # Generate some test data
         >>> from pymbar import testsystems
-        >>> from pymbar import PMF
+        >>> from pymbar import FES
         >>> x_n, u_kn, N_k, s_n = testsystems.HarmonicOscillatorsTestCase().sample(mode='u_kn',seed=0)
-        >>> # Select the potential we want to compute the PMF for (here, condition 0).
+        >>> # Select the potential we want to compute the FES for (here, condition 0).
         >>> u_n = u_kn[0, :]
         >>> # Sort into nbins equally-populated bins
         >>> nbins = 10 # number of equally-populated bins to use
@@ -331,16 +331,16 @@ class PMF:
         >>> x_n_sorted = np.sort(x_n) # unroll to n-indices
         >>> bins = np.append(x_n_sorted[0::int(N_tot/nbins)], x_n_sorted.max()+0.1)
         >>> bin_widths = bins[1:] - bins[0:-1]
-        >>> # Compute PMF for these unequally-sized bins.
-        >>> pmf = PMF(u_kn, N_k)
+        >>> # Compute FES for these unequally-sized bins.
+        >>> fes = FES(u_kn, N_k)
         >>> histogram_parameters = dict()
         >>> histogram_parameters['bin_edges'] = [bins]
-        >>> _ = pmf.generate_pmf(u_n, x_n, pmf_type='histogram', histogram_parameters = histogram_parameters)
-        >>> results = pmf.get_pmf(x_n)
+        >>> _ = fes.generate_fes(u_n, x_n, fes_type='histogram', histogram_parameters = histogram_parameters)
+        >>> results = fes.get_fes(x_n)
         >>> f_i = results['f_i']
         >>> for i, x_n in enumerate(x_n):  # doctest: +SKIP
         >>>     print(x_n, f_i[i])  # doctest: +SKIP
-        >>> mbar = pmf.get_mbar()
+        >>> mbar = fes.get_mbar()
         >>> print(mbar.f_k)  # doctest: +SKIP
         >>> print(N_k)  # doctest: +SKIP
 
@@ -348,7 +348,7 @@ class PMF:
 
         result_vals = dict()  # for results we may want to return.
 
-        self.pmf_type = pmf_type
+        self.fes_type = fes_type
 
         # eventually, we just want the desired energy of each sample.  For now, we allow conversion
         # from older 2d format (K,Nmax instead of N); this is data SAMPLED from
@@ -377,23 +377,23 @@ class PMF:
         if self.timings:
             start = timer()
 
-        self.pmf_function = list()
+        self.fes_function = list()
 
         # set some variables before bootstrapping loop.
 
         self.mc_data = None  # we have not sampled MC data yet.
 
-        if self.pmf_type == "histogram":
-            self._setup_pmf_histogram(histogram_parameters)
+        if self.fes_type == "histogram":
+            self._setup_fes_histogram(histogram_parameters)
 
-        elif pmf_type == "kde":
-            self._setup_pmf_kde(kde_parameters)
+        elif fes_type == "kde":
+            self._setup_fes_kde(kde_parameters)
 
-        elif pmf_type == "spline":
-            self._setup_pmf_spline(spline_parameters)
+        elif fes_type == "spline":
+            self._setup_fes_spline(spline_parameters)
 
         else:
-            raise ParameterError("pmf_type {:s} is not defined!".format(pmf_type))
+            raise ParameterError("fes_type {:s} is not defined!".format(fes_type))
 
         N_k = self.mbar.N_k
         K = self.mbar.K
@@ -433,15 +433,15 @@ class PMF:
                 self.w_n = w_nb
                 self.w_kn = w_knb
 
-            if self.pmf_type == "histogram":
+            if self.fes_type == "histogram":
                 # not clear if need to pass both w_nb and log_w_nb, but saves some processing
-                self._generate_pmf_histogram(b, x_nb, w_nb, log_w_nb)
+                self._generate_fes_histogram(b, x_nb, w_nb, log_w_nb)
 
-            elif self.pmf_type == "kde":
-                self._generate_pmf_kde(b, x_nb, w_nb)
+            elif self.fes_type == "kde":
+                self._generate_fes_kde(b, x_nb, w_nb)
 
-            elif self.pmf_type == "spline":
-                self._generate_pmf_spline(b, x_nb, w_nb)
+            elif self.fes_type == "spline":
+                self._generate_fes_spline(b, x_nb, w_nb)
 
         # we put the timings outside, since the switch / common stuff is really
         # low.
@@ -451,7 +451,7 @@ class PMF:
 
         return result_vals  # should we return results under some other conditions?
 
-    def _setup_pmf_histogram(self, histogram_parameters):
+    def _setup_fes_histogram(self, histogram_parameters):
 
         """
         Does initial processsing of histogram_parameters
@@ -459,20 +459,20 @@ class PMF:
         Parameters
         ----------
         histogram_parameters: dict()
-            A options:values dictonary for parameters to create the PMF using histogramss
+            A options:values dictonary for parameters to create the FES using histogramss
 
         Returns
         -------
         None
 
         Internally, creates histogram_data object and histogram_datas
-        to store information generated by generate_pmf
+        to store information generated by generate_fes
 
         """
 
         if "bin_edges" not in histogram_parameters:
             raise ParameterError(
-                "histogram_parameters['bin_edges'] cannot be undefined with pmf_type = histogram"
+                "histogram_parameters['bin_edges'] cannot be undefined with fes_type = histogram"
             )
 
         # code expects that the bin edges consist in an list of
@@ -488,7 +488,7 @@ class PMF:
         else:
             self.histogram_datas = None
 
-    def _generate_pmf_histogram(self, b, x_n, w_nb, log_w_nb):
+    def _generate_fes_histogram(self, b, x_n, w_nb, log_w_nb):
 
         """
         Parameters
@@ -501,7 +501,7 @@ class PMF:
 
         log_w_n : np.ndarray, float, shape=(self.N)
 
-            Normalized log weights for each sample for the state in which we want the PMF
+            Normalized log weights for each sample for the state in which we want the FES
             (usually, the unbiased state).  Doing it outside the loop to avoid redoing it each time.
 
         Returns
@@ -509,7 +509,7 @@ class PMF:
         None
 
         Doesn't return, rather adds histogram_data (for b==0) to self, or for b>0, adds
-        histogram_data to the array self.histogram_data for further processing by get_pmf.
+        histogram_data to the array self.histogram_data for further processing by get_fes.
 
         """
 
@@ -615,7 +615,7 @@ class PMF:
         else:
             self.histogram_datas.append(histogram_data)
 
-    def _setup_pmf_kde(self, kde_parameters):
+    def _setup_fes_kde(self, kde_parameters):
 
         """
         Does initial processsing of kde_parameters
@@ -623,7 +623,7 @@ class PMF:
         Parameters
         ----------
         kde_parameters: dict()
-            A options:values dictonary for parameters to create the PMF using the kernel density approach.
+            A options:values dictonary for parameters to create the FES using the kernel density approach.
             Parameters are passsed on to sklearn KernelDensity.
 
         Returns
@@ -631,7 +631,7 @@ class PMF:
         None
 
         Internally, creates kde object and kdes list of kde ibjects
-        to store information generated by generate_pmf_kde
+        to store information generated by generate_fes_kde
 
         """
 
@@ -639,7 +639,7 @@ class PMF:
             from sklearn.neighbors import KernelDensity
         except ImportError:
             raise ImportError(
-                "Cannot use 'kde' type PMF without the scikit-learn module. Could not import sklearn"
+                "Cannot use 'kde' type FES without the scikit-learn module. Could not import sklearn"
             )
 
         kde = KernelDensity()
@@ -664,11 +664,11 @@ class PMF:
 
         self.kde = kde
 
-    def _generate_pmf_kde(self, b, x_n, w_n):
+    def _generate_fes_kde(self, b, x_n, w_n):
 
         """
-        Given an pmf object with the kde data set up, determine
-        the information necessary to define a PMF using a kernel density approximation
+        Given an fes object with the kde data set up, determine
+        the information necessary to define a FES using a kernel density approximation
 
         Parameters
         ----------
@@ -682,7 +682,7 @@ class PMF:
 
         w_n : np.ndarray, float, shape=(sself.N)
 
-            Weights for each sample for the state in which we want the PMF (usually, the unbiased state)
+            Weights for each sample for the state in which we want the FES (usually, the unbiased state)
 
         Returns
         -------
@@ -703,7 +703,7 @@ class PMF:
             from sklearn.neighbors import KernelDensity
         except ImportError:
             raise ImportError(
-                "Cannot use 'kde' type PMF without the scikit-learn module. Could not import sklearn"
+                "Cannot use 'kde' type FES without the scikit-learn module. Could not import sklearn"
             )
 
         if b > 0:
@@ -718,7 +718,7 @@ class PMF:
         if b > 0:
             self.kdes.append(kde)
 
-    def _setup_pmf_spline(self, spline_parameters):
+    def _setup_fes_spline(self, spline_parameters):
 
         """
         Does initial processsing of spline_parameters
@@ -726,7 +726,7 @@ class PMF:
         Parameters
         ----------
         spline_parameters: dict()
-            A options:values dictonary for parameters to create the PMF using the spline approach.
+            A options:values dictonary for parameters to create the FES using the spline approach.
             Parameters are explained in docstring of
 
         Returns
@@ -734,7 +734,7 @@ class PMF:
         None
 
         Internally, creates spline_data object and spline_datas list of spline_Data objects
-        to store information generated by generate_pmf_spline
+        to store information generated by generate_fes_spline
 
         """
 
@@ -823,9 +823,9 @@ class PMF:
         self.spline_data = self._get_initial_spline(xinit, yinit)
 
         if self.nbootstraps > 0:
-            self.pmf_functions = list()
+            self.fes_functions = list()
         else:
-            self.pmf_functions = None
+            self.fes_functions = None
 
     def _get_initial_spline_points(self):
 
@@ -946,7 +946,7 @@ class PMF:
 
         sort_indices = np.argsort(xinit)
         b = make_lsq_spline(xinit[sort_indices], yinit[sort_indices], t, k=kdegree)
-        # one, since the PMF is only determined up to a constant.
+        # one, since the FES is only determined up to a constant.
         b.c = b.c - b.c[0]  # We zero out the first
         # the bspline coefficients are the variables we care about.
         xi = b.c[1:]
@@ -991,11 +991,11 @@ class PMF:
 
         return spline_data
 
-    def _generate_pmf_spline(self, b, x_n, w_n):
+    def _generate_fes_spline(self, b, x_n, w_n):
 
         """
-        Given an pmf object with the spline set up, determine
-        the information necessary to define a PMF.
+        Given an fes object with the spline set up, determine
+        the information necessary to define a FES.
 
         Parameters
         ----------
@@ -1009,13 +1009,13 @@ class PMF:
 
         w_n : np.ndarray, float, shape=(sself.N)
 
-            Weights for each sample for the state in which we want the PMF (usually, the unbiased state)
+            Weights for each sample for the state in which we want the FES (usually, the unbiased state)
 
         Returns
         -------
         None
 
-        Data is stored in self.pmf_function or self.pmf_functions (for bootstrap replicates).
+        Data is stored in self.fes_function or self.fes_functions (for bootstrap replicates).
 
         """
 
@@ -1118,9 +1118,9 @@ class PMF:
             self.spline_data["bic"] = results["bic"]
 
         if b == 0:
-            self.pmf_function = bspline
+            self.fes_function = bspline
         else:
-            self.pmf_functions.append(bspline)
+            self.fes_functions.append(bspline)
 
     @staticmethod
     def _calculate_information_criteria(nparameters, minus_log_likelihood, N):
@@ -1175,7 +1175,7 @@ class PMF:
 
         """
 
-        if self.pmf_type != "spline":
+        if self.fes_type != "spline":
             raise ParameterError(
                 "Information criteria currently only defined for spline approaches, you are currently using {:s}".format(
                     type
@@ -1188,29 +1188,29 @@ class PMF:
         else:
             raise ParameterError("Information criteria of type '{:s}' not defined".format(type))
 
-    def get_pmf(
-        self, x, reference_point="from-lowest", pmf_reference=None, uncertainty_method=None,
+    def get_fes(
+        self, x, reference_point="from-lowest", fes_reference=None, uncertainty_method=None,
     ):
         """
-        Returns values of the PMF at the specified x points.
+        Returns values of the FES at the specified x points.
 
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
             Method for reporting values and uncertainties (default: 'from-lowest')
 
-            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
-            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the FES
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         uncertainty_method : str, optional
             Method for computing uncertainties (default: None)
 
-        pmf_reference :
+        fes_reference :
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1231,31 +1231,31 @@ class PMF:
         if len(np.shape(x)) <= 1:
             x = x.reshape(-1, 1)
 
-        if reference_point == "from-specified" and pmf_reference is None:
+        if reference_point == "from-specified" and fes_reference is None:
             logger.info(
-                "No reference state specified for PMF, using uncertainty_method = from-specified"
+                "No reference state specified for FES, using uncertainty_method = from-specified"
             )
 
-        if self.pmf_type == "histogram":
-            result_vals = self._get_pmf_histogram(
-                x, reference_point, pmf_reference, uncertainty_method
+        if self.fes_type == "histogram":
+            result_vals = self._get_fes_histogram(
+                x, reference_point, fes_reference, uncertainty_method
             )
 
-        elif self.pmf_type == "kde":
+        elif self.fes_type == "kde":
             # TODO: check dimensionality here
-            result_vals = self._get_pmf_kde(x, reference_point, pmf_reference, uncertainty_method)
+            result_vals = self._get_fes_kde(x, reference_point, fes_reference, uncertainty_method)
 
-        elif self.pmf_type == "spline":
-            result_vals = self._get_pmf_spline(
-                x, reference_point, pmf_reference, uncertainty_method
+        elif self.fes_type == "spline":
+            result_vals = self._get_fes_spline(
+                x, reference_point, fes_reference, uncertainty_method
             )
         else:
-            raise ParameterError("pmf_type {self.pmf_type} is not supported")
+            raise ParameterError("fes_type {self.fes_type} is not supported")
 
         return result_vals
 
     def get_mbar(self):
-        """return the MBAR object being used by the PMF
+        """return the MBAR object being used by the FES
 
         Returns
         -------
@@ -1264,7 +1264,7 @@ class PMF:
         if self.mbar is not None:
             return self.mbar
         else:
-            raise DataError("MBAR in the PMF object is not initialized, cannot return it.")
+            raise DataError("MBAR in the FES object is not initialized, cannot return it.")
 
     def get_kde(self):
         """ return the KernelDensity object if it exists.
@@ -1274,7 +1274,7 @@ class PMF:
         sklearn KernelDensity object
         """
 
-        if self.pmf_type == "kde":
+        if self.fes_type == "kde":
             if self.kde != None:
                 return self.kde
             else:
@@ -1282,31 +1282,31 @@ class PMF:
                     "Can't return the KernelDensity object because kde not yet defined"
                 )
         else:
-            raise ParameterError("Can't return the KernelDensity object because pmf_type != kde")
+            raise ParameterError("Can't return the KernelDensity object because fes_type != kde")
 
-    def _get_pmf_histogram(
-        self, x, reference_point="from-lowest", pmf_reference=None, uncertainty_method=None,
+    def _get_fes_histogram(
+        self, x, reference_point="from-lowest", fes_reference=None, uncertainty_method=None,
     ):
         """
-        Returns values of the PMF at the specified x points for histogram PMFs.
+        Returns values of the FES at the specified x points for histogram FESs.
 
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
             Method for reporting values and uncertainties (default: 'from-lowest')
 
-            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
-            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the FES
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         uncertainty_method : str, optional
             Method for computing uncertainties (default: None)
 
-        pmf_reference :
+        fes_reference :
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1322,7 +1322,7 @@ class PMF:
 
         if np.shape(x)[1] != self.histogram_data["dims"]:
             raise DataError(
-                "query coordinates have inconsistent dimension with the data the PMF is fit to."
+                "query coordinates have inconsistent dimension with the data the FES is fit to."
             )
 
         if (
@@ -1334,7 +1334,7 @@ class PMF:
         if uncertainty_method == "bootstrap":
             if self.histogram_datas is None:
                 raise ParameterError(
-                    "Can't calculate uncertainties via bootstrap if bootstrapping was not performed when running get_pmf"
+                    "Can't calculate uncertainties via bootstrap if bootstrapping was not performed when running get_fes"
                 )
             else:
                 nbootstraps = len(self.histogram_datas)
@@ -1362,24 +1362,24 @@ class PMF:
                 # -1 and nbinsperdim are out of range
                 loc_indices[:, d] = np.digitize(x[:, d], bins[d]) - 1
 
-        # figure out which grid point the pmf_reference is at
+        # figure out which grid point the fes_reference is at
         if reference_point == "from-specified":
-            if pmf_reference is not None:
+            if fes_reference is not None:
                 if dims == 1:
                     # make it a list for reduced code duplication.
-                    pmf_reference = [pmf_reference]
-                pmf_ref_grid = np.zeros([dims], dtype=int)
+                    fes_reference = [fes_reference]
+                fes_ref_grid = np.zeros([dims], dtype=int)
                 for d in range(dims):
                     # -1 and nbins_per_dim are out of range
-                    pmf_ref_grid[d] = np.digitize(pmf_reference[d], bins[d]) - 1
-                    if pmf_ref_grid[d] == -1 or pmf_ref_grid[d] == len(bins[d]):
+                    fes_ref_grid[d] = np.digitize(fes_reference[d], bins[d]) - 1
+                    if fes_ref_grid[d] == -1 or fes_ref_grid[d] == len(bins[d]):
                         raise ParameterError(
-                            "Specified reference point coordinate {:f} in dim {:d} grid point is out of the PMF region [{:f},{:f}]".format(
-                                pmf_ref_grid[d], d, np.min(bins[d]), np.max(bins[d])
+                            "Specified reference point coordinate {:f} in dim {:d} grid point is out of the FES region [{:f},{:f}]".format(
+                                fes_ref_grid[d], d, np.min(bins[d]), np.max(bins[d])
                             )
                         )
             else:
-                raise ParameterError("Specified reference point for PMF not given")
+                raise ParameterError("Specified reference point for FES not given")
 
         if reference_point in ["from-lowest", "from-specified", "all-differences"]:
 
@@ -1388,13 +1388,13 @@ class PMF:
                 j = histogram_data["f"].argmin()
             elif reference_point == "from-specified":
                 # find the label of this bin
-                ref_bin_label = histogram_data["bin_label"][tuple(pmf_ref_grid)]
+                ref_bin_label = histogram_data["bin_label"][tuple(fes_ref_grid)]
                 # then find the invariant free energy index of this bin
                 j = bin_order[ref_bin_label]
             elif reference_point == "all-differences":
                 raise ParameterError(
                     "reference point method of 'all-differences' is not yet supported for histogram "
-                    "PMF types (not implemented)"
+                    "FES types (not implemented)"
                 )
             f_i = histogram_data["f"] - histogram_data["f"][j]
 
@@ -1542,30 +1542,30 @@ class PMF:
 
         return result_vals
 
-    def _get_pmf_kde(
-        self, x, reference_point="from-normalization", pmf_reference=None, uncertainty_method=None,
+    def _get_fes_kde(
+        self, x, reference_point="from-normalization", fes_reference=None, uncertainty_method=None,
     ):
         """
 
-        Returns values of the PMF at the specified x points for kde PMFs.
+        Returns values of the FES at the specified x points for kde FESs.
 
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
             Method for reporting values and uncertainties (default: 'from-lowest')
 
-            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
-            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the FES
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         uncertainty_method : str, optional
             Method for computing uncertainties (default: None)
 
-        pmf_reference :
+        fes_reference :
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1581,7 +1581,7 @@ class PMF:
 
         if np.shape(x)[1] != np.shape(self.kde.sample())[1]:
             raise DataError(
-                "query coordinates have inconsistent dimension with the data the PMF is fit to."
+                "query coordinates have inconsistent dimension with the data the FES is fit to."
             )
 
         result_vals = {}
@@ -1591,7 +1591,7 @@ class PMF:
             fmin = np.min(f_i)
             f_i = f_i - fmin
         elif reference_point == "from-specified":
-            fmin = -self.kde.score_samples(np.array(pmf_reference).reshape(1, -1))
+            fmin = -self.kde.score_samples(np.array(fes_reference).reshape(1, -1))
             f_i = f_i - fmin
         elif reference_point == "from-normalization":
             # uncertainites "from normalization" reference is already applied, since
@@ -1631,30 +1631,30 @@ class PMF:
 
         return result_vals
 
-    def _get_pmf_spline(
-        self, x, reference_point="from_lowest", pmf_reference=0.0, uncertainty_method=None,
+    def _get_fes_spline(
+        self, x, reference_point="from_lowest", fes_reference=0.0, uncertainty_method=None,
     ):
         """
 
-        Returns values of the PMF at the specified x points for spline PMFs.
+        Returns values of the FES at the specified x points for spline FESs.
 
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
             Method for reporting values and uncertainties (default: 'from-lowest')
 
-            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on PMF are reported
+            * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
-            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the PMF
+            * 'from-normalization' - the normalization \\sum_i p_i = 1 is used to determine uncertainties spread out through the FES
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         uncertainty_method : str, optional
             Method for computing uncertainties (default: None)
 
-        pmf_reference :
+        fes_reference :
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1669,44 +1669,44 @@ class PMF:
                 """
 
         if np.shape(x)[1] != 1:
-            raise DataError("splines PMF only supported in 1D")
+            raise DataError("splines FES only supported in 1D")
 
         result_vals = {}
         # for splines now, should only be 1D.  x is passed in as a 2D array, need to covert
-        # back to 1D array before being put in pmf_function (which will preserve shape)
+        # back to 1D array before being put in fes_function (which will preserve shape)
         x = x[:, 0]
 
         # before being put here, needs to be converted back
-        f_i = self.pmf_function(x)
+        f_i = self.fes_function(x)
 
         if reference_point == "from-lowest":
             fmin = np.min(f_i)
             f_i = f_i - fmin
 
         elif reference_point == "from-specified":
-            fmin = -self.pmf_function(np.array(pmf_reference).reshape(1, -1))
+            fmin = -self.fes_function(np.array(fes_reference).reshape(1, -1))
             f_i = f_i - fmin
 
         else:
             raise ParameterError(
-                f"reference point {reference_point} not implemented for spline pmf"
+                f"reference point {reference_point} not implemented for spline fes"
             )
 
         if uncertainty_method is None:
             df_i = None
 
         if uncertainty_method == "bootstrap":
-            if self.pmf_functions is None:
+            if self.fes_functions is None:
                 raise ParameterError(
-                    "Cannot calculate via uncertainties error if boostrapping was not peformed running get_pmf"
+                    "Cannot calculate via uncertainties error if boostrapping was not peformed running get_fes"
                 )
             else:
-                nbootstraps = len(self.pmf_functions)
+                nbootstraps = len(self.fes_functions)
 
             dim_breakdown = [d for d in x.shape] + [nbootstraps]
             fall = np.zeros(dim_breakdown)
             for b in range(nbootstraps):
-                fall[:, b] = self.pmf_functions[b](x) - fmin
+                fall[:, b] = self.fes_functions[b](x) - fmin
             df_i = np.std(fall, axis=-1)
 
         # uncertainites "from normalization" reference is applied, since
@@ -1726,7 +1726,7 @@ class PMF:
         Parameters
         ----------
 
-        x_n : numpy.ndarray of D dimensions, where D is the dimensionality of the PMF defined.
+        x_n : numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         mc_parameters :
             A dictionary of Monte Carlo parameters:
@@ -1756,7 +1756,7 @@ class PMF:
         # determine the range of the bspline at the start of the
         # process: changes are made as fractions of this
 
-        if self.pmf_type != "spline":
+        if self.fes_type != "spline":
             ParameterError("Sampling of posterior is only supported for spline type")
 
         spline_parameters = self.spline_parameters
@@ -1770,9 +1770,9 @@ class PMF:
         xrange = spline_parameters["xrange"]
         # numerically integrate over this range
 
-        if self.pmf_function is None:
+        if self.fes_function is None:
             ParameterError(
-                "Need to generate an initial splined PMF using generate_pmf before performing MCMC sampling"
+                "Need to generate an initial splined FES using generate_fes before performing MCMC sampling"
             )
 
         if mc_parameters is None:
@@ -1801,7 +1801,7 @@ class PMF:
 
         # we would like to make this below a copy, but BSpline doesn't have copy.
 
-        self.mc_data["bspline"] = self.pmf_function
+        self.mc_data["bspline"] = self.fes_function
         bspline = self.mc_data["bspline"]
 
         # ensure normalization of spline
@@ -1900,7 +1900,7 @@ class PMF:
             plow : ndarray of float, len(xplot) value of the parameter at plow percentile of the distribution at each x in xplot.
             phigh: ndarray of float, value of the parameter at phigh percentile of the distribution at each x in xplot.
             median: ndarray of float, value of the parameter at the median of the distribution at each x in xplot.
-            values: ndarray of float, shape [niterations//sample_every, len(xplot)] of the PMF saved during
+            values: ndarray of float, shape [niterations//sample_every, len(xplot)] of the FES saved during
                     the MCMC sampling at each input value of xplot.
 
         """
@@ -1986,16 +1986,16 @@ class PMF:
 
         w_n : np.ndarray, float, shape=(sself.N)
 
-            Weights for each sample for the state in which we want the PMF (usually, the unbiased state)
+            Weights for each sample for the state in which we want the FES (usually, the unbiased state)
 
         spline_weights : string
-            which type of fit to the likelihood to use (see `generate_pmf` options)
+            which type of fit to the likelihood to use (see `generate_fes` options)
 
         spline : function of ndarray argument
             function current value of the spline for which likelihood is being calculated
 
         xrange : float, shape=(2)
-           range over which the PMF is defined (defined in spline_parameters ["xrange"]
+           range over which the FES is defined (defined in spline_parameters ["xrange"]
 
         Returns
         -------
@@ -2036,7 +2036,7 @@ class PMF:
 
     def _MC_step(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
 
-        """ sample over the posterior space of the PMF as splined.
+        """ sample over the posterior space of the FES as splined.
 
         Parameters
         ----------
@@ -2127,7 +2127,7 @@ class PMF:
 
     def _bspline_calculate_f(self, xi, x_n, w_n):
 
-        """ Calculate the maximum likelihood / KL divergence of the PMF represented using B-splines.
+        """ Calculate the maximum likelihood / KL divergence of the FES represented using B-splines.
 
         Parameters
         ----------
@@ -2156,7 +2156,7 @@ class PMF:
         ]  # how to weight the integrated splines in the final likelihood
         nspline = self.spline_parameters["nspline"]  # number of spline points
         kdegree = self.spline_parameters["kdegree"]  # degree of spline
-        xrange = self.spline_parameters["xrange"]  # the range PMF is defined over
+        xrange = self.spline_parameters["xrange"]  # the range FES is defined over
         fkbias = self.spline_parameters["fkbias"]  # K biasing functions
 
         if spline_weights in ["simplesum", "biasedstates"]:
@@ -2213,7 +2213,7 @@ class PMF:
         return f
 
     def _bspline_calculate_g(self, xi, x_n, w_n):
-        """Calculate the gradient of the maximum likelihood / KL divergence of the PMF represented using B-splines.
+        """Calculate the gradient of the maximum likelihood / KL divergence of the FES represented using B-splines.
 
         Parameters
         -----------
@@ -2248,7 +2248,7 @@ class PMF:
         ]  # how to weight the integrated splines in the final likelihood
         nspline = self.spline_parameters["nspline"]  # number of spline points
         kdegree = self.spline_parameters["kdegree"]  # degree of spline
-        xrange = self.spline_parameters["xrange"]  # the range PMF is defined over
+        xrange = self.spline_parameters["xrange"]  # the range FES is defined over
         fkbias = self.spline_parameters["fkbias"]  # K biasing functions
         db_c = self.spline_data[
             "bspline_derivatives"
@@ -2333,7 +2333,7 @@ class PMF:
 
     def _bspline_calculate_h(self, xi, x_n, w_n):
 
-        """ Calculate the Hessian of the maximum likelihood / KL divergence of the PMF represented using B-splines.
+        """ Calculate the Hessian of the maximum likelihood / KL divergence of the FES represented using B-splines.
 
         Parameters
         ----------

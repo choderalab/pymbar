@@ -31,7 +31,7 @@ __email__ = "levi.naden@choderalab.org,michael.shirts@colorado.edu,john.chodera@
 from pymbar import timeseries, testsystems, confidenceintervals
 from pymbar.mbar import MBAR
 from pymbar.other_estimators import bar, bar_zero, exp, exp_gauss
-from pymbar.pmf import PMF
+from pymbar.fes import FES
 import pymbar.old_mbar
 
 try:
@@ -54,5 +54,5 @@ __all__ = [
     "testsystems",
     "confidenceintervals",
     "utils",
-    "PMF",
+    "FES",
 ]

@@ -1,5 +1,5 @@
 """
-Example illustrating the application of MBAR to compute a 1D PMF from an umbrella sampling simulation.
+Example illustrating the application of MBAR to compute a 1D free energy profile from an umbrella sampling simulation.
 
 The data represents an umbrella sampling simulation for the chi torsion of a valine sidechain in lysozyme L99A with benzene bound in the cavity.
 
@@ -69,9 +69,9 @@ K = 26  # number of umbrellas
 N_max = 501  # maximum number of snapshots/simulation
 T_k = np.ones(K, float) * temperature  # inital temperatures are all equal
 beta = 1.0 / (kB * temperature)  # inverse temperature of simulations (in 1/(kJ/mol))
-chi_min = -180.0  # min for PMF
-chi_max = +180.0  # max for PMF
-# number of bins for 1D PMF. Note, does not have to correspond to the number of umbrellas at all.
+chi_min = -180.0  # min for free energy profile
+chi_max = +180.0  # max for free energy profile
+# number of bins for 1D free energy profile. Note, does not have to correspond to the number of umbrellas at all.
 nbins = 30
 
 # Allocate storage for simulation data
@@ -130,7 +130,7 @@ for k in range(K):
     N_k[k] = n
 
     if different_temperatures:  # if different temperatures are specified the metadata file,
-        # then we need the energies to compute the PMF
+        # then we need the energies to compute the free energy profile
         # Read energies
         filename = f"data/prod{k:d}_energies.xvg"
         print(f"Reading {filename}...")
@@ -198,8 +198,8 @@ for k in range(K):
         # Compute energy of snapshot n from simulation k in umbrella potential l
         u_kln[k, :, n] = u_kn[k, n] + beta_k[k] * (K_k / 2.0) * dchi ** 2
 
-# initialize PMF with the data collected.
-basepmf = pymbar.PMF(u_kln, N_k, verbose=True)
+# initialize free energy profile with the data collected.
+basefes = pymbar.FES(u_kln, N_k, verbose=True)
 
 
 def bias_potential(x, k):
@@ -275,15 +275,15 @@ f_i_kde = None  # We check later if these have been defined or not
 # the data we used initially to parameterize points, from the KDE
 xstart = np.linspace(chi_min, chi_max, nbins * 3)
 
-pmfs = {}
+feses = {}
 for methodfull in methods:
 
-    # create a fresh copy of the initialized pmf object. Operate on that within the loop.
+    # create a fresh copy of the initialized fes object. Operate on that within the loop.
     # do the deepcopy here since there seem to be issues if it's done after data is added
     # For example, the scikit-learn kde object fails to deepopy.
 
-    pmfs[methodfull] = copy.deepcopy(basepmf)
-    pmf = pmfs[methodfull]
+    feses[methodfull] = copy.deepcopy(basefes)
+    fes = feses[methodfull]
     start = timer()
     if "-" in methodfull:
         method, tominimize = methodfull.split("-")
@@ -293,10 +293,10 @@ for methodfull in methods:
     if method == "histogram":
         histogram_parameters = {}
         histogram_parameters["bin_edges"] = bin_edges
-        pmf.generate_pmf(
+        fes.generate_fes(
             u_kn,
             chi_n,
-            pmf_type="histogram",
+            fes_type="histogram",
             histogram_parameters=histogram_parameters,
             nbootstraps=nbootstraps,
         )
@@ -306,12 +306,12 @@ for methodfull in methods:
         kde_parameters = {}
         # set the sigma for the spline.
         kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
-        pmf.generate_pmf(
-            u_kn, chi_n, pmf_type="kde", kde_parameters=kde_parameters, nbootstraps=nbootstraps,
+        fes.generate_fes(
+            u_kn, chi_n, fes_type="kde", kde_parameters=kde_parameters, nbootstraps=nbootstraps,
         )
 
         # save this for initializing other types
-        results = pmf.get_pmf(xstart, reference_point="from-lowest", uncertainty_method=None)
+        results = fes.get_fes(xstart, reference_point="from-lowest", uncertainty_method=None)
         f_i_kde = results["f_i"]  # kde results
 
     if method in ["unbiased", "biased", "simple"]:
@@ -360,10 +360,10 @@ for methodfull in methods:
             spline_parameters["objective"] = "ml"
             spline_parameters["map_data"] = None
 
-        pmf.generate_pmf(
+        fes.generate_fes(
             u_kn,
             chi_n,
-            pmf_type="spline",
+            fes_type="spline",
             spline_parameters=spline_parameters,
             nbootstraps=nbootstraps,
         )
@@ -373,13 +373,13 @@ for methodfull in methods:
 
     yout = {}
     yerr = {}
-    print(f"PMF (in units of kT) for {methodfull}")
+    print(f"free energy profile (in units of kT) for {methodfull}")
     print(f"{'bin':>8s} {'f':>8s} {'df':>8s}")
     if method == "histogram":
         uncertainty_method = "analytical"
     else:
         uncertainty_method = "bootstrap"
-    results = pmf.get_pmf(
+    results = fes.get_fes(
         bin_center_i, reference_point="from-lowest", uncertainty_method=uncertainty_method,
     )
     for i in range(nbins):
@@ -388,7 +388,7 @@ for methodfull in methods:
         else:
             print(f"{bin_center_i[i]:8.1f} {results['f_i'][i]:8.1f}")
 
-    results = pmf.get_pmf(
+    results = fes.get_fes(
         xplot, reference_point="from-lowest", uncertainty_method=uncertainty_method
     )
     yout[methodfull] = results["f_i"]
@@ -426,18 +426,18 @@ for methodfull in methods:
         )
 
         if "-ml" in methodfull:
-            aic = pmf.get_information_criteria(type="AIC")
-            bic = pmf.get_information_criteria(type="BIC")
+            aic = fes.get_information_criteria(type="AIC")
+            bic = fes.get_information_criteria(type="BIC")
             print(f"AIC for {method} with {nspline:d} splines is: {aic:f}")
             print(f"BIC for {method} with {nspline:d} splines is: {bic:f}")
 
 plt.xlim([chi_min, chi_max])
 plt.ylim([0, 20])
 plt.xlabel("Torsion angle (degrees)")
-plt.ylabel(r"PMF (units of $k_BT$)")
+plt.ylabel(r"free energy profile (units of $k_BT$)")
 plt.legend(fontsize="x-small")
-plt.title("Comparison of PMFs")
-plt.savefig(f"compare_pmf_{fig_suffix}.pdf")
+plt.title("Comparison of free energy profiles")
+plt.savefig(f"compare_fes_{fig_suffix}.pdf")
 plt.clf()
 
 # now perform MC sampling in parameter space
@@ -448,7 +448,7 @@ pltname = [
     "parameter_time_series",
 ]
 for method in mc_methods:
-    pmf = pmfs[method]
+    fes = feses[method]
     mc_parameters = {
         "niterations": mc_iterations,
         "fraction_change": 0.05,
@@ -457,41 +457,41 @@ for method in mc_methods:
         "print_every": 50,
     }
 
-    pmf.sample_parameter_distribution(chi_n, mc_parameters=mc_parameters, decorrelate=True)
+    fes.sample_parameter_distribution(chi_n, mc_parameters=mc_parameters, decorrelate=True)
 
-    mc_results = pmf.get_mc_data()
+    mc_results = fes.get_mc_data()
 
     plt.figure(1)
     plt.hist(mc_results["logposteriors"], label=descriptions[method])
 
     # plot maximum likelihood as well
     method_ml = method.replace("map", "ml")
-    pmf_ml = pmfs[method_ml]
-    results_ml = pmf_ml.get_pmf(xplot, reference_point="from-lowest", uncertainty_method=None)
+    fes_ml = feses[method_ml]
+    results_ml = fes_ml.get_fes(xplot, reference_point="from-lowest", uncertainty_method=None)
 
     plt.figure(2)
     plt.xlim([chi_min, chi_max])
-    ci_results = pmf.get_confidence_intervals(xplot, 2.5, 97.5, reference="zero")
+    ci_results = fes.get_confidence_intervals(xplot, 2.5, 97.5, reference="zero")
     ylow = ci_results["plow"]
     yhigh = ci_results["phigh"]
     plt.plot(xplot, ci_results["values"], colors[method], label=descriptions[method])
     plt.plot(xplot, results_ml["f_i"], colors[method_ml], label=descriptions[method_ml])
     plt.fill_between(xplot, ylow, yhigh, color=colors[method][0], alpha=0.3)
-    plt.title("PMF with 95% confidence intervals")
+    plt.title("FES with 95% confidence intervals")
     plt.xlabel("Torsion angle (degrees)")
-    plt.ylabel(r"PMF (units of $k_BT$)")
+    plt.ylabel(r"free energy profile (units of $k_BT$)")
 
     plt.figure(3)
     plt.xlim([chi_min, chi_max])
-    ci_results = pmf.get_confidence_intervals(xplot, 16, 84)
+    ci_results = fes.get_confidence_intervals(xplot, 16, 84)
     plt.plot(xplot, ci_results["values"], colors[method], label=descriptions[method])
     plt.plot(xplot, results_ml["f_i"], colors[method_ml], label=descriptions[method_ml])
     ylow = ci_results["plow"]
     yhigh = ci_results["phigh"]
     plt.fill_between(xplot, ylow, yhigh, color=colors[method][0], alpha=0.3)
     plt.xlabel("Torsion angle (degrees)")
-    plt.ylabel(r"PMF (units of $k_BT$)")
-    plt.title("PMF (in units of kT) with 1 sigma percent confidence intervals")
+    plt.ylabel(r"free energy profile (units of $k_BT$)")
+    plt.title("free energy profile (in units of kT) with 1 sigma percent confidence intervals")
 
     # plot the timeseries of the parameters to check for equilibration
     plt.figure(4)
@@ -502,9 +502,9 @@ for method in mc_methods:
     plt.title("Spline parameter time series")
 
     # print text results
-    ci_results = pmf.get_confidence_intervals(bin_center_i, 16, 84)
+    ci_results = fes.get_confidence_intervals(bin_center_i, 16, 84)
     df = (ci_results["phigh"] - ci_results["plow"]) / 2
-    print("PMF (in units of kT) with 1 sigma errors from posterior sampling")
+    print("free energy profile (in units of kT) with 1 sigma errors from posterior sampling")
     for i in range(nbins):
         print(f"{bin_center_i[i]:8.1f} {ci_results['values'][i]:8.1f} {df[i]:8.1f}")
 

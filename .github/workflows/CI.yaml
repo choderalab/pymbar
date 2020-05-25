@@ -84,13 +84,13 @@ jobs:
         python harmonic-oscillators-distributions.py
         cd ../heat-capacity
         python heat-capacity.py -b 2
-        ### parallel-tempering-2dpmf
-        cd ../parallel-tempering-2dpmf
-        python parallel-tempering-2dpmf.py
-        ### umbrella-sampling-pmf
-        cd ../umbrella-sampling-pmf
+        ### parallel-tempering-2dfes
+        cd ../parallel-tempering-2dfes
+        python parallel-tempering-2dfes.py
+        ### umbrella-sampling-fes
+        cd ../umbrella-sampling-fes
         python umbrella-sampling.py
-        python umbrella-sampling-advanced-pmf.py
+        python umbrella-sampling-advanced-fes.py
 
     - name: CodeCov
       uses: codecov/codecov-action@v1
