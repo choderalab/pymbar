@@ -76,7 +76,7 @@ def GetAnalytical(beta,K,O,observables):
 
 K_k = numpy.array([25, 16, 9, 4, 1, 1]) # spring constants for each state
 O_k = numpy.array([0, 1, 2, 3, 4, 5]) # offsets for spring constants
-N_k = 100*numpy.array([1000, 1000, 1000, 1000, 0, 1000]) # number of samples from each state (can be zero for some states)
+N_k = 1000*numpy.array([1000, 1000, 1000, 1000, 0, 1000]) # number of samples from each state (can be zero for some states)
 Nk_ne_zero = (N_k!=0)
 beta = 1.0 # inverse temperature for all simulations
 K_extra = numpy.array([20, 12, 6, 2, 1]) 
@@ -164,6 +164,7 @@ for k in range(K):
   stdevs[k,k] = 0
 print(stdevs)
 
+exit()
 print("==============================================")
 print("             Testing computeBAR               ")
 print("==============================================")
