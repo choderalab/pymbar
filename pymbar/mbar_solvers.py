@@ -3,6 +3,8 @@ import numpy as np
 import math
 import scipy.optimize
 from pymbar.utils import ensure_type, logsumexp, check_w_normalized
+from jax.scipy.special import logsumexp
+import jax.numpy as npj
 import warnings
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
@@ -43,6 +45,19 @@ def validate_inputs(u_kn, N_k, f_k):
 
     return u_kn, N_k, f_k
 
+def jax_self_consistent_update(u_kn, N_k, f_k):
+
+    states_with_samples = (N_k > 0)
+    f_k = npj.array(f_k[states_with_samples])
+    u_kn = npj.array(u_kn[states_with_samples])
+    N = 1.0*npj.array(N_k[states_with_samples])
+
+    # Only the states with samples can contribute to the denominator term.
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=1.0*N_k, axis=1)
+    
+    # All states can contribute to the numerator term.
+    return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)
+
 
 def self_consistent_update(u_kn, N_k, f_k):
     """Return an improved guess for the dimensionless free energies
@@ -67,15 +82,17 @@ def self_consistent_update(u_kn, N_k, f_k):
     """
 
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-    
-    states_with_samples = (N_k > 0)
 
-    # Only the states with samples can contribute to the denominator term.
-    log_denominator_n = logsumexp(f_k[states_with_samples] - u_kn[states_with_samples].T, b=N_k[states_with_samples], axis=1)
-    
-    # All states can contribute to the numerator term.
-    return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)
+    return jax_self_consistent(u_kn, N_k, f_k)
 
+def jax_mbar_gradient(u_kn, N_k, f_k):
+
+    f_k = npj.array(f_k)
+    u_kn = npj.array(u_kn)
+    N = 1.0*npj.array(N_k)
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+    log_numerator_k = logsumexp(-log_denominator_n - u_kn, axis=1)
+    return -1 * N_k * (1.0 - npj.exp(f_k + log_numerator_k))
 
 def mbar_gradient(u_kn, N_k, f_k):
     """Gradient of MBAR objective function.
@@ -100,10 +117,7 @@ def mbar_gradient(u_kn, N_k, f_k):
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
 
-    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-    log_numerator_k = logsumexp(-log_denominator_n - u_kn, axis=1)
-    return -1 * N_k * (1.0 - np.exp(f_k + log_numerator_k))
-
+    return jax_mbar_gradient(u_kn, N_k, f_k)  
 
 def mbar_objective_and_gradient(u_kn, N_k, f_k):
     """Calculates both objective function and gradient for MBAR.
@@ -148,6 +162,22 @@ def mbar_objective_and_gradient(u_kn, N_k, f_k):
 
     return obj, grad
 
+def jax_mbar_hessian(u_kn, N_k, f_k):
+
+    f_k = npj.array(f_k)
+    u_kn = npj.array(u_kn)
+    N = 1.0*npj.array(N_k)
+
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+    logW = f_k - u_kn.T - log_denominator_n[:, npj.newaxis]
+    W = npj.exp(logW)
+
+    H = W.T.dot(W)
+    H *= N_k
+    H *= N_k[:, npj.newaxis]
+    H -= npj.diag(W.sum(0) * N_k)
+
+    return -1.0 * H
 
 def mbar_hessian(u_kn, N_k, f_k):
     """Hessian of MBAR objective function.
@@ -172,14 +202,7 @@ def mbar_hessian(u_kn, N_k, f_k):
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
 
-    W = mbar_W_nk(u_kn, N_k, f_k)
-
-    H = W.T.dot(W)
-    H *= N_k
-    H *= N_k[:, np.newaxis]
-    H -= np.diag(W.sum(0) * N_k)
-
-    return -1.0 * H
+    return jax_mbar_hessian(u_kn, N_k, f_k)
 
 
 def mbar_log_W_nk(u_kn, N_k, f_k):
