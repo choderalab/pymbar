@@ -149,8 +149,6 @@ mbar = MBAR(u_kn, N_k, relative_tolerance=1.0e-10, verbose=True)
 print("=============================================")
 print("      Testing getFreeEnergyDifferences       ")
 print("=============================================")
-import pdb
-pdb.set_trace()
 results = mbar.getFreeEnergyDifferences(return_dict=True)
 Delta_f_ij_estimated = results['Delta_f']
 dDelta_f_ij_estimated = results['dDelta_f']
