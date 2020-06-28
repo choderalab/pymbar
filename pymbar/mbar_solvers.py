@@ -4,6 +4,7 @@ import math
 import scipy.optimize
 from pymbar.utils import ensure_type, logsumexp, check_w_normalized
 from jax.scipy.special import logsumexp
+from jax.config import config; config.update("jax_enable_x64", True)
 import jax.numpy as npj
 import warnings
 
@@ -48,12 +49,14 @@ def validate_inputs(u_kn, N_k, f_k):
 
 def jax_self_consistent_update(u_kn, N_k, f_k):
 
+    states_with_samples = (N_k > 0)
+
     jf_k = npj.array(f_k)
     ju_kn = npj.array(u_kn)
     jN_k = 1.0*npj.array(N_k)
 
     # Only the states with samples can contribute to the denominator term.
-    log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)
+    log_denominator_n = logsumexp(jf_k[states_with_samples] - ju_kn[states_with_samples].T, b=jN_k[states_with_samples], axis=1)
     
     # All states can contribute to the numerator term.
     return -1. * logsumexp(-log_denominator_n - ju_kn, axis=1)
@@ -82,8 +85,7 @@ def self_consistent_update(u_kn, N_k, f_k):
     """
 
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-    states_with_samples = (N_k > 0)
-    return jax_self_consistent_update(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples])
+    return jax_self_consistent_update(u_kn, N_k, f_k)
 
 def jax_mbar_gradient(u_kn, N_k, f_k):
 
@@ -585,9 +587,6 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
     else:
         f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples],
                                               f_k[states_with_samples], solver_protocol=solver_protocol)
-
-    import pdb
-    pdb.set_trace()
 
     f_k[states_with_samples] = np.array(f_k_nonzero)
 
