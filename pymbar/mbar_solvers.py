@@ -390,6 +390,8 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
             print('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
     return f_k
 
+jit_adaptive = jax.jit(adaptive)
+
 def jax_precondition_u_kn(u_kn,N_k,f_k):
 
     jf_k = npj.array(f_k)
@@ -491,7 +493,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
             results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
             f_k_nonzero = pad(results["x"])
         elif method == 'adaptive':
-            results = adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options)
+            results = jit_adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options)
             f_k_nonzero = results # they are the same for adaptive, until we decide to return more.
         else:
             results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
