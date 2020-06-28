@@ -7,7 +7,7 @@ import jax
 from jax.scipy.special import logsumexp
 from jax.ops import index_update, index
 from jax.config import config; config.update("jax_enable_x64", True)
-import jax.numpy as npj
+import jax.numpy as jnp
 import warnings
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
@@ -51,17 +51,13 @@ def validate_inputs(u_kn, N_k, f_k):
 
 def jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
 
-    jf_k = npj.array(f_k)
-    ju_kn = npj.array(u_kn)
-    jN_k = 1.0*npj.array(N_k)
-
     # Only the states with samples can contribute to the denominator term.
     if states_with_samples is not None:
-        log_denominator_n = logsumexp(jf_k[states_with_samples] - ju_kn[states_with_samples].T, b=jN_k[states_with_samples], axis=1)
+        log_denominator_n = logsumexp(f_k[states_with_samples] - u_kn[states_with_samples].T, b=1.0*N_k[states_with_samples], axis=1)
     else:
-        log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1) 
+        log_denominator_n = logsumexp(f_k - u_kn.T, b=1.0*N_k, axis=1) 
     # All states can contribute to the numerator term.
-    return -1. * logsumexp(-log_denominator_n - ju_kn, axis=1)  # check transpose
+    return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)  # check transpose
 
 jit_self_consistent_update = jax.jit(jax_self_consistent_update)
 
@@ -92,12 +88,10 @@ def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
 
 def jax_mbar_gradient(u_kn, N_k, f_k):
 
-    jf_k = npj.array(f_k)
-    ju_kn = npj.array(u_kn)
-    jN_k = 1.0*npj.array(N_k)
-    log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)
-    log_numerator_k = logsumexp(-log_denominator_n - ju_kn, axis=1)
-    return -1 * jN_k * (1.0 - npj.exp(jf_k + log_numerator_k))
+    jNk = 1.0*N_k
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=jNk, axis=1)
+    log_numerator_k = logsumexp(-log_denominator_n - u_kn, axis=1)
+    return -1 * jNk * (1.0 - jnp.exp(f_k + log_numerator_k))
 
 jit_mbar_gradient = jax.jit(jax_mbar_gradient)
 
@@ -163,7 +157,7 @@ def mbar_objective_and_gradient(u_kn, N_k, f_k):
 
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
     log_numerator_k = logsumexp(-log_denominator_n - u_kn, axis=1)
-    grad = -1 * N_k * (1.0 - np.exp(f_k + log_numerator_k))
+    grad = -1 * N_k * (1.0 - jnp.exp(f_k + log_numerator_k))
 
     obj = math.fsum(log_denominator_n) - N_k.dot(f_k)
 
@@ -171,18 +165,15 @@ def mbar_objective_and_gradient(u_kn, N_k, f_k):
 
 def jax_mbar_hessian(u_kn, N_k, f_k):
 
-    jf_k = npj.array(f_k)
-    ju_kn = npj.array(u_kn)
-    jN_k = 1.0*npj.array(N_k)
-
-    log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)
-    logW = jf_k - ju_kn.T - log_denominator_n[:, npj.newaxis]
-    W = npj.exp(logW)
+    jNk = 1.0*N_k
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=jNk, axis=1)
+    logW = f_k - u_kn.T - log_denominator_n[:, jnp.newaxis]
+    W = jnp.exp(logW)
 
     H = W.T.dot(W)
-    H *= jN_k
-    H *= jN_k[:, npj.newaxis]
-    H -= npj.diag(W.sum(0) * jN_k)
+    H *= jNk
+    H *= jNk[:, jnp.newaxis]
+    H -= jnp.diag(W.sum(0) * jNk)
 
     return -1.0 * H
 
@@ -215,12 +206,8 @@ def mbar_hessian(u_kn, N_k, f_k):
 
 def jax_mbar_log_W_nk(u_kn, N_k, f_k):
 
-    jf_k = npj.array(f_k)
-    ju_kn = npj.array(u_kn)
-    jN_k = 1.0*npj.array(N_k)
-    
-    log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)
-    logW = jf_k - ju_kn.T - log_denominator_n[:, npj.newaxis]
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=1.0*N_k, axis=1)
+    logW = f_k - u_kn.T - log_denominator_n[:, jnp.newaxis]
     return logW
 
 jit_mbar_log_W_nk = jax.jit(jax_mbar_log_W_nk)
@@ -324,14 +311,14 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     nr_iter = 0
     sci_iter = 0
 
-    f_sci = npj.zeros(len(f_k), dtype=npj.float64)
-    f_nr = npj.zeros(len(f_k), dtype=npj.float64)
+    f_sci = jnp.zeros(len(f_k), dtype=jnp.float64)
+    f_nr = jnp.zeros(len(f_k), dtype=jnp.float64)
 
     # Perform Newton-Raphson iterations (with sci computed on the way)
     for iteration in range(0, options['maximum_iterations']):
         g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
-        Hinvg = npj.linalg.lstsq(H, g, rcond=-1)[0]
+        Hinvg = jnp.linalg.lstsq(H, g, rcond=-1)[0]
         Hinvg -= Hinvg[0]
         f_nr = f_k - gamma * Hinvg
 
@@ -339,11 +326,11 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         f_sci = self_consistent_update(u_kn, N_k, f_k)
         f_sci = f_sci -  f_sci[0]   # zero out the minimum
         g_sci = mbar_gradient(u_kn, N_k, f_sci)
-        gnorm_sci = npj.dot(g_sci, g_sci)
+        gnorm_sci = jnp.dot(g_sci, g_sci)
 
         # newton raphson gradient norm and saved log sums.
         g_nr = mbar_gradient(u_kn, N_k, f_nr)
-        gnorm_nr = npj.dot(g_nr, g_nr)
+        gnorm_nr = jnp.dot(g_nr, g_nr)
 
         # we could save the gradient, for the next round, but it's not too expensive to
         # compute since we are doing the Hessian anyway.
@@ -366,12 +353,12 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
             if options['verbose']:
                 print("Newton-Raphson used on iteration %d" % iteration)
 
-        div = npj.abs(f_k[1:]) # what we will divide by to get relative difference
-        zeroed = npj.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
+        div = jnp.abs(f_k[1:]) # what we will divide by to get relative difference
+        zeroed = jnp.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
         #div[zeroed] = 1.0  # for these values, use absolute values.
         jax.ops.index_update(div,index[zeroed],1.0)
-        max_delta = npj.max(npj.abs(f_k[1:]-f_old[1:])/div)
-        if npj.isnan(max_delta) or (max_delta < tol):
+        max_delta = jnp.max(jnp.abs(f_k[1:]-f_old[1:])/div)
+        if jnp.isnan(max_delta) or (max_delta < tol):
             doneIterating = True
             break
 
@@ -379,7 +366,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         if options['verbose']:
             print('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
             print('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
-            if npj.all(f_k == 0.0):
+            if jnp.all(f_k == 0.0):
                 # all f_k appear to be zero
                 print('WARNING: All f_k appear to be zero.')
     else:
@@ -392,12 +379,8 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
 
 def jax_precondition_u_kn(u_kn,N_k,f_k):
 
-    jf_k = npj.array(f_k)
-    ju_kn = npj.array(u_kn)
-    jN_k = 1.0*npj.array(N_k)
-
-    u_kn = ju_kn - ju_kn.min(0)
-    u_kn += (logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)) - jN_k.dot(jf_k) / jN_k.sum()
+    u_kn = u_kn - u_kn.min(0)
+    u_kn += (logsumexp(f_k - u_kn.T, b=1.0*N_k, axis=1)) - N_k.dot(f_k) / N_k.sum()
     return u_kn
 
 jit_precondition_u_kn = jax.jit(jax_precondition_u_kn)
