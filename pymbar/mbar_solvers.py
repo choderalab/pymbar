@@ -54,10 +54,8 @@ def jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     ju_kn = npj.array(u_kn)
     jN_k = 1.0*npj.array(N_k)
 
-    import pdb
-    pdb.set_trace()
     # Only the states with samples can contribute to the denominator term.
-    if self_consistent_update is not None:
+    if states_with_samples is not None:
         log_denominator_n = logsumexp(jf_k[states_with_samples] - ju_kn[states_with_samples].T, b=jN_k[states_with_samples], axis=1)
     else:
         log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1) 
@@ -96,8 +94,6 @@ def jax_mbar_gradient(u_kn, N_k, f_k):
     jf_k = npj.array(f_k)
     ju_kn = npj.array(u_kn)
     jN_k = 1.0*npj.array(N_k)
-    import pdb
-    pdb.set_trace()
     log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)
     log_numerator_k = logsumexp(-log_denominator_n - ju_kn, axis=1)
     return -1 * jN_k * (1.0 - npj.exp(jf_k + log_numerator_k))
