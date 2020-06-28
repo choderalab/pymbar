@@ -3,6 +3,7 @@ import numpy as np
 import math
 import scipy.optimize
 from pymbar.utils import ensure_type, logsumexp, check_w_normalized
+import jax
 from jax.scipy.special import logsumexp
 from jax.config import config; config.update("jax_enable_x64", True)
 import jax.numpy as npj
@@ -47,22 +48,25 @@ def validate_inputs(u_kn, N_k, f_k):
 
     return u_kn, N_k, f_k
 
-def jax_self_consistent_update(u_kn, N_k, f_k):
-
-    states_with_samples = (N_k > 0)
+def jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
 
     jf_k = npj.array(f_k)
     ju_kn = npj.array(u_kn)
     jN_k = 1.0*npj.array(N_k)
 
+    import pdb
+    pdb.set_trace()
     # Only the states with samples can contribute to the denominator term.
-    log_denominator_n = logsumexp(jf_k[states_with_samples] - ju_kn[states_with_samples].T, b=jN_k[states_with_samples], axis=1)
-    
+    if self_consistent_update is not None:
+        log_denominator_n = logsumexp(jf_k[states_with_samples] - ju_kn[states_with_samples].T, b=jN_k[states_with_samples], axis=1)
+    else:
+        log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1) 
     # All states can contribute to the numerator term.
-    return -1. * logsumexp(-log_denominator_n - ju_kn, axis=1)
+    return -1. * logsumexp(-log_denominator_n - ju_kn, axis=1)  # check transpose
 
+jit_self_consistent_update = jax.jit(jax_self_consistent_update)
 
-def self_consistent_update(u_kn, N_k, f_k):
+def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     """Return an improved guess for the dimensionless free energies
 
     Parameters
@@ -85,16 +89,20 @@ def self_consistent_update(u_kn, N_k, f_k):
     """
 
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-    return jax_self_consistent_update(u_kn, N_k, f_k)
+    return jit_self_consistent_update(u_kn, N_k, f_k, states_with_samples=states_with_samples)
 
 def jax_mbar_gradient(u_kn, N_k, f_k):
 
     jf_k = npj.array(f_k)
     ju_kn = npj.array(u_kn)
     jN_k = 1.0*npj.array(N_k)
+    import pdb
+    pdb.set_trace()
     log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)
     log_numerator_k = logsumexp(-log_denominator_n - ju_kn, axis=1)
     return -1 * jN_k * (1.0 - npj.exp(jf_k + log_numerator_k))
+
+jit_mbar_gradient = jax.jit(jax_mbar_gradient)
 
 def mbar_gradient(u_kn, N_k, f_k):
     """Gradient of MBAR objective function.
@@ -119,7 +127,7 @@ def mbar_gradient(u_kn, N_k, f_k):
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
 
-    return jax_mbar_gradient(u_kn, N_k, f_k)  
+    return jit_mbar_gradient(u_kn, N_k, f_k)  
 
 def mbar_objective_and_gradient(u_kn, N_k, f_k):
     """Calculates both objective function and gradient for MBAR.
@@ -181,6 +189,8 @@ def jax_mbar_hessian(u_kn, N_k, f_k):
 
     return -1.0 * H
 
+jit_mbar_hessian = jax.jit(jax_mbar_hessian)
+
 def mbar_hessian(u_kn, N_k, f_k):
     """Hessian of MBAR objective function.
 
@@ -204,7 +214,7 @@ def mbar_hessian(u_kn, N_k, f_k):
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
 
-    return jax_mbar_hessian(u_kn, N_k, f_k)
+    return jit_mbar_hessian(u_kn, N_k, f_k)
 
 def jax_mbar_log_W_nk(u_kn, N_k, f_k):
 
@@ -216,6 +226,7 @@ def jax_mbar_log_W_nk(u_kn, N_k, f_k):
     logW = jf_k - ju_kn.T - log_denominator_n[:, npj.newaxis]
     return logW
 
+jit_mbar_log_W_nk = jax.jit(jax_mbar_log_W_nk)
 
 def mbar_log_W_nk(u_kn, N_k, f_k):
     """Calculate the log weight matrix.
@@ -240,7 +251,7 @@ def mbar_log_W_nk(u_kn, N_k, f_k):
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
 
-    return jax_mbar_log_W_nk(u_kn, N_k, f_k)
+    return jit_mbar_log_W_nk(u_kn, N_k, f_k)
 
 
 def mbar_W_nk(u_kn, N_k, f_k):
@@ -392,6 +403,7 @@ def jax_precondition_u_kn(u_kn,N_k,f_k):
     u_kn += (logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)) - jN_k.dot(jf_k) / jN_k.sum()
     return u_kn
 
+jit_precondition_u_kn = jax.jit(jax_precondition_u_kn)
 
 def precondition_u_kn(u_kn, N_k, f_k):
     """Subtract a sample-dependent constant from u_kn to improve precision
@@ -419,7 +431,7 @@ def precondition_u_kn(u_kn, N_k, f_k):
     should give maximum precision in the objective function.
     """
     u_kn, N_k, f_k = validate_inputs(u_kn, N_k, f_k)
-    return jax_precondition_u_kn(u_kn, N_k, f_k)
+    return jit_precondition_u_kn(u_kn, N_k, f_k)
 
 def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1E-12, options=None):
     """Solve MBAR self-consistent equations using some form of equation solver.
@@ -559,7 +571,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     return f_k_nonzero, all_results
 
 
-def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
+def solve_mbar_for_all_states(u_kn, N_k, f_k, states_with_samples, solver_protocol):
     """Solve for free energies of states with samples, then calculate for
     empty states.
 
@@ -580,7 +592,6 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
     f_k : np.ndarray, shape=(n_states), dtype='float'
         The free energies of states
     """
-    states_with_samples = np.where(N_k > 0)[0]
 
     if len(states_with_samples) == 1:
         f_k_nonzero = np.array([0.0])
@@ -591,7 +602,7 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
     f_k[states_with_samples] = np.array(f_k_nonzero)
 
     # Update all free energies because those from states with zero samples are not correctly computed by solvers.
-    f_k = np.array(self_consistent_update(u_kn, N_k, f_k))
+    f_k = np.array(self_consistent_update(u_kn, N_k, f_k, states_with_samples))
     # This is necessary because state 0 might have had zero samples,
     # but we still want that state to be the reference with free energy 0.
     f_k -= f_k[0]
