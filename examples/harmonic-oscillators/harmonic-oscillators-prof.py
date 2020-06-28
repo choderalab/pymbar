@@ -22,7 +22,6 @@
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
-from __future__ import print_function
 import sys
 import numpy as np
 from pymbar import testsystems, EXP, EXPGauss, BAR, MBAR
@@ -74,7 +73,7 @@ def GetAnalytical(beta,K,O,observables):
 # PARAMETERS
 #=============================================================================================
 
-copies = 2
+copies = 10
 K_k = copies*[2.5,1.6,9,4,1,1]
 K_k = np.array(K_k) # spring constants for each state
 O_i = [0,1,2,3,4,5]
