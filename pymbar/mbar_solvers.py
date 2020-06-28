@@ -221,6 +221,8 @@ def jax_mbar_log_W_nk(u_kn, N_k, f_k):
     
     log_denominator_n = logsumexp(jf_k - ju_kn.T, b=jN_k, axis=1)
     logW = jf_k - ju_kn.T - log_denominator_n[:, npj.newaxis]
+    import pdb
+    pdb.set_trace()
     return logW
 
 jit_mbar_log_W_nk = jax.jit(jax_mbar_log_W_nk)
@@ -313,22 +315,36 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     options.setdefault('print_warning',False)
     options.setdefault('gamma',1.0)
 
-    gamma = options['gamma']
     doneIterating = False
-    if options['verbose'] == True:
+    if options['verbose']:
         print("Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.")
 
     if tol < 1.5e-15:
         print("Tolerance may be too close to machine precision to converge.")
     # keep track of Newton-Raphson and self-consistent iterations
+    results = jit_core_adaptive(u_kn, N_k, f_k, tol, options['gamma'], options['maximum_iterations'])
+
+    if options['verbose']:
+        print(f"iterations:{results['iterations']}")
+        print("gnorm_sci  gnorm_nr  choice")
+        for gsci,gnr,choice in zip(results['gnorms_sci'],results['gnorms_nr'],results['which_method']):
+            print(f"{gsci} {gnr} {choice}")
+    
+    return f_k
+
+def core_adaptive(u_kn, N_k, f_k, tol, gamma, maximum_iterations):
+
     nr_iter = 0
     sci_iter = 0
 
     f_sci = npj.zeros(len(f_k), dtype=npj.float64)
     f_nr = npj.zeros(len(f_k), dtype=npj.float64)
+    which_method = []
+    gnorms_sci = []
+    gnorms_nr = []
 
     # Perform Newton-Raphson iterations (with sci computed on the way)
-    for iteration in range(0, options['maximum_iterations']):
+    for iteration in range(0, maximum_iterations):
         g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
         Hinvg = npj.linalg.lstsq(H, g, rcond=-1)[0]
@@ -348,49 +364,38 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         # we could save the gradient, for the next round, but it's not too expensive to
         # compute since we are doing the Hessian anyway.
 
-        if options['verbose']:
-            print("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
+        gnorms_nr.append(gnorm_nr)
+        gnorms_sci.append(gnorm_sci)
+        
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
         if (gnorm_sci < gnorm_nr or sci_iter < 2):
             f_k = f_sci
             sci_iter += 1
-            if options['verbose']:
-                if sci_iter < 2:
-                    print("Choosing self-consistent iteration on iteration %d" % iteration)
-                else:
-                    print("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
+            which_method.append("sci")
         else:
             f_k = f_nr
             nr_iter += 1
-            if options['verbose']:
-                print("Newton-Raphson used on iteration %d" % iteration)
-
+            which_method.append("nr")
+            
         div = npj.abs(f_k[1:]) # what we will divide by to get relative difference
         zeroed = npj.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
-        #div[zeroed] = 1.0  # for these values, use absolute values.
         jax.ops.index_update(div,index[zeroed],1.0)
         max_delta = npj.max(npj.abs(f_k[1:]-f_old[1:])/div)
         if npj.isnan(max_delta) or (max_delta < tol):
-            doneIterating = True
             break
 
-    if doneIterating:
-        if options['verbose']:
-            print('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
-            print('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
-            if npj.all(f_k == 0.0):
-                # all f_k appear to be zero
-                print('WARNING: All f_k appear to be zero.')
-    else:
-        print('WARNING: Did not converge to within specified tolerance.')
-        if options['maximum_iterations'] <= 0:
-            print("No iterations ran be cause maximum_iterations was <= 0 ({})!".format(options['maximum_iterations']))
-        else:
-            print('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
-    return f_k
+    results = dict()
+    results['f_k'] = f_k
+    results['max_delta'] = max_delta
+    results['iterations'] = iteration
+    results['gnorms_sci'] = gnorms_sci
+    results['gnorms_nr'] = gnorms_nr
+    results['which_method'] = which_method
 
-jit_adaptive = jax.jit(adaptive)
+    return results
+
+jit_core_adaptive = jax.jit(core_adaptive,static_argnums=(0,1,2,3,4,5,))
 
 def jax_precondition_u_kn(u_kn,N_k,f_k):
 
@@ -476,7 +481,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     """
     u_kn_nonzero, N_k_nonzero, f_k_nonzero = validate_inputs(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
     f_k_nonzero = f_k_nonzero - f_k_nonzero[0]  # Work with reduced dimensions with f_k[0] := 0
-    u_kn_nonzero = precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
+    u_kn_nonzero = jit_precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
 
     pad = lambda x: np.pad(x, (1, 0), mode='constant')  # Helper function inserts zero before first element
     unpad_second_arg = lambda obj, grad: (obj, grad[1:])  # Helper function drops first element of gradient
@@ -493,7 +498,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
             results = scipy.optimize.minimize(grad_and_obj, f_k_nonzero[1:], jac=True, hess=hess, method=method, tol=tol, options=options)
             f_k_nonzero = pad(results["x"])
         elif method == 'adaptive':
-            results = jit_adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options)
+            results = adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options)
             f_k_nonzero = results # they are the same for adaptive, until we decide to return more.
         else:
             results = scipy.optimize.root(grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options)
