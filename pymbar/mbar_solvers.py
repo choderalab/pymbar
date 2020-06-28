@@ -2,9 +2,10 @@ from __future__ import division  # Ensure same division behavior in py2 and py3
 import numpy as np
 import math
 import scipy.optimize
-from pymbar.utils import ensure_type, logsumexp, check_w_normalized
+from pymbar.utils import ensure_type, check_w_normalized
 import jax
 from jax.scipy.special import logsumexp
+from jax.ops import index_update, index
 from jax.config import config; config.update("jax_enable_x64", True)
 import jax.numpy as npj
 import warnings
@@ -323,14 +324,14 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     nr_iter = 0
     sci_iter = 0
 
-    f_sci = np.zeros(len(f_k), dtype=np.float64)
-    f_nr = np.zeros(len(f_k), dtype=np.float64)
+    f_sci = npj.zeros(len(f_k), dtype=npj.float64)
+    f_nr = npj.zeros(len(f_k), dtype=npj.float64)
 
     # Perform Newton-Raphson iterations (with sci computed on the way)
     for iteration in range(0, options['maximum_iterations']):
         g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
-        Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
+        Hinvg = npj.linalg.lstsq(H, g, rcond=-1)[0]
         Hinvg -= Hinvg[0]
         f_nr = f_k - gamma * Hinvg
 
@@ -338,11 +339,11 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         f_sci = self_consistent_update(u_kn, N_k, f_k)
         f_sci = f_sci -  f_sci[0]   # zero out the minimum
         g_sci = mbar_gradient(u_kn, N_k, f_sci)
-        gnorm_sci = np.dot(g_sci, g_sci)
+        gnorm_sci = npj.dot(g_sci, g_sci)
 
         # newton raphson gradient norm and saved log sums.
         g_nr = mbar_gradient(u_kn, N_k, f_nr)
-        gnorm_nr = np.dot(g_nr, g_nr)
+        gnorm_nr = npj.dot(g_nr, g_nr)
 
         # we could save the gradient, for the next round, but it's not too expensive to
         # compute since we are doing the Hessian anyway.
@@ -365,11 +366,12 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
             if options['verbose']:
                 print("Newton-Raphson used on iteration %d" % iteration)
 
-        div = np.abs(f_k[1:]) # what we will divide by to get relative difference
-        zeroed = np.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
-        div[zeroed] = 1.0  # for these values, use absolute values.
-        max_delta = np.max(np.abs(f_k[1:]-f_old[1:])/div)
-        if np.isnan(max_delta) or (max_delta < tol):
+        div = npj.abs(f_k[1:]) # what we will divide by to get relative difference
+        zeroed = npj.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
+        #div[zeroed] = 1.0  # for these values, use absolute values.
+        jax.ops.index_update(div,index[zeroed],1.0)
+        max_delta = npj.max(npj.abs(f_k[1:]-f_old[1:])/div)
+        if npj.isnan(max_delta) or (max_delta < tol):
             doneIterating = True
             break
 
@@ -377,7 +379,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         if options['verbose']:
             print('Converged to tolerance of {:e} in {:d} iterations.'.format(max_delta, iteration + 1))
             print('Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations'.format(iteration + 1, nr_iter, sci_iter))
-            if np.all(f_k == 0.0):
+            if npj.all(f_k == 0.0):
                 # all f_k appear to be zero
                 print('WARNING: All f_k appear to be zero.')
     else:
@@ -387,7 +389,6 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         else:
             print('max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}'.format(max_delta,tol, options['maximum_iterations'], iteration))
     return f_k
-
 
 def jax_precondition_u_kn(u_kn,N_k,f_k):
 
