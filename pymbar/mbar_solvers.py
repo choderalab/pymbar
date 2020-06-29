@@ -226,7 +226,9 @@ def mbar_log_W_nk(u_kn, N_k, f_k):
     """
     return jax_mbar_log_W_nk(u_kn, N_k, f_k)
 
-def mbar_W_nk(u_kn, N_k, f_k):
+jit_mbar_log_W_nk = jit.jax(jax_mbar_log_W_nk)
+
+def jax_mbar_W_nk(u_kn, N_k, f_k):
     """Calculate the weight matrix.
 
     Parameters
@@ -247,8 +249,9 @@ def mbar_W_nk(u_kn, N_k, f_k):
     -----
     Equation (9) in JCP MBAR paper.
     """
-    return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
+    return npj.exp(jax_mbar_log_W_nk(u_kn, N_k, f_k))
 
+jit_mbar_W_nk = jax.jit(mbar_W_nk(u_kn, N_k, f_k)):
 
 def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
 
@@ -297,48 +300,17 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
     if tol < 1.5e-15:
         logger.info("Tolerance may be too close to machine precision to converge.")
     # keep track of Newton-Raphson and self-consistent iterations
-    results = jit_core_adaptive(u_kn, N_k, f_k, tol, options['gamma'], options['maximum_iterations'])
-
-    if options['verbose']:
-        print(f"iterations:{results['iterations']}")
-        print("gnorm_sci  gnorm_nr  choice")
-        for gsci,gnr,choice in zip(results['gnorms_sci'],results['gnorms_nr'],results['which_method']):
-            print(f"{gsci} {gnr} {choice}")
-
-    return results['f_k']
-
-def core_adaptive(u_kn, N_k, f_k, tol, gamma, maximum_iterations):
 
     nr_iter = 0
     sci_iter = 0
 
-    which_method = []
-    gnorms_sci = []
-    gnorms_nr = []
+    which_method = np.zeros(methods,int) # 0 is sci, 1 is nr
+    gnorms_sci = np.zeros(maximum_iterations)
+    gnorms_nr = np.zeros(maximum_iterations)
 
-    # Perform Newton-Raphson iterations (with sci computed on the way)
     for iteration in range(0, maximum_iterations):
-        g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
-        H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
-        Hinvg = jnp.linalg.lstsq(H, g, rcond=-1)[0]
-        Hinvg -= Hinvg[0]
-        f_nr = f_k - gamma * Hinvg
 
-        # self-consistent iteration gradient norm and saved log sums.
-        f_sci = self_consistent_update(u_kn, N_k, f_k)
-        f_sci = f_sci - f_sci[0]  # zero out the minimum
-        g_sci = mbar_gradient(u_kn, N_k, f_sci)
-        gnorm_sci = jnp.dot(g_sci, g_sci)
-
-        # newton raphson gradient norm and saved log sums.
-        g_nr = mbar_gradient(u_kn, N_k, f_nr)
-        gnorm_nr = jnp.dot(g_nr, g_nr)
-
-        # we could save the gradient, for the next round, but it's not too expensive to
-        # compute since we are doing the Hessian anyway.
-
-        gnorms_nr.append(gnorm_nr)
-        gnorms_sci.append(gnorm_sci)
+        f_sci, gnorm_sci, f_nr gnorm_nr = jit_core_adaptive(u_kn, N_k, f_k, options['gamma'])
         
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
@@ -346,12 +318,20 @@ def core_adaptive(u_kn, N_k, f_k, tol, gamma, maximum_iterations):
             f_k = f_sci
             g = g_sci
             sci_iter += 1
-            which_method.append("sci")
+            if options["verbose"]:
+                if sci_iter < 2:
+                    logger.info("Choosing self-consistent iteration on iteration %d" % iteration)
+                else:
+                    logger.info(
+                        "Choosing self-consistent iteration for lower gradient on iteration %d"
+                        % iteration
+                    )
         else:
             f_k = f_nr
             g = g_nr
             nr_iter += 1
-            which_method.append("nr")
+            if options["verbose"]:
+                logger.info("Newton-Raphson used on iteration %d" % iteration)
             
         div = jnp.abs(f_k[1:]) # what we will divide by to get relative difference
         zeroed = jnp.abs(f_k[1:])< np.min([10**-8,tol]) # check which values are near enough to zero, hard coded max for now.
@@ -360,17 +340,60 @@ def core_adaptive(u_kn, N_k, f_k, tol, gamma, maximum_iterations):
         if jnp.isnan(max_delta) or (max_delta < tol):
             break
 
-    results = dict()
-    results['f_k'] = f_k
-    results['max_delta'] = max_delta
-    results['iterations'] = iteration
-    results['gnorms_sci'] = gnorms_sci
-    results['gnorms_nr'] = gnorms_nr
-    results['which_method'] = which_method
+    if doneIterating:
+       if options["verbose"]:
+           logger.info(
+                "Converged to tolerance of {:e} in {:d} iterations.".format(
+                    max_delta, iteration + 1
+                )
+            )
+            logger.info(
+                "Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations".format(
+                    iteration + 1, nr_iter, sci_iter
+                )
+            )
+            if np.all(f_k == 0.0):
+                # all f_k appear to be zero
+                logger.info("WARNING: All f_k appear to be zero.")
+    else:
+        logger.warning("WARNING: Did not converge to within specified tolerance.")
+        if options["maximum_iterations"] <= 0:
+            logger.warning(
+                "No iterations ran be cause maximum_iterations was <= 0 ({:s})!".format(
+                    options["maximum_iterations"]
+                )
+            )
+        else:
+            logger.warning(
+                "max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}".format(
+                    max_delta, tol, options["maximum_iterations"], iteration
+                )
+            )
+        
+    return f_k
+
+def core_adaptive(u_kn, N_k, f_k, gamma):
+
+    # Perform Newton-Raphson iterations (with sci computed on the way)
+    g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
+    H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
+    Hinvg = jnp.linalg.lstsq(H, g, rcond=-1)[0]
+    Hinvg -= Hinvg[0]
+    f_nr = f_k - gamma * Hinvg
+
+    # self-consistent iteration gradient norm and saved log sums.
+    f_sci = self_consistent_update(u_kn, N_k, f_k)
+    f_sci = f_sci - f_sci[0]  # zero out the minimum
+    g_sci = mbar_gradient(u_kn, N_k, f_sci)
+    gnorm_sci = jnp.dot(g_sci, g_sci)
+
+    # newton raphson gradient norm and saved log sums.
+    g_nr = mbar_gradient(u_kn, N_k, f_nr)
+    gnorm_nr = jnp.dot(g_nr, g_nr)
 
     return results
 
-jit_core_adaptive = jax.jit(core_adaptive,static_argnums=(0,1,2,3,4,5,))
+jit_core_adaptive = jax.jit(core_adaptive)
 
 def jax_precondition_u_kn(u_kn,N_k,f_k):
 
@@ -378,6 +401,8 @@ def jax_precondition_u_kn(u_kn,N_k,f_k):
     u_kn = u_kn - u_kn.min(0)
     u_kn += (logsumexp(f_k - u_kn.T, b=jNk, axis=1)) - jNk.dot(f_k) / jNk.sum()
     return u_kn
+
+jit_precondition_u_kn = jax.git(precondition_u_kn)
 
 def precondition_u_kn(u_kn, N_k, f_k):
     """Subtract a sample-dependent constant from u_kn to improve precision
@@ -454,7 +479,7 @@ def solve_mbar_once(
         u_kn_nonzero, N_k_nonzero, f_k_nonzero
     )
     f_k_nonzero = f_k_nonzero - f_k_nonzero[0]  # Work with reduced dimensions with f_k[0] := 0
-    u_kn_nonzero = jax_precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
+    u_kn_nonzero = jit_precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
 
     pad = lambda x: np.pad(
         x, (1, 0), mode="constant"
