@@ -73,7 +73,7 @@ def GetAnalytical(beta,K,O,observables):
 # PARAMETERS
 #=============================================================================================
 
-copies = 1
+copies = 20
 K_k = copies*[2.5,1.6,9,4,1,1]
 K_k = np.array(K_k) # spring constants for each state
 O_i = [0,1,2,3,4,5]
@@ -83,7 +83,7 @@ for c in range(copies):
   O_k[len(O_i)*c:len(O_i)*(c+1)] += c*len(O_i)*np.ones(len(O_i),int)
 
 N_k = copies*[1000, 1000, 1000, 1000, 0, 1000]
-N_k = 100*np.array(N_k) # number of samples from each state (can be zero for some states)
+N_k = 20*np.array(N_k) # number of samples from each state (can be zero for some states)
 Nk_ne_zero = (N_k!=0)
 beta = 1.0 # inverse temperature for all simulations
 K_extra = np.array([20, 12, 6, 2, 1]) 
