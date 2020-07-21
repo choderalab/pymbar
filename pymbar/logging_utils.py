@@ -111,7 +111,7 @@ class PerLevelFormatter(logging.Formatter):
         logging.DEBUG: "Debug: %(message)s",
     }
 
-    def __init__(self, fmt="%(levelno)d: %(message)s", datefmt=None, style="%", **kwargs):
+    def __init__(self, fmt="%(levelName)d: %(message)s", datefmt=None, style="%", **kwargs):
         super().__init__(fmt=fmt, datefmt=datefmt, style=style, **kwargs)
 
     def format(self, record):
