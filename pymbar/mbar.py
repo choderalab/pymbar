@@ -644,7 +644,7 @@ class MBAR:
 
         """
         
-        logfactor = 1
+        logfactor = 0
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map) # number of computed expectations we desire
                                                # need to convert to matrix to be able to pick up D=1
