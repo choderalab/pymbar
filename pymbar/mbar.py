@@ -644,7 +644,7 @@ class MBAR:
 
         """
         
-        logfactor = 0
+        logfactor = 1
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map) # number of computed expectations we desire
                                                # need to convert to matrix to be able to pick up D=1
@@ -1107,8 +1107,6 @@ class MBAR:
 
         """
 
-        import pdb
-        pdb.set_trace()
         # Retrieve N and K for convenience.
         I = A_in.shape[0]  # number of observables
         K = self.K
