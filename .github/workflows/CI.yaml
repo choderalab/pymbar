@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
-        python-version: [3.7, 3.8]
+        python-version: [3.8, 3.9]
     env:
       PYVER: ${{ matrix.python-version }}
       CI_OS: ${{ matrix.os }}
@@ -46,34 +46,33 @@ jobs:
       run: |
         sudo chown -R $(id -u):$(id -g) ${CONDA}
 
-    - name: Create environment for package
-      shell: bash
-      run: |
-        . devtools/github-actions/initialize_conda.sh
-        conda activate
-        conda info
-        python devtools/scripts/create_conda_env.py -n=test -p=$PYVER devtools/conda-envs/test_env.yaml
+    - name: Setup Conda
+      uses: conda-incubator/setup-miniconda@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        environment-file: devtools/conda-envs/test_env.yaml
+
+        channels: conda-forge,defaults
+
+        activate-environment: test
+        auto-update-conda: false
+        auto-activate-base: false
+        show-channel-urls: true
 
     - name: Install package
-      shell: bash
+      shell: bash -l {0}
       run: |
-        . devtools/github-actions/initialize_conda.sh
-        conda activate test
         python -m pip install . --no-deps
         conda list --show-channel-urls
 
     - name: Run tests (pytest)
-      shell: bash
+      shell: bash -l {0}
       run: |
-        . devtools/github-actions/initialize_conda.sh
-        conda activate test
         pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/
 
     - name: Run examples
-      shell: bash
+      shell: bash -l {0}
       run: |
-        . devtools/github-actions/initialize_conda.sh
-        conda activate test
         ### constant-force-optical-trap
         cd examples/constant-force-optical-trap
         python extract-data.py
@@ -111,27 +110,32 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v1
 
+    - name: Setup Conda
+      uses: conda-incubator/setup-miniconda@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        environment-file: devtools/conda-envs/test_env.yaml
+
+        channels: conda-forge,defaults
+
+        activate-environment: test
+        auto-update-conda: false
+        auto-activate-base: false
+        show-channel-urls: true
+
     - name: Install linter and formatter
-      shell: bash
+      shell: bash -l {0}
       run: |
-        . devtools/github-actions/initialize_conda.sh
-        conda activate
-        python devtools/scripts/create_conda_env.py -n=test -p=$PYVER devtools/conda-envs/test_env.yaml
-        conda activate test
         conda install pylint black
 
     - name: Run pylint
-      shell: bash
+      shell: bash -l {0}
       run: |
-        . devtools/github-actions/initialize_conda.sh
-        conda activate test
         pylint $PACKAGE/
 
     # TODO: Remove --exclude pymbar/old_mbar.py after deprecation
     - name: Run black check
-      shell: bash
+      shell: bash -l {0}
       if: always()
       run: |
-        . devtools/github-actions/initialize_conda.sh
-        conda activate test
         black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py
