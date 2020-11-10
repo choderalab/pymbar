@@ -101,9 +101,10 @@ jobs:
 
   lint-format:
     runs-on: ubuntu-latest
-    matrix:
-      os: [ubuntu-latest]
-      python-version: [3.8]
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
     env:
       PACKAGE: "pymbar"
 
