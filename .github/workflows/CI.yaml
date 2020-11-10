@@ -101,10 +101,11 @@ jobs:
 
   lint-format:
     runs-on: ubuntu-latest
+    matrix:
+      os: [ubuntu-latest]
+      python-version: [3.8]
     env:
-      CI_OS: ubuntu-latest
       PACKAGE: "pymbar"
-      PYVER: "3.7"
 
     steps:
     - name: Checkout the code
