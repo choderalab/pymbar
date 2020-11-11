@@ -17,8 +17,8 @@ def test_logsumexp():
         ans_ne = pymbar.utils.logsumexp(a, axis=axis)
         ans_no_ne = pymbar.utils.logsumexp(a, axis=axis, use_numexpr=False)
         ans_scipy = logsumexp(a, axis=axis)
-        assert_equal(ans_ne, ans_no_ne)
-        assert_equal(ans_ne, ans_scipy)
+        assert_almost_equal(ans_ne, ans_no_ne)
+        assert_almost_equal(ans_ne, ans_scipy)
 
 
 def test_logsumexp_single_infinite():
@@ -36,8 +36,8 @@ def test_logsumexp_b():
         ans_ne = pymbar.utils.logsumexp(a, b=b, axis=axis)
         ans_no_ne = pymbar.utils.logsumexp(a, b=b, axis=axis, use_numexpr=False)
         ans_scipy = logsumexp(a, b=b, axis=axis)
-        assert_equal(ans_ne, ans_no_ne)
-        assert_equal(ans_ne, ans_scipy)
+        assert_almost_equal(ans_ne, ans_no_ne)
+        assert_almost_equal(ans_ne, ans_scipy)
 
 
 def test_logsum():

@@ -13,6 +13,7 @@ dependencies:
     # Testing
   - pytest
   - pytest-cov
+  - flaky
   - codecov
   - statsmodels
   - scikit-learn  # Provides the sklearn module

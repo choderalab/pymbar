@@ -888,7 +888,8 @@ def statistical_inefficiency_fft(A_n, mintime=3):
     # Get the length of the timeseries.
     N = A_n.size
 
-    C_t = sm.tsa.stattools.acf(A_n, fft=True, unbiased=True, nlags=N)
+    # The "ubiased" kwarg deprecated in favor of "adjusted"
+    C_t = sm.tsa.stattools.acf(A_n, fft=True, adjusted=True, nlags=N)
     t_grid = np.arange(N).astype("float")
     g_t = 2.0 * C_t * (1.0 - t_grid / float(N))
 

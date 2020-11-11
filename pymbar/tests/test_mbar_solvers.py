@@ -17,6 +17,7 @@ def base_oscillator():
     return {"name": name, "u_kn": u_kn, "N_k": N_k, "s_n": s_n, "test": test}
 
 
+@pytest.mark.flaky(max_runs=2)  # Uses flaky plugin for pytest
 @pytest.mark.parametrize(
     "statesa, statesb, test_system",
     [(100, 100, oscillators), (200, 50, oscillators), (200, 50, exponentials)],
