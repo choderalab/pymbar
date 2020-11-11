@@ -307,7 +307,7 @@ for methodfull in methods:
         # set the sigma for the spline.
         kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
         fes.generate_fes(
-            u_kn, chi_n, fes_type="kde", kde_parameters=kde_parameters, nbootstraps=nbootstraps,
+            u_kn, chi_n, fes_type="kde", kde_parameters=kde_parameters, nbootstraps=nbootstraps
         )
 
         # save this for initializing other types
@@ -380,7 +380,7 @@ for methodfull in methods:
     else:
         uncertainty_method = "bootstrap"
     results = fes.get_fes(
-        bin_center_i, reference_point="from-lowest", uncertainty_method=uncertainty_method,
+        bin_center_i, reference_point="from-lowest", uncertainty_method=uncertainty_method
     )
     for i in range(nbins):
         if "df_i" in results and results["df_i"] is not None:

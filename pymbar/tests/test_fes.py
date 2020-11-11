@@ -438,7 +438,7 @@ def base_1d_fes_spline(fes_1d, gen_kwargs, reference_point):
     )
     # Something wrong with unbiased state?
     results_spline = fes.get_fes(
-        bin_centers, reference_point=reference_point, fes_reference=0.0, uncertainty_method=None,
+        bin_centers, reference_point=reference_point, fes_reference=0.0, uncertainty_method=None
     )
     f_is = results_spline["f_i"]
     # df_ih = results_spline['df_i']
