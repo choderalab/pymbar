@@ -17,6 +17,7 @@ def base_oscillator():
     return {"name": name, "u_kn": u_kn, "N_k": N_k, "s_n": s_n, "test": test}
 
 
+@pytest.mark.flaky(max_runs=2)  # Uses flaky plugin for pytest
 @pytest.mark.parametrize(
     "statesa, statesb, test_system",
     [(100, 100, oscillators), (200, 50, oscillators), (200, 50, exponentials)],
@@ -24,12 +25,7 @@ def base_oscillator():
 def test_solvers(statesa, statesb, test_system):
     name, U, N_k, s_n, _ = test_system(statesa, statesb, provide_test=True)
     print(name)
-    try:
-        mbar = pymbar.MBAR(U, N_k)
-    except:
-        print(U)
-        print(N_k)
-        raise
+    mbar = pymbar.MBAR(U, N_k)
     assert_almost_equal(
         pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8
     )

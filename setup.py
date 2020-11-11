@@ -109,7 +109,7 @@ def buildKeywordDictionary():
     setupKeywords["platforms"]         = ["Linux", "Mac OS X", "Windows"]
     setupKeywords["description"]       = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method."
     setupKeywords["requires"]          = ["numpy", "scipy", "numexpr"]
-    setupKeywords["tests_require"]     = ["pytest", "statsmodel"]
+    setupKeywords["tests_require"]     = ["pytest", "statsmodel", "flaky"]
     setupKeywords["long_description"]  = """
     Pymbar (https://simtk.org/home/pymbar) is a library
     that provides tools for optimally combining simulations

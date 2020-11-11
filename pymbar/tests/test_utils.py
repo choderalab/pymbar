@@ -13,16 +13,12 @@ except ImportError:
 def test_logsumexp():
     a = np.random.normal(size=(200, 500, 5))
 
-    try:
-        for axis in range(a.ndim):
-            ans_ne = pymbar.utils.logsumexp(a, axis=axis)
-            ans_no_ne = pymbar.utils.logsumexp(a, axis=axis, use_numexpr=False)
-            ans_scipy = logsumexp(a, axis=axis)
-            assert_equal(ans_ne, ans_no_ne)
-            assert_equal(ans_ne, ans_scipy)
-    except AssertionError:
-        print(a)
-        raise
+    for axis in range(a.ndim):
+        ans_ne = pymbar.utils.logsumexp(a, axis=axis)
+        ans_no_ne = pymbar.utils.logsumexp(a, axis=axis, use_numexpr=False)
+        ans_scipy = logsumexp(a, axis=axis)
+        assert_almost_equal(ans_ne, ans_no_ne)
+        assert_almost_equal(ans_ne, ans_scipy)
 
 
 def test_logsumexp_single_infinite():
@@ -36,17 +32,12 @@ def test_logsumexp_b():
     a = np.random.normal(size=(200, 500, 5))
     b = np.random.normal(size=(200, 500, 5)) ** 2.0
 
-    try:
-        for axis in range(a.ndim):
-            ans_ne = pymbar.utils.logsumexp(a, b=b, axis=axis)
-            ans_no_ne = pymbar.utils.logsumexp(a, b=b, axis=axis, use_numexpr=False)
-            ans_scipy = logsumexp(a, b=b, axis=axis)
-            assert_equal(ans_ne, ans_no_ne)
-            assert_equal(ans_ne, ans_scipy)
-    except AssertionError:
-        print(a)
-        print(b)
-        raise
+    for axis in range(a.ndim):
+        ans_ne = pymbar.utils.logsumexp(a, b=b, axis=axis)
+        ans_no_ne = pymbar.utils.logsumexp(a, b=b, axis=axis, use_numexpr=False)
+        ans_scipy = logsumexp(a, b=b, axis=axis)
+        assert_almost_equal(ans_ne, ans_no_ne)
+        assert_almost_equal(ans_ne, ans_scipy)
 
 
 def test_logsum():
