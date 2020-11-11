@@ -14,7 +14,7 @@ conda (recommended)
 The easiest way to install the ``pymbar`` release is via `conda <http://conda.pydata.org>`_:
 
 ::
-   $ conda install -c omnia pymbar
+   $ conda install -c conda-forge pymbar
 
 pip
 ---
