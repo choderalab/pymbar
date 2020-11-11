@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
 # Use Adpative solver as first attempt
 DEFAULT_SOLVER_METHOD = "adaptive"
-DEFAULT_SOLVER_PROTOCOL = (dict(method=DEFAULT_SOLVER_METHOD,),)
+DEFAULT_SOLVER_PROTOCOL = (dict(method=DEFAULT_SOLVER_METHOD),)
 
 
 def validate_inputs(u_kn, N_k, f_k):

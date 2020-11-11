@@ -46,7 +46,8 @@ beta = 1.0  # inverse temperature for all simulations
 nreplicates = 200  # number of replicates of experiment for testing uncertainty estimate
 
 
-observe = "position^2"  # the observable, one of 'mean square displacement','position', or 'potential energy'
+# the observable, one of 'mean square displacement','position', or 'potential energy'
+observe = "position^2"
 
 # Uncomment the following line to seed the random number generated to produce reproducible output.
 numpy.random.seed(0)

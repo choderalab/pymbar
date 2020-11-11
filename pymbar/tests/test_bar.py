@@ -39,12 +39,7 @@ def bar_and_test(request):
     bars["dBAR"] = estimators.bar(w_F, w_R, uncertainty_method="BAR")
     bars["dMBAR"] = estimators.bar(w_F, w_R, uncertainty_method="MBAR")
 
-    yield_bundle = {
-        "bars": bars,
-        "test": test,
-        "w_F": w_F,
-        "w_R": w_R,
-    }
+    yield_bundle = {"bars": bars, "test": test, "w_F": w_F, "w_R": w_R}
     yield yield_bundle
 
 

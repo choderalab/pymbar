@@ -415,7 +415,7 @@ class FES:
                     index += N_k[k]
                     # recompute MBAR.
                     mbar = pymbar.MBAR(
-                        self.u_kn[:, bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k,
+                        self.u_kn[:, bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k
                     )
                     x_nb = x_n[bootstrap_indices]
 
@@ -868,7 +868,7 @@ class FES:
                     tinit[noverfit + 1 : noverfit + kdegree + 1] = xrange[1]
                     # problem: bin centers might not actually be sorted.
                     binit = make_lsq_spline(
-                        bias_centers[sort_indices], initvals[sort_indices], tinit, k=kdegree,
+                        bias_centers[sort_indices], initvals[sort_indices], tinit, k=kdegree
                     )
                     xinit = np.linspace(xrange[0], xrange[1], num=2 * nspline)
                     yinit = binit(xinit)
@@ -1189,7 +1189,7 @@ class FES:
             raise ParameterError("Information criteria of type '{:s}' not defined".format(type))
 
     def get_fes(
-        self, x, reference_point="from-lowest", fes_reference=None, uncertainty_method=None,
+        self, x, reference_point="from-lowest", fes_reference=None, uncertainty_method=None
     ):
         """
         Returns values of the FES at the specified x points.
@@ -1285,7 +1285,7 @@ class FES:
             raise ParameterError("Can't return the KernelDensity object because fes_type != kde")
 
     def _get_fes_histogram(
-        self, x, reference_point="from-lowest", fes_reference=None, uncertainty_method=None,
+        self, x, reference_point="from-lowest", fes_reference=None, uncertainty_method=None
     ):
         """
         Returns values of the FES at the specified x points for histogram FESs.
@@ -1528,7 +1528,7 @@ class FES:
 
             elif uncertainty_method == "bootstrap":  # TODO: check this is working!
                 dfxij_vals = np.zeros([len(histogram_data["f"]), len(histogram_data["f"])])
-                fall = np.zeros([len(histogram_data["f"]), len(histogram_data["f"]), nbootstraps,])
+                fall = np.zeros([len(histogram_data["f"]), len(histogram_data["f"]), nbootstraps])
                 for b in range(nbootstraps):
                     h = histogram_datas[b]
                     for i in range(nbins):
@@ -1543,7 +1543,7 @@ class FES:
         return result_vals
 
     def _get_fes_kde(
-        self, x, reference_point="from-normalization", fes_reference=None, uncertainty_method=None,
+        self, x, reference_point="from-normalization", fes_reference=None, uncertainty_method=None
     ):
         """
 
@@ -1632,7 +1632,7 @@ class FES:
         return result_vals
 
     def _get_fes_spline(
-        self, x, reference_point="from_lowest", fes_reference=0.0, uncertainty_method=None,
+        self, x, reference_point="from_lowest", fes_reference=0.0, uncertainty_method=None
     ):
         """
 
@@ -1717,7 +1717,7 @@ class FES:
         return result_vals
 
     def sample_parameter_distribution(
-        self, x_n, mc_parameters=None, decorrelate=True, verbose=True,
+        self, x_n, mc_parameters=None, decorrelate=True, verbose=True
     ):
         """
 
@@ -2424,7 +2424,7 @@ class FES:
 
                         # now compute the expectation of each derivative
                         pE = self._integrate(
-                            ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1],
+                            ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1]
                         )
                         h[i, j] += N * pE / pF
 

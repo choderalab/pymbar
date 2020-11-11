@@ -38,12 +38,7 @@ def exp_and_test(request):
     exps["gF"] = estimators.exp_gauss(w_F)
     exps["gR"] = estimators.exp_gauss(w_R)
 
-    yield_bundle = {
-        "exps": exps,
-        "test": test,
-        "w_F": w_F,
-        "w_R": w_R,
-    }
+    yield_bundle = {"exps": exps, "test": test, "w_F": w_F, "w_R": w_R}
     yield yield_bundle
 
 

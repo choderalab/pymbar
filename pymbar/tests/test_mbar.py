@@ -47,12 +47,7 @@ def mbar_and_test(request):
     x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode="u_kn")
     assert_equal(N_k, N_k_output)
     mbar = MBAR(u_kn, N_k, verbose=True)
-    yield_bundle = {
-        "mbar": mbar,
-        "test": test,
-        "x_n": x_n,
-        "u_kn": u_kn,
-    }
+    yield_bundle = {"mbar": mbar, "test": test, "x_n": x_n, "u_kn": u_kn}
     yield yield_bundle
 
 
@@ -62,12 +57,7 @@ def mbar_and_test_harmonic():
     x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode="u_kn")
     assert_equal(N_k, N_k_output)
     mbar = MBAR(u_kn, N_k, verbose=True)
-    yield_bundle = {
-        "mbar": mbar,
-        "test": test,
-        "x_n": x_n,
-        "u_kn": u_kn,
-    }
+    yield_bundle = {"mbar": mbar, "test": test, "x_n": x_n, "u_kn": u_kn}
     yield yield_bundle
 
 
@@ -77,12 +67,7 @@ def mbar_and_test_kln():
     x_n, u_kn, N_k_output = test.sample(N_k, mode="u_kln")
     assert_equal(N_k, N_k_output)
     mbar = MBAR(u_kn, N_k, verbose=True)
-    yield_bundle = {
-        "mbar": mbar,
-        "test": test,
-        "x_n": x_n,
-        "u_kn": u_kn,
-    }
+    yield_bundle = {"mbar": mbar, "test": test, "x_n": x_n, "u_kn": u_kn}
     yield yield_bundle
 
 
