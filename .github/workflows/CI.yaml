@@ -40,12 +40,6 @@ jobs:
         df -h
         ulimit -a
 
-    - name: Fix conda in MacOS
-      shell: bash
-      if: startsWith(matrix.os, 'macOS')
-      run: |
-        sudo chown -R $(id -u):$(id -g) ${CONDA}
-
     - name: Setup Conda
       uses: conda-incubator/setup-miniconda@v2
       with:

@@ -24,7 +24,12 @@ def base_oscillator():
 def test_solvers(statesa, statesb, test_system):
     name, U, N_k, s_n, _ = test_system(statesa, statesb, provide_test=True)
     print(name)
-    mbar = pymbar.MBAR(U, N_k)
+    try:
+        mbar = pymbar.MBAR(U, N_k)
+    except:
+        print(U)
+        print(N_k)
+        raise
     assert_almost_equal(
         pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8
     )
