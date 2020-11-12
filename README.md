@@ -16,7 +16,7 @@ Installation
 
 The easiest way to install the `pymbar` release is via [conda](http://conda.pydata.org):
 ```bash
-conda install -c omnia pymbar
+conda install -c conda-forge pymbar
 ```
 You can also install `pymbar` from the [Python package index](https://pypi.python.org/pypi/pymbar) using `pip`:
 ```bash
@@ -65,6 +65,7 @@ Authors
 * John D. Chodera <john.chodera@choderalab.org>
 * Levi N. Naden <levi.naden@choderalab.org>
 * Michael R. Shirts <michael.shirts@virginia.edu>
+* Jaime Rodríguez-Guerra <jaime.rodriguez-guerra@choderalab.org>
 
 References
 ----------
