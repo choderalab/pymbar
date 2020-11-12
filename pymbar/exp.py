@@ -227,7 +227,7 @@ EXPGauss = _deprecate(EXP_gauss, "EXPGauss")
 # For compatibility with 2.0.1-beta
 #=============================================================================================
 computeEXP = _deprecate(EXP, "computeEXP")
-computeEXPGauss = _deprecate(EXPGauss, "computeEXPGauss")
+computeEXPGauss = _deprecate(EXP_gauss, "computeEXPGauss")
 
 def _compatibilityDoctests():
     """
