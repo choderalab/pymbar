@@ -26,7 +26,10 @@ from numpy.testing import (assert_allclose, assert_almost_equal,
                            assert_approx_equal, assert_array_almost_equal, assert_array_almost_equal_nulp,
                            assert_array_equal, assert_array_less, assert_array_max_ulp, assert_equal,
                            assert_raises, assert_string_equal, assert_warns)
-from numpy.testing.decorators import skipif, slow
+try:
+    from numpy.testing.decorators import skipif, slow
+except ImportError:
+    from numpy.testing._private.decorators import skipif, slow
 from nose.tools import ok_, eq_, raises
 from nose import SkipTest
 from pkg_resources import resource_filename
