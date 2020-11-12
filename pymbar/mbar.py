@@ -1396,7 +1396,7 @@ class MBAR:
     computeEntropyAndEnthalpy = _deprecate(compute_entropy_and_enthalpy, "computeEntropyAndEnthalpy")
 
     #=====================================================================
-    def compute_pmf(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None, return_dict=False):
+    def computePMF(self, u_n, bin_n, nbins, uncertainties='from-lowest', pmf_reference=None, return_dict=False):
         """
         Compute the free energy of occupying a number of bins.
 
@@ -1436,7 +1436,7 @@ class MBAR:
 
         Notes
         -----
-        * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling compute_pmf().
+        * All bins must have some samples in them from at least one of the states -- this will not work if bin_n.sum(0) == 0. Empty bins should be removed before calling computePMF().
         * This method works by computing the free energy of localizing the system to each bin for the given potential by aggregating the log weights for the given potential.
         * To estimate uncertainties, the NxK weight matrix W_nk is augmented to be Nx(K+nbins) in order to accomodate the normalized weights of states where
         * the potential is given by u_kn within each bin and infinite potential outside the bin.  The uncertainties with respect to the bin of lowest free energy are then computed in the standard way.
@@ -1461,12 +1461,13 @@ class MBAR:
         >>> bin_n = np.zeros(x_n.shape, np.int64)
         >>> bin_n = np.digitize(x_n, bins) - 1
         >>> # Compute PMF for these unequally-sized bins.
-        >>> results = mbar.compute_pmf(u_n, bin_n, nbins, return_dict=True)
+        >>> results = mbar.computePMF(u_n, bin_n, nbins, return_dict=True)
         >>> # If we want to correct for unequally-spaced bins to get a PMF on uniform measure
         >>> f_i_corrected = results['f_i'] - np.log(bin_widths)
 
         """
-
+        from warnings import warn
+        warn("This method will be deprecated in pymbar v4. Equivalent functionality will be available in `pymbar.pmf.PMF`.", DeprecationWarning)
         # Verify that no PMF bins are empty -- we can't deal with empty bins,
         # because the free energy is infinite.
         for i in range(nbins):
@@ -1583,8 +1584,6 @@ class MBAR:
                 result_vals['df_i'] = df_i
             return result_vals
         return f_i, df_i
-
-    computePMF = _deprecate(compute_pmf, "computePMF")
     
     #=========================================================================
     # PRIVATE METHODS - INTERFACES ARE NOT EXPORTED
