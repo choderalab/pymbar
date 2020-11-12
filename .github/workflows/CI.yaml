@@ -116,16 +116,10 @@ jobs:
     - name: Install linter and formatter
       shell: bash -l {0}
       run: |
-        conda install pylint black
+        conda install pylint
 
     - name: Run pylint
       shell: bash -l {0}
       run: |
         pylint $PACKAGE/
 
-    # TODO: Remove --exclude pymbar/old_mbar.py after deprecation
-    - name: Run black check
-      shell: bash -l {0}
-      if: always()
-      run: |
-        black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py
