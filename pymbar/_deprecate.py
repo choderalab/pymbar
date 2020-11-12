@@ -23,7 +23,8 @@ def _deprecate(fn, old_name):
     old_name : str
         Original name to be deprecated
 
-    >>> OldName = _deprecate(new_name, "OldName")
+    >>> def new_function(): pass
+    >>> OldFunction = _deprecate(new_function, "OldFunction")
     """
     _deprecated_names[old_name] = fn.__name__
 
