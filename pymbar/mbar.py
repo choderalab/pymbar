@@ -1175,7 +1175,7 @@ class MBAR:
             return result_vals
         return tuple(return_list)
 
-    computeExpectations = _deprecate(compute_multiple_expectations, "computeExpectations")
+    computeMultipleExpectations = _deprecate(compute_multiple_expectations, "computeMultipleExpectations")
 
     #=========================================================================
     def compute_perturbed_free_energies(self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10, return_dict=False):
