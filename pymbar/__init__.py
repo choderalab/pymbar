@@ -25,10 +25,10 @@ ratio (MBAR) estimator.
 
 __author__ = "Michael R. Shirts and John D. Chodera"
 __license__ = "MIT"
-__maintainer__ = "Levi N. Naden, Michael R. Shirts and John D. Chodera"
-__email__ = "levi.naden@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
+__maintainer__ = "Levi N. Naden, Jaime Rodriguez-Guerra, Michael R. Shirts and John D. Chodera"
+__email__ = "levi.naden@choderalab.org,jaime.rodriguez-guerra@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
 
-from pymbar import timeseries, testsystems, confidenceintervals, version
+from pymbar import timeseries, testsystems, confidenceintervals
 from pymbar.mbar import MBAR
 from pymbar.bar import BAR, BARzero
 from pymbar.exp import EXP, EXPGauss
@@ -39,9 +39,11 @@ try:
 except:
     # Fill in information manually.
     # TODO: See if we can at least get the git revision info in here.
-    version = 'dev'
-    full_version = 'dev'
-    git_revision = 'dev'
-    isrelease = False
+    class Version:
+        version = 'dev'
+        full_version = 'dev'
+        git_revision = 'dev'
+        isrelease = False
+    version = Version()
 
 __all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
