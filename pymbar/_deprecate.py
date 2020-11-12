@@ -37,5 +37,5 @@ def _deprecate(fn, old_name):
         return fn(*args, **kwargs)
 
     fn_doc = fn.__doc__ or ""
-    deprecated.__doc__ = fn.__doc__ + _docstring_warning.format(fn.__name__)
+    deprecated.__doc__ = fn_doc + _docstring_warning.format(fn.__name__)
     return deprecated
