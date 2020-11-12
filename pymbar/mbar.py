@@ -1467,7 +1467,7 @@ class MBAR:
 
         """
         from warnings import warn
-        warn("This method will be deprecated in pymbar v4. Equivalent functionality will be available in `pymbar.pmf.PMF`.", DeprecationWarning)
+        warn("This method will be deprecated in pymbar v4. Equivalent functionality will be available in `pymbar.fes.FES`.", DeprecationWarning)
         # Verify that no PMF bins are empty -- we can't deal with empty bins,
         # because the free energy is infinite.
         for i in range(nbins):
