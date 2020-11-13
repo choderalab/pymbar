@@ -4,7 +4,8 @@ coverage:
     - pymbar/tests/.*
     - pymbar/testsystems/.*
     - setup.py
-    - pymbar/version.py
+    - versioneer.py
+    - pymbar/_version.py
     - pymbar/old_mbar.py
   status:
     patch: false

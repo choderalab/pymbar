@@ -1685,16 +1685,13 @@ class MBAR:
                     # kickstart NR.
                     from pymbar.other_estimators import bar
 
-                    self.f_k[l] = (
-                        self.f_k[k]
-                        + bar(
-                            w_F,
-                            w_R,
-                            relative_tolerance=0.000001,
-                            verbose=False,
-                            compute_uncertainty=False,
-                        )["Delta_f"]
-                    )
+                    self.f_k[l] = self.f_k[k] + bar(
+                        w_F,
+                        w_R,
+                        relative_tolerance=0.000001,
+                        verbose=False,
+                        compute_uncertainty=False,
+                    )["Delta_f"]
                 else:
                     # no states observed, so we don't need to initialize this free energy anyway, as
                     # the solution is noniterative.

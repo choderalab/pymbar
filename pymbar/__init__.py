@@ -25,24 +25,19 @@ ratio (MBAR) estimator.
 
 __author__ = "Michael R. Shirts and John D. Chodera"
 __license__ = "MIT"
-__maintainer__ = "Levi N. Naden, Michael R. Shirts and John D. Chodera"
-__email__ = "levi.naden@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
+__maintainer__ = "Levi N. Naden, Jaime Rodríguez-Guerra, Michael R. Shirts and John D. Chodera"
+__email__ = "levi.naden@choderalab.org,jaime.rodriguez-guerra@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
 
-from pymbar import timeseries, testsystems, confidenceintervals
-from pymbar.mbar import MBAR
-from pymbar.other_estimators import bar, bar_zero, exp, exp_gauss
-from pymbar.fes import FES
-import pymbar.old_mbar
+from . import timeseries, testsystems, confidenceintervals
+from .mbar import MBAR
+from .other_estimators import bar, bar_zero, exp, exp_gauss
+from .fes import FES
+from . import old_mbar
 
-try:
-    from pymbar.version import *
-except ImportError:
-    # Fill in information manually.
-    # TODO: See if we can at least get the git revision info in here.
-    version = "dev"
-    full_version = "dev"
-    git_revision = "dev"
-    isrelease = False
+from ._version import get_versions
+
+__version__ = get_versions()["version"]
+del get_versions
 
 __all__ = [
     "exp",

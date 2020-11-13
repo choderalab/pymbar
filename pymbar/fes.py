@@ -1267,7 +1267,7 @@ class FES:
             raise DataError("MBAR in the FES object is not initialized, cannot return it.")
 
     def get_kde(self):
-        """ return the KernelDensity object if it exists.
+        """return the KernelDensity object if it exists.
 
         Returns
         -------
@@ -1666,7 +1666,7 @@ class FES:
                 result_vals['df_i'][i] is the uncertainty in the difference of x_i with respect to the reference point
                 Only included if uncertainty_method is not None
 
-                """
+        """
 
         if np.shape(x)[1] != 1:
             raise DataError("splines FES only supported in 1D")
@@ -1950,7 +1950,7 @@ class FES:
 
     def get_mc_data(self):
 
-        """ convenience function to retrieve MC data
+        """convenience function to retrieve MC data
 
         Parameters
         ----------
@@ -2036,7 +2036,7 @@ class FES:
 
     def _MC_step(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
 
-        """ sample over the posterior space of the FES as splined.
+        """sample over the posterior space of the FES as splined.
 
         Parameters
         ----------
@@ -2071,13 +2071,16 @@ class FES:
 
         if self.mc_data["first_step"]:
             c = bspline.c
-            mc_data["previous_logposterior"] = self._get_MC_loglikelihood(
-                x_n,
-                w_n,
-                self.spline_parameters["spline_weights"],
-                bspline,
-                self.spline_parameters["xrange"],
-            ) - logprior(c)
+            mc_data["previous_logposterior"] = (
+                self._get_MC_loglikelihood(
+                    x_n,
+                    w_n,
+                    self.spline_parameters["spline_weights"],
+                    bspline,
+                    self.spline_parameters["xrange"],
+                )
+                - logprior(c)
+            )
             cold = bspline.c
             mc_data["first_step"] = True
             # create an extra one we can carry around
@@ -2127,7 +2130,7 @@ class FES:
 
     def _bspline_calculate_f(self, xi, x_n, w_n):
 
-        """ Calculate the maximum likelihood / KL divergence of the FES represented using B-splines.
+        """Calculate the maximum likelihood / KL divergence of the FES represented using B-splines.
 
         Parameters
         ----------
@@ -2333,7 +2336,7 @@ class FES:
 
     def _bspline_calculate_h(self, xi, x_n, w_n):
 
-        """ Calculate the Hessian of the maximum likelihood / KL divergence of the FES represented using B-splines.
+        """Calculate the Hessian of the maximum likelihood / KL divergence of the FES represented using B-splines.
 
         Parameters
         ----------

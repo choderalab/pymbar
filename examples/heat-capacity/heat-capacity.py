@@ -109,7 +109,7 @@ def read_total_energies(pathname, colnum):
     ----------
     pathname : str
         the path to the folder of the simulation
-	colnum : int
+        colnum : int
         column the energy is found in
 
     Returns

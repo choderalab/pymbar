@@ -39,7 +39,7 @@ class TypeCastPerformanceWarning(RuntimeWarning):
 
 
 def kln_to_kn(kln, N_k=None, cleanup=False):
-    """ Convert KxKxN_max array to KxN max array
+    """Convert KxKxN_max array to KxN max array
 
     Parameters
     ----------
@@ -76,7 +76,7 @@ def kln_to_kn(kln, N_k=None, cleanup=False):
 
 
 def kn_to_n(kn, N_k=None, cleanup=False):
-    """ Convert KxN_max array to N array
+    """Convert KxN_max array to N array
 
     Parameters
     ----------
