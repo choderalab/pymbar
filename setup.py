@@ -1,15 +1,6 @@
-from platform import python_version
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_packages
 import versioneer
-import numpy
 
-# are we really shipping the C extension in v4?
-CMBAR = Extension(
-    "_pymbar",
-    sources=["pymbar/_pymbar.c"],
-    extra_compile_args=["-std=c99", "-O2", "-shared", "-msse2", "-msse3"],
-    include_dirs=[numpy.get_include(), numpy.get_include() + "/numpy/"],
-)
 
 long_description = """
 Pymbar (https://simtk.org/home/pymbar) is a library
@@ -34,7 +25,4 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     python_requires=">=3.6",
     install_requires=["numpy>=1.12", "scipy", "numexpr"],
-    # are we really shipping the C extension in v4?
-    ext_modules=[CMBAR],
-    data_files=[("pymbar", ["pymbar/_pymbar.c"])],
 )
