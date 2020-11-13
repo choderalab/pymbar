@@ -78,7 +78,6 @@ def get_analytical(beta, K, O, observables):
 # PARAMETERS
 # =============================================================================================
 
-
 K_k = np.array([25, 16, 9, 4, 1, 1])  # spring constants for each state
 O_k = np.array([0, 1, 2, 3, 4, 5])  # offsets for spring constants
 # number of samples from each state (can be zero for some states)
