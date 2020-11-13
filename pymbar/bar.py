@@ -228,6 +228,12 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         method = 'self-consistent-iteration'
         DeltaF_initial = DeltaF
 
+    if method not in ['self-consistent-iteration', 'false-position', 'bisection']:
+        raise ParameterError('method {:d} is not defined for BAR'.format(method))
+
+    if uncertainty_method not in ['BAR', 'MBAR']:
+        raise ParameterError('uncertainty_method {:d} is not defined for BAR'.format(uncertainty_method))
+
     if method == 'self-consistent-iteration':
         nfunc = 0
 
