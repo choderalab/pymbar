@@ -44,6 +44,7 @@ __license__ = "MIT"
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
+import warnings
 import numpy as np
 from pymbar.utils import logsumexp
 from pymbar._deprecate import _deprecate, warn
@@ -95,7 +96,9 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=False):
     Reverse free energy difference is -1.073 +- 0.082 kT
 
     """
-
+    if return_dict:
+        warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
+        
     result_vals = dict()
     result_list = []
 
@@ -184,7 +187,9 @@ def EXP_gauss(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=Fa
     Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
 
     """
-
+    if return_dict:
+        warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
+        
     # Get number of work measurements.
     T = float(np.size(w_F))  # number of work measurements
 

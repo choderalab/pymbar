@@ -278,7 +278,7 @@ def test_mbar_computeOverlap():
         name, test = system_generator()
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         mbar = MBAR(u_kn, N_k)
-        results = mbar.computeOverlap()
+        results = mbar.computeOverlap(return_dict=True)
         overlap_scalar = results['scalar']
         eigenval = results['eigenvalues']
         O = results['matrix']

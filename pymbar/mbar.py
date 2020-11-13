@@ -38,6 +38,7 @@ This module contains implementations of
 """
 
 import math
+import warnings
 import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
@@ -411,7 +412,7 @@ class MBAR:
     computeEffectiveSampleNumber = _deprecate(compute_effective_sample_number, "computeEffectiveSampleNumber")
     
     # =========================================================================
-    def compute_overlap(self, return_dict=True):
+    def compute_overlap(self, return_dict=False):
         """
         Compute estimate of overlap matrix between the states.
 
@@ -454,6 +455,8 @@ class MBAR:
         >>> results = mbar.compute_overlap(return_dict=True)
 
         """
+        if return_dict:
+            warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
         W = np.matrix(self.weights(), np.float64)
         O = np.multiply(self.N_k, W.T * W)
@@ -528,6 +531,9 @@ class MBAR:
         >>> results = mbar.compute_free_energy_differences(return_dict=True)
 
         """
+        if return_dict:
+            warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
+
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
 
         # Compute free energy differences.
@@ -1215,6 +1221,8 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
         >>> results = mbar.compute_perturbed_free_energies(u_kn, return_dict=True)
         """
+        if return_dict:
+            warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
         # Convert to np matrix.
         u_ln = np.array(u_ln, dtype=np.float64)
@@ -1306,6 +1314,9 @@ class MBAR:
         >>> results = mbar.compute_entropy_and_enthalpy(return_dict=True)
 
         """
+        if return_dict:
+            warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
+
         if verbose:
             print("Computing average energy and entropy by MBAR.")
 
@@ -1466,8 +1477,7 @@ class MBAR:
         >>> f_i_corrected = results['f_i'] - np.log(bin_widths)
 
         """
-        from warnings import warn
-        warn("This method will be deprecated in pymbar v4. Equivalent functionality will be available in `pymbar.fes.FES`.", DeprecationWarning)
+        warnings.warn("This method will be deprecated in pymbar v4. Equivalent functionality will be available in `pymbar.fes.FES`.", DeprecationWarning)
         # Verify that no PMF bins are empty -- we can't deal with empty bins,
         # because the free energy is infinite.
         for i in range(nbins):

@@ -46,6 +46,7 @@ __license__ = "MIT"
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
+import warnings
 import numpy as np
 import numpy.linalg
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
@@ -218,6 +219,8 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     >>> results = BAR(w_F, w_R, method='bisection', return_dict=True)
 
     """
+    if return_dict:
+        warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
     result_vals = dict()
     # if computing nonoptimized, one step value, we set the max-iterations
