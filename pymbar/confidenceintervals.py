@@ -231,7 +231,7 @@ def generate_confidence_intervals(replicates, K):
                     print(replicate['error'])
                     print("destimated")
                     print(replicate['destimated'])
-                    raise ArithmaticError("Encountered isnan in computation")
+                    raise ArithmeticError("Encountered isnan in computation")
                 else:
                     if abs(replicate['error']) <= alpha * replicate['destimated']:
                         a += 1.0
@@ -246,7 +246,7 @@ def generate_confidence_intervals(replicates, K):
                         print(replicate['error'])
                         print("destimated")
                         print(replicate['destimated'])
-                        raise ArithmaticError("Encountered isnan in computation")
+                        raise ArithmeticError("Encountered isnan in computation")
                     else:
                         if abs(replicate['error'][i]) <= alpha * replicate['destimated'][i]:
                             a += 1.0
@@ -262,7 +262,7 @@ def generate_confidence_intervals(replicates, K):
                             print(replicate['error'])
                             print("ij_estimated")
                             print(replicate['destimated'])
-                            raise ArithmaticError("Encountered isnan in computation")
+                            raise ArithmeticError("Encountered isnan in computation")
                         else:
                             if abs(replicate['error'][i, j]) <= alpha * replicate['destimated'][i, j]:
                                 a += 1.0
