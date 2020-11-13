@@ -141,7 +141,7 @@ def mbar_objective_and_gradient(u_kn, N_k, f_k):
 
     More optimal precision, the objective function uses math.fsum for the
     outermost sum and logsumexp for the inner sum.
-    
+
     The gradient is equation C6 in the JCP MBAR paper; the objective
     function is its integral.
     """

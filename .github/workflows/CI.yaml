@@ -134,4 +134,4 @@ jobs:
       shell: bash -l {0}
       if: always()
       run: |
-        black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py
+        black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py --exclude $PACKAGE/_version.py
