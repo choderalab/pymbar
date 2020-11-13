@@ -455,7 +455,7 @@ class MBAR:
         >>> results = mbar.compute_overlap(return_dict=True)
 
         """
-        if return_dict:
+        if not return_dict:
             warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
         W = np.matrix(self.weights(), np.float64)
@@ -531,7 +531,7 @@ class MBAR:
         >>> results = mbar.compute_free_energy_differences(return_dict=True)
 
         """
-        if return_dict:
+        if not return_dict:
             warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
         Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
@@ -1221,7 +1221,7 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
         >>> results = mbar.compute_perturbed_free_energies(u_kn, return_dict=True)
         """
-        if return_dict:
+        if not return_dict:
             warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
         # Convert to np matrix.
@@ -1314,7 +1314,7 @@ class MBAR:
         >>> results = mbar.compute_entropy_and_enthalpy(return_dict=True)
 
         """
-        if return_dict:
+        if not return_dict:
             warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
         if verbose:

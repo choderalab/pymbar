@@ -219,7 +219,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     >>> results = BAR(w_F, w_R, method='bisection', return_dict=True)
 
     """
-    if return_dict:
+    if not return_dict:
         warnings.warn("In pymbar 4+, this function will always behave like `return_dict=True`", FutureWarning)
 
     result_vals = dict()
