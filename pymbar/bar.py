@@ -147,7 +147,7 @@ def BARzero(w_F, w_R, DeltaF):
     return fzero
 
 
-def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR',maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True, return_dict=False):
+def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR', maximum_iterations=500, relative_tolerance=1.0e-12, verbose=False, method='false-position', iterated_solution=True, return_dict=False):
     """Compute free energy difference using the Bennett acceptance ratio (BAR) method.
 
     Parameters
@@ -174,7 +174,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
     method : str, optional, defualt='false-position'
         choice of method to solve BAR nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-position')
     iterated_solution : bool, optional, default=True
-        whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be 
+        whether to fully solve the optimized BAR equation to consistency, or to stop after one step, to be
         equivalent to transition matrix sampling.
     return_dict : bool, default False
         If true, returns are a dict, else they are a tuple
@@ -242,7 +242,7 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
             # consider returning more information about failure
             print("Warning: BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty.")
             if compute_uncertainty:
-                result_vals['Delta_f'] = 0.0 
+                result_vals['Delta_f'] = 0.0
                 result_vals['dDelta_f'] = 0.0
                 if return_dict:
                     return result_vals
@@ -503,6 +503,38 @@ def BAR(w_F, w_R, DeltaF=0.0, compute_uncertainty=True, uncertainty_method='BAR'
         if return_dict:
             return result_vals
         return DeltaF
+
+def BARoverlap(w_F, w_R):
+    """Compute overlap between foward and backward ensembles (using MBAR definition of overlap)
+
+    Parameters
+    ----------
+    w_F : np.ndarray
+        w_F[t] is the forward work value from snapshot t.
+        t = 0...(T_F-1)  Length T_F is deduced from vector.
+    w_R : np.ndarray
+        w_R[t] is the reverse work value from snapshot t.
+        t = 0...(T_R-1)  Length T_R is deduced from vector.
+
+    Returns
+    -------
+    overlap : float
+        The overlap: 0 denotes no overlap, 1 denotes complete overlap
+
+    """
+    from pymbar import MBAR
+    N_k = np.array( [len(w_F), len(w_R)] )
+    N = N_k.sum()
+    u_kn = np.zeros([2,N], np.float32)
+    u_kn[1,0:N_k[0]] = w_F[:]
+    u_kn[0,N_k[0]:N] = w_R[:]
+    mbar = MBAR(u_kn, N_k)
+
+    # Check to make sure u_kn has been correctly formed
+    BAR_DF, BAR_dDF = BAR(w_F, w_R, return_dict=False)
+    assert numpy.isclose(mbar.f_k[1] - mbar.f_k[0], BAR_DF), f'BAR: {BAR_DF} +- {BAR_dDF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}'
+
+    return mbar.computeOverlap()['scalar']
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta
