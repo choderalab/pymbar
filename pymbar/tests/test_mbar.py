@@ -119,8 +119,8 @@ def test_mbar_computeExpectations_position_differences():
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
         results = mbar.computeExpectations(x_n, output = 'differences', return_dict=True)
-        mu_ij = results['mu'] 
-        sigma_ij = results['sigma'] 
+        mu_ij = results['mu']
+        sigma_ij = results['sigma']
 
         mu0 = test.analytical_observable(observable = 'position')
         z = convert_to_differences(mu_ij, sigma_ij, mu0)
@@ -137,7 +137,7 @@ def test_mbar_computeExpectations_position2():
         mbar = MBAR(u_kn, N_k)
         results = mbar.computeExpectations(x_n ** 2, return_dict=True)
         mu = results['mu']
-        sigma = results['sigma'] 
+        sigma = results['sigma']
         mu0 = test.analytical_observable(observable = 'position^2')
 
         z = (mu0 - mu) / sigma
@@ -154,7 +154,7 @@ def test_mbar_computeExpectations_potential():
         mbar = MBAR(u_kn, N_k)
         results = mbar.computeExpectations(u_kn, state_dependent = True, return_dict=True)
         mu = results['mu']
-        sigma = results['sigma'] 
+        sigma = results['sigma']
         mu0 = test.analytical_observable(observable = 'potential energy')
         print(mu)
         print(mu0)
@@ -198,11 +198,11 @@ def test_mbar_computeEntropyAndEnthalpy():
         mbar = MBAR(u_kn, N_k)
         results =  mbar.computeEntropyAndEnthalpy(u_kn, return_dict=True)
         f_t, df_t, u_t, du_t, s_t, ds_t = mbar.computeEntropyAndEnthalpy(u_kn, return_dict=False)
-        f_ij = results['Delta_f'] 
-        df_ij = results['dDelta_f'] 
-        u_ij = results['Delta_u'] 
-        du_ij = results['dDelta_u']  
-        s_ij = results['Delta_s'] 
+        f_ij = results['Delta_f']
+        df_ij = results['dDelta_f']
+        u_ij = results['Delta_u']
+        du_ij = results['dDelta_u']
+        s_ij = results['Delta_s']
         ds_ij = results['dDelta_s']
 
         eq(f_ij, f_t)
