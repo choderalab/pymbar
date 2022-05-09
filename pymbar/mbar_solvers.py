@@ -268,7 +268,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     """
     # put the defaults here in case we get passed an 'options' dictionary that is only partial
     options.setdefault('verbose',False)
-    options.setdefault('maximum_iterations',250)
+    options.setdefault('maximum_iterations',10000)
     options.setdefault('print_warning',False)
     options.setdefault('gamma',1.0)
 
