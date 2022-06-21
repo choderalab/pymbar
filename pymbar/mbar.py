@@ -310,6 +310,8 @@ class MBAR:
         for solver in solver_protocol:
             if 'options' not in solver:
                 solver['options'] = dict()
+            if 'continuation' not in solver:
+                solver['continuation'] = None
             if 'maxiter' not in solver['options']:
                 solver['options']['maxiter'] = maximum_iterations
             if 'verbose' not in solver['options']:
