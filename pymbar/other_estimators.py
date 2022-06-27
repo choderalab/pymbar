@@ -547,22 +547,26 @@ def bar_overlap(w_F, w_R):
         The overlap: 0 denotes no overlap, 1 denotes complete overlap
     """
     from pymbar import MBAR
-    N_k = np.array( [len(w_F), len(w_R)] )
+
+    N_k = np.array([len(w_F), len(w_R)])
     N = N_k.sum()
-    u_kn = np.zeros([2,N])
-    u_kn[1,0:N_k[0]] = w_F[:]
-    u_kn[0,N_k[0]:N] = w_R[:]
+    u_kn = np.zeros([2, N])
+    u_kn[1, 0 : N_k[0]] = w_F[:]
+    u_kn[0, N_k[0] : N] = w_R[:]
     mbar = MBAR(u_kn, N_k)
 
     # Check to make sure u_kn has been correctly formed
     results = bar(w_F, w_R)
-    bar_df = results['Delta_f']
-    bar_ddf = results['dDelta_f']
+    bar_df = results["Delta_f"]
+    bar_ddf = results["dDelta_f"]
 
-    assert np.isclose(mbar.f_k[1] - mbar.f_k[0], bar_df), f'BAR: {bar_df} +- {bar_ddF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}'
+    assert np.isclose(
+        mbar.f_k[1] - mbar.f_k[0], bar_df
+    ), f"BAR: {bar_df} +- {bar_ddF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}"
 
-    return mbar.compute_overlap()['scalar']    
-    
+    return mbar.compute_overlap()["scalar"]
+
+
 # =============================================================================================
 # One-sided exponential averaging (EXP).
 # =============================================================================================

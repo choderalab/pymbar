@@ -2071,16 +2071,13 @@ class FES:
 
         if self.mc_data["first_step"]:
             c = bspline.c
-            mc_data["previous_logposterior"] = (
-                self._get_MC_loglikelihood(
-                    x_n,
-                    w_n,
-                    self.spline_parameters["spline_weights"],
-                    bspline,
-                    self.spline_parameters["xrange"],
-                )
-                - logprior(c)
-            )
+            mc_data["previous_logposterior"] = self._get_MC_loglikelihood(
+                x_n,
+                w_n,
+                self.spline_parameters["spline_weights"],
+                bspline,
+                self.spline_parameters["xrange"],
+            ) - logprior(c)
             cold = bspline.c
             mc_data["first_step"] = True
             # create an extra one we can carry around

@@ -694,12 +694,12 @@ class MBAR:
 
         """
 
-        logfactor = 4.0*np.finfo(np.float64).eps
-                       # make sure all results are larger than this number.
-                       # We tried 1 before, but expecations that are all very small (like
-                       # fraction folded when it is low) cannot be computed accurately. 
-                       # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
-                       # and even occasionally 2*eps, so we chooose 4*eps
+        logfactor = 4.0 * np.finfo(np.float64).eps
+        # make sure all results are larger than this number.
+        # We tried 1 before, but expecations that are all very small (like
+        # fraction folded when it is low) cannot be computed accurately.
+        # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
+        # and even occasionally 2*eps, so we chooose 4*eps
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map)  # number of computed expectations we desire
         # need to convert to matrix to be able to pick up D=1
@@ -1692,13 +1692,16 @@ class MBAR:
                     # kickstart NR.
                     from pymbar.other_estimators import bar
 
-                    self.f_k[l] = self.f_k[k] + bar(
-                        w_F,
-                        w_R,
-                        relative_tolerance=0.000001,
-                        verbose=False,
-                        compute_uncertainty=False,
-                    )["Delta_f"]
+                    self.f_k[l] = (
+                        self.f_k[k]
+                        + bar(
+                            w_F,
+                            w_R,
+                            relative_tolerance=0.000001,
+                            verbose=False,
+                            compute_uncertainty=False,
+                        )["Delta_f"]
+                    )
                 else:
                     # no states observed, so we don't need to initialize this free energy anyway, as
                     # the solution is noniterative.
