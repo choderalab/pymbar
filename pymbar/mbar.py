@@ -337,7 +337,7 @@ class MBAR:
         for solver in solver_protocol:
             if "options" not in solver:
                 solver["options"] = dict()
-                solver["maximum_iterations"] = maximum_iterations
+                solver["options"]["maxiter"] = maximum_iterations
             if "verbose" not in solver["options"]:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.
@@ -694,11 +694,12 @@ class MBAR:
 
         """
 
-        logfactor = 0  # make sure all results are larger than this number.
+        logfactor = 4.0*np.finfo(np.float64).eps
+                       # make sure all results are larger than this number.
                        # We tried 1 before, but expecations that are all very small (like
                        # fraction folded when it is low) cannot be computed accurately. 
-                       # it's possible  that something really small but > 0 might avoid
-                       # errors, but no errors have occured yet. 
+                       # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
+                       # and even occasionally 2*eps, so we chooose 4*eps
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map)  # number of computed expectations we desire
         # need to convert to matrix to be able to pick up D=1

@@ -85,9 +85,9 @@ def test_bar_free_energies(bar_and_test):
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
     # make sure the different methods are nearly equal.
-    assert_almost_equal(fe_bis, fe_fp, decimal=8)
-    assert_almost_equal(fe_sci, fe_bis, decimal=8)
-    assert_almost_equal(fe_fp, fe_bis, decimal=8)
+    assert_almost_equal(fe_bis, fe_fp, decimal=precision)
+    assert_almost_equal(fe_sci, fe_bis, decimal=precision)
+    assert_almost_equal(fe_fp, fe_bis, decimal=precision)
 
     # Test uncertainty methods
     results_dBAR = bars["dBAR"]
@@ -103,8 +103,8 @@ def test_bar_overlap():
     for system_generator in system_generators:
         name, test = system_generator()
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
-        eq(N_k, N_k_output)
-
+        assert_equal(N_k_output,N_k)
+        
         i = 0
         j = 1
         i_indices = np.arange(0, N_k[0])
@@ -117,6 +117,6 @@ def test_bar_overlap():
 
         # Compare with MBAR
         mbar = MBAR(u_kn, N_k)
-        mbar_overlap = mbar.computeOverlap()['scalar']
+        mbar_overlap = mbar.compute_overlap()['scalar']
 
-        eq(bar_overlap, mbar_overlap)
+        assert_almost_equal(bar_overlap, mbar_overlap, decimal=precision)

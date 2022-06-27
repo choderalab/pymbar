@@ -170,7 +170,7 @@ class ExponentialTestCase(object):
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
         x_n = np.zeros([N_tot], np.float64)
-        s_n = np.zeros([N_tot], np.int)
+        s_n = np.zeros([N_tot], int)
         u_kn = np.zeros([self.n_states, N_tot], np.float64)
         index = 0
         for k, N in enumerate(N_k):

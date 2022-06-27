@@ -555,10 +555,13 @@ def bar_overlap(w_F, w_R):
     mbar = MBAR(u_kn, N_k)
 
     # Check to make sure u_kn has been correctly formed
-    bar_df, bar_ddf = bar(w_F, w_R, return_dict=False)
-    assert numpy.isclose(mbar.f_k[1] - mbar.f_k[0], bar_df), f'BAR: {bar_df} +- {bar_ddF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}'
+    results = bar(w_F, w_R)
+    bar_df = results['Delta_f']
+    bar_ddf = results['dDelta_f']
 
-    return mbar.computeOverlap()['scalar']    
+    assert np.isclose(mbar.f_k[1] - mbar.f_k[0], bar_df), f'BAR: {bar_df} +- {bar_ddF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}'
+
+    return mbar.compute_overlap()['scalar']    
     
 # =============================================================================================
 # One-sided exponential averaging (EXP).
