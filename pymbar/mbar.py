@@ -1,7 +1,7 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2017 University of Colorado Boulder
+# Copyright 2017-2022 University of Colorado Boulder
 # Copyright 2010-2017 Memorial Sloan-Kettering Cancer Center
 # Portions of this software are Copyright (c) 2010-2016 University of Virginia
 # Portions of this software are Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
@@ -660,7 +660,7 @@ class MBAR:
 
         'Amin' : np.ndarray, float, shape = (S), needed for reconstructing the covariance one level up.
 
-        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+1)) as the log form is easier to work with.
+        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+logfactor)) as the log form is easier to work with.
 
         Notes
         -----
