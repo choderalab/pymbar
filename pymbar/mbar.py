@@ -337,6 +337,7 @@ class MBAR:
         for solver in solver_protocol:
             if "options" not in solver:
                 solver["options"] = dict()
+                solver["maximum_iterations"] = maximum_iterations
             if "verbose" not in solver["options"]:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.

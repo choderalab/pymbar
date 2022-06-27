@@ -30,7 +30,7 @@ __email__ = "levi.naden@choderalab.org,jaime.rodriguez-guerra@choderalab.org,mic
 
 from . import timeseries, testsystems, confidenceintervals
 from .mbar import MBAR
-from .other_estimators import bar, bar_zero, exp, exp_gauss
+from .other_estimators import bar, bar_overlap, bar_zero, exp, exp_gauss
 from .fes import FES
 from . import old_mbar
 
@@ -43,6 +43,7 @@ __all__ = [
     "exp",
     "exp_gauss",
     "bar",
+    "bar_overlap",
     "bar_zero",
     "MBAR",
     "timeseries",
