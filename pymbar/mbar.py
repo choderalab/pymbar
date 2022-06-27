@@ -612,7 +612,7 @@ class MBAR:
 
         'Amin' : np.ndarray, float, shape = (S), needed for reconstructing the covariance one level up.
 
-        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+1)) as the log form is easier to work with.
+        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+logfactor)) as the log form is easier to work with.
 
         Notes
         -----
@@ -771,7 +771,7 @@ class MBAR:
             result_vals['Theta'] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                result_vals['Amin'] = (A_min[state_map[1,np.arange(S)]] - 1)
+                result_vals['Amin'] = (A_min[state_map[1,np.arange(S)]] - logfactor)
 
         # free energies at these new states
         result_vals['f'] =  f_k[K+state_list]
