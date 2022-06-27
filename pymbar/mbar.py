@@ -612,7 +612,7 @@ class MBAR:
 
         'Amin' : np.ndarray, float, shape = (S), needed for reconstructing the covariance one level up.
 
-        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+1)) as the log form is easier to work with.
+        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+logfactor)) as the log form is easier to work with.
 
         Notes
         -----
