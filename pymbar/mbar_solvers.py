@@ -3,14 +3,13 @@ import logging
 import numpy as np
 import math
 import scipy.optimize
-from pymbar.utils import ensure_type, logsumexp, check_w_normalized
+from pymbar.utils import ensure_type, logsumexp, check_w_normalized, ParameterError
 import warnings
 
 logger = logging.getLogger(__name__)
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
-
 DEFAULT_SOLVER_PROTOCOL = (dict(method="BFGS",continuation=True),dict(method="adaptive",))
 # Allows all of the gradient based methods, but not the non-gradient methods ["Nelder-Mead", "Powell", "COBYLA"]",
 scipy_minimize_options = ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "trust-krylov", "trust-exact", "SLSQP"]
@@ -507,18 +506,15 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method = "adaptive",
             f_k_nonzero = (
                 results  # they are the same for adaptive, until we decide to return more.
             )
-        else:
-            results = scipy.optimize.root(
-                grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options
-            )
-            f_k_nonzero = results["x"] 
         elif method in scipy_root_options:
-            # find the root in the gradient.  Not sure how well this has been tested . . . ?
+            # find the root in the gradient.
             results = scipy.optimize.root(
                 grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options
             )
             f_k_nonzero = pad(results["x"])
         else:
+            import pdb
+            pdb.set_trace()
             raise ParameterError(f"Method {method} for solution of free energies not recognized")
             
     # If there were runtime warnings, show the messages
@@ -588,21 +584,22 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     """
     if solver_protocol is None:
         solver_protocol = DEFAULT_SOLVER_PROTOCOL
-    for protocol in solver_protocol:
-        if protocol["method"] is None:
-            protocol["method"] = DEFAULT_SOLVER_METHOD
 
     all_fks = []
+    all_gnorms = []
     all_results = []
-    for k, options in enumerate(solver_protocol):
-        f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, **options)
+    for solver in solver_protocol:
+        f_k_nonzero_result, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, **solver)
         all_fks.append(f_k_nonzero)
-        all_results.append(results)
         all_gnorms.append(
             np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero_result))
         )
+        all_results.append(results)
 
-        if results["success"] == True:
+        import pdb
+        pdb.set_trace()
+        
+        if results["success"]:
             success = True
             best_gnorm = all_gnorms[-1]
             break

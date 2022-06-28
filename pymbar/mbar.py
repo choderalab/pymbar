@@ -333,7 +333,8 @@ class MBAR:
                 logger.info(self.f_k)
 
         if solver_protocol is None:
-            solver_protocol = ({"method": None},)
+            solver_protocol = DEFAULT_SOLVER_PROTOCOL
+            
         for solver in solver_protocol:
             if "options" not in solver:
                 solver["options"] = dict()
