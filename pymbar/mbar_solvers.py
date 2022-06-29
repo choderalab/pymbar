@@ -21,8 +21,8 @@ DEFAULT_SOLVER_PROTOCOL = (
 )
 
 ROBUST_SOLVER_PROTOCOL = (
+    dict(method="adaptive", options=dict(maxiter=1000)),
     dict(method="L-BFGS-B", options=dict(maxiter=1000)),
-    dict(method="adaptive", options=dict(maxiter=10000)),
 )
 
 # Allows all of the gradient based methods, but not the non-gradient methods ["Nelder-Mead", "Powell", "COBYLA"]",
