@@ -760,7 +760,7 @@ class MBAR:
         logfactors = np.zeros(len(A_list))
         for i in A_list:
             A_min[i] = np.min(A_n[i, :])  # find the minimum
-            logfactors[i] = logfactor*A_min[i]
+            logfactors[i] = np.abs(logfactor*A_min[i])
             A_n[i, :] = A_n[i, :] - (
                 A_min[i] - logfactors[i]
             )  # all values now positive so that we can work in logarithmic scale
