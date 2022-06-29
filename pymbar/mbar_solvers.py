@@ -542,7 +542,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method = "adaptive",
                 "MBAR weights converged within tolerance, despite the SciPy Warnings. Please validate your results."
             )
 
-    return f_k_nonzero, results
+        return f_k_nonzero, results
 
 
 def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
@@ -590,6 +590,10 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     all_fks = []
     all_gnorms = []
     all_results = []
+
+    import pdb
+    pdb.set_trace()
+    
     for solver in solver_protocol:
         f_k_nonzero_result, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, **solver)
         all_fks.append(f_k_nonzero)
