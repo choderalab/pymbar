@@ -1,7 +1,6 @@
 import logging
 import numpy as np
 import math
-import scipy.optimize
 from pymbar.utils import ensure_type, check_w_normalized, ParameterError
 
 use_jit = True
@@ -13,9 +12,13 @@ if use_jit:
     import jax.numpy as jnp
     from jax.numpy import exp, sum, newaxis, diag, dot
     from jax.numpy.linalg import lstsq
+    import jax.scipy.optimize
+    from jax.scipy.optimize import minimize
 else:
     from numpy import exp, sum, newaxis, diag, dot
-    from numpy.linalg import lstsq 
+    from numpy.linalg import lstsq
+    import scipy.optimize.minimize as minimize
+
 import warnings
 logger = logging.getLogger(__name__)
 
@@ -168,6 +171,51 @@ def jax_mbar_gradient(u_kn, N_k, f_k):
     return -1 * N_k * (1.0 - exp(f_k + log_numerator_k))
 
 jit_mbar_gradient = jax.jit(jax_mbar_gradient)
+
+def mbar_objective(u_kn, N_k, f_k):
+    """Calculates objective function for MBAR.
+
+    Parameters
+    ----------
+    u_kn : np.ndarray, shape=(n_states, n_samples), dtype='float'
+        The reduced potential energies, i.e. -log unnormalized probabilities
+    N_k : np.ndarray, shape=(n_states), dtype='int'
+        The number of samples in each state
+    f_k : np.ndarray, shape=(n_states), dtype='float'
+        The reduced free energies of each state
+
+
+    Returns
+    -------
+    obj : float
+        Objective function
+
+    Notes
+    -----
+    This objective function is essentially a doubly-summed partition function and is
+    quite sensitive to precision loss from both overflow and underflow. For optimal
+    results, u_kn can be preconditioned by subtracting out a `n` dependent
+    vector.
+
+    More optimal precision, the objective function uses math.fsum for the
+    outermost sum and logsumexp for the inner sum.
+    """
+
+    return jit_mbar_objective(u_kn, N_k, f_k)
+
+def jax_mbar_objective(u_kn, N_k, f_k):
+    """JAX version of mbar_objective.
+    For parameters, mbar_objective_and_Gradient
+    N_k must be float (should be cast at a higher level)
+
+    """
+    
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+    obj = sum(log_denominator_n) - dot(N_k,f_k)
+
+    return obj
+
+jit_mbar_objective = jax.jit(jax_mbar_objective)
 
 
 def jax_mbar_objective_and_gradient(u_kn, N_k, f_k):
@@ -635,12 +683,26 @@ def solve_mbar_once(
     hess = lambda x: mbar_hessian(u_kn_nonzero, N_k_nonzero, pad(x))[1:][
         :, 1:
     ]  # Hessian of objective function
-
     with warnings.catch_warnings(record=True) as w:
-        if method in scipy_minimize_options:
+        if use_jit and method == 'BFGS':
+            jpad = lambda x: jnp.pad(x, (1, 0))
+            obj = lambda x: mbar_objective(u_kn_nonzero, N_k_nonzero, jpad(x))
+            # objective function to be minimized (for derivative free methods, mostly jit)
+            jax_results = minimize(
+                obj,
+                f_k_nonzero[1:],
+                method=method,
+                tol=tol,
+                options=dict(maxiter=options["maxiter"]),
+            )
+            results = dict()  # there should be a way to copy this.
+            results["x"] = jax_results[0]
+            f_k_nonzero = pad(results["x"])
+            results["success"] = jax_results[1]
+        elif method in scipy_minimize_options:
             if method in scipy_nohess_options:
                 hess = None  # To suppress warning from passing a hessian function.
-            results = scipy.optimize.minimize(
+            results = minimize(
                 grad_and_obj,
                 f_k_nonzero[1:],
                 jac=True,

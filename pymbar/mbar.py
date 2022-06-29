@@ -54,6 +54,7 @@ from pymbar.utils import (
 logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
+JAX_SOLVER_PROTOCOL = mbar_solvers.JAX_SOLVER_PROTOCOL
 
 # =========================================================================
 # MBAR class definition
@@ -343,6 +344,8 @@ class MBAR:
             solver_protocol = DEFAULT_SOLVER_PROTOCOL
         elif solver_protocol == "robust":
             solver_protocol = ROBUST_SOLVER_PROTOCOL
+        elif solver_protocol == "jax":
+            solver_protocol = JAX_SOLVER_PROTOCOL        
         elif not isinstance(solver_protocol, dict):
             logger.warn(
                 "solver_protocol is not 'robust','default' or a dictionary, setting to 'default'"
