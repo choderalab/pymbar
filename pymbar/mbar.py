@@ -362,7 +362,7 @@ class MBAR:
                 solver["options"]["verbose"] = self.verbose
 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(
-            self.u_kn, self.N_k, self.f_k, solver_protocol
+            self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
         )
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
