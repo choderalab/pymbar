@@ -356,6 +356,9 @@ class MBAR:
                 solver["continuation"] = None
             if "maxiter" not in solver["options"]:
                 solver["options"]["maxiter"] = maximum_iterations
+            if maximum_iterations > solver["options"]["maxiter"]:
+                solver["options"]["maxiter"] = maximum_iterations
+                logger.info(f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}")
             if "verbose" not in solver["options"]:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.
