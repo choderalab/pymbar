@@ -1547,7 +1547,6 @@ class MBAR:
         A: the matrix whose entries are to be zeroed.
 
         """
-
         for pair in self.samestates:
             A[pair[0], pair[1]] = 0
             A[pair[1], pair[0]] = 0

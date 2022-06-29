@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import math
 from pymbar.utils import ensure_type, check_w_normalized, ParameterError
-
+import scipy.optimize
 use_jit = True
 if use_jit:
     #### JAX related imports
@@ -17,7 +17,6 @@ if use_jit:
 else:
     from numpy import exp, sum, newaxis, diag, dot
     from numpy.linalg import lstsq
-    import scipy.optimize.minimize as minimize
 
 import warnings
 logger = logging.getLogger(__name__)
@@ -688,7 +687,7 @@ def solve_mbar_once(
             jpad = lambda x: jnp.pad(x, (1, 0))
             obj = lambda x: mbar_objective(u_kn_nonzero, N_k_nonzero, jpad(x))
             # objective function to be minimized (for derivative free methods, mostly jit)
-            jax_results = minimize(
+            jax_results = jax.scipy.optimize.minimize(
                 obj,
                 f_k_nonzero[1:],
                 method=method,
