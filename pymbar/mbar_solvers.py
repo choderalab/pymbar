@@ -10,10 +10,21 @@ logger = logging.getLogger(__name__)
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
-DEFAULT_SOLVER_PROTOCOL = (
+JAX_SOLVER_PROTOCOL = (
     dict(method="BFGS", continuation=True),
     dict(method="adaptive", options=dict(min_sc_iter=0)),
 )
+
+DEFAULT_SOLVER_PROTOCOL = (
+    dict(method="hybr", continuation=True),
+    dict(method="adaptive", options=dict(min_sc_iter=0)),
+)
+
+ROBUST_SOLVER_PROTOCOL = (
+    dict(method="L-BFGS-B", options=dict(maxiter=1000)),
+    dict(method="adaptive", options=dict(maxiter=10000)),
+)
+
 # Allows all of the gradient based methods, but not the non-gradient methods ["Nelder-Mead", "Powell", "COBYLA"]",
 scipy_minimize_options = [
     "L-BFGS-B",
@@ -403,7 +414,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
             )
         else:
             logger.warning(
-                f"max_delta = {max_delta:e}, tol = {rol:e}, maximum_iterations = {maxiter:d}, iterations completed = {iteration:d}"
+                f"max_delta = {max_delta:e}, tol = {tol:e}, maximum_iterations = {maxiter:d}, iterations completed = {iteration:d}"
             )
 
     results = dict()
@@ -558,7 +569,7 @@ def solve_mbar_once(
                 warn_msg.file,
                 "",
             )
-            can_ignore = False  # If any warning is not just unknown options, can ]not skip check
+            can_ignore = False  # If any warning is not just unknown options, can not skip check
         if not can_ignore:
             # Ensure MBAR solved correctly
             w_nk_check = mbar_W_nk(u_kn_nonzero, N_k_nonzero, f_k_nonzero)

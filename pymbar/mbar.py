@@ -53,6 +53,7 @@ from pymbar.utils import (
 
 logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
+ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
 
 # =========================================================================
 # MBAR class definition
@@ -134,11 +135,17 @@ class MBAR:
         initial_f_k : np.ndarray, float, shape=(K), optional
             Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
-        solver_protocol : list(dict) or None, optional, default=None
+        solver_protocol : list(dict), string or None, optional, default=None
             List of dictionaries to define a sequence of solver algorithms
             and options used to estimate the dimensionless free energies.
             See `pymbar.mbar_solvers.solve_mbar()` for details.  If None,
             use the developers best guess at an appropriate algorithm.
+
+            if the string is "robust", it tries "L-BFGS-B" and "adaptive",
+            with relatively large numbers of iterations.
+
+            if "default" or "none", it will use 'hybr' root solver, followed with
+            some rounds of Newton-Raphson if it fails to converge.
 
             The default will try to solve with an adaptive solver algorithm
             which alternates between self-consistent iteration and
@@ -332,7 +339,14 @@ class MBAR:
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
-        if solver_protocol is None:
+        if solver_protocol is None or solver_protocol == "default":
+            solver_protocol = DEFAULT_SOLVER_PROTOCOL
+        elif solver_protocol == "robust":
+            solver_protocol = ROBUST_SOLVER_PROTOCOL
+        elif not isinstance(solver_protocol, dict):
+            logger.warn(
+                "solver_protocol is not 'robust','default' or a dictionary, setting to 'default'"
+            )
             solver_protocol = DEFAULT_SOLVER_PROTOCOL
 
         for solver in solver_protocol:
