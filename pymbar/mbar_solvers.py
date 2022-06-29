@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
-DEFAULT_SOLVER_PROTOCOL = (dict(method="BFGS",continuation=True),dict(method="adaptive",))
+DEFAULT_SOLVER_PROTOCOL = (dict(method="BFGS",continuation=True),dict(method="adaptive",options=dict(min_sc_iter=0)))
 # Allows all of the gradient based methods, but not the non-gradient methods ["Nelder-Mead", "Powell", "COBYLA"]",
 scipy_minimize_options = ["L-BFGS-B", "dogleg", "CG", "BFGS", "Newton-CG", "TNC", "trust-ncg", "trust-krylov", "trust-exact", "SLSQP"]
 scipy_nohess_options = ["L-BFGS-B","BFGS","CG","TNC","SLSQP"] # don't pass a hessian to these to avoid warnings to these. 
@@ -240,7 +240,7 @@ def mbar_W_nk(u_kn, N_k, f_k):
     return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
 
 
-def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
+def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
 
     """
     Determine dimensionless free energies by a combination of Newton-Raphson iteration and self-consistent iteration.
@@ -330,7 +330,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
         if options["verbose"]:
             logger.info(
                 "self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g"
-                % (gnorm_sci, gnorm_nr)
+                % (np.sqrt(gnorm_sci), np.sqrt(gnorm_nr))
             )
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
@@ -375,7 +375,6 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
                 f"Of {iteration+1:d} iterations, {nr_iter:d} were Newton-Raphson iterations and {sci_iter:d} were self-consistent iterations"
             )
             if np.all(f_k == 0.0):
-                # all f_k appear to be zero
                 logger.info("WARNING: All f_k appear to be zero.")
     else:
         logger.warning("WARNING: Did not converge to within specified tolerance.")
@@ -605,10 +604,10 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
             break
         else:
             logger.warning(f"Failed to reach a solution to within tolerance with {solver['method']}: trying next method")
-            logger.info("Ending gnorm of method = {all_gnorms[-1]:e}")
+            logger.info(f"Ending gnorm of method {solver['method']} = {all_gnorms[-1]:e}")
             if solver["continuation"]:
                 f_k_nonzero = f_k_nonzero_result
-                print("Will continue with results from previous method")
+                logger.info("Will continue with results from previous method")
 
     if results["success"]:
         logger.info("Solution found within tolerance!")
