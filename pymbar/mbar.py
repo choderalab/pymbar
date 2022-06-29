@@ -757,10 +757,12 @@ class MBAR:
         else:
             A_list = np.zeros(0, dtype=int)
 
+        logfactors = np.zeros(len(A_list))
         for i in A_list:
             A_min[i] = np.min(A_n[i, :])  # find the minimum
+            logfactors[i] = logfactor*A_min[i]
             A_n[i, :] = A_n[i, :] - (
-                A_min[i] - logfactor
+                A_min[i] - logfactors[i]
             )  # all values now positive so that we can work in logarithmic scale
 
         # Augment W_nk, N_k, and c_k for q_A(x) for the observables, with one
@@ -813,11 +815,11 @@ class MBAR:
         # Now that covariances are computed, add the constants back to A_i that
         # were required to enforce positivity
         for s in range(S):
-            A_i[s] += A_min[state_map[1, s]] - logfactor
+            A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1,s]]
 
         # these values may be used outside the routine, so copy back.
         for i in A_list:
-            A_n[i, :] = A_n[i, :] + (A_min[i] - logfactor)
+            A_n[i, :] = A_n[i, :] + (A_min[i] - logfactors[i])
 
         # expectations of the observables at these states
         if S > 0:
@@ -846,7 +848,7 @@ class MBAR:
             result_vals["Theta"] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - logfactor
+                result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
 
         # free energies at these new states
         result_vals["f"] = f_k[K + state_list]

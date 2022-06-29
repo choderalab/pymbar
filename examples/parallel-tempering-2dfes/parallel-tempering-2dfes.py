@@ -295,7 +295,7 @@ for i in range(2):
     bin_edges.append(np.linspace(torsion_min, torsion_max, nbins_per_torsion + 1))
 
 # Initialize free energy surface with data collected
-fes = pymbar.FES(u_kln, N_k)
+fes = pymbar.FES(u_kln, N_k, mbar_options = dict(solver_protocol="robust"))
 
 # ===================================================================================================
 # Compute free energy surface at the desired temperature.
