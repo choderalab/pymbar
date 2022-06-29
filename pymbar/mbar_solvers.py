@@ -609,7 +609,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
                 f_k_nonzero = f_k_nonzero_result
                 print("Will continue with results from previous method")
 
-    if results["success"] is True:
+    if results["success"]:
         logger.info("Solution found within tolerance!")
     else:
         i_best_gnorm = np.argmin(all_gnorms)
