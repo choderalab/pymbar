@@ -54,6 +54,7 @@ from pymbar.utils import (
 logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
+BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
 
 # =========================================================================
 # MBAR class definition
@@ -92,6 +93,10 @@ class MBAR:
         solver_protocol=None,
         initialize="zeros",
         x_kindices=None,
+        n_bootstraps = 0,
+        bootstrap_solver_protocol=None,            
+        rseed = None,    
+
     ):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -128,13 +133,17 @@ class MBAR:
 
         maximum_iterations : int, optional
             Set to limit the maximum number of iterations performed (default 1000)
+
         relative_tolerance : float, optional
             Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
+
         initial_f_k : np.ndarray, float, shape=(K), optional
             Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
+
         solver_protocol : list(dict), string or None, optional, default=None
             List of dictionaries to define a sequence of solver algorithms
             and options used to estimate the dimensionless free energies.
@@ -164,10 +173,20 @@ class MBAR:
             sense to think of states as adjacent, then choose 'zeroes'.
 
             (default: 'zeros', unless specific values are passed in.)
+
         x_kindices
             Which state is each x from?  Usually doesn't matter, but does for bar. We assume the samples
             are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
             the 1st state, and so forth.
+
+        n_bootstraps: int
+            How many bootstrap free energies will be computed? If None, no bootstraps will be computed.
+            computing uncertainties with bootstraps is only possible if this is > 0. 
+            (default: None)
+
+        bootstrap_solver_protocol: list(dict), string or None, optional, default=None
+            We usually just do steps of adaptive sampling without. "robust" would be the backup.  
+            Default: dict(method="adaptive", options=dict(min_sc_iter=0)),
 
         Notes
         -----
@@ -339,34 +358,70 @@ class MBAR:
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
-        if solver_protocol is None or solver_protocol == "default":
-            solver_protocol = DEFAULT_SOLVER_PROTOCOL
-        elif solver_protocol == "robust":
-            solver_protocol = ROBUST_SOLVER_PROTOCOL
-        elif not isinstance(solver_protocol, dict):
-            logger.warn(
-                "solver_protocol is not 'robust','default' or a dictionary, setting to 'default'"
-            )
-            solver_protocol = DEFAULT_SOLVER_PROTOCOL
+        # decide on the protocol to use when solving.  We use similar logic
+        # for both the solver protocol and the bootstrap solver protocol
 
-        for solver in solver_protocol:
-            if "options" not in solver:
-                solver["options"] = dict()
-            if "continuation" not in solver:
-                solver["continuation"] = None
-            if "maxiter" not in solver["options"]:
-                solver["options"]["maxiter"] = maximum_iterations
-            if maximum_iterations > solver["options"]["maxiter"]:
-                solver["options"]["maxiter"] = maximum_iterations
-                logger.info(f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}")
-            if "verbose" not in solver["options"]:
-                # should add in other ways to get information out of the scipy solvers, not just adaptive,
-                # which might involve passing in different combinations of options, and passing out other strings.
-                solver["options"]["verbose"] = self.verbose
+        protocols = [solver_protocol,bootstrap_solver_protocol]
+        defaults = [DEFAULT_SOLVER_PROTOCOL,BOOTSTRAP_SOLVER_PROTOCOL]
+        robusts = [ROBUST_SOLVER_PROTOCOL,ROBUST_SOLVER_PROTOCOL]
+        pnames = ["solver_protocol","bootstrap_solver_protocol"]
+        
+        for prot, defl, rob, pname in zip(protocols,defaults,robusts,pnames):
+            if prot is None or prot == "default":
+                prot = defl
+            elif prot == "robust":
+                prot = rob
+            else:
+                for solver in prot:
+                    if not isinstance(solver, dict):
+                        logger.warn(
+                            "{pname} is not 'robust','default' or a tuple/list dictionaries, setting to 'default'"
+                        )
+                    prot = defl
+
+            for solver in prot:
+                if "options" not in solver:
+                    solver["options"] = dict()
+                if "continuation" not in solver:
+                    solver["continuation"] = None
+                if "maxiter" not in solver["options"]:
+                    solver["options"]["maxiter"] = maximum_iterations
+                if maximum_iterations > solver["options"]["maxiter"]:
+                    solver["options"]["maxiter"] = maximum_iterations
+                    logger.info(f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}")
+                if "verbose" not in solver["options"]:
+                    # should add in other ways to get information out of the scipy solvers, not just adaptive,
+                    # which might involve passing in different combinations of options, and passing out other strings.
+                    solver["options"]["verbose"] = self.verbose
+
+        if rseed != None:
+            self.rstate = np.random.get_state()
+        else:
+            np.random.seed(rseed)
 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(
             self.u_kn, self.N_k, self.f_k, solver_protocol
         )
+        
+        if n_bootstraps > 0:
+            self.n_bootstraps = n_bootstraps
+            maxfrac = int(max((1,0.1*self.n_bootstraps)))
+
+            self.f_k_boots = np.zeros([self.n_bootstraps,self.K])
+            for b in range(self.n_bootstraps):
+                f_k_init = self.f_k.copy()             #save the original data, as it gets updated.
+                allN = int(np.sum(N_k))
+                rinit = np.random.randint(allN,size=allN)
+                self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(
+                    self.u_kn[:,rinit], self.N_k, f_k_init, bootstrap_solver_protocol,
+                )
+                if verbose:
+                    if b%maxfrac==0:
+                        logger.info(f"Caculated {b+1:d}/{self.n_bootstraps:d} bootstrap samples")
+        elif n_bootstraps < 0:
+            logger.warn("n_bootstraps must be an integer >= 0")
+
+        # bootstrapped weight matrices not generated here, but when expectations are needed.
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
@@ -539,7 +594,7 @@ class MBAR:
         warning_cutoff=1.0e-10,
         return_theta=False,
     ):
-        """Get the dimensionless free energy differences and uncertainties among all thermodynamic states.
+        """Compute and return  the dimensionless free energy differences and uncertainties among all thermodynamic states.
 
 
         Parameters
@@ -550,6 +605,7 @@ class MBAR:
             Choice of method used to compute asymptotic covariance method,
             or None to use default.  See help for _computeAsymptoticCovarianceMatrix()
             for more information on various methods. (default: svd)
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
             than this number (default: 1.0e-10)
@@ -604,21 +660,34 @@ class MBAR:
         result_vals = dict()
 
         result_vals["Delta_f"] = Deltaf_ij
+        
+        if uncertainty_method == 'bootstrap' and self.n_boostraps == 0:
+            raise ParameterError(
+                "Cannot request bootstrap sampling of free energy differences without any bootstraps"
+            )
 
-        if compute_uncertainty or return_theta:
+        if (compute_uncertainty and self.n_bootstraps==None) or return_theta:
             # Compute asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
                 np.exp(self.Log_W_nk), self.N_k, method=uncertainty_method
             )
 
         if compute_uncertainty:
-            dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
-            # zero out numerical error for thermodynamically identical states
-            self._zerosamestates(dDeltaf_ij)
-            # Return matrix of free energy differences and uncertainties.
-            dDeltaf_ij = np.array(dDeltaf_ij)
-            result_vals["dDelta_f"] = dDeltaf_ij
-
+            if self.n_bootstraps > 0:
+                diffm = np.zeros([self.K,self.K,self.n_bootstraps])
+                for b in range(self.n_bootstraps):
+                    # take the matrix of differences of f_ij
+                    diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose()
+                dDeltaf_ij = np.std(diffm,axis=2)
+                result_vals['dDelta_f'] = dDeltaf_ij                
+            else:
+                dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
+                # zero out numerical error for thermodynamically identical states
+                self._zerosamestates(dDeltaf_ij)
+                # Return matrix of free energy differences and uncertainties.
+                dDeltaf_ij = np.array(dDeltaf_ij)
+                result_vals["dDelta_f"] = dDeltaf_ij
+                
         if return_theta:
             result_vals["Theta"] = Theta_ij
 
