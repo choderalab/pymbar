@@ -21,7 +21,7 @@ requirements:
 
 test:
   requires:
-    - nose
+    - pytest
     - statsmodels
   imports:
     - pymbar
