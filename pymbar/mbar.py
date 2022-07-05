@@ -707,11 +707,11 @@ class MBAR:
 
         if compute_uncertainty:
             if uncertainty_method == "bootstrap":
-                diffm = np.zeros([self.K,self.K,self.n_bootstraps])
+                diffm = np.zeros([self.n_bootstraps,self.K,self.K])
                 for b in range(self.n_bootstraps):
                     # take the matrix of differences of f_ij
-                    diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose()
-                dDeltaf_ij = np.std(diffm,axis=2)
+                    diffm[b,:,:] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose()
+                dDeltaf_ij = np.std(diffm,axis=0)
                 result_vals['dDelta_f'] = dDeltaf_ij                
             else:
                 dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
@@ -882,7 +882,7 @@ class MBAR:
         if uncertainty_method == "bootstrap":
             n_total = self.n_bootstraps + 1
             A_i_bootstrap = np.zeros([self.n_bootstraps,S])
-            
+            f_bootstrap = np.zeros([self.n_bootstraps,len(state_list)])
         else:
             n_total = 1
 
@@ -936,26 +936,31 @@ class MBAR:
             if n == 0:
                 for s in range(S):
                     A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1,s]]
+                    # expectations of the observables at these states
+                    if S > 0:
+                        result_vals["observables"] = A_i
+                if return_theta:
+                    Theta_ij = self._computeAsymptoticCovarianceMatrix(
+                        np.exp(Log_W_nk), N_k, method=uncertainty_method
+                    )
+                        
+                # free energies at these new states. Not needed for bootstrapping?
+                result_vals["f"] = f_k[K + state_list]
             else:
                 # we don't need to add a_min, since we did that when n=0
                 for s in range(S):
                     A_i_bootstrap[n-1,s] = A_i[s]
+                f_bootstrap[n-1] = f_k[K + state_list]
                 
         if uncertainty_method == "bootstrap":
             result_vals["bootstrapped_observables"] = A_i_bootstrap
+            result_vals["bootstrapped_f"] = f_bootstrap
 
         # these values may be used outside the routine, so copy back.
         for i in A_list:
             A_n[i, :] = A_n[i, :] + (A_min[i] - logfactors[i])
 
-        # expectations of the observables at these states
-        if S > 0:
-            result_vals["observables"] = A_i
-
         if return_theta:
-            Theta_ij = self._computeAsymptoticCovarianceMatrix(
-                np.exp(Log_W_nk), N_k, method=uncertainty_method
-            )
 
             # Note: these variances will be the same whether or not we
             # subtract a different constant from each A_i
@@ -976,9 +981,6 @@ class MBAR:
             if S > 0:
                 # we need to return the minimum A as well
                 result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
-
-        # free energies at these new states. Not needed for bootstrapping?
-        result_vals["f"] = f_k[K + state_list]
 
         # Return expectations and uncertainties.
         return result_vals
@@ -1261,8 +1263,6 @@ class MBAR:
                 - Theta[K : 2 * K, 0:K]
             )
 
-        import pdb
-        pdb.set_trace()
         if output == "averages":
             result_vals["mu"] = inner_results["observables"]
             if compute_uncertainty:
@@ -1279,11 +1279,11 @@ class MBAR:
 
             if compute_uncertainty:
                 if uncertainty_method=="bootstrap":
-                    result_vals["sigma"] = np.zeros([len(A_im),len(A_im)])
+                    bootstrap_differences = np.zeros([self.n_bootstraps,len(A_im),len(A_im)])
                     for b in range(self.n_bootstraps):
                         A_b =  inner_results["bootstrapped_observables"][b]
-                        result_vals["sigma"] += A_b - np.vstack(A_b)
-                    result_vals["sigma"] /= np.sqrt(results_val["sigma"]/self.n_bootstraps)
+                        bootstrap_differences[b,:,:] = A_b - np.vstack(A_b)
+                    result_vals["sigma"] = np.std(bootstrap_differences,axis=0)
                 else:
                     result_vals["sigma"] = self._ErrorOfDifferences(
                         covA_ij, warning_cutoff=warning_cutoff
@@ -1384,10 +1384,9 @@ class MBAR:
             warning_cutoff=warning_cutoff,
         )
         result_vals = dict()
-        expectations, uncertainties, covariances = None, None, None
         result_vals["mu"] = inner_results["observables"]
 
-        if compute_uncertainty or compute_covariance or return_theta:
+        if ((compute_uncertainty or compute_covariance) and compute_uncertainty!="bootstrap") or return_theta:
             Adiag = np.zeros([2 * I, 2 * I], dtype=np.float64)
             diag = np.ones(2 * I, dtype=np.float64)
             diag[0:I] = diag[I : 2 * I] = inner_results["observables"] - inner_results["Amin"]
@@ -1409,7 +1408,13 @@ class MBAR:
 
             if return_theta:
                 result_vals["Theta"] = Theta
-
+        if uncertainty_method == "bootstrap":        
+            if compute_uncertainty:
+                result_vals["sigma"] = np.std(
+                    inner_results["bootstrapped_observables"],axis=0
+                )
+            if compute_covariance:
+                result_vals["covariances"] = np.cov(inner_results["bootstrapped_observables"].T)
         return result_vals
 
     # =========================================================================
@@ -1429,7 +1434,8 @@ class MBAR:
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. 
+            Alternate method is bootstrapping. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1482,10 +1488,13 @@ class MBAR:
         result_vals["Delta_f"] = f_k - np.vstack(f_k)
 
         if compute_uncertainty:
-            result_vals["dDelta_f"] = self._ErrorOfDifferences(
-                inner_results["Theta"], warning_cutoff=warning_cutoff
-            )
-
+            if uncertainty_method == "bootstrap":
+                result_vals["dDelta_f"] = np.std(inner_results["bootstrapped_f"],axis=0)
+            else:
+                result_vals["dDelta_f"] = self._ErrorOfDifferences(
+                    inner_results["Theta"], warning_cutoff=warning_cutoff
+                )
+            
         return result_vals
 
     # =====================================================================
@@ -1574,58 +1583,77 @@ class MBAR:
         np.fill_diagonal(Adiag, diag)
         Theta = Adiag @ Theta @ Adiag
 
+        result_vals = dict()
         # Compute reduced free energy difference.
         f_k = inner_results["f"]
-        Delta_f_ij = f_k - np.vstack(f_k)
-        # compute uncertainty matrix in free energies:
-        covf = Theta[2 * K : 3 * K, 2 * K : 3 * K]
-        dDelta_f_ij = self._ErrorOfDifferences(covf, warning_cutoff=warning_cutoff)
-
+        result_vals["Delta_f"] = f_k - np.vstack(f_k)
         # Compute reduced enthalpy difference.
         u_k = inner_results["observables"]
-        Delta_u_ij = u_k - np.vstack(u_k)
-        # compute uncertainty matrix in energies:
-        covu = (
-            Theta[0:K, 0:K]
-            + Theta[K : 2 * K, K : 2 * K]
-            - Theta[0:K, K : 2 * K]
-            - Theta[K : 2 * K, 0:K]
-        )
-        dDelta_u_ij = self._ErrorOfDifferences(covu, warning_cutoff=warning_cutoff)
-
+        result_vals["Delta_u"] = u_k - np.vstack(u_k)
         # Compute reduced entropy difference
         s_k = u_k - f_k
-        Delta_s_ij = s_k - np.vstack(s_k)
-        # compute uncertainty matrix in entropies
-        # s_i = u_i - f_i
-        # cov(s_i) =   cov(u_i - f_i)
-        #         =   cov(exp(ln C_a - ln c_a) + ln c_a)
-        #         =   cov(exp(ln C_a - ln c_a), exp(ln C_a - ln c_a)) + cov(ln c_a, ln c_a)
-        #           + cov(exp(ln C_a - ln c_a), ln c_a) + cov(ln c_a, exp(ln C_a - ln c_a))
-        #         = cov(u,u) + cov(f,f)
-        #             + A cov(ln C_a - ln c_a, ln c_a) + A cov(ln c_a, ln C_a - ln c_a)
-        #         = cov(u,u) + cov(f,f)
-        #             + A cov(ln C_a, ln c_a) - A cov(ln c_a, ln c_a) + A cov(ln c_a, ln C_a) - A cov(ln c_a, ln c_a)
-        #         = cov(u,u) + cov(f,f) + A cov(ln C_a,ln c_a) + A cov(ln c_a, ln C_a) - 2A cov(ln_ca,ln_ca)
-        #
-        covs = (
-            covu
-            + covf
-            + Theta[0:K, 2 * K : 3 * K]
-            + Theta[2 * K : 3 * K, 0:K]
-            - Theta[K : 2 * K, 2 * K : 3 * K]
-            - Theta[2 * K : 3 * K, K : 2 * K]
-        )
-        # note: not clear that Theta[K:2*K,2*K:3*K] and Theta[K:2*K,2*K:3*K] are symmetric?
-        dDelta_s_ij = self._ErrorOfDifferences(covs, warning_cutoff=warning_cutoff)
+        result_vals["Delta_s"] = s_k - np.vstack(s_k)
 
-        result_vals = dict()
-        result_vals["Delta_f"] = Delta_f_ij
-        result_vals["dDelta_f"] = dDelta_f_ij
-        result_vals["Delta_u"] = Delta_u_ij
-        result_vals["dDelta_u"] = dDelta_u_ij
-        result_vals["Delta_s"] = Delta_s_ij
-        result_vals["dDelta_s"] = dDelta_s_ij
+        if uncertainty_method == "bootstrap":
+            # bootstrapped free energy
+            diffm = np.zeros([self.n_bootstraps, self.K, self.K])
+            for b in range(self.n_bootstraps):
+                # take the matrix of differences of f_ij
+                f = np.matrix(self.f_k_boots[b,:])
+                diffm[b,:,:] = f - f.transpose()
+            result_vals['dDelta_f'] = np.std(diffm,axis=0)
+
+            # bootstrapped enthalpy
+            for b in range(self.n_bootstraps):
+                # take the matrix of differences of f_ij
+                u = np.matrix(inner_results["bootstrapped_observables"][b])
+                diffm[b,:,:] = u - u.transpose()
+            result_vals['dDelta_u'] = np.std(diffm,axis=0)
+
+            # bootstrapped entropy
+            for b in range(self.n_bootstraps):
+                # take the matrix of differences of f_ij
+                s = np.matrix(
+                    inner_results["bootstrapped_observables"][b] - self.f_k_boots[b,:]
+                )
+                diffm[b,:,:] = s - s.transpose()
+            result_vals['dDelta_s'] = np.std(diffm,axis=0)
+        else:
+            # compute uncertainty matrix in free energies:
+            covf = Theta[2 * K : 3 * K, 2 * K : 3 * K]
+            result_vals["dDelta_f"] = self._ErrorOfDifferences(covf, warning_cutoff=warning_cutoff)
+
+            # compute uncertainty matrix in energies/enthalpies:
+            covu = (
+                Theta[0:K, 0:K]
+                + Theta[K : 2 * K, K : 2 * K]
+                - Theta[0:K, K : 2 * K]
+                - Theta[K : 2 * K, 0:K]
+            )
+            result_vals["dDelta_u"] = self._ErrorOfDifferences(covu, warning_cutoff=warning_cutoff)
+
+            # compute uncertainty matrix in entropies
+            # s_i = u_i - f_i
+            # cov(s_i) =   cov(u_i - f_i)
+            #         =   cov(exp(ln C_a - ln c_a) + ln c_a)
+            #         =   cov(exp(ln C_a - ln c_a), exp(ln C_a - ln c_a)) + cov(ln c_a, ln c_a)
+            #           + cov(exp(ln C_a - ln c_a), ln c_a) + cov(ln c_a, exp(ln C_a - ln c_a))
+            #         = cov(u,u) + cov(f,f)
+            #             + A cov(ln C_a - ln c_a, ln c_a) + A cov(ln c_a, ln C_a - ln c_a)
+            #         = cov(u,u) + cov(f,f)
+            #             + A cov(ln C_a, ln c_a) - A cov(ln c_a, ln c_a) + A cov(ln c_a, ln C_a) - A cov(ln c_a, ln c_a)
+            #         = cov(u,u) + cov(f,f) + A cov(ln C_a,ln c_a) + A cov(ln c_a, ln C_a) - 2A cov(ln_ca,ln_ca)
+            #
+            covs = (
+                covu
+                + covf
+                + Theta[0:K, 2 * K : 3 * K]
+                + Theta[2 * K : 3 * K, 0:K]
+                - Theta[K : 2 * K, 2 * K : 3 * K]
+                - Theta[2 * K : 3 * K, K : 2 * K]
+            )
+            # note: not clear that Theta[K:2*K,2*K:3*K] and Theta[K:2*K,2*K:3*K] are symmetric?
+            result_vals["dDelta_s"] = self._ErrorOfDifferences(covs, warning_cutoff=warning_cutoff)
 
         return result_vals
 
