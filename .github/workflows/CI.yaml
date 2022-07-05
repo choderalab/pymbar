@@ -61,26 +61,6 @@ jobs:
       shell: bash -l {0}
       run: |
         pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/
-    - name: Run examples
-      shell: bash -l {0}
-      run: |
-        ### constant-force-optical-trap
-        cd examples/constant-force-optical-trap
-        python extract-data.py
-        python force-bias-optical-trap.py
-        ### harmonic-oscillators
-        cd ../harmonic-oscillators
-        python harmonic-oscillators.py
-        python harmonic-oscillators-distributions.py
-        cd ../heat-capacity
-        python heat-capacity.py -b 2
-        ### parallel-tempering-2dfes
-        cd ../parallel-tempering-2dfes
-        python parallel-tempering-2dfes.py
-        ### umbrella-sampling-fes
-        cd ../umbrella-sampling-fes
-        python umbrella-sampling.py
-        python umbrella-sampling-advanced-fes.py
     - name: CodeCov
       uses: codecov/codecov-action@v1
       with:
@@ -88,44 +68,3 @@ jobs:
         file: ./coverage.xml
         flags: unittests
         yml: ./.codecov.yml
-
-  lint-format:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.8]
-    env:
-      PACKAGE: "pymbar"
-
-    steps:
-    - name: Checkout the code
-      uses: actions/checkout@v1
-
-    - name: Setup Conda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-        environment-file: devtools/conda-envs/test_env.yaml
-
-        channels: conda-forge,defaults
-
-        activate-environment: test
-        auto-update-conda: false
-        auto-activate-base: false
-        show-channel-urls: true
-
-    - name: Install linter and formatter
-      shell: bash -l {0}
-      run: |
-        conda install pylint black
-    - name: Run pylint
-      shell: bash -l {0}
-      run: |
-        pylint $PACKAGE/
-    # TODO: Remove --exclude pymbar/old_mbar.py after deprecation
-    - name: Run black check
-      shell: bash -l {0}
-      if: always()
-      run: |
-        black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py --exclude $PACKAGE/_version.py
