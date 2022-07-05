@@ -25,10 +25,8 @@ ROBUST_SOLVER_PROTOCOL = (
     dict(method="L-BFGS-B", options=dict(maxiter=1000)),
 )
 
-BOOTSTRAP_SOLVER_PROTOCOL = (
-    dict(method="adaptive", options=dict(min_sc_iter=0)),
-)
-    
+BOOTSTRAP_SOLVER_PROTOCOL = (dict(method="adaptive", options=dict(min_sc_iter=0)),)
+
 # Allows all of the gradient based methods, but not the non-gradient methods ["Nelder-Mead", "Powell", "COBYLA"]",
 scipy_minimize_options = [
     "L-BFGS-B",

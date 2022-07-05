@@ -211,7 +211,6 @@ def test_mbar_compute_expectations_position_averages(mbar_and_test):
 def test_mbar_compute_expectations_position_differences(mbar_and_test):
 
     """Can MBAR calculate E(x_n)??"""
-
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
     results = mbar.compute_expectations(x_n, output="differences")
     mu_ij = results["mu"]
@@ -507,6 +506,7 @@ def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
 def test_mbar_compute_expectations_inner(mbar_and_test):
 
     """Can MBAR calculate general expectations inner code (note: this just tests completion)"""
+
     mbar, test, x_n, u_kn = (
         mbar_and_test["mbar"],
         mbar_and_test["test"],
