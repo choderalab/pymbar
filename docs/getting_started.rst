@@ -38,7 +38,7 @@ Running the tests is a great way to verify that everything is working.
 The test suite uses `pytest <https://pytest.readthedocs.org/en/latest/>`_, in addition to `statsmodels <http://statsmodels.sourceforge.net/>`_ and `pytables <http://www.pytables.org/>`_, which you can install via ``conda``:
 
 ::
-   $ conda install pytest statsmodels pytables
+   $ conda install pytest "statsmodels<0.13" pytables
 
 You can then run the tests with:
 

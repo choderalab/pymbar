@@ -14,7 +14,7 @@ dependencies:
   - pytest-cov
   - flaky
   - codecov
-  - statsmodels
+  - statsmodels <0.13
   - scikit-learn  # Provides the sklearn module
   - matplotlib-base
   - xlrd

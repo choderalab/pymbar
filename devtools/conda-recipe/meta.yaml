@@ -22,7 +22,7 @@ requirements:
 test:
   requires:
     - pytest
-    - statsmodels
+    - statsmodels <0.13
   imports:
     - pymbar
   commands:
