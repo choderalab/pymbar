@@ -60,7 +60,8 @@ def test_bar_free_energies():
         fe_t, dfe_t = mbar.getFreeEnergyDifferences(return_dict=False)
 
         eq(fe, fe_t[0,1])
-        eq(fe_sigma, dfe_t[0,1])
+        # absolute(fe_sigma - dfe_t[0,1]) <= (rtol * absolute(dfe_t[0,1]))
+        np.testing.assert_allclose(fe_sigma, dfe_t[0,1], rtol=0.01)
 
 
 def test_bar_computeOverlap():
