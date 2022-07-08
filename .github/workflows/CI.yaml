@@ -24,6 +24,7 @@ jobs:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
         python-version: [3.8, 3.9]
+        jax: ["", "_nojax"]
     env:
       PYVER: ${{ matrix.python-version }}
       CI_OS: ${{ matrix.os }}
@@ -44,7 +45,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: ${{ matrix.python-version }}
-        environment-file: devtools/conda-envs/test_env.yaml
+        environment-file: devtools/conda-envs/test_env${{ matrix.jax }}.yaml
 
         channels: conda-forge,defaults
 

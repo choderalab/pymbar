@@ -1,0 +1,21 @@
+name: test
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+    # Base depends
+  - python
+  - pip
+  - numpy >=1.12
+  - scipy
+  - numexpr
+
+    # Testing
+  - pytest
+  - pytest-cov
+  - flaky
+  - codecov
+  - statsmodels
+  - scikit-learn  # Provides the sklearn module
+  - matplotlib-base
+  - xlrd
