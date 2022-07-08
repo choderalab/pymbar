@@ -314,13 +314,14 @@ class MBAR:
             #save the original data:
             self.f_k_boots = np.zeros([self.nbootstraps,self.K])
 
+            allN = int(np.sum(self.N_k))
             rinit = np.zeros(allN, int)
             for b in range(self.nbootstraps):
                 for k in range(K): # randomize within the indices with the same K.
                     # which of the indices are equal to K
                     k_indices = np.where(self.x_kindices == k)[0]
                     # pick new random ones of these K.
-                    new_kindices = k_indices[np.random.randint(N_k[k], size=N_k[k])]
+                    new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
                     rinit[k_indices] = new_kindices
 
                 self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol)
