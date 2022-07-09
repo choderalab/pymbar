@@ -2011,21 +2011,21 @@ class FES:
         if spline_weights in ["simplesum", "biasedstates"]:
             loglikelihood = 0
 
+            def splinek(x, kf):
+                return spline(x) + self.spline_parameters["fkbias"][kf](x)
+
+            def expk(x, kf):
+                return np.exp(-splinek(x, kf))
+
             for k in range(K):
                 x_kn = x_n[self.mbar.x_kindices == k]
 
-                def splinek(x, kf=k):
-                    return spline(x) + self.spline_parameters["fkbias"][kf](x)
-
-                def expk(x, kf=k):
-                    return np.exp(-splinek(x, kf))
-
                 normalize = np.log(self._integrate(expk, xrange[0], xrange[1], args=(k)))
                 if spline_weights == "simplesum":
-                    loglikelihood += (N / K) * np.mean(splinek(x_kn))
+                    loglikelihood += (N / K) * np.mean(splinek(x_kn, k))
                     loglikelihood += (N / K) * normalize
                 elif spline_weights == "biasedstates":
-                    loglikelihood += np.sum(splinek(x_kn))
+                    loglikelihood += np.sum(splinek(x_kn, k))
                     loglikelihood += self.N_k[k] * normalize
 
         elif spline_weights == "unbiasedstate":
@@ -2311,13 +2311,14 @@ class FES:
             # with other scipy solvers
             pE = np.zeros(nspline - 1)
 
+            def dexpf(x, index):
+                return db_c[index + 1](x) * expf(x)
+
             for i in range(nspline - 1):
                 # Boltzmann weighted derivative
-                def dexpf(x):
-                    return db_c[i + 1](x) * expf(x)
 
                 # now compute the expectation of each derivative
-                pE[i] = self._integrate(dexpf, xrangei[i + 1, 0], xrangei[i + 1, 1])
+                pE[i] = self._integrate(dexpf, xrangei[i + 1, 0], xrangei[i + 1, 1], args=(i,))
                 # normalize the expectation.
                 pE[i] /= pF
             g -= N * pE
@@ -2415,16 +2416,18 @@ class FES:
                             h[i, j] += pE / pF[k]
 
         elif spline_weights == "unbiasedstate":
+
+            def ddexpf(x, index_i, index_j):
+                return db_c[index_i + 1](x) * db_c[index_j + 1](x) * expf(x)
+
             for i in range(nspline - 1):
                 for j in range(0, i + 1):
                     if np.abs(i - j) <= kdegree:
 
-                        def ddexpf(x):
-                            return db_c[i + 1](x) * db_c[j + 1](x) * expf(x)
-
                         # now compute the expectation of each derivative
                         pE = self._integrate(
-                            ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1]
+                            ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1],
+                            args=(i, j)
                         )
                         h[i, j] += N * pE / pF
 
