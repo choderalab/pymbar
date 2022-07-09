@@ -304,20 +304,27 @@ class MBAR:
                 solver['options']['verbose'] = self.verbose
 
         np.random.seed(rseed)
-        if rseed != None:
-            self.rstate = np.random.get_state()
+        self.rstate = np.random.get_state()
 
         f_k_init = self.f_k.copy()  # we need to pass a copy so we don't overwrite the original 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, f_k_init, solver_protocol)
 
-        self.bootstraps = None    
+        self.nbootstraps = None
         if nbootstraps != None:
             self.nbootstraps = nbootstraps
             #save the original data:
             self.f_k_boots = np.zeros([self.nbootstraps,self.K])
+
+            allN = int(np.sum(self.N_k))
+            rinit = np.zeros(allN, int)
             for b in range(self.nbootstraps):
-                allN = np.sum(N_k)
-                rinit = np.random.randint(allN,size=allN)
+                for k in range(K): # randomize within the indices with the same K.
+                    # which of the indices are equal to K
+                    k_indices = np.where(self.x_kindices == k)[0]
+                    # pick new random ones of these K.
+                    new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
+                    rinit[k_indices] = new_kindices
+
                 self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol)
                 if verbose:
                     if b%10==0:
@@ -540,6 +547,7 @@ class MBAR:
         >>> results = mbar.getFreeEnergyDifferences(return_dict=True)
 
         """
+
         if uncertainty_method == 'bootstrap' and self.nbootstraps == None:
             raise ParameterError("Cannot request bootstrap sampling of free energy differences without any bootstraps")
 
@@ -562,7 +570,7 @@ class MBAR:
             diffm = np.zeros([self.K,self.K,self.nbootstraps])
             # take the matrix of differences of f_ij
             for b in range(self.nbootstraps):
-                diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose() 
+                diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose()
             dDeltaf_ij = np.std(diffm,axis=2)
             result_vals['dDelta_f'] = dDeltaf_ij
 
@@ -732,6 +740,7 @@ class MBAR:
         Log_W_nk[:, 0:K] = self.Log_W_nk
         N_k[0:K] = self.N_k
         f_k[0:K] = self.f_k
+
 
         # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
         states_with_samples = (self.N_k > 0)
@@ -1251,13 +1260,12 @@ class MBAR:
         Deltaf_ij, dDeltaf_ij = None, None
 
         f_k = np.matrix(inner_results['f'])
-
         result_vals = dict()
         results_list = []
         result_vals['Delta_f'] = np.array(f_k - f_k.transpose())
         results_list.append(result_vals['Delta_f'])
 
-        if (compute_uncertainty):
+        if compute_uncertainty:
             result_vals['dDelta_f'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
             results_list.append(result_vals['dDelta_f'])
 
