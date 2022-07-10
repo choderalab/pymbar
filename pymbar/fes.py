@@ -2426,7 +2426,9 @@ class FES:
 
                         # now compute the expectation of each derivative
                         pE = self._integrate(
-                            ddexpf, xrangeij[i + 1, j + 1, 0], xrangeij[i + 1, j + 1, 1],
+                            ddexpf,
+                            xrangeij[i + 1, j + 1, 0],
+                            xrangeij[i + 1, j + 1, 1],
                             args=(i, j)
                         )
                         h[i, j] += N * pE / pF
