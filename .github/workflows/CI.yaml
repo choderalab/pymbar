@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - 'master'
-      - 'pymbar4'
-      - 'gha'
+      - 'main'
+      - 'pymbar3'
   pull_request:
     branches:
       - 'master'
-      - 'pymbar4'
-      - 'gha'
+      - 'main'
+      - 'pymbar3'
   schedule:
     # Nightly Tests
     - cron: '0 0 * * *'
