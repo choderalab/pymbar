@@ -358,7 +358,9 @@ class MBAR:
                 solver["options"]["maxiter"] = maximum_iterations
             if maximum_iterations > solver["options"]["maxiter"]:
                 solver["options"]["maxiter"] = maximum_iterations
-                logger.info(f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}")
+                logger.info(
+                    f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}"
+                )
             if "verbose" not in solver["options"]:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.
@@ -763,7 +765,7 @@ class MBAR:
         logfactors = np.zeros(len(A_list))
         for i in A_list:
             A_min[i] = np.min(A_n[i, :])  # find the minimum
-            logfactors[i] = np.abs(logfactor*A_min[i])
+            logfactors[i] = np.abs(logfactor * A_min[i])
             A_n[i, :] = A_n[i, :] - (
                 A_min[i] - logfactors[i]
             )  # all values now positive so that we can work in logarithmic scale
@@ -818,7 +820,7 @@ class MBAR:
         # Now that covariances are computed, add the constants back to A_i that
         # were required to enforce positivity
         for s in range(S):
-            A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1,s]]
+            A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1, s]]
 
         # these values may be used outside the routine, so copy back.
         for i in A_list:
@@ -851,7 +853,9 @@ class MBAR:
             result_vals["Theta"] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
+                result_vals["Amin"] = (
+                    A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
+                )
 
         # free energies at these new states
         result_vals["f"] = f_k[K + state_list]
