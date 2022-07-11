@@ -35,12 +35,12 @@ The development version can be installed directly from github via ``pip``:
 Running the tests
 =================
 Running the tests is a great way to verify that everything is working.
-The test suite uses `nose <https://nose.readthedocs.org/en/latest/>`_, in addition to `statsmodels <http://statsmodels.sourceforge.net/>`_ and `pytables <http://www.pytables.org/>`_, which you can install via ``conda``:
+The test suite uses `pytest <https://pytest.readthedocs.org/en/latest/>`_, in addition to `statsmodels <http://statsmodels.sourceforge.net/>`_ and `pytables <http://www.pytables.org/>`_, which you can install via ``conda``:
 
 ::
-   $ conda install nose statsmodels pytables
+   $ conda install pytest "statsmodels<0.13" pytables
 
 You can then run the tests with:
 
 ::
-   $ nosetests -vv pymbar
+   $ pytest -vv pymbar
