@@ -65,13 +65,13 @@ class ExponentialTestCase(object):
         return np.log(self.rates)
 
     def analytical_means(self):
-        return self.rates ** -1.0
+        return self.rates**-1.0
 
     def analytical_variances(self):
-        return self.rates ** -2.0
+        return self.rates**-2.0
 
     def analytical_standard_deviations(self):
-        return np.sqrt(self.rates ** -2.0)
+        return np.sqrt(self.rates**-2.0)
 
     def analytical_observable(self, observable="position"):
 

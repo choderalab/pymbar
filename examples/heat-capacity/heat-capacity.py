@@ -352,7 +352,7 @@ for n in range(n_boots_work):
     dDeltaE_expect = results["sigma"]
     print("Computing Expectations for E^2...")
 
-    results = mbar.compute_expectations(E_kn ** 2, state_dependent=True)
+    results = mbar.compute_expectations(E_kn**2, state_dependent=True)
     E2_expect = results["mu"]
     dE2_expect = results["sigma"]
     allE2_expect[:, n] = E2_expect[:]
@@ -380,7 +380,7 @@ for n in range(n_boots_work):
     # we just need an estimate of n-1, but we can try to get that by var(dE)/dE_expect**2
     # it's within 50% or so, but that's not good enough.
 
-    allCv_expect[:, 0, n] = (E2_expect - (E_expect * E_expect)) / (kB * temp_k ** 2)
+    allCv_expect[:, 0, n] = (E2_expect - (E_expect * E_expect)) / (kB * temp_k**2)
 
     ####################################
     # C_v by fluctuation formula
@@ -393,7 +393,7 @@ for n in range(n_boots_work):
 
     if n == 0:
         # sigma^2 / (sigma^2/n) = effective number of samples
-        N_eff = (E2_expect - (E_expect * E_expect)) / dE_expect ** 2
+        N_eff = (E2_expect - (E_expect * E_expect)) / dE_expect**2
         dCv_expect[:, 0] = allCv_expect[:, 0, n] * np.sqrt(2 / N_eff)
 
     # only loop over the points that will be plotted, not the ones that

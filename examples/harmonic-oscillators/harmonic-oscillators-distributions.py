@@ -90,7 +90,7 @@ elif observe == "potential energy":
 elif observe == "position":
     A_k_analytical = O_k  # observable is the position
 elif observe == "position^2":
-    A_k_analytical = (1 + beta * K_k * O_k ** 2) / (beta * K_k)  # observable is the position^2
+    A_k_analytical = (1 + beta * K_k * O_k**2) / (beta * K_k)  # observable is the position^2
 else:
     raise ParameterError("Observable %s not known." % observe)
 
