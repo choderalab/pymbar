@@ -1,7 +1,7 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2017 University of Colorado Boulder
+# Copyright 2017-2022 University of Colorado Boulder
 # Copyright 2010-2017 Memorial Sloan-Kettering Cancer Center
 # Portions of this software are Copyright (c) 2010-2016 University of Virginia
 # Portions of this software are Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
@@ -337,6 +337,7 @@ class MBAR:
         for solver in solver_protocol:
             if "options" not in solver:
                 solver["options"] = dict()
+                solver["options"]["maxiter"] = maximum_iterations
             if "verbose" not in solver["options"]:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.
@@ -439,7 +440,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w ** 2)
+            N_eff[k] = 1 / np.sum(w**2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
@@ -660,7 +661,7 @@ class MBAR:
 
         'Amin' : np.ndarray, float, shape = (S), needed for reconstructing the covariance one level up.
 
-        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+1)) as the log form is easier to work with.
+        'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+logfactor)) as the log form is easier to work with.
 
         Notes
         -----
@@ -693,6 +694,12 @@ class MBAR:
 
         """
 
+        logfactor = 4.0 * np.finfo(np.float64).eps
+        # make sure all results are larger than this number.
+        # We tried 1 before, but expecations that are all very small (like
+        # fraction folded when it is low) cannot be computed accurately.
+        # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
+        # and even occasionally 2*eps, so we chooose 4*eps
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map)  # number of computed expectations we desire
         # need to convert to matrix to be able to pick up D=1
@@ -735,7 +742,7 @@ class MBAR:
         for i in A_list:
             A_min[i] = np.min(A_n[i, :])  # find the minimum
             A_n[i, :] = A_n[i, :] - (
-                A_min[i] - 1
+                A_min[i] - logfactor
             )  # all values now positive so that we can work in logarithmic scale
 
         # Augment W_nk, N_k, and c_k for q_A(x) for the observables, with one
@@ -788,11 +795,11 @@ class MBAR:
         # Now that covariances are computed, add the constants back to A_i that
         # were required to enforce positivity
         for s in range(S):
-            A_i[s] += A_min[state_map[1, s]] - 1
+            A_i[s] += A_min[state_map[1, s]] - logfactor
 
         # these values may be used outside the routine, so copy back.
         for i in A_list:
-            A_n[i, :] = A_n[i, :] + (A_min[i] - 1)
+            A_n[i, :] = A_n[i, :] + (A_min[i] - logfactor)
 
         # expectations of the observables at these states
         if S > 0:
@@ -821,7 +828,7 @@ class MBAR:
             result_vals["Theta"] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - 1
+                result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - logfactor
 
         # free energies at these new states
         result_vals["f"] = f_k[K + state_list]
@@ -1685,13 +1692,16 @@ class MBAR:
                     # kickstart NR.
                     from pymbar.other_estimators import bar
 
-                    self.f_k[l] = self.f_k[k] + bar(
-                        w_F,
-                        w_R,
-                        relative_tolerance=0.000001,
-                        verbose=False,
-                        compute_uncertainty=False,
-                    )["Delta_f"]
+                    self.f_k[l] = (
+                        self.f_k[k]
+                        + bar(
+                            w_F,
+                            w_R,
+                            relative_tolerance=0.000001,
+                            verbose=False,
+                            compute_uncertainty=False,
+                        )["Delta_f"]
+                    )
                 else:
                     # no states observed, so we don't need to initialize this free energy anyway, as
                     # the solution is noniterative.

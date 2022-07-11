@@ -5,6 +5,7 @@ for which the true free energy differences can be computed analytically.
 import numpy as np
 import pytest
 from pymbar import other_estimators as estimators
+from pymbar import MBAR
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 
@@ -84,9 +85,9 @@ def test_bar_free_energies(bar_and_test):
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
     # make sure the different methods are nearly equal.
-    assert_almost_equal(fe_bis, fe_fp, decimal=8)
-    assert_almost_equal(fe_sci, fe_bis, decimal=8)
-    assert_almost_equal(fe_fp, fe_bis, decimal=8)
+    assert_almost_equal(fe_bis, fe_fp, decimal=precision)
+    assert_almost_equal(fe_sci, fe_bis, decimal=precision)
+    assert_almost_equal(fe_fp, fe_bis, decimal=precision)
 
     # Test uncertainty methods
     results_dBAR = bars["dBAR"]
@@ -96,3 +97,27 @@ def test_bar_free_energies(bar_and_test):
 
     # not sure exactly how close they need to be for sample problems?
     assert_almost_equal(dfe_bar, dfe_mbar, decimal=3)
+
+
+def test_bar_overlap():
+
+    for system_generator in system_generators:
+        name, test = system_generator()
+        x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode="u_kn")
+        assert_equal(N_k_output, N_k)
+
+        i = 0
+        j = 1
+        i_indices = np.arange(0, N_k[0])
+        j_indices = np.arange(N_k[0], N_k[0] + N_k[1])
+        w_f = u_kn[j, i_indices] - u_kn[i, i_indices]
+        w_r = u_kn[i, j_indices] - u_kn[j, j_indices]
+
+        # Compute overlap
+        bar_overlap = estimators.bar_overlap(w_f, w_r)
+
+        # Compare with MBAR
+        mbar = MBAR(u_kn, N_k)
+        mbar_overlap = mbar.compute_overlap()["scalar"]
+
+        assert_almost_equal(bar_overlap, mbar_overlap, decimal=precision)

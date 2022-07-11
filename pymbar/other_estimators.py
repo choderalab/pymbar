@@ -506,7 +506,7 @@ def bar(
         nrat = (T_F + T_R) / (T_F * T_R)  # same for both methods
 
         if uncertainty_method == "BAR":
-            variance = (afF2 / afF ** 2) / T_F + (afR2 / afR ** 2) / T_R - nrat
+            variance = (afF2 / afF**2) / T_F + (afR2 / afR**2) / T_R - nrat
             dDeltaF = np.sqrt(variance)
         elif uncertainty_method == "MBAR":
             # OR equivalently
@@ -529,6 +529,42 @@ def bar(
             logger.info("DeltaF = {:8.3f}".format(DeltaF))
         result_vals["Delta_f"] = DeltaF
         return result_vals
+
+
+def bar_overlap(w_F, w_R):
+    """Compute overlap between foward and backward ensembles (using MBAR definition of overlap)
+    Parameters
+    ----------
+    w_F : np.ndarray
+        w_F[t] is the forward work value from snapshot t.
+        t = 0...(T_F-1)  Length T_F is deduced from vector.
+    w_R : np.ndarray
+        w_R[t] is the reverse work value from snapshot t.
+        t = 0...(T_R-1)  Length T_R is deduced from vector.
+    Returns
+    -------
+    overlap : float
+        The overlap: 0 denotes no overlap, 1 denotes complete overlap
+    """
+    from pymbar import MBAR
+
+    N_k = np.array([len(w_F), len(w_R)])
+    N = N_k.sum()
+    u_kn = np.zeros([2, N])
+    u_kn[1, 0 : N_k[0]] = w_F[:]
+    u_kn[0, N_k[0] : N] = w_R[:]
+    mbar = MBAR(u_kn, N_k)
+
+    # Check to make sure u_kn has been correctly formed
+    results = bar(w_F, w_R)
+    bar_df = results["Delta_f"]
+    bar_ddf = results["dDelta_f"]
+
+    assert np.isclose(
+        mbar.f_k[1] - mbar.f_k[0], bar_df
+    ), f"BAR: {bar_df} +- {bar_ddF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}"
+
+    return mbar.compute_overlap()["scalar"]
 
 
 # =============================================================================================

@@ -153,7 +153,7 @@ class HarmonicOscillatorsTestCase(object):
 
         np.random.seed(seed)
 
-        N_k = np.array(N_k, np.int32)
+        N_k = np.array(N_k, int)
         if len(N_k) != self.n_states:
             raise Exception(
                 "N_k has {:d} states while self.n_states has {:d} states.".format(
@@ -175,7 +175,7 @@ class HarmonicOscillatorsTestCase(object):
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
         x_n = np.zeros([N_tot], np.float64)
-        s_n = np.zeros([N_tot], np.int)
+        s_n = np.zeros([N_tot], int)
         u_kn = np.zeros([self.n_states, N_tot], np.float64)
         index = 0
         for k, N in enumerate(N_k):
