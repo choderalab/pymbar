@@ -26,9 +26,6 @@ from numpy.testing import (assert_allclose, assert_almost_equal,
                            assert_approx_equal, assert_array_almost_equal, assert_array_almost_equal_nulp,
                            assert_array_equal, assert_array_less, assert_array_max_ulp, assert_equal,
                            assert_raises, assert_string_equal, assert_warns)
-from numpy.testing.decorators import skipif, slow
-from nose.tools import ok_, eq_, raises
-from nose import SkipTest
 from pkg_resources import resource_filename
 import warnings
 import contextlib
@@ -49,7 +46,7 @@ __all__ = ['assert_allclose', 'assert_almost_equal', 'assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_array_max_ulp',
            'assert_equal', 'assert_raises', 'assert_string_equal', 'assert_warns',
            'get_fn', 'eq', 'assert_dict_equal', 'assert_sparse_matrix_equal',
-           'expected_failure', 'skip', 'ok_', 'eq_', 'raises', 'skipif', 'slow',
+           'expected_failure', 'skip',
            'suppress_derivative_warnings_for_tests']
 
 ##############################################################################
@@ -147,7 +144,7 @@ def eq(o1, o2, decimal=6, err_msg=''):
     # probably these are other specialized types
     # that need a special check?
     else:
-        eq_(o1, o2)
+        assert o1==o2
 
     return True
 
@@ -160,7 +157,7 @@ def assert_dict_equal(t1, t2, decimal=6):
     """
 
     # make sure the keys are the same
-    eq_(t1.keys(), t2.keys())
+    assert t1.keys()==t2.keys()
 
     for key, val in t1.iteritems():
         # compare numpy arrays using numpy.testing
@@ -172,7 +169,7 @@ def assert_dict_equal(t1, t2, decimal=6):
                 # compare everything else (ints, bools) for absolute equality
                 assert_array_equal(val, t2[key])
         else:
-            eq_(val, t2[key])
+            assert val==t2[key]
 
 
 def assert_sparse_matrix_equal(m1, m2, decimal=6):
@@ -182,32 +179,8 @@ def assert_sparse_matrix_equal(m1, m2, decimal=6):
     assert isspmatrix(m1)
 
     # make sure they have the same format
-    eq_(m1.format, m2.format)
+    assert m1.format==m2.format
 
     # even though its called assert_array_almost_equal, it will
     # work for scalars
     assert_array_almost_equal((m1 - m2).sum(), 0, decimal=decimal)
-
-
-# decorator to mark tests as expected failure
-def expected_failure(test):
-    @functools.wraps(test)
-    def inner(*args, **kwargs):
-        try:
-            test(*args, **kwargs)
-        except BaseException:
-            raise SkipTest
-        else:
-            raise AssertionError('Failure expected')
-    return inner
-
-
-# decorator to skip tests
-def skip(reason):
-    def wrap(test):
-        @functools.wraps(test)
-        def inner(*args, **kwargs):
-            raise SkipTest
-            print("After f(*args)")
-        return inner
-    return wrap

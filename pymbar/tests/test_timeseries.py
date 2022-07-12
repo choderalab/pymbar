@@ -2,8 +2,9 @@ from pymbar import timeseries
 from pymbar import testsystems
 import numpy as np
 from scipy import stats
-from pymbar.utils_for_testing import eq, skipif
+from pymbar.utils_for_testing import eq
 from six.moves import xrange
+import pytest
 
 try:
     import statsmodels.api as sm
@@ -50,7 +51,7 @@ def test_statistical_inefficiency_multiple():
     # TODO: Add some checks to test statistical inefficinecies are within normal range
 
 
-@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
+@pytest.mark.skipif(not HAVE_STATSMODELS, reason="Skipping FFT based tests because statsmodels not installed.")
 def test_statistical_inefficiency_fft():
     X, Y, energy = generate_data()
     timeseries.statisticalInefficiency_fft(X[0])
@@ -65,7 +66,7 @@ def test_statistical_inefficiency_fft():
     eq(g0, g2)
     eq(g0, g3)
 
-@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
+@pytest.mark.skipif(not HAVE_STATSMODELS, reason="Skipping FFT based tests because statsmodels not installed.")
 def test_statistical_inefficiency_fft_gaussian():
 
     # Run multiple times to get things with and without negative "spikes" at C(1)
@@ -100,12 +101,12 @@ def test_detectEquil():
     x = np.random.normal(size=10000)
     (t, g, Neff_max) = timeseries.detectEquilibration(x)
 
-@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
+@pytest.mark.skipif(not HAVE_STATSMODELS, reason="Skipping FFT based tests because statsmodels not installed.")
 def test_detectEquil_binary():
     x = np.random.normal(size=10000)
     (t, g, Neff_max) = timeseries.detectEquilibration_binary_search(x)
 
-@skipif(not HAVE_STATSMODELS, "Skipping FFT based tests because statsmodels not installed.")
+@pytest.mark.skipif(not HAVE_STATSMODELS, reason="Skipping FFT based tests because statsmodels not installed.")
 def test_compare_detectEquil(show_hist=False):
     """
     compare detectEquilibration implementations (with and without binary search + fft)

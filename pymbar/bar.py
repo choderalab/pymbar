@@ -46,6 +46,7 @@ __license__ = "MIT"
 #=============================================================================================
 # IMPORTS
 #=============================================================================================
+import warnings
 import numpy as np
 import numpy.linalg
 from pymbar.utils import ParameterError, ConvergenceError, BoundsError, logsumexp
@@ -523,6 +524,7 @@ def BARoverlap(w_F, w_R):
 
     """
     from pymbar import MBAR
+    warnings.warn("Warning: This API is experimental and subject to change in future releases", FutureWarning)
     N_k = np.array( [len(w_F), len(w_R)] )
     N = N_k.sum()
     u_kn = np.zeros([2,N], np.float32)
