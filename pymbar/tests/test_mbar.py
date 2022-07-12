@@ -89,7 +89,7 @@ def test_mbar_free_energies():
 
         # now test the bootstrap uncertainty
         mbar = MBAR(u_kn, N_k, nbootstraps = 40)
-        results = mbar.getFreeEnergyDifferences(uncertainty_method='bootstrap')
+        results = mbar.getFreeEnergyDifferences(uncertainty_method='bootstrap', return_dict=True)
         fe = results['Delta_f']
         fe_sigma = results['dDelta_f']
         fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
