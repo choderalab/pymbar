@@ -30,7 +30,7 @@ __email__ = "levi.naden@choderalab.org,michael.shirts@colorado.edu,john.chodera@
 
 from pymbar import timeseries, testsystems, confidenceintervals, version
 from pymbar.mbar import MBAR
-from pymbar.bar import BAR, BARzero
+from pymbar.bar import BAR, BARoverlap, BARzero
 from pymbar.exp import EXP, EXPGauss
 import pymbar.old_mbar
 

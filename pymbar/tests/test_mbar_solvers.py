@@ -3,7 +3,6 @@ import pymbar
 import warnings
 from pymbar.utils_for_testing import eq, suppress_derivative_warnings_for_tests
 import scipy.misc
-from nose import SkipTest
 
 
 def load_oscillators(n_states, n_samples, provide_test=False):
@@ -83,7 +82,7 @@ def test_protocols():
             mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({'method': solver_protocol},))
             # Solve MBAR with the correct f_k used for the inital weights
             mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({'method': solver_protocol},))
-            results = mbar.getFreeEnergyDifferences()
+            results = mbar.getFreeEnergyDifferences(return_dict=True)
             fe = results['Delta_f'][0,1:]
             fe_sigma = results['dDelta_f'][0,1:]
             z = (fe - fa) / fe_sigma

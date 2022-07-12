@@ -71,9 +71,14 @@ def test_mbar_free_energies():
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
 
-        results = mbar.getFreeEnergyDifferences()
+        results = mbar.getFreeEnergyDifferences(return_dict=True)
+        fe_t, dfe_t = mbar.getFreeEnergyDifferences(return_dict=False)
         fe = results['Delta_f']
         fe_sigma = results['dDelta_f']
+
+        eq(fe, fe_t)
+        eq(fe_sigma, dfe_t)
+
         fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
 
         fe0 = test.analytical_free_energies()
@@ -104,9 +109,13 @@ def test_mbar_computeExpectations_position_averages():
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
-        results = mbar.computeExpectations(x_n)
+        results = mbar.computeExpectations(x_n, return_dict=True)
+        mu_t, sigma_t = mbar.computeExpectations(x_n, return_dict=False)
         mu = results['mu']
         sigma = results['sigma' ]
+
+        eq(mu, mu_t)
+        eq(sigma, sigma_t)
 
         mu0 = test.analytical_observable(observable = 'position')
 
@@ -122,9 +131,9 @@ def test_mbar_computeExpectations_position_differences():
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
-        results = mbar.computeExpectations(x_n, output = 'differences')
-        mu_ij = results['mu'] 
-        sigma_ij = results['sigma'] 
+        results = mbar.computeExpectations(x_n, output = 'differences', return_dict=True)
+        mu_ij = results['mu']
+        sigma_ij = results['sigma']
 
         mu0 = test.analytical_observable(observable = 'position')
         z = convert_to_differences(mu_ij, sigma_ij, mu0)
@@ -139,9 +148,9 @@ def test_mbar_computeExpectations_position2():
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
-        results = mbar.computeExpectations(x_n ** 2)
+        results = mbar.computeExpectations(x_n ** 2, return_dict=True)
         mu = results['mu']
-        sigma = results['sigma'] 
+        sigma = results['sigma']
         mu0 = test.analytical_observable(observable = 'position^2')
 
         z = (mu0 - mu) / sigma
@@ -156,9 +165,9 @@ def test_mbar_computeExpectations_potential():
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
-        results = mbar.computeExpectations(u_kn, state_dependent = True)
+        results = mbar.computeExpectations(u_kn, state_dependent = True, return_dict=True)
         mu = results['mu']
-        sigma = results['sigma'] 
+        sigma = results['sigma']
         mu0 = test.analytical_observable(observable = 'potential energy')
         print(mu)
         print(mu0)
@@ -178,9 +187,12 @@ def test_mbar_computeMultipleExpectations():
         A[0,:] = x_n
         A[1,:] = x_n**2
         state = 1
-        results = mbar.computeMultipleExpectations(A,u_kn[state,:])
+        results = mbar.computeMultipleExpectations(A,u_kn[state,:], return_dict=True)
+        mu_t, sigma_t = mbar.computeMultipleExpectations(A,u_kn[state,:], return_dict=False)
         mu = results['mu']
         sigma = results['sigma']
+        eq(mu, mu_t)
+        eq(sigma, sigma_t)
         mu0 = test.analytical_observable(observable = 'position')[state]
         mu1 = test.analytical_observable(observable = 'position^2')[state]
         z = (mu0 - mu[0]) / sigma[0]
@@ -197,13 +209,21 @@ def test_mbar_computeEntropyAndEnthalpy():
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         eq(N_k, N_k_output)
         mbar = MBAR(u_kn, N_k)
-        results =  mbar.computeEntropyAndEnthalpy(u_kn)
-        f_ij = results['Delta_f'] 
-        df_ij = results['dDelta_f'] 
-        u_ij = results['Delta_u'] 
-        du_ij = results['dDelta_u']  
-        s_ij = results['Delta_s'] 
-        ds_ij = results['dDelta_s'] 
+        results =  mbar.computeEntropyAndEnthalpy(u_kn, return_dict=True)
+        f_t, df_t, u_t, du_t, s_t, ds_t = mbar.computeEntropyAndEnthalpy(u_kn, return_dict=False)
+        f_ij = results['Delta_f']
+        df_ij = results['dDelta_f']
+        u_ij = results['Delta_u']
+        du_ij = results['dDelta_u']
+        s_ij = results['Delta_s']
+        ds_ij = results['dDelta_s']
+
+        eq(f_ij, f_t)
+        eq(df_ij, df_t)
+        eq(u_ij, u_t)
+        eq(du_ij, du_t)
+        eq(s_ij, s_t)
+        eq(ds_ij, ds_t)
 
         fa = test.analytical_free_energies()
         ua = test.analytical_observable('potential energy')
@@ -247,10 +267,15 @@ def test_mbar_computeOverlap():
     x_n, u_kn, N_k_output, s_n = test.sample(even_N_k, mode='u_kn')
     mbar = MBAR(u_kn, even_N_k)
 
-    results = mbar.computeOverlap()
+    results = mbar.computeOverlap(return_dict=True)
+    os_t, eig_t, O_t = mbar.computeOverlap(return_dict=False)
     overlap_scalar = results['scalar']
     eigenval = results['eigenvalues']
     O = results['matrix']
+
+    eq(overlap_scalar, os_t)
+    eq(eigenval, eig_t)
+    eq(O, O_t)
 
     reference_matrix = np.matrix((1.0/d)*np.ones([d,d]))
     reference_eigenvalues = np.zeros(d)
@@ -298,9 +323,14 @@ def test_mbar_computePerturbedFreeEnergeies():
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode='u_kn')
         numN = np.sum(N_k[:2])
         mbar = MBAR(u_kn[:2,:numN], N_k[:2])  # only do MBAR with the first and last set
-        results = mbar.computePerturbedFreeEnergies(u_kn[2:,:numN])
+        results = mbar.computePerturbedFreeEnergies(u_kn[2:,:numN], return_dict=True)
+        f_t, df_t = mbar.computePerturbedFreeEnergies(u_kn[2:, :numN], return_dict=False)
         fe = results['Delta_f']
         fe_sigma = results['dDelta_f']
+
+        eq(fe, f_t)
+        eq(fe_sigma, df_t)
+
         fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
 
         print(fe, fe_sigma)
@@ -328,9 +358,14 @@ def test_mbar_computePMF():
     bin_n[within_bounds] = 1 + np.floor((x_n[within_bounds]-xmin)/dx)
     # 0 is reserved for samples outside the domain.  We will ignore this state
     range = np.max(bin_n)+1
-    results = mbar.computePMF(u_kn[refstate,:], bin_n, range, uncertainties = 'from-specified', pmf_reference = 1)
+    results = mbar.computePMF(u_kn[refstate,:], bin_n, range, uncertainties = 'from-specified', pmf_reference = 1, return_dict=True)
+    f_t, df_t = mbar.computePMF(u_kn[refstate,:], bin_n, range, uncertainties = 'from-specified', pmf_reference = 1, return_dict=False)
     f_i = results['f_i']
     df_i = results['df_i']
+
+    eq(f_i, f_t)
+    eq(df_i, df_t)
+
     f0_i = 0.5*test.K_k[refstate]*(bin_centers-test.O_k[refstate])**2
     f_i, df_i = f_i[2:], df_i[2:] # first state is ignored, second is zero, with zero uncertainty
     normf0_i = f0_i[1:] - f0_i[0] # normalize to first state
@@ -349,4 +384,4 @@ def test_mbar_computeExpectationsInner():
         A_in = np.array([x_n, x_n ** 2, x_n ** 3])
         u_n = u_kn[:2,:]
         state_map = np.array([[0,0],[1,0],[2,0],[2,1]],int)
-        results = mbar.computeExpectationsInner(A_in, u_n, state_map)
+        _ = mbar.computeExpectationsInner(A_in, u_n, state_map)

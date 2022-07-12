@@ -51,7 +51,7 @@ from pymbar.utils import logsumexp
 # One-sided exponential averaging (EXP).
 #=============================================================================================
 
-def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
+def EXP(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=False):
     """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
 
     Parameters
@@ -63,17 +63,17 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
     is_timeseries : bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
         Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+    return_dict : bool, default False
+        If true, returns are a dictionary, else they are a tuple
 
     Returns
     -------
-    result_vals : dictionary
-    
-    Possible keys in the result_vals dictionary
-
     'Delta_f' : float
         Free energy difference
+        If return_dict, key is 'Delta_f'
     'dDelta_f': float
         Estimated standard deviation of free energy difference
+        If return_dict, key is 'dDelta_f'
 
     Notes
     -----
@@ -86,16 +86,17 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = EXP(w_F)
+    >>> results = EXP(w_F, return_dict=True)
     >>> print('Forward free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Forward free energy difference is 1.088 +- 0.076 kT
-    >>> results = EXP(w_R)
+    >>> results = EXP(w_R, return_dict=True)
     >>> print('Reverse free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Reverse free energy difference is -1.073 +- 0.082 kT
 
     """
 
     result_vals = dict()
+    result_list = []
 
     # Get number of work measurements.
     T = float(np.size(w_F))  # number of work measurements
@@ -126,16 +127,21 @@ def EXP(w_F, compute_uncertainty=True, is_timeseries=False):
 
         # Return estimate of free energy difference and uncertainty.
         result_vals['Delta_f'] = DeltaF
-        result_vals['dDelta_f'] = dDeltaF 
+        result_vals['dDelta_f'] = dDeltaF
+        result_list.append(DeltaF)
+        result_list.append(dDeltaF)
     else:
         result_vals['Delta_f'] = DeltaF
-    return result_vals
+        result_list.append(DeltaF)
+    if return_dict:
+        return result_vals
+    return tuple(result_list)
 
 #=============================================================================================
 # Gaussian approximation to exponential averaging (Gauss).
 #=============================================================================================
 
-def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
+def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False, return_dict=False):
     """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
     Parameters
@@ -147,17 +153,17 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     is_timeseries : bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
         Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+    return_dict : bool, default False
+        If true, returns are a dictionary, else they are a tuple
 
     Returns
     -------
-    result_vals : dictionary
-    
-    Possible keys in the result_vals dictionary
-
     'Delta_f' : float
         Free energy difference between the two states
+        If return_dict, key is 'Delta_f'
     'dDelta_f': float
         Estimated standard deviation of free energy difference between the two states.
+        If return_dict, key is 'dDelta_f'
 
     Notes
     -----
@@ -169,10 +175,10 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
     >>> from pymbar import testsystems
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
-    >>> results = EXPGauss(w_F)
+    >>> results = EXPGauss(w_F, return_dict=True)
     >>> print('Forward Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Forward Gaussian approximated free energy difference is 1.049 +- 0.089 kT
-    >>> results = EXPGauss(w_R)
+    >>> results = EXPGauss(w_R, return_dict=True)
     >>> print('Reverse Gaussian approximated free energy difference is %.3f +- %.3f kT' % (results['Delta_f'], results['dDelta_f']))
     Reverse Gaussian approximated free energy difference is -1.073 +- 0.080 kT
 
@@ -186,6 +192,7 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
     DeltaF = np.average(w_F) - 0.5 * var
 
     result_vals = dict()
+    result_list = []
     if compute_uncertainty:
         # Compute effective number of uncorrelated samples.
         g = 1.0  # statistical inefficiency
@@ -202,10 +209,15 @@ def EXPGauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
         # Return estimate of free energy difference and uncertainty.
         result_vals['Delta_f'] = DeltaF
-        result_vals['dDelta_f'] = dDeltaF 
+        result_vals['dDelta_f'] = dDeltaF
+        result_list.append(DeltaF)
+        result_list.append(dDeltaF)
     else:
         result_vals['Delta_f'] = DeltaF
-    return result_vals
+        result_list.append(DeltaF)
+    if return_dict:
+        return result_vals
+    return tuple(result_list)
 
 #=============================================================================================
 # For compatibility with 2.0.1-beta
