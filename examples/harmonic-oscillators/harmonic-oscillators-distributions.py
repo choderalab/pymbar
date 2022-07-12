@@ -143,7 +143,7 @@ for replicate_index in range(0, nreplicates):
 
     # Initialize the MBAR class, determining the free energies.
     # use fast Newton-Raphson solver
-    mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10, verbose=False)
+    mbar = MBAR(u_kln, N_k, relative_tolerance=1.0e-10, verbose=False, solver_protocol="robust")
     results = mbar.compute_free_energy_differences()
     Deltaf_ij_estimated = results["Delta_f"]
     dDeltaf_ij_estimated = results["dDelta_f"]
@@ -330,7 +330,7 @@ for k in range(1, K):
         plt.plot(alpha_f, Pobs_f, formatstrings[k - 1], label=label)
 
 if generateplots:
-    plt.title("Cumulative Probabilty vs. Normal Distribution", size=24)
+    plt.title("Cumulative Probabilty vs.\n Normal Distribution", size=24)
     plt.xlabel("Standard Deviations", size=18)
     plt.ylabel("Cumulative Probability", size=18)
     plt.legend(loc=4)

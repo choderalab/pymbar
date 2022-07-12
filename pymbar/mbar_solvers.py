@@ -3,18 +3,49 @@ import logging
 import numpy as np
 import math
 import scipy.optimize
-from pymbar.utils import ensure_type, logsumexp, check_w_normalized
+from pymbar.utils import ensure_type, logsumexp, check_w_normalized, ParameterError
 import warnings
 
 logger = logging.getLogger(__name__)
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
 # Note: we use tuples instead of lists to avoid accidental mutability.
-# DEFAULT_SUBSAMPLING_PROTOCOL = (dict(method="L-BFGS-B"), )  # First use BFGS on subsampled data.
-# DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
-# Use Adpative solver as first attempt
-DEFAULT_SOLVER_METHOD = "adaptive"
-DEFAULT_SOLVER_PROTOCOL = (dict(method=DEFAULT_SOLVER_METHOD),)
+JAX_SOLVER_PROTOCOL = (
+    dict(method="BFGS", continuation=True),
+    dict(method="adaptive", options=dict(min_sc_iter=0)),
+)
+
+DEFAULT_SOLVER_PROTOCOL = (
+    dict(method="hybr", continuation=True),
+    dict(method="adaptive", options=dict(min_sc_iter=0)),
+)
+
+ROBUST_SOLVER_PROTOCOL = (
+    dict(method="adaptive", options=dict(maxiter=1000)),
+    dict(method="L-BFGS-B", options=dict(maxiter=1000)),
+)
+
+# Allows all of the gradient based methods, but not the non-gradient methods ["Nelder-Mead", "Powell", "COBYLA"]",
+scipy_minimize_options = [
+    "L-BFGS-B",
+    "dogleg",
+    "CG",
+    "BFGS",
+    "Newton-CG",
+    "TNC",
+    "trust-ncg",
+    "trust-krylov",
+    "trust-exact",
+    "SLSQP",
+]
+scipy_nohess_options = [
+    "L-BFGS-B",
+    "BFGS",
+    "CG",
+    "TNC",
+    "SLSQP",
+]  # don't pass a hessian to these to avoid warnings to these.
+scipy_root_options = ["hybr", "lm"]  # only use root options with the hessian included
 
 
 def validate_inputs(u_kn, N_k, f_k):
@@ -241,7 +272,7 @@ def mbar_W_nk(u_kn, N_k, f_k):
     return np.exp(mbar_log_W_nk(u_kn, N_k, f_k))
 
 
-def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
+def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
 
     """
     Determine dimensionless free energies by a combination of Newton-Raphson iteration and self-consistent iteration.
@@ -253,11 +284,10 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
 
     options: dictionary of options
         gamma (float between 0 and 1) - incrementor for NR iterations (default 1.0).  Usually not changed now, since adaptively switch.
-        maximum_iterations (int) - maximum number of Newton-Raphson iterations (default 250: either NR converges or doesn't, pretty quickly)
+        maxiter (int) - maximum number of Newton-Raphson iterations (default 10000: either NR converges or doesn't, pretty quickly)
         verbose (boolean) - verbosity level for debug output
 
     NOTES
-
 
     This method determines the dimensionless free energies by
     minimizing a convex function whose solution is the desired
@@ -275,19 +305,23 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
     """
     # put the defaults here in case we get passed an 'options' dictionary that is only partial
     options.setdefault("verbose", False)
-    options.setdefault("maximum_iterations", 10000)
+    options.setdefault("maxiter", 10000)
     options.setdefault("print_warning", False)
     options.setdefault("gamma", 1.0)
+    options.setdefault("min_sc_iter", 2)  # set a minimum number of self-consistent iterations
 
     gamma = options["gamma"]
+
     doneIterating = False
     if options["verbose"] == True:
         logger.info(
             "Determining dimensionless free energies by Newton-Raphson / self-consistent iteration."
         )
 
-    if tol < 1.5e-15:
+    if tol < 4.0 * np.finfo(float).eps:
         logger.info("Tolerance may be too close to machine precision to converge.")
+
+    success = False  # fail unless solution is found.
     # keep track of Newton-Raphson and self-consistent iterations
     nr_iter = 0
     sci_iter = 0
@@ -301,7 +335,10 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
     # to calculate the first time.
     g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient.
 
-    for iteration in range(0, options["maximum_iterations"]):
+    maxiter = options["maxiter"]
+    min_sc_iter = options["min_sc_iter"]
+
+    for iteration in range(0, maxiter):
 
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
         Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
@@ -324,28 +361,29 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
         if options["verbose"]:
             logger.info(
                 "self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g"
-                % (gnorm_sci, gnorm_nr)
+                % (np.sqrt(gnorm_sci), np.sqrt(gnorm_nr))
             )
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
-        if gnorm_sci < gnorm_nr or sci_iter < 2:
+        if gnorm_sci < gnorm_nr or sci_iter < min_sc_iter:
             f_k = f_sci
             g = g_sci
             sci_iter += 1
             if options["verbose"]:
-                if sci_iter < 2:
-                    logger.info("Choosing self-consistent iteration on iteration %d" % iteration)
+                if sci_iter < min_sc_iter:
+                    logger.info(
+                        f"Choosing self-consistent iteration on iteration {iteration:d} because min_sci_iter={min_sc_iter:d}"
+                    )
                 else:
                     logger.info(
-                        "Choosing self-consistent iteration for lower gradient on iteration %d"
-                        % iteration
+                        f"Choosing self-consistent iteration for lower gradient on iteration {iteration:d}"
                     )
         else:
             f_k = f_nr
             g = g_nr
             nr_iter += 1
             if options["verbose"]:
-                logger.info("Newton-Raphson used on iteration %d" % iteration)
+                logger.info(f"Newton-Raphson used on iteration {iteration:}")
 
         div = np.abs(f_k[1:])  # what we will divide by to get relative difference
         zeroed = np.abs(f_k[1:]) < np.min(
@@ -355,38 +393,36 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-12, options=None):
         max_delta = np.max(np.abs(f_k[1:] - f_old[1:]) / div)
         if np.isnan(max_delta) or (max_delta < tol):
             doneIterating = True
+            success = True
+            warn = "Convergence achieved by change in f with respect to previous guess."
             break
 
     if doneIterating:
         if options["verbose"]:
+            logger.info(f"Converged to tolerance of {max_delta:e} in {iteration+1:d} iterations.")
             logger.info(
-                "Converged to tolerance of {:e} in {:d} iterations.".format(
-                    max_delta, iteration + 1
-                )
-            )
-            logger.info(
-                "Of {:d} iterations, {:d} were Newton-Raphson iterations and {:d} were self-consistent iterations".format(
-                    iteration + 1, nr_iter, sci_iter
-                )
+                f"Of {iteration+1:d} iterations, {nr_iter:d} were Newton-Raphson iterations and {sci_iter:d} were self-consistent iterations"
             )
             if np.all(f_k == 0.0):
-                # all f_k appear to be zero
                 logger.info("WARNING: All f_k appear to be zero.")
     else:
         logger.warning("WARNING: Did not converge to within specified tolerance.")
-        if options["maximum_iterations"] <= 0:
+
+        if maxiter <= 0:
             logger.warning(
-                "No iterations ran be cause maximum_iterations was <= 0 ({:s})!".format(
-                    options["maximum_iterations"]
-                )
+                f"No iterations ran be cause maximum_iterations was <= 0 ({maxiter:s})!"
             )
         else:
             logger.warning(
-                "max_delta = {:e}, tol = {:e}, maximum_iterations = {:d}, iterations completed = {:d}".format(
-                    max_delta, tol, options["maximum_iterations"], iteration
-                )
+                f"max_delta = {max_delta:e}, tol = {tol:e}, maximum_iterations = {maxiter:d}, iterations completed = {iteration:d}"
             )
-    return f_k
+
+    results = dict()
+    results["success"] = success
+    results["message"] = warn
+    results["x"] = f_k
+
+    return results
 
 
 def precondition_u_kn(u_kn, N_k, f_k):
@@ -421,7 +457,13 @@ def precondition_u_kn(u_kn, N_k, f_k):
 
 
 def solve_mbar_once(
-    u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1e-12, options=None
+    u_kn_nonzero,
+    N_k_nonzero,
+    f_k_nonzero,
+    method="adaptive",
+    tol=1e-12,
+    continuation=None,
+    options=None,
 ):
     """Solve MBAR self-consistent equations using some form of equation solver.
 
@@ -464,9 +506,7 @@ def solve_mbar_once(
     For fast but precise convergence, we recommend calling this function
     multiple times to polish the result.  `solve_mbar()` facilitates this.
     """
-    u_kn_nonzero, N_k_nonzero, f_k_nonzero = validate_inputs(
-        u_kn_nonzero, N_k_nonzero, f_k_nonzero
-    )
+
     f_k_nonzero = f_k_nonzero - f_k_nonzero[0]  # Work with reduced dimensions with f_k[0] := 0
     u_kn_nonzero = precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
 
@@ -490,17 +530,8 @@ def solve_mbar_once(
     ]  # Hessian of objective function
 
     with warnings.catch_warnings(record=True) as w:
-        if method in [
-            "L-BFGS-B",
-            "dogleg",
-            "CG",
-            "BFGS",
-            "Newton-CG",
-            "TNC",
-            "trust-ncg",
-            "SLSQP",
-        ]:
-            if method in ["L-BFGS-B", "CG"]:
+        if method in scipy_minimize_options:
+            if method in scipy_nohess_options:
                 hess = None  # To suppress warning from passing a hessian function.
             results = scipy.optimize.minimize(
                 grad_and_obj,
@@ -514,14 +545,15 @@ def solve_mbar_once(
             f_k_nonzero = pad(results["x"])
         elif method == "adaptive":
             results = adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options)
-            f_k_nonzero = (
-                results  # they are the same for adaptive, until we decide to return more.
-            )
-        else:
+            f_k_nonzero = results["x"]
+        elif method in scipy_root_options:
+            # find the root in the gradient.
             results = scipy.optimize.root(
                 grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options
             )
             f_k_nonzero = pad(results["x"])
+        else:
+            raise ParameterError(f"Method {method} for solution of free energies not recognized")
 
     # If there were runtime warnings, show the messages
     if len(w) > 0:
@@ -537,7 +569,7 @@ def solve_mbar_once(
                 warn_msg.file,
                 "",
             )
-            can_ignore = False  # If any warning is not just unknown options, can ]not skip check
+            can_ignore = False  # If any warning is not just unknown options, can not skip check
         if not can_ignore:
             # Ensure MBAR solved correctly
             w_nk_check = mbar_W_nk(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
@@ -590,21 +622,52 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     """
     if solver_protocol is None:
         solver_protocol = DEFAULT_SOLVER_PROTOCOL
-    for protocol in solver_protocol:
-        if protocol["method"] is None:
-            protocol["method"] = DEFAULT_SOLVER_METHOD
 
+    all_fks = []
+    all_gnorms = []
     all_results = []
-    for k, options in enumerate(solver_protocol):
-        f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, **options)
-        all_results.append(results)
-        all_results.append(
-            (
-                "Final gradient norm: %.3g"
-                % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero))
-            )
+
+    for solver in solver_protocol:
+        f_k_nonzero_result, results = solve_mbar_once(
+            u_kn_nonzero, N_k_nonzero, f_k_nonzero, **solver
         )
-    return f_k_nonzero, all_results
+        all_fks.append(f_k_nonzero_result)
+        all_gnorms.append(
+            np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero_result))
+        )
+        all_results.append(results)
+
+        if results["success"]:
+            success = True
+            best_gnorm = all_gnorms[-1]
+            break
+        else:
+            logger.warning(
+                f"Failed to reach a solution to within tolerance with {solver['method']}: trying next method"
+            )
+            logger.info(f"Ending gnorm of method {solver['method']} = {all_gnorms[-1]:e}")
+            if solver["continuation"]:
+                f_k_nonzero = f_k_nonzero_result
+                logger.info("Will continue with results from previous method")
+
+    if results["success"]:
+        logger.info("Solution found within tolerance!")
+    else:
+        i_best_gnorm = np.argmin(all_gnorms)
+        logger.warning("No solution found to within tolerance.")
+        best_method = solver_protocol[i_best_gnorm]["method"]
+        best_gnorm = all_gnorms[i_best_gnorm]
+        logger.warning(
+            f"The solution with the smallest gradient {best_gnorm:e} norm is {best_method}"
+        )
+        f_k_nonzero_result = all_fks[i_best_gnorm]
+        logger.warning(
+            "Please exercise caution with this solution and consider alternative methods or a different tolerance."
+        )
+
+    logger.info(f"Final gradient norm: {best_gnorm:.3g}")
+
+    return f_k_nonzero_result, all_results
 
 
 def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):

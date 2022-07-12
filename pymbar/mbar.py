@@ -53,6 +53,7 @@ from pymbar.utils import (
 
 logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
+ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
 
 # =========================================================================
 # MBAR class definition
@@ -134,11 +135,17 @@ class MBAR:
         initial_f_k : np.ndarray, float, shape=(K), optional
             Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
-        solver_protocol : list(dict) or None, optional, default=None
+        solver_protocol : list(dict), string or None, optional, default=None
             List of dictionaries to define a sequence of solver algorithms
             and options used to estimate the dimensionless free energies.
             See `pymbar.mbar_solvers.solve_mbar()` for details.  If None,
             use the developers best guess at an appropriate algorithm.
+
+            if the string is "robust", it tries "L-BFGS-B" and "adaptive",
+            with relatively large numbers of iterations.
+
+            if "default" or "none", it will use 'hybr' root solver, followed with
+            some rounds of Newton-Raphson if it fails to converge.
 
             The default will try to solve with an adaptive solver algorithm
             which alternates between self-consistent iteration and
@@ -332,12 +339,28 @@ class MBAR:
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
-        if solver_protocol is None:
-            solver_protocol = ({"method": None},)
+        if solver_protocol is None or solver_protocol == "default":
+            solver_protocol = DEFAULT_SOLVER_PROTOCOL
+        elif solver_protocol == "robust":
+            solver_protocol = ROBUST_SOLVER_PROTOCOL
+        elif not isinstance(solver_protocol, dict):
+            logger.warn(
+                "solver_protocol is not 'robust','default' or a dictionary, setting to 'default'"
+            )
+            solver_protocol = DEFAULT_SOLVER_PROTOCOL
+
         for solver in solver_protocol:
             if "options" not in solver:
                 solver["options"] = dict()
+            if "continuation" not in solver:
+                solver["continuation"] = None
+            if "maxiter" not in solver["options"]:
                 solver["options"]["maxiter"] = maximum_iterations
+            if maximum_iterations > solver["options"]["maxiter"]:
+                solver["options"]["maxiter"] = maximum_iterations
+                logger.info(
+                    f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}"
+                )
             if "verbose" not in solver["options"]:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.
@@ -739,10 +762,12 @@ class MBAR:
         else:
             A_list = np.zeros(0, dtype=int)
 
+        logfactors = np.zeros(len(A_list))
         for i in A_list:
             A_min[i] = np.min(A_n[i, :])  # find the minimum
+            logfactors[i] = np.abs(logfactor * A_min[i])
             A_n[i, :] = A_n[i, :] - (
-                A_min[i] - logfactor
+                A_min[i] - logfactors[i]
             )  # all values now positive so that we can work in logarithmic scale
 
         # Augment W_nk, N_k, and c_k for q_A(x) for the observables, with one
@@ -795,11 +820,11 @@ class MBAR:
         # Now that covariances are computed, add the constants back to A_i that
         # were required to enforce positivity
         for s in range(S):
-            A_i[s] += A_min[state_map[1, s]] - logfactor
+            A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1, s]]
 
         # these values may be used outside the routine, so copy back.
         for i in A_list:
-            A_n[i, :] = A_n[i, :] + (A_min[i] - logfactor)
+            A_n[i, :] = A_n[i, :] + (A_min[i] - logfactors[i])
 
         # expectations of the observables at these states
         if S > 0:
@@ -828,7 +853,9 @@ class MBAR:
             result_vals["Theta"] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - logfactor
+                result_vals["Amin"] = (
+                    A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
+                )
 
         # free energies at these new states
         result_vals["f"] = f_k[K + state_list]

@@ -130,7 +130,7 @@ def main():
         # biasing_force_k[k] is the constant external biasing force used to collect trajectory k (in pN)
         biasing_force_k = np.zeros([K])
         for k in range(K):
-            biasing_force_k[k] = np.float(elements[k])
+            biasing_force_k[k] = float(elements[k])
     print("biasing forces (in pN) = ", biasing_force_k)
 
     # Determine maximum number of snapshots in all trajectories.
@@ -153,7 +153,7 @@ def main():
             elements = line.split()
             for k in range(K):
                 t = T_k[k]
-                x_kt[k, t] = np.float(elements[k])
+                x_kt[k, t] = float(elements[k])
                 T_k[k] += 1
 
     # Create a list of indices of all configurations in kt-indexing.
@@ -224,7 +224,9 @@ def main():
     # Initialize MBAR.
     print("Running MBAR...")
     # TODO: change to u_kn inputs
-    mbar = pymbar.MBAR(u_kln, N_k, verbose=True, relative_tolerance=1.0e-10)
+    mbar = pymbar.MBAR(
+        u_kln, N_k, verbose=True, relative_tolerance=1.0e-10, solver_protocol="robust"
+    )
 
     # Compute unbiased energies (all biasing forces are zero).
     # u_n[n] is the reduced potential energy without umbrella restraints of snapshot n
@@ -243,7 +245,7 @@ def main():
     # Compute free energy profile in unbiased potential (in units of kT).
 
     print("Computing free energy profile...")
-    fes = FES(u_kln, N_k)
+    fes = FES(u_kln, N_k, mbar_options=dict(solver_protocol="robust"))
     histogram_parameters = dict()
     # 1D array of parameters, one entry because 1D
     histogram_parameters["bin_edges"] = bin_left_boundary_i
