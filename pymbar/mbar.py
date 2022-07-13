@@ -375,7 +375,7 @@ class MBAR:
             else:
                 for solver in prot:
                     if not isinstance(solver, dict):
-                        logger.warn(
+                        logger.warning(
                             "{pname} is not 'robust','default' or a tuple/list dictionaries, setting to 'default'"
                         )
                         prot = defl
@@ -456,7 +456,7 @@ class MBAR:
                     if b % maxfrac == 0:
                         logger.info(f"Calculated {b+1:d}/{self.n_bootstraps:d} bootstrap samples")
         elif n_bootstraps < 0:
-            logger.warn("n_bootstraps must be an integer >= 0")
+            logger.warning("n_bootstraps must be an integer >= 0")
 
         # bootstrapped weight matrices not generated here, but when expectations are needed
         # otherwise, it's too much memry to keep
