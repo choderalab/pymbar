@@ -365,6 +365,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
             )
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
+
         if gnorm_sci < gnorm_nr or sci_iter < min_sc_iter:
             f_k = f_sci
             g = g_sci
@@ -391,7 +392,10 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
         )  # check which values are near enough to zero, hard coded max for now.
         div[zeroed] = 1.0  # for these values, use absolute values.
         max_delta = np.max(np.abs(f_k[1:] - f_old[1:]) / div)
-        if np.isnan(max_delta) or (max_delta < tol):
+        max_diff = np.max(np.abs(f_sci[1:] - f_nr[1:]) / div)
+        # add this just to make sure they are not too different.
+        # if we start with bad states, the f_k - f_k_old might be far off.
+        if np.isnan(max_delta) or ((max_delta < tol) and max_diff < np.sqrt(tol)):
             doneIterating = True
             success = True
             warn = "Convergence achieved by change in f with respect to previous guess."
