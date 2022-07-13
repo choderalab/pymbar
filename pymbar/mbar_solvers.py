@@ -11,7 +11,8 @@ import warnings
 #DEFAULT_SOLVER_PROTOCOL = (dict(method="hybr"), )  # Then do fmin hybrid on full dataset.
 # Use Adpative solver as first attempt
 DEFAULT_SOLVER_METHOD = "adaptive"
-DEFAULT_SOLVER_PROTOCOL = (dict(method=DEFAULT_SOLVER_METHOD,),)
+DEFAULT_SOLVER_PROTOCOL = (dict(method=DEFAULT_SOLVER_METHOD, options=dict(min_sc_iter=2)),)
+DEFAULT_SOLVER_TOLERANCE = 1.0e-12
 
 
 def validate_inputs(u_kn, N_k, f_k):
@@ -248,6 +249,7 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
         gamma (float between 0 and 1) - incrementor for NR iterations (default 1.0).  Usually not changed now, since adaptively switch.
         maximum_iterations (int) - maximum number of Newton-Raphson iterations (default 250: either NR converges or doesn't, pretty quickly)
         verbose (boolean) - verbosity level for debug output
+        min_sc_iter (int) - minimum number of self-consistent iterations to run before switching to Newton-Raphson
 
     NOTES
 
@@ -271,12 +273,15 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     options.setdefault('maximum_iterations',10000)
     options.setdefault('print_warning',False)
     options.setdefault('gamma',1.0)
+    options.setdefault("min_sc_iter", 2)
 
     gamma = options['gamma']
     doneIterating = False
     if options['verbose'] == True:
         print("Determining dimensionless free energies by Newton-Raphson / self-consistent iteration.")
-
+        print(f"maximum iterations: {options['maximum_iterations']}")
+        print(f"minimum self consistent iterations: {options['min_sc_iter']}")
+ 
     if tol < 1.5e-15:
         print("Tolerance may be too close to machine precision to converge.")
     # keep track of Newton-Raphson and self-consistent iterations
@@ -287,7 +292,9 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
     f_nr = np.zeros(len(f_k), dtype=np.float64)
 
     # Perform Newton-Raphson iterations (with sci computed on the way)
-    for iteration in range(0, options['maximum_iterations']):
+    maximum_iterations = options['maximum_iterations']
+    min_sc_iter = options["min_sc_iter"]
+    for iteration in range(0, maximum_iterations):
         g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
         H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
         Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
@@ -311,12 +318,12 @@ def adaptive(u_kn, N_k, f_k, tol = 1.0e-12, options = None):
             print("self consistent iteration gradient norm is %10.5g, Newton-Raphson gradient norm is %10.5g" % (gnorm_sci, gnorm_nr))
         # decide which directon to go depending on size of gradient norm
         f_old = f_k
-        if (gnorm_sci < gnorm_nr or sci_iter < 2):
+        if (gnorm_sci < gnorm_nr or sci_iter < min_sc_iter):
             f_k = f_sci
             sci_iter += 1
             if options['verbose']:
-                if sci_iter < 2:
-                    print("Choosing self-consistent iteration on iteration %d" % iteration)
+                if sci_iter < min_sc_iter:
+                    print("Choosing self-consistent iteration on iteration %d because min_sc_iter=%d" % (iteration, min_sc_iter))
                 else:
                     print("Choosing self-consistent iteration for lower gradient on iteration %d" % iteration)
         else:
@@ -380,7 +387,7 @@ def precondition_u_kn(u_kn, N_k, f_k):
     return u_kn
 
 
-def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1E-12, options=None):
+def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=DEFAULT_SOLVER_TOLERANCE, options=None):
     """Solve MBAR self-consistent equations using some form of equation solver.
 
     Parameters
@@ -395,7 +402,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     method : str, optional, default="hybr"
         The optimization routine to use.  This can be any of the methods
         available via scipy.optimize.minimize() or scipy.optimize.root().
-    tol : float, optional, default=1E-14
+    tol : float, optional, default=1.0e-12
         The convergance tolerance for minimize() or root()
     verbose: bool
         Whether to print information about the solution method.
@@ -465,7 +472,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=1
     return f_k_nonzero, results
 
 
-def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
+def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, solver_tolerance=None):
     """Solve MBAR self-consistent equations using some sequence of equation solvers.
 
     Parameters
@@ -480,6 +487,8 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     solver_protocol: tuple(dict()), optional, default=None
         Optional list of dictionaries of steps in solver protocol.
         If None, a default protocol will be used.
+    solver_tolerance : float, optional, default=None
+        tolerance to use when solving the mbar equation (see solve_mbar_once)
 
     Returns
     -------
@@ -510,15 +519,17 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
         if protocol['method'] is None:
             protocol['method'] = DEFAULT_SOLVER_METHOD
 
+    tol = solver_tolerance if solver_tolerance else DEFAULT_SOLVER_TOLERANCE
+
     all_results = []
     for k, options in enumerate(solver_protocol):
-        f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, **options)
+        f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, **options)
         all_results.append(results)
         all_results.append(("Final gradient norm: %.3g" % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero))))
     return f_k_nonzero, all_results
 
 
-def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
+def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol, solver_tolerance):
     """Solve for free energies of states with samples, then calculate for
     empty states.
 
@@ -530,9 +541,11 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
         The number of samples in each state
     f_k : np.ndarray, shape=(n_states), dtype='float'
         The reduced free energies of each state
-    solver_protocol: tuple(dict()), optional, default=None
+    solver_protocol: tuple(dict())
         Sequence of dictionaries of steps in solver protocol for final
         stage of refinement.
+    solver_tolerance : float
+        tolerance to use when solving the mbar equation (see solve_mbar_once)
 
     Returns
     -------
@@ -545,7 +558,8 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, solver_protocol):
         f_k_nonzero = np.array([0.0])
     else:
         f_k_nonzero, all_results = solve_mbar(u_kn[states_with_samples], N_k[states_with_samples],
-                                              f_k[states_with_samples], solver_protocol=solver_protocol)
+                                              f_k[states_with_samples], solver_protocol=solver_protocol, 
+                                              solver_tolerance=solver_tolerance)
 
     f_k[states_with_samples] = f_k_nonzero
 

@@ -44,6 +44,7 @@ from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
+DEFAULT_SOLVER_TOLERANCE = mbar_solvers.DEFAULT_SOLVER_TOLERANCE
 
 # =========================================================================
 # MBAR class definition
@@ -70,8 +71,8 @@ class MBAR:
     """
     # =========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None,
-                 solver_protocol=None, initialize='zeros', x_kindices=None, nbootstraps = None, rseed = None, **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, solver_tolerance=DEFAULT_SOLVER_TOLERANCE, verbose=False, initial_f_k=None,
+                 solver_protocol=None, initialize='zeros', x_kindices=None, nbootstraps=None, rseed=None, **kwargs):
 
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -107,9 +108,11 @@ class MBAR:
             from above, once ``u_kln`` is phased out.
 
         maximum_iterations : int, optional
-            Set to limit the maximum number of iterations performed (default 1000)
+            Set to limit the maximum number of iterations performed (default 10000)
         relative_tolerance : float, optional
-            Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+            Set to determine the relative tolerance convergence criteria (default 1.0e-7)
+        solver_tolerance : float, optional
+            Set the tolerance for which to use for solving the mbar equation (see solve_mbar_once()) (default 1.0e-12)
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
         initial_f_k : np.ndarray, float, shape=(K), optional
@@ -306,14 +309,17 @@ class MBAR:
         np.random.seed(rseed)
         self.rstate = np.random.get_state()
 
-        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol)
+        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol, solver_tolerance)
 
         self.nbootstraps = None
         if nbootstraps != None:
             self.nbootstraps = nbootstraps
-            #save the original data:
-            self.f_k_boots = np.zeros([self.nbootstraps,self.K])
 
+            # Set min_sc_iter to 0 for bootstrapping
+            for solver in solver_protocol:
+                solver['options']['min_sc_iter'] = 0
+
+            self.f_k_boots = np.zeros([self.nbootstraps,self.K])
             allN = int(np.sum(self.N_k))
             rinit = np.zeros(allN, int)
             for b in range(self.nbootstraps):
@@ -324,11 +330,11 @@ class MBAR:
                     # pick new random ones of these K.
                     new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
                     rinit[k_indices] = new_kindices
-
-                self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol)
+                
+                self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol, solver_tolerance)
                 if verbose:
                     if b%10==0:
-                        print("Caculated {:d}/{:d} bootstrap samples".format(b,self.nbootstraps)) 
+                        print("Calculated {:d}/{:d} bootstrap samples".format(b,self.nbootstraps)) 
                         
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
