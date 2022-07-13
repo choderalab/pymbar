@@ -974,7 +974,7 @@ class MBAR:
         for i in range(K):
             for j in range(K):
                 for k in range(n):
-                    d2[i, j] += a[k]**2 * var_ij[i + k * K, j + k * K]
+                    d2[i, j] += a[k] ** 2 * var_ij[i + k * K, j + k * K]
                     for l in range(n):
                         d2[i, j] += (
                             a[k]
