@@ -91,5 +91,5 @@ def test_EXP_free_energies(exp_and_test):
     # assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
     # make sure the different methods are nearly equal for these systems (within uncertainty)
-    z = np.abs(fe_R - fe_F) / np.sqrt(dfe_R ** 2 + dfe_F ** 2)
+    z = np.abs(fe_R - fe_F) / np.sqrt(dfe_R**2 + dfe_F**2)
     assert_almost_equal(z / z_scale_factor, 0.0, decimal=0)

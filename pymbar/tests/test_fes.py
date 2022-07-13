@@ -127,7 +127,7 @@ def fes_1d():
     xmin = gridscale * (np.min(xrange[0][0]) - 1 / 2.0)
     xmax = gridscale * (np.max(xrange[0][1]) + 1 / 2.0)
     dx = (xmax - xmin) / nbinsperdim
-    nbins = nbinsperdim ** ndim
+    nbins = nbinsperdim**ndim
     bin_edges = np.linspace(xmin, xmax, nbins + 1)  # list of bin edges.
     bin_centers = np.zeros([nbins, ndim])
 
@@ -230,7 +230,7 @@ def fes_2d():
     ymax = gridscale * (np.max(xrange[1][1]) + 1 / 2.0)
     dx = (xmax - xmin) / nbinsperdim
     dy = (ymax - ymin) / nbinsperdim
-    nbins = nbinsperdim ** ndim
+    nbins = nbinsperdim**ndim
     bin_centers = np.zeros([nbins, ndim])
 
     ibin = 0
@@ -488,7 +488,7 @@ def test_1d_fes_spline_bootstraped(fes_1d):
 )
 def test_2d_fes_histogram(fes_2d, reference_point):
 
-    """ testing fes_generate_fes and fes_get_fes in 2D """
+    """testing fes_generate_fes and fes_get_fes in 2D"""
 
     fes = fes_2d["fes"]
     fes_analytical = fes_2d["fes_analytical"]

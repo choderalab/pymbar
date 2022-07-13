@@ -166,10 +166,10 @@ class MBAR:
             for now, it just does it zipping up the states.
 
             The 'BAR' option works best when the states are ordered such that adjacent states
-            maximize the overlap between states. Its up to the user
+            maximize the overlap between states. It is up to the user
             to arrange the states in such an order, or at least close to such an order.
             If you are uncertain what the order of states should be, or if it does not make
-            sense to think of states as adjacent, then choose 'zeroes'.
+            sense to think of states as adjacent, then choose 'zeros'.
 
             (default: 'zeros', unless specific values are passed in.)
 
@@ -180,11 +180,11 @@ class MBAR:
 
         n_bootstraps: int
             How many bootstrap free energies will be computed? If None, no bootstraps will be computed.
-            computing uncertainties with bootstraps is only possible if this is > 0. 
+            computing uncertainties with bootstraps is only possible if this is > 0.
             (default: None)
 
         bootstrap_solver_protocol: list(dict), string or None, optional, default=None
-            We usually just do steps of adaptive sampling without. "robust" would be the backup.  
+            We usually just do steps of adaptive sampling without. "robust" would be the backup.
             Default: dict(method="adaptive", options=dict(min_sc_iter=0)),
 
         Notes
@@ -194,7 +194,7 @@ class MBAR:
         ``u_k(x) = beta_k [ U_k(x) + p_k V(x) + mu_k' n(x) ]``
         where
 
-        ``beta_k = 1/(kB T_k)`` is the inverse temperature of condition ``k``, where kB is Boltzmann's constant
+        ``beta_k = 1/(k_B T_k)`` is the inverse temperature of condition ``k``, where k_B is Boltzmann's constant
 
         ``U_k(x)`` is the potential energy function for state ``k``
 
@@ -440,15 +440,17 @@ class MBAR:
                 for k in range(K):
                     # which of the indices are equal to K
                     k_indices = np.where(self.x_kindices == k)[0]
-                    # pick new random ones of these K.
+                    # pick new random ones, selected of these K.
                     new_kindices = k_indices[np.random.randint(N_k[k], size=N_k[k])]
                     rints[k_indices] = new_kindices
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
-                    self.u_kn[:, rints], self.N_k, f_k_init, bootstrap_solver_protocol,
+                    self.u_kn[:, rints],
+                    self.N_k,
+                    f_k_init,
+                    bootstrap_solver_protocol,
                 )
-                self.bootstrap_rints[
-                    b, :
-                ] = rints  # save the random integers for computing expectations.
+                # save the random integers for computing expectations.
+                self.bootstrap_rints[b, :] = rints
 
                 if verbose:
                     if b % maxfrac == 0:
@@ -552,7 +554,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w ** 2)
+            N_eff[k] = 1 / np.sum(w**2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
@@ -641,7 +643,7 @@ class MBAR:
             Choice of method used to compute asymptotic covariance method,
             or None to use default.  See help for _computeAsymptoticCovarianceMatrix()
             for more information on various methods. (default: svd)
-            The exception is the "bootstrap" option, which required n_boostraps being defined at initialization of MBAR.
+            The exception is the "bootstrap" option, which requires n_boostraps being defined upon initialization of MBAR.
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
             than this number (default: 1.0e-10)
@@ -681,11 +683,6 @@ class MBAR:
         >>> results = mbar.compute_free_energy_differences()
 
         """
-        Deltaf_ij, dDeltaf_ij, Theta_ij = (
-            None,
-            None,
-            None,
-        )  # By default, returns None for dDelta and Theta
 
         # Compute free energy differences.
         Deltaf_ij = self.f_k - np.vstack(self.f_k)
@@ -751,9 +748,9 @@ class MBAR:
         space functions [A_0(x),A_1(x),...,A_i(x)] along with the
         covariances of their estimates at multiple states.
 
-        intended as an internal function to keep all the optimized and
+        Intended as an internal function to keep all the optimized and
         robust expectation code in one place, but will leave it
-        open to allow for later modifications
+        open to allow for later modifications and uses.
 
         It calculates all input observables at all states which are
         specified by the list of states in the state list.
@@ -773,7 +770,7 @@ class MBAR:
             large number of different situations.
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for _computeAsymptoticCovarianceMatrix() for more information on various methods. 
+            See help for _computeAsymptoticCovarianceMatrix() for more information on various methods.
             The exception is the "bootstrap" option, which required n_boostraps being defined at initialization of MBAR.
             (default: None)
         warning_cutoff : float, optional
@@ -796,9 +793,9 @@ class MBAR:
 
         'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+logfactor)) as the log form is easier to work with.
 
-        'bootstrapped_observables' : np.ndarray, float, shape = (n_boostraps,S), bootstrapped 'observables'.
+        'bootstrapped_observables' : np.ndarray, float, shape = (n_boostraps,S), array of the observables bootstrapped over random samples.
 
-        'bootstrapped_f' : np.ndarray, float, shape = (n_boostraps,S), bootstrapped free energies 'f'.
+        'bootstrapped_f' : np.ndarray, float, shape = (n_boostraps,S), free energies 'f' bootstrapped over random samples.
 
 
         Notes
@@ -903,11 +900,7 @@ class MBAR:
         for n in range(n_total):
             # <A> = A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
             # Fill in first section of matrix with existing q_k(x) from states.
-            N_k[
-                0:K
-            ] = (
-                self.N_k
-            )  # is this correct? or does this change with randomization? Do we need to recalculate?
+            N_k[0:K] = self.N_k
             if n == 0:
                 f_k[0:K] = self.f_k
                 u_kn = self.u_kn
@@ -1108,7 +1101,7 @@ class MBAR:
         outputs : KxK variance matrix for the sums or differences ``\\sum a_i df_i``
         """
 
-        # todo: vectorize this.
+        # todo: vectorize this, use for computing entropy and enthalpy.
         var_ij = np.square(d_ij)
         d2 = np.zeros([K, K], float)
         n = len(a)
@@ -1166,7 +1159,7 @@ class MBAR:
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method,
             or None to use default See help for _computeAsymptoticCovarianceMatrix()
-            for more information on various methods. if uncertainty_method = "bootstrap", 
+            for more information on various methods. if uncertainty_method = "bootstrap",
             then uncertainty over bootstrap samples is used. (default: None)
 
         warning_cutoff : float, optional
@@ -1353,7 +1346,7 @@ class MBAR:
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
-            if method = "bootstrap" then uncertainty over bootstrap samples is used. 
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
             with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
@@ -1460,9 +1453,9 @@ class MBAR:
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. 
-            if method = "bootstrap" then uncertainty over bootstrap samples is used. 
-            with bootstraps. (default: None)  
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
+            with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1779,13 +1772,12 @@ class MBAR:
           'approximate' only requires multiplication of KxN and NxK matrices, but is an approximate underestimate of the uncertainty.
 
 
-
         svd and svd-ew are described in appendix D of Shirts, 2007 JCP, while
         "approximate" in Section 4 of Kong, 2003. J. R. Statist. Soc. B.
 
         We currently recommend 'svd-ew'.
 
-        if uncertainty method = "bootstrap", we asked for uncertainties with bootstrap, so we probably don't care that 
+        if uncertainty method = "bootstrap", we asked for uncertainties with bootstrap, so we probably don't care that
         much about the theta matrix, and we will just default to using svd-ew, the best method.
 
 
