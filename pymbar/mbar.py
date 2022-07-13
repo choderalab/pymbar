@@ -306,8 +306,7 @@ class MBAR:
         np.random.seed(rseed)
         self.rstate = np.random.get_state()
 
-        f_k_init = self.f_k.copy()  # we need to pass a copy so we don't overwrite the original 
-        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, f_k_init, solver_protocol)
+        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol)
 
         self.nbootstraps = None
         if nbootstraps != None:
@@ -318,6 +317,7 @@ class MBAR:
             allN = int(np.sum(self.N_k))
             rinit = np.zeros(allN, int)
             for b in range(self.nbootstraps):
+                f_k_init = self.f_k.copy()  # we need to pass a copy so we don't overwrite the original
                 for k in range(K): # randomize within the indices with the same K.
                     # which of the indices are equal to K
                     k_indices = np.where(self.x_kindices == k)[0]
