@@ -598,8 +598,11 @@ class MBAR:
             None,
         )  # By default, returns None for dDelta and Theta
 
-        # Compute free energy differences.
-        Deltaf_ij = self.f_k - np.vstack(self.f_k)
+        # Compute free energy differences and force cast back to mutable, normal ndarray (we're done with JAX here)
+        # Cannot use asarray because that makes reference to the JAX memory, which NumPy doesn't own and is flagged
+        # read-only (.flags(write=0)). Using .array makes a copy of the data to a new memory address, and is thus
+        # mutable
+        Deltaf_ij = np.array(self.f_k - np.vstack(self.f_k))
 
         # zero out numerical error for thermodynamically identical states
         self._zerosamestates(Deltaf_ij)
@@ -615,7 +618,8 @@ class MBAR:
             )
 
         if compute_uncertainty:
-            dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
+            # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
+            dDeltaf_ij = np.array(self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff))
             # zero out numerical error for thermodynamically identical states
             self._zerosamestates(dDeltaf_ij)
             # Return matrix of free energy differences and uncertainties.
@@ -1542,9 +1546,12 @@ class MBAR:
         """
         zeros out states that should be identical
 
+        Since this is in place update, must be normal NumPy ndarray instead of JAX DeviceArray
+
         REQUIRED ARGUMENTS
 
-        A: the matrix whose entries are to be zeroed.
+        A: np.ndarray
+            The matrix whose entries are to be zeroed.
 
         """
         for pair in self.samestates:

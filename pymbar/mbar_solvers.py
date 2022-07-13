@@ -1,6 +1,7 @@
 import logging
+import warnings
+
 import numpy as np
-import math
 from pymbar.utils import ensure_type, check_w_normalized, ParameterError
 import scipy.optimize
 use_jit = True
@@ -10,15 +11,14 @@ if use_jit:
     from jax.scipy.special import logsumexp
     from jax.config import config; config.update("jax_enable_x64", True)
     import jax.numpy as jnp
-    from jax.numpy import exp, sum, newaxis, diag, dot
+    from jax.numpy import exp, sum, newaxis, diag, dot, s_
     from jax.numpy.linalg import lstsq
     import jax.scipy.optimize
     from jax.scipy.optimize import minimize
 else:
-    from numpy import exp, sum, newaxis, diag, dot
+    from numpy import exp, sum, newaxis, diag, dot, s_
     from numpy.linalg import lstsq
 
-import warnings
 logger = logging.getLogger(__name__)
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving the MBAR equations.
@@ -115,27 +115,36 @@ def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     Equation C3 in MBAR JCP paper.
     """
 
-    return jit_self_consistent_update(
+    return jax_self_consistent_update(
             u_kn, N_k, f_k, states_with_samples=states_with_samples
         )
+
+
+@jax.jit
+def _jit_self_consistent_update(u_kn, N_k, f_k):
+    """JAX version of self_consistent update.  For parameters, see self_consistent_update.
+    N_k must be float (should be cast at a higher level)
+
+    """
+    log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+    # All states can contribute to the numerator term.
+    return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)  # check transpose
+
 
 def jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     """JAX version of self_consistent update.  For parameters, see self_consistent_update.
     N_k must be float (should be cast at a higher level)
 
     """
-
     # Only the states with samples can contribute to the denominator term.
-    if states_with_samples is not None:
-        log_denominator_n = logsumexp(
-            f_k[states_with_samples] - u_kn[states_with_samples].T, b=N_k[states_with_samples], axis=1
-        )
-    else:
-        log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1) 
-    # All states can contribute to the numerator term.
-    return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)  # check transpose
+    # Precondition before feeding the op to the JIT'd function
+    # In theory, this can be computed with jax.lax.cond, but trying to reuse code for non-jax paths
+    states_with_samples = s_[:] if states_with_samples is None else states_with_samples
+    # Feed to the JIT'd function. Can't pass slice types, so slice here
+    return _jit_self_consistent_update(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples])
 
-jit_self_consistent_update = jax.jit(jax_self_consistent_update)
+# jit_self_consistent_update = jax.jit(jax_self_consistent_update)
+
 
 def mbar_gradient(u_kn, N_k, f_k):
     """Gradient of MBAR objective function.
@@ -158,8 +167,10 @@ def mbar_gradient(u_kn, N_k, f_k):
     -----
     This is equation C6 in the JCP MBAR paper.
     """
-    return jit_mbar_gradient(u_kn, N_k, f_k)
+    return jax_mbar_gradient(u_kn, N_k, f_k)
 
+
+@jax.jit
 def jax_mbar_gradient(u_kn, N_k, f_k):
     """ JAX version of MBAR gradient function. See documentation of mbar_gradient.
     N_k must be float (should be cast at a higher level)
@@ -169,7 +180,8 @@ def jax_mbar_gradient(u_kn, N_k, f_k):
     log_numerator_k = logsumexp(-log_denominator_n - u_kn, axis=1)
     return -1 * N_k * (1.0 - exp(f_k + log_numerator_k))
 
-jit_mbar_gradient = jax.jit(jax_mbar_gradient)
+# jit_mbar_gradient = jax.jit(jax_mbar_gradient)
+
 
 def mbar_objective(u_kn, N_k, f_k):
     """Calculates objective function for MBAR.
@@ -200,8 +212,9 @@ def mbar_objective(u_kn, N_k, f_k):
     outermost sum and logsumexp for the inner sum.
     """
 
-    return jit_mbar_objective(u_kn, N_k, f_k)
+    return jax_mbar_objective(u_kn, N_k, f_k)
 
+@jax.jit
 def jax_mbar_objective(u_kn, N_k, f_k):
     """JAX version of mbar_objective.
     For parameters, mbar_objective_and_Gradient
@@ -210,13 +223,14 @@ def jax_mbar_objective(u_kn, N_k, f_k):
     """
     
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-    obj = sum(log_denominator_n) - dot(N_k,f_k)
+    obj = sum(log_denominator_n) - dot(N_k, f_k)
 
     return obj
 
-jit_mbar_objective = jax.jit(jax_mbar_objective)
+# jit_mbar_objective = jax.jit(jax_mbar_objective)
 
 
+@jax.jit
 def jax_mbar_objective_and_gradient(u_kn, N_k, f_k):
     """JAX version of mbar_objective_and_gradient.
     For parameters, mbar_objective_and_Gradient
@@ -228,11 +242,11 @@ def jax_mbar_objective_and_gradient(u_kn, N_k, f_k):
     log_numerator_k = logsumexp(-log_denominator_n - u_kn, axis=1)
     grad = -1 * N_k * (1.0 - exp(f_k + log_numerator_k))
 
-    obj = sum(log_denominator_n) - dot(N_k,f_k)
+    obj = sum(log_denominator_n) - dot(N_k, f_k)
 
     return obj, grad
 
-jit_mbar_objective_and_gradient = jax.jit(jax_mbar_objective_and_gradient)
+# jit_mbar_objective_and_gradient = jax.jit(jax_mbar_objective_and_gradient)
 
 
 def mbar_objective_and_gradient(u_kn, N_k, f_k):
@@ -269,8 +283,9 @@ def mbar_objective_and_gradient(u_kn, N_k, f_k):
     function is its integral.
     """
 
-    return jit_mbar_objective_and_gradient(u_kn, N_k, f_k)
+    return jax_mbar_objective_and_gradient(u_kn, N_k, f_k)
 
+@jax.jit
 def jax_mbar_hessian(u_kn, N_k, f_k):
     """JAX version of mbar_hessian.
     For parameters, see mbar_hessian
@@ -282,13 +297,14 @@ def jax_mbar_hessian(u_kn, N_k, f_k):
     logW = f_k - u_kn.T - log_denominator_n[:, newaxis]
     W = exp(logW)
 
-    H = dot(W.T,W)
+    H = dot(W.T, W)
     H *= N_k
     H *= N_k[:, newaxis]
     H -= diag(W.sum(0) * N_k)
     return -1.0 * H
 
-jit_mbar_hessian = jax.jit(jax_mbar_hessian)
+# jit_mbar_hessian = jax.jit(jax_mbar_hessian)
+
 
 def mbar_hessian(u_kn, N_k, f_k):
     """Hessian of MBAR objective function.
@@ -312,8 +328,10 @@ def mbar_hessian(u_kn, N_k, f_k):
     Equation (C9) in JCP MBAR paper.
     """
 
-    return jit_mbar_hessian(u_kn, N_k, f_k)
+    return jax_mbar_hessian(u_kn, N_k, f_k)
 
+
+@jax.jit
 def jax_mbar_log_W_nk(u_kn, N_k, f_k):
     """JAX version of mbar_log_W_nk.
     For parameters, see mbar_log_W_nk
@@ -325,7 +343,7 @@ def jax_mbar_log_W_nk(u_kn, N_k, f_k):
     logW = f_k - u_kn.T - log_denominator_n[:, newaxis]
     return logW
 
-jit_mbar_log_W_nk = jax.jit(jax_mbar_log_W_nk)
+# jit_mbar_log_W_nk = jax.jit(jax_mbar_log_W_nk)
 
 
 def mbar_log_W_nk(u_kn, N_k, f_k):
@@ -349,8 +367,10 @@ def mbar_log_W_nk(u_kn, N_k, f_k):
     -----
     Equation (9) in JCP MBAR paper.
     """
-    return jit_mbar_log_W_nk(u_kn, N_k, f_k)
+    return jax_mbar_log_W_nk(u_kn, N_k, f_k)
 
+
+@jax.jit
 def jax_mbar_W_nk(u_kn, N_k, f_k):
     """JAX version of mbar_W_nk.
     For parameters, see mbar_W_nk
@@ -359,7 +379,8 @@ def jax_mbar_W_nk(u_kn, N_k, f_k):
     """
     return exp(jax_mbar_log_W_nk(u_kn, N_k, f_k))
     
-jit_mbar_W_nk = jax.jit(jax_mbar_W_nk)
+# jit_mbar_W_nk = jax.jit(jax_mbar_W_nk)
+
 
 def mbar_W_nk(u_kn, N_k, f_k):
     """Calculate the weight matrix.
@@ -382,7 +403,8 @@ def mbar_W_nk(u_kn, N_k, f_k):
     -----
     Equation (9) in JCP MBAR paper.
     """
-    return jit_mbar_W_nk(u_kn, N_k, f_k)
+    return jax_mbar_W_nk(u_kn, N_k, f_k)
+
 
 def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
 
@@ -453,7 +475,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
     for iteration in range(0, maxiter):
 
         if use_jit:
-            (f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr) = jit_core_adaptive(u_kn, N_k, f_k, options['gamma'])
+            (f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr) = jax_core_adaptive(u_kn, N_k, f_k, options['gamma'])
         else:
             H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
             Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
@@ -544,6 +566,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
     return results
 
 
+@jax.jit
 def jax_core_adaptive(u_kn, N_k, f_k, gamma):
     """JAX version of adaptive inner loop.
     N_k must be float (should be cast at a higher level)
@@ -567,11 +590,13 @@ def jax_core_adaptive(u_kn, N_k, f_k, gamma):
     g_nr = mbar_gradient(u_kn, N_k, f_nr)
     gnorm_nr = dot(g_nr, g_nr)
 
-    return (f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr)
+    return f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr
 
-jit_core_adaptive = jax.jit(jax_core_adaptive)
+# jit_core_adaptive = jax.jit(jax_core_adaptive)
 
-def jax_precondition_u_kn(u_kn,N_k,f_k):
+
+@jax.jit
+def jax_precondition_u_kn(u_kn, N_k, f_k):
     """JAX version of precondition_u_kn
     for parameters, see precondition_u_kn
     N_k must be float (should be cast at a higher level)
@@ -582,7 +607,8 @@ def jax_precondition_u_kn(u_kn,N_k,f_k):
     u_kn += (logsumexp(f_k - u_kn.T, b=N_k, axis=1)) - dot(N_k,f_k) / N_k.sum()
     return u_kn
 
-jit_precondition_u_kn = jax.jit(jax_precondition_u_kn)
+# jit_precondition_u_kn = jax.jit(jax_precondition_u_kn)
+
 
 def precondition_u_kn(u_kn, N_k, f_k):
     """Subtract a sample-dependent constant from u_kn to improve precision
@@ -609,7 +635,8 @@ def precondition_u_kn(u_kn, N_k, f_k):
     x_n such that the current objective function value is zero, which
     should give maximum precision in the objective function.
     """
-    return jit_precondition_u_kn(u_kn, N_k, f_k)
+    return jax_precondition_u_kn(u_kn, N_k, f_k)
+
 
 def solve_mbar_once(
     u_kn_nonzero,
