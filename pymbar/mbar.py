@@ -348,7 +348,7 @@ class MBAR:
             self.f_k[:] = self.f_k[:] - self.f_k[0]
         else:
             # Initialize estimate of relative dimensionless free energies.
-            self._initializeFreeEnergies(verbose, method=initialize, f_k_init = initial_f_k)
+            self._initializeFreeEnergies(verbose, method=initialize, f_k_init=initial_f_k)
 
             if self.verbose:
                 logger.info(
@@ -445,7 +445,7 @@ class MBAR:
                     rints[k_indices] = new_kindices
                 # If we initialized with BAR, then BAR, starting from the provided initial_f_k as well.
                 if initialize == "BAR":
-                    f_k_init = self._initialize_with_bar(self.u_kn[:,rints],f_k_init = self.f_k)
+                    f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
                     self.u_kn[:, rints],
                     self.N_k,
@@ -1927,14 +1927,15 @@ class MBAR:
 
     def _initialize_with_bar(self, u_kn, f_k_init=None):
 
-        '''
+        """
 
         Internal method for intializing free energies simulations with BAR.
         Only useful to do when the states are in order.
 
-        '''
+        """
 
         from pymbar.other_estimators import bar
+
         initialization_order = np.where(self.N_k > 0)[0]
         # Initialize all f_k to zero.
         if f_k_init is None:
@@ -1958,7 +1959,7 @@ class MBAR:
                     + bar(
                         w_F,
                         w_R,
-                        DeltaF = f_k_init[l] - f_k_init[k],
+                        DeltaF=f_k_init[l] - f_k_init[k],
                         relative_tolerance=0.000001,
                         verbose=False,
                         compute_uncertainty=False,
