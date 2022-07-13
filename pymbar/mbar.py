@@ -343,9 +343,14 @@ class MBAR:
             solver_protocol = DEFAULT_SOLVER_PROTOCOL
         elif solver_protocol == "robust":
             solver_protocol = ROBUST_SOLVER_PROTOCOL
-        elif not isinstance(solver_protocol, dict):
+        elif not (
+            isinstance(solver_protocol, dict)
+            or (
+                isinstance(solver_protocol, (list, tuple)) and isinstance(solver_protocol[0], dict)
+            )
+        ):
             logger.warn(
-                "solver_protocol is not 'robust','default' or a dictionary, setting to 'default'"
+                "solver_protocol is not 'robust','default' or a dictionary or list of dictionaries, setting to 'default'"
             )
             solver_protocol = DEFAULT_SOLVER_PROTOCOL
 
