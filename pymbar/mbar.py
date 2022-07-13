@@ -348,7 +348,7 @@ class MBAR:
             self.f_k[:] = self.f_k[:] - self.f_k[0]
         else:
             # Initialize estimate of relative dimensionless free energies.
-            self._initializeFreeEnergies(verbose, method=initialize)
+            self._initializeFreeEnergies(verbose, method=initialize, f_k_init = initial_f_k)
 
             if self.verbose:
                 logger.info(
@@ -441,8 +441,11 @@ class MBAR:
                     # which of the indices are equal to K
                     k_indices = np.where(self.x_kindices == k)[0]
                     # pick new random ones, selected of these K.
-                    new_kindices = k_indices[np.random.randint(N_k[k], size=N_k[k])]
+                    new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
                     rints[k_indices] = new_kindices
+                # If we initialized with BAR, then BAR, starting from the provided initial_f_k as well.
+                if initialize == "BAR":
+                    f_k_init = self._initialize_with_bar(self.u_kn[:,rints],f_k_init = self.f_k)
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
                     self.u_kn[:, rints],
                     self.N_k,
@@ -1856,7 +1859,7 @@ class MBAR:
 
     # =========================================================================
 
-    def _initializeFreeEnergies(self, verbose=False, method="zeros"):
+    def _initializeFreeEnergies(self, verbose=False, method="zeros", f_k_init=None):
         """
         Compute an initial guess at the relative free energies.
 
@@ -1868,6 +1871,7 @@ class MBAR:
             Method for initializing guess at free energies.
             * zeros: all free energies are initially set to zero
             * mean-reduced-potential: the mean reduced potential is used
+            * 'BAR'
 
         """
 
@@ -1894,42 +1898,7 @@ class MBAR:
                 )
             self.f_k = means
         elif method == "BAR":
-            # For now, make a simple list of those states with samples.
-            initialization_order = np.where(self.N_k > 0)[0]
-            # Initialize all f_k to zero.
-            self.f_k[:] = 0.0
-            # Initialize the rest
-            for index in range(0, np.size(initialization_order) - 1):
-                k = initialization_order[index]
-                l = initialization_order[index + 1]
-                # forward work
-                # here, we actually need to distinguish which states are which
-                w_F = self.u_kn[l, self.x_kindices == k] - self.u_kn[k, self.x_kindices == k]
-                # self.u_kln[k, l, 0:self.N_k[k]] - self.u_kln[k, k, 0:self.N_k[k]])
-                # reverse work
-                w_R = self.u_kn[k, self.x_kindices == l] - self.u_kn[l, self.x_kindices == l]
-                # self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
-
-                if len(w_F) > 0 and len(w_R) > 0:
-                    # bar solution doesn't need to be incredibly accurate to
-                    # kickstart NR.
-                    from pymbar.other_estimators import bar
-
-                    self.f_k[l] = (
-                        self.f_k[k]
-                        + bar(
-                            w_F,
-                            w_R,
-                            relative_tolerance=0.000001,
-                            verbose=False,
-                            compute_uncertainty=False,
-                        )["Delta_f"]
-                    )
-                else:
-                    # no states observed, so we don't need to initialize this free energy anyway, as
-                    # the solution is noniterative.
-                    self.f_k[l] = 0
-
+            self.f_k = self._initialize_with_bar(self.u_kn, f_k_init)
         else:
             # The specified method is not implemented.
             raise ParameterError("Method " + method + " unrecognized.")
@@ -1955,3 +1924,49 @@ class MBAR:
           'log weights' here refers to \\log [ \\sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
         """
         return -1.0 * logsumexp(self.f_k + u_n[:, np.newaxis] - self.u_kn.T, b=self.N_k, axis=1)
+
+    def _initialize_with_bar(self, u_kn, f_k_init=None):
+
+        '''
+
+        Internal method for intializing free energies simulations with BAR.
+        Only useful to do when the states are in order.
+
+        '''
+
+        from pymbar.other_estimators import bar
+        initialization_order = np.where(self.N_k > 0)[0]
+        # Initialize all f_k to zero.
+        if f_k_init is None:
+            f_k_init = np.zeros(len(self.f_k))
+        for index in range(0, np.size(initialization_order) - 1):
+            k = initialization_order[index]
+            l = initialization_order[index + 1]
+            # forward work
+            # here, we actually need to distinguish which states are which
+            w_F = u_kn[l, self.x_kindices == k] - u_kn[k, self.x_kindices == k]
+            # self.u_kln[k, l, 0:self.N_k[k]] - self.u_kln[k, k, 0:self.N_k[k]])
+            # reverse work
+            w_R = u_kn[k, self.x_kindices == l] - u_kn[l, self.x_kindices == l]
+            # self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
+
+            if len(w_F) > 0 and len(w_R) > 0:
+                # bar solution doesn't need to be incredibly accurate to
+                # kickstart NR.
+                f_k_init[l] = (
+                    f_k_init[k]
+                    + bar(
+                        w_F,
+                        w_R,
+                        DeltaF = f_k_init[l] - f_k_init[k],
+                        relative_tolerance=0.000001,
+                        verbose=False,
+                        compute_uncertainty=False,
+                    )["Delta_f"]
+                )
+            else:
+                # no states observed, so we don't need to initialize this free energy anyway, as
+                # the solution is noniterative.
+                f_k_init[l] = 0
+
+        return f_k_init
