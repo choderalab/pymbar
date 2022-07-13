@@ -4,7 +4,7 @@ import pymbar
 from pymbar.utils_for_testing import (
     suppress_derivative_warnings_for_tests,
     suppress_matrix_warnings_for_tests,
-    assert_almost_equal,
+    assert_array_almost_equal,
     oscillators,
     exponentials,
 )
@@ -26,12 +26,12 @@ def test_solvers(statesa, statesb, test_system):
     name, U, N_k, s_n, _ = test_system(statesa, statesb, provide_test=True)
     print(name)
     mbar = pymbar.MBAR(U, N_k)
-    assert_almost_equal(
+    assert_array_almost_equal(
         pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8
     )
-    assert_almost_equal(np.exp(mbar.Log_W_nk).sum(0), np.ones(len(N_k)), decimal=10)
-    assert_almost_equal(np.exp(mbar.Log_W_nk).dot(N_k), np.ones(U.shape[1]), decimal=10)
-    assert_almost_equal(
+    assert_array_almost_equal(np.exp(mbar.Log_W_nk).sum(0), np.ones(len(N_k)), decimal=10)
+    assert_array_almost_equal(np.exp(mbar.Log_W_nk).dot(N_k), np.ones(U.shape[1]), decimal=10)
+    assert_array_almost_equal(
         pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10
     )
 
@@ -39,8 +39,8 @@ def test_solvers(statesa, statesb, test_system):
     with suppress_derivative_warnings_for_tests():
         with suppress_matrix_warnings_for_tests():
             mbar0 = pymbar.old_mbar.MBAR(U, N_k)
-    assert_almost_equal(mbar.f_k, mbar0.f_k, decimal=8)
-    assert_almost_equal(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
+    assert_array_almost_equal(mbar.f_k, mbar0.f_k, decimal=8)
+    assert_array_almost_equal(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
 
 
 @pytest.mark.parametrize(
@@ -85,4 +85,4 @@ def test_protocols(base_oscillator, protocol):
         fe = results["Delta_f"][0, 1:]
         fe_sigma = results["dDelta_f"][0, 1:]
         z = (fe - fa) / fe_sigma
-        assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+        assert_array_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
