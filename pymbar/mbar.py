@@ -343,7 +343,12 @@ class MBAR:
             solver_protocol = DEFAULT_SOLVER_PROTOCOL
         elif solver_protocol == "robust":
             solver_protocol = ROBUST_SOLVER_PROTOCOL
-        elif not (isinstance(solver_protocol, dict) or (isinstance(solver_protocol,(list,tuple)) and isinstance(solver_protocol[0],dict))):
+        elif not (
+            isinstance(solver_protocol, dict)
+            or (
+                isinstance(solver_protocol, (list, tuple)) and isinstance(solver_protocol[0], dict)
+            )
+        ):
             logger.warn(
                 "solver_protocol is not 'robust','default' or a dictionary or list of dictionaries, setting to 'default'"
             )
@@ -463,7 +468,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w**2)
+            N_eff[k] = 1 / np.sum(w ** 2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
