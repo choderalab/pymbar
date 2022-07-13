@@ -444,7 +444,10 @@ class MBAR:
                     new_kindices = k_indices[np.random.randint(N_k[k], size=N_k[k])]
                     rints[k_indices] = new_kindices
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
-                    self.u_kn[:, rints], self.N_k, f_k_init, bootstrap_solver_protocol,
+                    self.u_kn[:, rints],
+                    self.N_k,
+                    f_k_init,
+                    bootstrap_solver_protocol,
                 )
                 # save the random integers for computing expectations.
                 self.bootstrap_rints[b, :] = rints
@@ -551,7 +554,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w ** 2)
+            N_eff[k] = 1 / np.sum(w**2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
@@ -767,7 +770,7 @@ class MBAR:
             large number of different situations.
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for _computeAsymptoticCovarianceMatrix() for more information on various methods. 
+            See help for _computeAsymptoticCovarianceMatrix() for more information on various methods.
             The exception is the "bootstrap" option, which required n_boostraps being defined at initialization of MBAR.
             (default: None)
         warning_cutoff : float, optional
@@ -897,7 +900,7 @@ class MBAR:
         for n in range(n_total):
             # <A> = A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
             # Fill in first section of matrix with existing q_k(x) from states.
-            N_k[0:K] = self.N_k  
+            N_k[0:K] = self.N_k
             if n == 0:
                 f_k[0:K] = self.f_k
                 u_kn = self.u_kn
@@ -1156,7 +1159,7 @@ class MBAR:
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method,
             or None to use default See help for _computeAsymptoticCovarianceMatrix()
-            for more information on various methods. if uncertainty_method = "bootstrap", 
+            for more information on various methods. if uncertainty_method = "bootstrap",
             then uncertainty over bootstrap samples is used. (default: None)
 
         warning_cutoff : float, optional
@@ -1343,7 +1346,7 @@ class MBAR:
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
-            if method = "bootstrap" then uncertainty over bootstrap samples is used. 
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
             with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
@@ -1450,9 +1453,9 @@ class MBAR:
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. 
-            if method = "bootstrap" then uncertainty over bootstrap samples is used. 
-            with bootstraps. (default: None)  
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
+            with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1774,7 +1777,7 @@ class MBAR:
 
         We currently recommend 'svd-ew'.
 
-        if uncertainty method = "bootstrap", we asked for uncertainties with bootstrap, so we probably don't care that 
+        if uncertainty method = "bootstrap", we asked for uncertainties with bootstrap, so we probably don't care that
         much about the theta matrix, and we will just default to using svd-ew, the best method.
 
 
