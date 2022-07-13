@@ -224,7 +224,9 @@ def main():
     # Initialize MBAR.
     print("Running MBAR...")
     # TODO: change to u_kn inputs
-    mbar = pymbar.MBAR(u_kln, N_k, verbose=True, relative_tolerance=1.0e-10, solver_protocol = 'robust')
+    mbar = pymbar.MBAR(
+        u_kln, N_k, verbose=True, relative_tolerance=1.0e-10, solver_protocol="robust"
+    )
 
     # Compute unbiased energies (all biasing forces are zero).
     # u_n[n] is the reduced potential energy without umbrella restraints of snapshot n
@@ -243,7 +245,7 @@ def main():
     # Compute free energy profile in unbiased potential (in units of kT).
 
     print("Computing free energy profile...")
-    fes = FES(u_kln, N_k, mbar_options = dict(solver_protocol='robust'))
+    fes = FES(u_kln, N_k, mbar_options=dict(solver_protocol="robust"))
     histogram_parameters = dict()
     # 1D array of parameters, one entry because 1D
     histogram_parameters["bin_edges"] = bin_left_boundary_i

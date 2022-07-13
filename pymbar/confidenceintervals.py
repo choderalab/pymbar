@@ -177,7 +177,7 @@ def qq_plot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
                     labelij[k] = [i, j]
                     k += 1
 
-    sq = (nplots) ** 0.5
+    sq = nplots**0.5
     labelsize = 30.0 / sq
     matplotlib.rc("axes", facecolor="#E3E4FA")
     matplotlib.rc("axes", edgecolor="white")
@@ -369,7 +369,7 @@ def generate_confidence_intervals(replicates, K):
         logger.info(
             "{:5.1f} {:10.6f} {:10.6f} ({:10.6f},{:10.6f}) {:10.6f}".format(
                 alpha,
-                1.0 - 1.0 / alpha ** 2,
+                1.0 - 1.0 / alpha**2,
                 Pobs[alpha_index],
                 Plow[alpha_index],
                 Phigh[alpha_index],
@@ -414,9 +414,9 @@ def generate_confidence_intervals(replicates, K):
     standarddev = np.std(vals, axis=0)
     bias = np.average(vals_error, axis=0)
     aveerr = np.average(vals_error, axis=0)
-    d2 = vals_error ** 2
+    d2 = vals_error**2
     rms_error = (np.average(d2, axis=0)) ** (1.0 / 2.0)
-    d2 = vals_std ** 2
+    d2 = vals_std**2
     ave_std = (np.average(d2, axis=0)) ** (1.0 / 2.0)
 
     # for now, just print out the data at the end for each

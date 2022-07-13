@@ -347,8 +347,9 @@ class MBAR:
         elif solver_protocol == "jax":
             solver_protocol = JAX_SOLVER_PROTOCOL        
         elif not isinstance(solver_protocol, dict):
+
             logger.warn(
-                "solver_protocol is not 'robust','default' or a dictionary, setting to 'default'"
+                "solver_protocol is not 'robust','default' or a dictionary or list of dictionaries, setting to 'default'"
             )
             solver_protocol = DEFAULT_SOLVER_PROTOCOL
 
@@ -362,6 +363,7 @@ class MBAR:
             if maximum_iterations > solver["options"]["maxiter"]:
                 solver["options"]["maxiter"] = maximum_iterations
                 logger.info(f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}")
+
             if "verbose" not in solver["options"]:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.
@@ -464,7 +466,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w ** 2)
+            N_eff[k] = 1 / np.sum(w**2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
@@ -770,7 +772,7 @@ class MBAR:
         logfactors = np.zeros(len(A_list))
         for i in A_list:
             A_min[i] = np.min(A_n[i, :])  # find the minimum
-            logfactors[i] = np.abs(logfactor*A_min[i])
+            logfactors[i] = np.abs(logfactor * A_min[i])
             A_n[i, :] = A_n[i, :] - (
                 A_min[i] - logfactors[i]
             )  # all values now positive so that we can work in logarithmic scale
@@ -825,7 +827,7 @@ class MBAR:
         # Now that covariances are computed, add the constants back to A_i that
         # were required to enforce positivity
         for s in range(S):
-            A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1,s]]
+            A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1, s]]
 
         # these values may be used outside the routine, so copy back.
         for i in A_list:
@@ -858,7 +860,9 @@ class MBAR:
             result_vals["Theta"] = Theta
             if S > 0:
                 # we need to return the minimum A as well
-                result_vals["Amin"] = A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
+                result_vals["Amin"] = (
+                    A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
+                )
 
         # free energies at these new states
         result_vals["f"] = f_k[K + state_list]

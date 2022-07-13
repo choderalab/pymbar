@@ -67,7 +67,7 @@ def get_analytical(beta, K, O, observables):
             A_k_analytical[observe] = O
         if observe == "position^2":
             # observable is the position^2
-            A_k_analytical[observe] = (1 + beta * K * O ** 2) / (beta * K)
+            A_k_analytical[observe] = (1 + beta * K * O**2) / (beta * K)
 
         A_ij_analytical[observe] = A_k_analytical[observe] - np.vstack(A_k_analytical[observe])
 
@@ -772,7 +772,7 @@ mbar = MBAR(u_kn, N_k)
 xmin = gridscale * (np.min(xrange[0][0]) - 1 / 2.0)
 xmax = gridscale * (np.max(xrange[0][1]) + 1 / 2.0)
 dx = (xmax - xmin) / nbinsperdim
-nbins = 1 + nbinsperdim ** ndim
+nbins = 1 + nbinsperdim**ndim
 bin_edges = np.linspace(xmin, xmax, nbins)  # list of bin edges.
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
@@ -904,7 +904,7 @@ ymin = gridscale * (np.min(xrange[1][0]) - 1 / 2.0)
 ymax = gridscale * (np.max(xrange[1][1]) + 1 / 2.0)
 dx = (xmax - xmin) / nbinsperdim
 dy = (ymax - ymin) / nbinsperdim
-nbins = 1 + nbinsperdim ** ndim
+nbins = 1 + nbinsperdim**ndim
 bin_centers = np.zeros([nbins, ndim], np.float64)
 
 ibin = 1  # first reserved for something outside.

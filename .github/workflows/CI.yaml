@@ -130,9 +130,11 @@ jobs:
       run: |
         pylint $PACKAGE/
 
-    # TODO: Remove --exclude pymbar/old_mbar.py after deprecation
+    # TODO: Remove old_mbar.py from --extend-exclude after deprecation
+    # Black has a default --exclude which reads .gitignore.
+    # Black's --exclude and --extend-exclude are single specified RegEx patterns and overwrite if multi-marked.
     - name: Run black check
       shell: bash -l {0}
       if: always()
       run: |
-        black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py --exclude $PACKAGE/_version.py
+        black --check -l 99 $PACKAGE/ examples/ --extend-exclude "$PACKAGE/(old_mbar.py|_version.py)"
