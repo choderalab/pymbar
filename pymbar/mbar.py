@@ -1940,6 +1940,8 @@ class MBAR:
         # Initialize all f_k to zero.
         if f_k_init is None:
             f_k_init = np.zeros(len(self.f_k))
+
+        starting_f_k_init = f_k_init.copy()    
         for index in range(0, np.size(initialization_order) - 1):
             k = initialization_order[index]
             l = initialization_order[index + 1]
@@ -1959,7 +1961,8 @@ class MBAR:
                     + bar(
                         w_F,
                         w_R,
-                        DeltaF=f_k_init[l] - f_k_init[k],
+                        method="bisection",
+                        DeltaF=starting_f_k_init[l] - starting_f_k_init[k],
                         relative_tolerance=0.000001,
                         verbose=False,
                         compute_uncertainty=False,
