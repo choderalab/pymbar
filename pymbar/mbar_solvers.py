@@ -472,7 +472,7 @@ def solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, method="hybr", tol=D
     return f_k_nonzero, results
 
 
-def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, solver_tolerance=None):
+def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, solver_tolerance=DEFAULT_SOLVER_TOLERANCE):
     """Solve MBAR self-consistent equations using some sequence of equation solvers.
 
     Parameters
@@ -519,11 +519,9 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, sol
         if protocol['method'] is None:
             protocol['method'] = DEFAULT_SOLVER_METHOD
 
-    tol = solver_tolerance if solver_tolerance else DEFAULT_SOLVER_TOLERANCE
-
     all_results = []
     for k, options in enumerate(solver_protocol):
-        f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, **options)
+        f_k_nonzero, results = solve_mbar_once(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=solver_tolerance, **options)
         all_results.append(results)
         all_results.append(("Final gradient norm: %.3g" % np.linalg.norm(mbar_gradient(u_kn_nonzero, N_k_nonzero, f_k_nonzero))))
     return f_k_nonzero, all_results
