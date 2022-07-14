@@ -356,8 +356,8 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
         which_badcolumns = np.arange(K)[badcolumns]
         firstbad = which_badcolumns[0]
         raise ParameterError(
-            'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
-            (firstbad, column_sums[firstbad], np.sum(badcolumns)))
+            'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems.' %
+            (firstbad, column_sums[firstbad], np.sum(badcolumns)) + ' This generally indicates the free energies are not converged.')
 
     row_sums = np.sum(W * N_k, axis=1)
     badrows = (np.abs(row_sums - 1) > tolerance)
@@ -365,8 +365,8 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
         which_badrows = np.arange(N)[badrows]
         firstbad = which_badrows[0]
         raise ParameterError(
-            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
-            (firstbad, row_sums[firstbad], np.sum(badrows)))
+            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems.' %
+            (firstbad, row_sums[firstbad], np.sum(badrows)) + ' This generally indicates the free energies are not converged.')
 
     return
 

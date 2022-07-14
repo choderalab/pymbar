@@ -1,9 +1,9 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR
 #
-# Copyright 2017 University of Colorado Boulder
-# Copyright 2010-2017 Memorial Sloan-Kettering Cancer Center
-# Portions of this software are Copyright (c) 2010-2016 University of Virginia
+# Copyright 2016-2022 University of Colorado Boulder
+# Copyright 2010-2022 Memorial Sloan-Kettering Cancer Center
+# Portions of this software are Copyright (c) 2010-2015 University of Virginia
 # Portions of this software are Copyright (c) 2006-2007 The Regents of the University of California.  All Rights Reserved.
 # Portions of this software are Copyright (c) 2007-2008 Stanford University and Columbia University.
 #
@@ -42,8 +42,6 @@ import numpy as np
 import numpy.linalg as linalg
 from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
-
-DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 
 # =========================================================================
 # MBAR class definition
@@ -106,9 +104,9 @@ class MBAR:
             from above, once ``u_kln`` is phased out.
 
         maximum_iterations : int, optional
-            Set to limit the maximum number of iterations performed (default 1000)
+            Set to limit the maximum number of iterations performed (default 10000)
         relative_tolerance : float, optional
-            Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+            Set to determine the relative tolerance convergence criteria (default 1.0e-7)
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
         initial_f_k : np.ndarray, float, shape=(K), optional
@@ -292,14 +290,34 @@ class MBAR:
                 print(self.f_k)
 
         if solver_protocol is None:
-            solver_protocol = ({'method': None},)
+            solver_protocol = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
+
+        # Add backup option if only one method is given
+        # The backup method is 'adaptive', unless 'adaptive' is already the only method selected. 
+        if len(solver_protocol) == 1:
+            #Add backup option.
+            fallback = dict()
+            if solver_protocol[0]['method'] != 'adaptive':
+                fallback['method'] = 'adaptive'
+                print("Adding backup method 'adaptive'")
+            else:
+                # the backup method is already adaptive, try l-bfgs-b
+                fallback['method'] = 'BFGS'
+                print("Adding backup method 'BFGS'")
+            solver_protocol = solver_protocol + (fallback,)
+
+
         for solver in solver_protocol:
             if 'options' not in solver:
                 solver['options'] = dict()
-                solver['options']['maximum_iterations'] = maximum_iterations
+            if 'continuation' not in solver:
+                solver['continuation'] = None
+            if 'maxiter' not in solver['options']:
+                solver['options']['maxiter'] = maximum_iterations
             if 'verbose' not in solver['options']:
                 # should add in other ways to get information out of the scipy solvers, not just adaptive,
                 # which might involve passing in different combinations of options, and passing out other strings.
+                # to be addressed with logging in mbar 4.0.
                 solver['options']['verbose'] = self.verbose
 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol)
