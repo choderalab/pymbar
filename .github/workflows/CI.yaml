@@ -31,7 +31,7 @@ jobs:
       PACKAGE: "pymbar"
 
     # Skip win + jax
-    if: !((${{ matrix.os }} == "windows-latest") &&  (${{ matrix.jax }} == "_jax"))
+    if: ${{ !( (matrix.os == "windows-latest") && (matrix.jax == "_jax") ) }}
     steps:
     - name: Checkout the code
       uses: actions/checkout@v3
