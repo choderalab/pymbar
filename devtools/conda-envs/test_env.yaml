@@ -9,8 +9,6 @@ dependencies:
   - numpy >=1.12
   - scipy
   - numexpr
-  - jaxlib
-  - jax
 
     # Testing
   - pytest
