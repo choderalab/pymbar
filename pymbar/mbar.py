@@ -1969,13 +1969,10 @@ class MBAR:
                     )
                 except:
                     logger.warn("WARNING: BAR did not converge to within tolerance")
-                    f_k_init[l] = f_k_init[k]
+                    f_k_init[l] = f_k_init[k] # just assume zero if didn't converge.
             else:
                 # no states observed, so we don't need to initialize this free energy anyway, as
                 # the solution is noniterative.
                 f_k_init[l] = 0
 
-        import pdb
-
-        pdb.set_trace()
         return f_k_init

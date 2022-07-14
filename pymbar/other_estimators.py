@@ -287,7 +287,7 @@ def bar(
 
     # Iterate to convergence or until maximum number of iterations has been exceeded.
 
-    for iteration in range(maximum_iterations):
+    for iteration in range(maximum_iterations+1):
 
         DeltaF_old = DeltaF
 
