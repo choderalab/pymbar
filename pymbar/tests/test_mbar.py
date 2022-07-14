@@ -105,7 +105,7 @@ def test_mbar_free_energies_bootstrapping():
     """Is the boostrapped uncertainty similar to the non-bootstrapped uncertainty? """
 
     # Generate harmonic oscillator with plenty of samples for each state
-    testcase = HarmonicOscillatorsTestCase()
+    testcase = harmonic_oscillators.HarmonicOscillatorsTestCase()
     [x_kn, u_kn, N_k, s_n] = testcase.sample(N_k=[10000, 10000, 10000, 10000, 10000])
 
     # Compute non-bootstrapped uncertainty
