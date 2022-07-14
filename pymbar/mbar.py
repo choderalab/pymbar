@@ -447,10 +447,7 @@ class MBAR:
                 if initialize == "BAR":
                     f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
-                    self.u_kn[:, rints],
-                    self.N_k,
-                    f_k_init,
-                    bootstrap_solver_protocol,
+                    self.u_kn[:, rints], self.N_k, f_k_init, bootstrap_solver_protocol,
                 )
                 # save the random integers for computing expectations.
                 self.bootstrap_rints[b, :] = rints
@@ -557,7 +554,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w**2)
+            N_eff[k] = 1 / np.sum(w ** 2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
@@ -1941,7 +1938,7 @@ class MBAR:
         if f_k_init is None:
             f_k_init = np.zeros(len(self.f_k))
 
-        starting_f_k_init = f_k_init.copy()    
+        starting_f_k_init = f_k_init.copy()
         for index in range(0, np.size(initialization_order) - 1):
             k = initialization_order[index]
             l = initialization_order[index + 1]
@@ -1956,21 +1953,29 @@ class MBAR:
             if len(w_F) > 0 and len(w_R) > 0:
                 # bar solution doesn't need to be incredibly accurate to
                 # kickstart NR.
-                f_k_init[l] = (
-                    f_k_init[k]
-                    + bar(
-                        w_F,
-                        w_R,
-                        method="bisection",
-                        DeltaF=starting_f_k_init[l] - starting_f_k_init[k],
-                        relative_tolerance=0.000001,
-                        verbose=False,
-                        compute_uncertainty=False,
-                    )["Delta_f"]
-                )
+                try:
+                    f_k_init[l] = (
+                        f_k_init[k]
+                        + bar(
+                            w_F,
+                            w_R,
+                            method="bisection",  # Fast, so be more certain.
+                            DeltaF=starting_f_k_init[l] - starting_f_k_init[k],
+                            relative_tolerance=0.00001,
+                            verbose=False,
+                            maximum_iterations=100,  # If it doesn't converge fast, probably not worth it.
+                            compute_uncertainty=False,
+                        )["Delta_f"]
+                    )
+                except:
+                    logger.warn("WARNING: BAR did not converge to within tolerance")
+                    f_k_init[l] = f_k_init[k]
             else:
                 # no states observed, so we don't need to initialize this free energy anyway, as
                 # the solution is noniterative.
                 f_k_init[l] = 0
 
+        import pdb
+
+        pdb.set_trace()
         return f_k_init
