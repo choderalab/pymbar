@@ -420,22 +420,7 @@ class MBAR:
             self.bootstrap_rints = np.zeros([self.n_bootstraps, allN], int)
             for b in range(self.n_bootstraps):
                 f_k_init = self.f_k.copy()
-
-                # how to pick the random numbers is not always clear.
-                # If the samples are decorrelated, then it shouldn't
-                # matter which state points come from. This is because
-                # we are reweighting from the mixture distribution, and
-                #
-                # <A>_i = \sum_n A(x_n) p_i(x_n)/p_m(x_n)
-                #       = \sum_n A(x_n) p_i(x_n)/(\sum_k N_k p_k(x_n))
-                #
-                # However, if we bootstrap by randomly picking from
-                # all samples, we might pull different numbers of
-                # samples from each state. So the question is if this
-                # is still the mixture distribution?
-                #
-                # I think we actually want random samples from the SAME state.
-                #
+                # picking random samples from the same N_k states.
                 rints = np.zeros(allN, int)
                 for k in range(K):
                     # which of the indices are equal to K
