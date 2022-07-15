@@ -122,7 +122,7 @@ def bar_zero(w_F, w_R, DeltaF):
     max_arg_F = np.choose(np.less(0.0, exp_arg_F), (0.0, exp_arg_F))
     try:
         log_f_F = -max_arg_F - np.log(np.exp(-max_arg_F) + np.exp(exp_arg_F - max_arg_F))
-    except ParameterError():
+    except ParameterError:
         # give up; if there's overflow, return zero
         logger.warning("The input data results in overflow in bar")
         return np.nan
@@ -287,7 +287,7 @@ def bar(
 
     # Iterate to convergence or until maximum number of iterations has been exceeded.
 
-    for iteration in range(maximum_iterations+1):
+    for iteration in range(maximum_iterations + 1):
 
         DeltaF_old = DeltaF
 
@@ -506,7 +506,7 @@ def bar(
         nrat = (T_F + T_R) / (T_F * T_R)  # same for both methods
 
         if uncertainty_method == "BAR":
-            variance = (afF2 / afF**2) / T_F + (afR2 / afR**2) / T_R - nrat
+            variance = (afF2 / afF ** 2) / T_F + (afR2 / afR ** 2) / T_R - nrat
             dDeltaF = np.sqrt(variance)
         elif uncertainty_method == "MBAR":
             # OR equivalently

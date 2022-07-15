@@ -171,7 +171,14 @@ def test_sample(system_generator):
 
 @pytest.mark.parametrize(
     "uncertainty_method",
-    [None, "approximate", "svd", "svd-ew", "bootstrap", pytest.param("waffles", marks=pytest.mark.xfail)],
+    [
+        None,
+        "approximate",
+        "svd",
+        "svd-ew",
+        "bootstrap",
+        pytest.param("waffles", marks=pytest.mark.xfail),
+    ],
 )
 def test_mbar_free_energies(mbar_and_test, uncertainty_method):
 
@@ -186,10 +193,7 @@ def test_mbar_free_energies(mbar_and_test, uncertainty_method):
 
 
 @pytest.mark.xfail(strict=True)  # This whole test should always fail and passes are problems
-@pytest.mark.parametrize(
-    "n_bootstrap",
-    [None, -4, 0, 100.3]
-)
+@pytest.mark.parametrize("n_bootstrap", [None, -4, 0, 100.3])
 def test_mbar_bad_bootstrap(single_harmonic_u_kn, n_bootstrap):
     """Test that bad parameters for n_bootstraps makes bootstrap fail"""
     mbar = MBAR(single_harmonic_u_kn, N_k, verbose=True, n_bootstraps=n_bootstrap)
@@ -243,7 +247,7 @@ def test_mbar_compute_expectations_position2(mbar_and_test):
     """Can MBAR calculate E(x_n^2)??"""
 
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
-    results = mbar.compute_expectations(x_n**2)
+    results = mbar.compute_expectations(x_n ** 2)
     mu = results["mu"]
     sigma = results["sigma"]
     mu0 = test.analytical_observable(observable="position^2")
@@ -335,7 +339,7 @@ def test_mbar_compute_multiple_expectations(mbar_and_test):
     )
     A = np.zeros([2, len(x_n)])
     A[0, :] = x_n
-    A[1, :] = x_n**2
+    A[1, :] = x_n ** 2
     state = 1
     results = mbar.compute_multiple_expectations(A, u_kn[state, :])
     multiExpectationAssertion(results, test, state=state)
@@ -353,7 +357,7 @@ def test_mbar_compute_multiple_expectations_more_dims(mbar_and_test_kln):
     )
     A = np.zeros([2, x_n.shape[0], x_n.shape[1]])
     A[0, :, :] = x_n
-    A[1, :, :] = x_n**2
+    A[1, :, :] = x_n ** 2
     state = 1
     results = mbar.compute_multiple_expectations(
         A, u_kn[:, state, :], compute_covariance=True, return_theta=True
@@ -530,7 +534,7 @@ def test_mbar_compute_expectations_inner(mbar_and_test):
         mbar_and_test["x_n"],
         mbar_and_test["u_kn"],
     )
-    A_in = np.array([x_n, x_n**2, x_n**3])
+    A_in = np.array([x_n, x_n ** 2, x_n ** 3])
     u_n = u_kn[:2, :]
     state_map = np.array([[0, 0], [1, 0], [2, 0], [2, 1]], int)
     _ = mbar.compute_expectations_inner(A_in, u_n, state_map)

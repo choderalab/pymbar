@@ -1002,7 +1002,6 @@ class MBAR:
         # Return expectations and uncertainties.
         return result_vals
 
-    
         # For reference
         # Covariance of normalization constants is cov(ln A - ln a, ln B - ln b) = (Theta(c_A,c_B)-Theta(c_A,c_b)-Theta(c_B,c_a) + Theta(c_a,c_b))
         # Covariance of the differences of observables is cov(A-B)
@@ -1968,7 +1967,7 @@ class MBAR:
                             compute_uncertainty=False,
                         )["Delta_f"]
                     )
-                except:
+                except ConvergenceError:
                     logger.warn("WARNING: BAR did not converge to within tolerance")
                     f_k_init[l] = f_k_init[k]  # just assume zero if didn't converge.
             else:
