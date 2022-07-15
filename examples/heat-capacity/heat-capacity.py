@@ -327,7 +327,12 @@ for n in range(n_boots_work):
         initial_f_k = mbar.f_k  # start from the previous final free energies to speed convergence
 
     mbar = pymbar.MBAR(
-        u_kn, Nall_k, verbose=False, relative_tolerance=1e-12, solver_protocol="robust", initial_f_k=initial_f_k
+        u_kn,
+        Nall_k,
+        verbose=False,
+        relative_tolerance=1e-12,
+        solver_protocol="robust",
+        initial_f_k=initial_f_k,
     )
 
     # ------------------------------------------------------------------------

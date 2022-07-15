@@ -357,6 +357,7 @@ class MBAR:
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
+<<<<<<< HEAD
         # decide on the protocol to use when solving.  We use similar logic
         # for both the solver protocol and the bootstrap solver protocol
 
@@ -1002,6 +1003,7 @@ class MBAR:
         # Return expectations and uncertainties.
         return result_vals
 
+    
         # For reference
         # Covariance of normalization constants is cov(ln A - ln a, ln B - ln b) = (Theta(c_A,c_B)-Theta(c_A,c_b)-Theta(c_B,c_a) + Theta(c_a,c_b))
         # Covariance of the differences of observables is cov(A-B)

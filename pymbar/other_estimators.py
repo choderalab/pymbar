@@ -532,7 +532,7 @@ def bar(
 
 
 def bar_overlap(w_F, w_R):
-    """Compute overlap between foward and backward ensembles (using MBAR definition of overlap)
+    """Compute overlap between forward and backward ensembles (using MBAR definition of overlap)
     Parameters
     ----------
     w_F : np.ndarray
