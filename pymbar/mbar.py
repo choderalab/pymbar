@@ -357,7 +357,6 @@ class MBAR:
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
-<<<<<<< HEAD
         # decide on the protocol to use when solving.  We use similar logic
         # for both the solver protocol and the bootstrap solver protocol
 
