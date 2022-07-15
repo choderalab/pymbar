@@ -389,7 +389,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
 
         div = np.abs(f_k[1:])  # what we will divide by to get relative difference
         zeroed = np.abs(f_k[1:]) < np.min(
-            [10**-8, tol]
+            [10 ** -8, tol]
         )  # check which values are near enough to zero, hard coded max for now.
         div[zeroed] = 1.0  # for these values, use absolute values.
         max_delta = np.max(np.abs(f_k[1:] - f_old[1:]) / div)
