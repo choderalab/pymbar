@@ -35,14 +35,6 @@ def test_solvers(statesa, statesb, test_system):
         pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10
     )
 
-    # Test against old MBAR code.
-    with suppress_derivative_warnings_for_tests():
-        with suppress_matrix_warnings_for_tests():
-            mbar0 = pymbar.old_mbar.MBAR(U, N_k)
-    assert_almost_equal(mbar.f_k, mbar0.f_k, decimal=8)
-    assert_almost_equal(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
-
-
 @pytest.mark.parametrize(
     "protocol",
     [
