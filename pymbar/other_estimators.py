@@ -506,7 +506,7 @@ def bar(
         nrat = (T_F + T_R) / (T_F * T_R)  # same for both methods
 
         if uncertainty_method == "BAR":
-            variance = (afF2 / afF**2) / T_F + (afR2 / afR**2) / T_R - nrat
+            variance = (afF2 / afF ** 2) / T_F + (afR2 / afR ** 2) / T_R - nrat
             dDeltaF = np.sqrt(variance)
         elif uncertainty_method == "MBAR":
             # OR equivalently
