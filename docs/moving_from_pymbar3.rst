@@ -20,36 +20,62 @@ The main changes include:
 Snake Care 
 ---------------------
 
-Previous version of pymbar had mixed cases in functions. We have standardized on snake case, and tried to make the operator names behave better.  Specific changes include:
+Previous version of pymbar had mixed cases in functions. We have
+standardized on snake case, and tried to make the method names that do
+similar things more consistent.  Specific changes include:
 
-  * ``getFreeEnergyDifferences`` is now ``get_free_energy_differences``
+  * ``getFreeEnergyDifferences`` is now ``compute_free_energy_differences``
   * ``computeExpectations`` is now ``compute_expectations``
   * ``computeMultipleExpectations`` is now ``compute_multiple_expectations``
   * ``computePerturbedFreeEnergies`` is now ``compute_perturbed_free_energies``
   * ``computeEntropyAndEnthalpy`` is now ``compute_entropy_and_enthalpy``
-  * ``timseries.StatisticalInefficiency`` is now ``timeseries.statistical_inefficiency``
-  * ``timeseries.statistical_inefficiency_multiple`` is now ``timeseries.statistical_inefficiency_multiple``  
 
-    Additionally, the 
-    
----------------------
-More consistent return information 
+In the submodule `timeseries`:
 
+  * ``StatisticalInefficiency`` is now ``statistical_inefficiency``
+  * ``Statistical_inefficiency_multiple`` is now ``statistical_inefficiency_multiple``  
+  * is now ``integrated_autocorrelation_time``
+  * is now ``normalized_fluctuation_correlation_function``
+  * is now ``normalized_fluctuation_correlation_function_multiple``
+  * is now ``subsample_correlated_data``
+  * is now ``detect_equilibration``
+  * is now ``statistical_inefficiency_fft``
+  * is now ``detect_equilibration_binary_search``
+
+    Additionally, the other estimators such as the Bennett Acceptance
+    Ratio and exponential averaging/Zwanzig equation have different,
+    more consistent, call signatures.  All other estimators are now in
+    the ``other_estimators`` module.
+ 
+  * is now `bar`
+  * is now `exp`
+  * is now `exp_gauss` 
+------------------------------------
+More consistent return functionality
+------------------------------------
 Previously, different pymbar functions returned different information
 as tuples. This became problematic when different functions returned
-different types of information or different numbers of results.  We
-have thus consolidated on an API where all functions return a
+different types of information or different numbers of results.
+
+
+We have thus consolidated on an API where all functions return a
 dictionary.
 
-
-As an example of both API changes of API, a short bit of code that would load in data and
-calculate free energies, instead of beinh
+As an example of both API changes of API, a short bit of code that
+would load in data and calculate free energies, instead of being
 
 ::
-
+    # For 3.0.5
+    mbar = MBAR(u_kn, N_k)
+    results, errors = mbar.getFreeEnergyDifferences()                                                                                   
+    print(results[0])                                                                                                                   
+    print(errors[0])  
    
-Would now be:
+Would now be written as.
 
+    results = mbar.compute_free_energy_differences()
+    print(results['Delta_f'])
+    print(results['dDelta_f'])
 ::  
 
 ---------------------

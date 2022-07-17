@@ -179,17 +179,19 @@ def bar(
         DeltaF can be set to initialize the free energy difference with a guess
     compute_uncertainty : bool, optional, default=True
         if False, only the free energy is returned
-    uncertainty_method: string, optional, default=BAR
-        There are two possible uncertainty estimates for bar.  One agrees with MBAR for two states exactly;
-        The other only agrees with MBAR in the limit of good overlap. See below.
+    uncertainty_method: string, optional, default=''BAR''
+        There are two possible uncertainty estimates for BAR.  One agrees with MBAR for two states exactly, 
+        and is indicated by "MBAR". The other estimator, which is the one originally derived for BAR, only 
+        agrees with MBAR in the limit of good overlap, and is designated 'BAR'
+        See code comments below for derivations of the two methods.
     maximum_iterations : int, optional, default=500
-        can be set to limit the maximum number of iterations performed
+        Can be set to limit the maximum number of iterations performed
     relative_tolerance : float, optional, default=1E-11
-        can be set to determine the relative tolerance convergence criteria (defailt 1.0e-11)
+        Can be set to determine the relative tolerance convergence criteria (defailt 1.0e-11)
     verbose : bool
-        should be set to True if verbse debug output is desired (default False)
+        Should be set to True if verbse debug output is desired (default False)
     method : str, optional, defualt='false-position'
-        choice of method to solve bar nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-position')
+        Choice of method to solve bar nonlinear equations: one of 'bisection', 'self-consistent-iteration' or 'false-position' (default: 'false-position').
     iterated_solution : bool, optional, default=True
         whether to fully solve the optimized bar equation to consistency, or to stop after one step, to be
         equivalent to transition matrix sampling.
