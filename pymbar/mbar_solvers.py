@@ -4,13 +4,16 @@ import warnings
 import numpy as np
 import scipy.optimize
 from pymbar.utils import ensure_type, check_w_normalized, ParameterError
+
 use_jit = False
 force_no_jax = False  # Temporary until we can make a proper setting to enable/disable by choice
 try:
     #### JAX related imports
     if force_no_jax:
         raise ImportError("Jax disabled by force_no_jax in mbar_solvers.py")
-    from jax.config import config; config.update("jax_enable_x64", True)
+    from jax.config import config
+
+    config.update("jax_enable_x64", True)
 
     from jax.numpy import exp, sum, newaxis, diag, dot, s_
     from jax.numpy import pad as npad
@@ -20,6 +23,7 @@ try:
     from jax.scipy.optimize import minimize
 
     from jax import jit as jit_or_passthrough
+
     use_jit = True
 
 except ImportError:
@@ -35,6 +39,7 @@ except ImportError:
     # No jit, so make a passthrough decorator
     def jit_or_passthrough(fn):
         return fn
+
 
 logger = logging.getLogger(__name__)
 
@@ -139,9 +144,7 @@ def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     Equation C3 in MBAR JCP paper.
     """
 
-    return jax_self_consistent_update(
-            u_kn, N_k, f_k, states_with_samples=states_with_samples
-        )
+    return jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=states_with_samples)
 
 
 @jit_or_passthrough
@@ -152,7 +155,7 @@ def _jit_self_consistent_update(u_kn, N_k, f_k):
     """
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
     # All states can contribute to the numerator term.
-    return -1. * logsumexp(-log_denominator_n - u_kn, axis=1)  # check transpose
+    return -1.0 * logsumexp(-log_denominator_n - u_kn, axis=1)  # check transpose
 
 
 def jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
@@ -165,7 +168,9 @@ def jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     # In theory, this can be computed with jax.lax.cond, but trying to reuse code for non-jax paths
     states_with_samples = s_[:] if states_with_samples is None else states_with_samples
     # Feed to the JIT'd function. Can't pass slice types, so slice here
-    return _jit_self_consistent_update(u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples])
+    return _jit_self_consistent_update(
+        u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples]
+    )
 
 
 def mbar_gradient(u_kn, N_k, f_k):
@@ -194,7 +199,7 @@ def mbar_gradient(u_kn, N_k, f_k):
 
 @jit_or_passthrough
 def jax_mbar_gradient(u_kn, N_k, f_k):
-    """ JAX version of MBAR gradient function. See documentation of mbar_gradient.
+    """JAX version of MBAR gradient function. See documentation of mbar_gradient.
     N_k must be float (should be cast at a higher level)
     """
 
@@ -234,6 +239,7 @@ def mbar_objective(u_kn, N_k, f_k):
 
     return jax_mbar_objective(u_kn, N_k, f_k)
 
+
 @jit_or_passthrough
 def jax_mbar_objective(u_kn, N_k, f_k):
     """JAX version of mbar_objective.
@@ -241,7 +247,7 @@ def jax_mbar_objective(u_kn, N_k, f_k):
     N_k must be float (should be cast at a higher level)
 
     """
-    
+
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
     obj = sum(log_denominator_n) - dot(N_k, f_k)
 
@@ -255,7 +261,7 @@ def jax_mbar_objective_and_gradient(u_kn, N_k, f_k):
     N_k must be float (should be cast at a higher level)
 
     """
-    
+
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
     log_numerator_k = logsumexp(-log_denominator_n - u_kn, axis=1)
     grad = -1 * N_k * (1.0 - exp(f_k + log_numerator_k))
@@ -301,6 +307,7 @@ def mbar_objective_and_gradient(u_kn, N_k, f_k):
 
     return jax_mbar_objective_and_gradient(u_kn, N_k, f_k)
 
+
 @jit_or_passthrough
 def jax_mbar_hessian(u_kn, N_k, f_k):
     """JAX version of mbar_hessian.
@@ -308,7 +315,7 @@ def jax_mbar_hessian(u_kn, N_k, f_k):
     N_k must be float (should be cast at a higher level)
 
     """
-    
+
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
     logW = f_k - u_kn.T - log_denominator_n[:, newaxis]
     W = exp(logW)
@@ -352,7 +359,7 @@ def jax_mbar_log_W_nk(u_kn, N_k, f_k):
     N_k must be float (should be cast at a higher level)
 
     """
-    
+
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
     logW = f_k - u_kn.T - log_denominator_n[:, newaxis]
     return logW
@@ -485,13 +492,15 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
     for iteration in range(0, maxiter):
 
         if use_jit:
-            (f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr) = jax_core_adaptive(u_kn, N_k, f_k, options['gamma'])
+            (f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr) = jax_core_adaptive(
+                u_kn, N_k, f_k, options["gamma"]
+            )
         else:
             H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
             Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
             Hinvg -= Hinvg[0]
             f_nr = f_k - gamma * Hinvg
-            
+
             # self-consistent iteration gradient norm and saved log sums.
             f_sci = self_consistent_update(u_kn, N_k, f_k)
             f_sci = f_sci - f_sci[0]  # zero out the minimum
@@ -582,7 +591,7 @@ def jax_core_adaptive(u_kn, N_k, f_k, gamma):
     N_k must be float (should be cast at a higher level)
 
     """
-    
+
     # Perform Newton-Raphson iterations (with sci computed on the way)
     g = mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
     H = mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
@@ -612,7 +621,7 @@ def jax_precondition_u_kn(u_kn, N_k, f_k):
     """
 
     u_kn = u_kn - u_kn.min(0)
-    u_kn += (logsumexp(f_k - u_kn.T, b=N_k, axis=1)) - dot(N_k,f_k) / N_k.sum()
+    u_kn += (logsumexp(f_k - u_kn.T, b=N_k, axis=1)) - dot(N_k, f_k) / N_k.sum()
     return u_kn
 
 
@@ -698,7 +707,7 @@ def solve_mbar_once(
     # we only validate at the outside of the call
     u_kn_nonzero, N_k_nonzeo, f_k_nonzero = validate_inputs(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
     f_k_nonzero = f_k_nonzero - f_k_nonzero[0]  # Work with reduced dimensions with f_k[0] := 0
-    N_k_nonzero = 1.0*N_k_nonzero # convert to float for acceleration.
+    N_k_nonzero = 1.0 * N_k_nonzero  # convert to float for acceleration.
     u_kn_nonzero = precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
 
     pad = lambda x: np.pad(
@@ -720,7 +729,7 @@ def solve_mbar_once(
         :, 1:
     ]  # Hessian of objective function
     with warnings.catch_warnings(record=True) as w:
-        if use_jit and method == 'BFGS':
+        if use_jit and method == "BFGS":
             fpad = lambda x: npad(x, (1, 0))
             obj = lambda x: mbar_objective(u_kn_nonzero, N_k_nonzero, fpad(x))
             # objective function to be minimized (for derivative free methods, mostly jit)
@@ -738,7 +747,7 @@ def solve_mbar_once(
         elif method in scipy_minimize_options:
             if method in scipy_nohess_options:
                 hess = None  # To suppress warning from passing a hessian function.
-            results = minimize(
+            results = scipy.optimize.minimize(
                 grad_and_obj,
                 f_k_nonzero[1:],
                 jac=True,

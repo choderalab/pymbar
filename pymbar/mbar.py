@@ -715,7 +715,9 @@ class MBAR:
                 result_vals["dDelta_f"] = dDeltaf_ij
             else:
                 # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
-                dDeltaf_ij = np.array(self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff))
+                dDeltaf_ij = np.array(
+                    self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
+                )
                 # zero out numerical error for thermodynamically identical states
                 self._zerosamestates(dDeltaf_ij)
                 # Return matrix of free energy differences and uncertainties.
