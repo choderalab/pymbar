@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 import pymbar
 from pymbar.utils_for_testing import (
-    suppress_derivative_warnings_for_tests,
-    suppress_matrix_warnings_for_tests,
     assert_almost_equal,
     oscillators,
     exponentials,
@@ -63,18 +61,17 @@ def test_protocols(base_oscillator, protocol):
     N_k = base_oscillator["N_k"]
     fa = test.analytical_free_energies()
     fa = fa[1:] - fa[0]
-    with suppress_derivative_warnings_for_tests():
-        # scipy.optimize.minimize methods, same ones that are checked for in mbar_solvers.py
-        # subsampling_protocols = ['adaptive', 'L-BFGS-B', 'dogleg', 'CG', 'BFGS', 'Newton-CG', 'TNC', 'trust-ncg', 'SLSQP']
-        # scipy.optimize.root methods. Omitting methods which do not use the Jacobian. Adding the custom adaptive protocol.
-        # Solve MBAR with zeros for initial weights
-        mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({"method": protocol},))
-        # Solve MBAR with the correct f_k used for the inital weights
-        mbar = pymbar.MBAR(
-            u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({"method": protocol},)
-        )
-        results = mbar.compute_free_energy_differences()
-        fe = results["Delta_f"][0, 1:]
-        fe_sigma = results["dDelta_f"][0, 1:]
-        z = (fe - fa) / fe_sigma
-        assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+    # scipy.optimize.minimize methods, same ones that are checked for in mbar_solvers.py
+    # subsampling_protocols = ['adaptive', 'L-BFGS-B', 'dogleg', 'CG', 'BFGS', 'Newton-CG', 'TNC', 'trust-ncg', 'SLSQP']
+    # scipy.optimize.root methods. Omitting methods which do not use the Jacobian. Adding the custom adaptive protocol.
+    # Solve MBAR with zeros for initial weights
+    mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({"method": protocol},))
+    # Solve MBAR with the correct f_k used for the inital weights
+    mbar = pymbar.MBAR(
+        u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({"method": protocol},)
+    )
+    results = mbar.compute_free_energy_differences()
+    fe = results["Delta_f"][0, 1:]
+    fe_sigma = results["dDelta_f"][0, 1:]
+    z = (fe - fa) / fe_sigma
+    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
