@@ -24,6 +24,10 @@ jobs:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
         python-version: [3.8, 3.9]
+        jax: ["", "_jax"]
+        exclude:  # Skip win + jax
+          - jax: "_jax"
+            os: windows-latest
     env:
       PYVER: ${{ matrix.python-version }}
       CI_OS: ${{ matrix.os }}
@@ -44,7 +48,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         python-version: ${{ matrix.python-version }}
-        environment-file: devtools/conda-envs/test_env.yaml
+        environment-file: devtools/conda-envs/test_env${{ matrix.jax }}.yaml
 
         channels: conda-forge,defaults
 
@@ -129,9 +133,11 @@ jobs:
       run: |
         pylint $PACKAGE/
 
-    # TODO: Remove --exclude pymbar/old_mbar.py after deprecation
+    # TODO: Remove old_mbar.py from --extend-exclude after deprecation
+    # Black has a default --exclude which reads .gitignore.
+    # Black's --exclude and --extend-exclude are single specified RegEx patterns and overwrite if multi-marked.
     - name: Run black check
       shell: bash -l {0}
       if: always()
       run: |
-        black --check -l 99 $PACKAGE/ examples/ --exclude pymbar/old_mbar.py --exclude $PACKAGE/_version.py
+        black --check -l 99 $PACKAGE/ examples/ --extend-exclude "$PACKAGE/(old_mbar.py|_version.py)"

@@ -196,7 +196,7 @@ for k in range(K):
                 dchi[l] = 360.0 - abs(dchi[l])
 
         # Compute energy of snapshot n from simulation k in umbrella potential l
-        u_kln[k, :, n] = u_kn[k, n] + beta_k[k] * (K_k / 2.0) * dchi ** 2
+        u_kln[k, :, n] = u_kn[k, n] + beta_k[k] * (K_k / 2.0) * dchi**2
 
 # initialize free energy profile with the data collected.
 basefes = pymbar.FES(u_kln, N_k, verbose=True)
@@ -208,7 +208,7 @@ def bias_potential(x, k):
     # vectorize the conditional
     i = np.fabs(dchi) > 180.0
     dchi = i * (360.0 - np.fabs(dchi)) + (1 - i) * dchi
-    return beta_k[k] * (K_k[k] / 2.0) * dchi ** 2
+    return beta_k[k] * (K_k[k] / 2.0) * dchi**2
 
 
 def deltag(c, scalef=1, n=nspline):
@@ -216,7 +216,7 @@ def deltag(c, scalef=1, n=nspline):
     consider periodicity later!!
     """
     cdiff = np.diff(c)
-    logp = -scalef / n * (np.sum(cdiff ** 2))
+    logp = -scalef / n * (np.sum(cdiff**2))
     return logp
 
 
