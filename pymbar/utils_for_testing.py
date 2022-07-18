@@ -34,8 +34,6 @@ from numpy.testing import (
     assert_string_equal,
     assert_warns,
 )
-import warnings
-import contextlib
 
 from pymbar.testsystems import HarmonicOscillatorsTestCase, ExponentialTestCase
 
