@@ -60,6 +60,7 @@ __all__ = [
 # functions
 ##############################################################################
 
+
 def oscillators(n_states, n_samples, provide_test=False):
     name = f"{n_states}x{n_samples} oscillators"
     O_k = np.linspace(1, 5, n_states)
