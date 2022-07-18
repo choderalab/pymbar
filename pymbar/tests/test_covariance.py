@@ -34,16 +34,5 @@ def _test(statesa, statesb, test_system):
         pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10
     )
 
-    # Test against old MBAR code.
-    with suppress_derivative_warnings_for_tests():
-        with suppress_matrix_warnings_for_tests():
-            mbar0 = pymbar.old_mbar.MBAR(U, N_k)
-    fij0, dfij0 = mbar0.compute_free_energy_differences(uncertainty_method="svd")
-    assert_almost_equal(mbar.f_k, mbar0.f_k, decimal=8)
-    assert_almost_equal(np.exp(mbar.Log_W_nk), np.exp(mbar0.Log_W_nk), decimal=5)
-
-    assert_almost_equal(fij0, fij1, decimal=8)
-    assert_almost_equal(dfij0, dfij1, decimal=8)
-
-    assert_almost_equal(fij0, fij2, decimal=8)
-    assert_almost_equal(dfij0, dfij2, decimal=8)
+    assert_almost_equal(fij1, fij2, decimal=8)
+    assert_almost_equal(dfij1, dfij2, decimal=8)
