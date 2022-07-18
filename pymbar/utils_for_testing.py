@@ -34,8 +34,6 @@ from numpy.testing import (
     assert_string_equal,
     assert_warns,
 )
-import warnings
-import contextlib
 
 from pymbar.testsystems import HarmonicOscillatorsTestCase, ExponentialTestCase
 
@@ -52,8 +50,6 @@ __all__ = [
     "assert_raises",
     "assert_string_equal",
     "assert_warns",
-    "suppress_derivative_warnings_for_tests",
-    "suppress_matrix_warnings_for_tests",
     "oscillators",
     "exponentials",
 ]
@@ -61,34 +57,6 @@ __all__ = [
 ##############################################################################
 # functions
 ##############################################################################
-
-
-@contextlib.contextmanager
-def suppress_derivative_warnings_for_tests():
-    """
-    Suppress specific warnings and then reset when done, used as a with suppress_warnings():
-    """
-    # Supress the warnings when Jacobian and Hessian information is not used in a specific solver
-    warnings.filterwarnings("ignore", ".*does not use the Jacobian.*")
-    warnings.filterwarnings("ignore", ".*does not use Hessian.*")
-    warnings.filterwarnings(
-        "ignore", ".*parameter will change to the default of machine precision.*"
-    )
-    yield
-    # Clear warning filters
-    warnings.resetwarnings()
-
-
-@contextlib.contextmanager
-def suppress_matrix_warnings_for_tests():
-    """
-    Suppress specific warnings and then reset when done, used as a with suppress_warnings():
-    """
-    # Supress the numpy matrix warnings
-    warnings.filterwarnings("ignore", ".*the matrix subclass is not*")
-    yield
-    # Clear warning filters
-    warnings.resetwarnings()
 
 
 def oscillators(n_states, n_samples, provide_test=False):

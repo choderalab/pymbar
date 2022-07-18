@@ -432,7 +432,10 @@ class MBAR:
                 if initialize == "BAR":
                     f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
-                    self.u_kn[:, rints], self.N_k, f_k_init, bootstrap_solver_protocol,
+                    self.u_kn[:, rints],
+                    self.N_k,
+                    f_k_init,
+                    bootstrap_solver_protocol,
                 )
                 # save the random integers for computing expectations.
                 self.bootstrap_rints[b, :] = rints
@@ -539,7 +542,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w ** 2)
+            N_eff[k] = 1 / np.sum(w**2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
