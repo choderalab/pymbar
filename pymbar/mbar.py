@@ -124,13 +124,17 @@ class MBAR:
 
         maximum_iterations: int, optional
             Set to limit the maximum number of iterations performed (default 1000)
+
         relative_tolerance: float, optional
             Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+
         verbosity: bool, optional
             Set to True if verbose debug output is desired (default False)
+
         initial_f_k: np.ndarray, float, shape=(K), optional
             Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
+
         solver_protocol: list(dict), string or None, optional, default=None
             List of dictionaries to define a sequence of solver algorithms
             and options used to estimate the dimensionless free energies.
@@ -159,12 +163,11 @@ class MBAR:
             If you are uncertain what the order of states should be, or if it does not make
             sense to think of states as adjacent, then choose 'zeroes'.
 
-            (default: 'zeros', unless specific values are passed in.)
-
-        x_kindices: default?
-            Which state is each x from?  Usually doesn't matter, but does for bar. We assume the samples
-            are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
-            the 1st state, and so forth.
+        x_kindices: np.ndarray, int, shape=(K), default = [0,1,2,3,4...K]
+            Describes which state is each sample *x* is from?  Usually doesn't matter, 
+            but it does for bar. As a default, we assume the samples are in ``K`` order 
+            (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` 
+            samples from the 1st state, and so forth.
 
         Notes
         -----
