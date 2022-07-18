@@ -422,7 +422,7 @@ class MBAR:
             allN = int(np.sum(N_k))
             self.bootstrap_rints = np.zeros([self.n_bootstraps, allN], int)
             for b in range(self.n_bootstraps):
-                f_k_init = self.f_k.copy()
+                f_k_init = np.array(self.f_k.copy())
                 # picking random samples from the same N_k states.
                 rints = np.zeros(allN, int)
                 for k in range(K):
@@ -438,6 +438,7 @@ class MBAR:
                     self.u_kn[:, rints],
                     self.N_k,
                     f_k_init,
+                    self.states_with_samples,
                     bootstrap_solver_protocol,
                 )
                 # save the random integers for computing expectations.
