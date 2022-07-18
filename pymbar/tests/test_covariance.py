@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 import pymbar
 from pymbar.utils_for_testing import (
-    suppress_derivative_warnings_for_tests,
-    suppress_matrix_warnings_for_tests,
     assert_almost_equal,
     oscillators,
     exponentials,
