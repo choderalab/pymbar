@@ -152,7 +152,7 @@ def bar_zero(w_F, w_R, DeltaF):
     )  # return options to standard settings so we don't disturb other functionality.
     return fzero
 
-
+# =========================================================================
 def bar(
     w_F,
     w_R,
@@ -532,7 +532,7 @@ def bar(
         result_vals["Delta_f"] = DeltaF
         return result_vals
 
-
+# =========================================================================
 def bar_overlap(w_F, w_R):
     """Compute overlap between forward and backward ensembles (using MBAR definition of overlap)
     Parameters
@@ -572,8 +572,6 @@ def bar_overlap(w_F, w_R):
 # =============================================================================================
 # One-sided exponential averaging (EXP).
 # =============================================================================================
-
-
 def exp(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
 
