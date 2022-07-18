@@ -33,6 +33,7 @@ def test_solvers(statesa, statesb, test_system):
         pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10
     )
 
+
 @pytest.mark.parametrize(
     "protocol",
     [
@@ -67,9 +68,7 @@ def test_protocols(base_oscillator, protocol):
     # Solve MBAR with zeros for initial weights
     mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({"method": protocol},))
     # Solve MBAR with the correct f_k used for the inital weights
-    mbar = pymbar.MBAR(
-        u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({"method": protocol},)
-    )
+    mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({"method": protocol},))
     results = mbar.compute_free_energy_differences()
     fe = results["Delta_f"][0, 1:]
     fe_sigma = results["dDelta_f"][0, 1:]
