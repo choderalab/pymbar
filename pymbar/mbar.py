@@ -55,6 +55,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
 JAX_SOLVER_PROTOCOL = mbar_solvers.JAX_SOLVER_PROTOCOL
+BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
 
 # =========================================================================
 # MBAR class definition
@@ -93,6 +94,9 @@ class MBAR:
         solver_protocol=None,
         initialize="zeros",
         x_kindices=None,
+        n_bootstraps=0,
+        bootstrap_solver_protocol=None,
+        rseed=None,
     ):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -129,13 +133,17 @@ class MBAR:
 
         maximum_iterations : int, optional
             Set to limit the maximum number of iterations performed (default 1000)
+
         relative_tolerance : float, optional
             Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
+
         initial_f_k : np.ndarray, float, shape=(K), optional
             Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
+
         solver_protocol : list(dict), string or None, optional, default=None
             List of dictionaries to define a sequence of solver algorithms
             and options used to estimate the dimensionless free energies.
@@ -159,16 +167,26 @@ class MBAR:
             for now, it just does it zipping up the states.
 
             The 'BAR' option works best when the states are ordered such that adjacent states
-            maximize the overlap between states. Its up to the user
+            maximize the overlap between states. It is up to the user
             to arrange the states in such an order, or at least close to such an order.
             If you are uncertain what the order of states should be, or if it does not make
-            sense to think of states as adjacent, then choose 'zeroes'.
+            sense to think of states as adjacent, then choose 'zeros'.
 
             (default: 'zeros', unless specific values are passed in.)
+
         x_kindices
             Which state is each x from?  Usually doesn't matter, but does for bar. We assume the samples
             are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
             the 1st state, and so forth.
+
+        n_bootstraps: int
+            How many bootstrap free energies will be computed? If None, no bootstraps will be computed.
+            computing uncertainties with bootstraps is only possible if this is > 0.
+            (default: None)
+
+        bootstrap_solver_protocol: list(dict), string or None, optional, default=None
+            We usually just do steps of adaptive sampling without. "robust" would be the backup.
+            Default: dict(method="adaptive", options=dict(min_sc_iter=0)),
 
         Notes
         -----
@@ -177,7 +195,7 @@ class MBAR:
         ``u_k(x) = beta_k [ U_k(x) + p_k V(x) + mu_k' n(x) ]``
         where
 
-        ``beta_k = 1/(kB T_k)`` is the inverse temperature of condition ``k``, where kB is Boltzmann's constant
+        ``beta_k = 1/(k_B T_k)`` is the inverse temperature of condition ``k``, where k_B is Boltzmann's constant
 
         ``U_k(x)`` is the potential energy function for state ``k``
 
@@ -331,7 +349,7 @@ class MBAR:
             self.f_k[:] = self.f_k[:] - self.f_k[0]
         else:
             # Initialize estimate of relative dimensionless free energies.
-            self._initializeFreeEnergies(verbose, method=initialize)
+            self._initializeFreeEnergies(verbose, method=initialize, f_k_init=initial_f_k)
 
             if self.verbose:
                 logger.info(
@@ -340,37 +358,99 @@ class MBAR:
                 logger.info("f_k = ")
                 logger.info(self.f_k)
 
-        if solver_protocol is None or solver_protocol == "default":
-            solver_protocol = DEFAULT_SOLVER_PROTOCOL
-        elif solver_protocol == "robust":
-            solver_protocol = ROBUST_SOLVER_PROTOCOL
-        elif solver_protocol == "jax":
-            solver_protocol = JAX_SOLVER_PROTOCOL        
-        elif not (isinstance(solver_protocol, dict) or (isinstance(solver_protocol,(list,tuple)) and isinstance(solver_protocol[0],dict))):
-            logger.warn(
-                "solver_protocol is not 'robust','default' or a dictionary or list of dictionaries, setting to 'default'"
-            )
-            solver_protocol = DEFAULT_SOLVER_PROTOCOL
+        # decide on the protocol to use when solving.  We use similar logic
+        # for both the solver protocol and the bootstrap solver protocol
 
-        for solver in solver_protocol:
-            if "options" not in solver:
-                solver["options"] = dict()
-            if "continuation" not in solver:
-                solver["continuation"] = None
-            if "maxiter" not in solver["options"]:
-                solver["options"]["maxiter"] = maximum_iterations
-            if maximum_iterations > solver["options"]["maxiter"]:
-                solver["options"]["maxiter"] = maximum_iterations
-                logger.info(f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}")
+        defaults = [DEFAULT_SOLVER_PROTOCOL, BOOTSTRAP_SOLVER_PROTOCOL]
+        robusts = [ROBUST_SOLVER_PROTOCOL, ROBUST_SOLVER_PROTOCOL]
+        pnames = ["solver_protocol", "bootstrap_solver_protocol"]
+        protocols = {pnames[0]: solver_protocol, pnames[1]: bootstrap_solver_protocol}
 
-            if "verbose" not in solver["options"]:
-                # should add in other ways to get information out of the scipy solvers, not just adaptive,
-                # which might involve passing in different combinations of options, and passing out other strings.
-                solver["options"]["verbose"] = self.verbose
+        for defl, rob, pname in zip(defaults, robusts, pnames):
+
+            prot = protocols[pname]
+            if prot is None or prot == "default":
+                prot = defl
+            elif prot == "robust":
+                prot = rob
+            elif prot == "jax":
+                prot = JAX_SOLVER_PROTOCOL
+            else:
+                for solver in prot:
+                    if not isinstance(solver, dict):
+                        logger.warning(
+                            "{pname} is not 'robust','default' or a tuple/list dictionaries, setting to 'default'"
+                        )
+                        prot = defl
+
+            for solver in prot:
+                if "options" not in solver:
+                    solver["options"] = dict()
+                if "continuation" not in solver:
+                    solver["continuation"] = None
+                if "maxiter" not in solver["options"]:
+                    solver["options"]["maxiter"] = maximum_iterations
+                if maximum_iterations > solver["options"]["maxiter"]:
+                    solver["options"]["maxiter"] = maximum_iterations
+                    logger.info(
+                        f"Explicitly overwriting maxiter={solver['options']['maxiter']} with maximum_iterations={maximum_iterations}"
+                    )
+                if "verbose" not in solver["options"]:
+                    # should add in other ways to get information out of the scipy solvers, not just adaptive,
+                    # which might involve passing in different combinations of options, and passing out other strings.
+                    solver["options"]["verbose"] = self.verbose
+            # seems like there should be a better way to do this.
+            if pname == "solver_protocol":
+                solver_protocol = prot
+            elif pname == "bootstrap_solver_protocol":
+                bootstrap_solver_protocol = prot
+
+        if rseed != None:
+            self.rstate = np.random.get_state()
+        else:
+            np.random.seed(rseed)
 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(
             self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
         )
+
+        if n_bootstraps > 0:
+            self.n_bootstraps = n_bootstraps
+            maxfrac = int(max((1, 0.1 * self.n_bootstraps)))
+
+            self.f_k_boots = np.zeros([self.n_bootstraps, self.K])
+            allN = int(np.sum(N_k))
+            self.bootstrap_rints = np.zeros([self.n_bootstraps, allN], int)
+            for b in range(self.n_bootstraps):
+                f_k_init = self.f_k.copy()
+                # picking random samples from the same N_k states.
+                rints = np.zeros(allN, int)
+                for k in range(K):
+                    # which of the indices are equal to K
+                    k_indices = np.where(self.x_kindices == k)[0]
+                    # pick new random ones, selected of these K.
+                    new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
+                    rints[k_indices] = new_kindices
+                # If we initialized with BAR, then BAR, starting from the provided initial_f_k as well.
+                if initialize == "BAR":
+                    f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
+                self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
+                    self.u_kn[:, rints],
+                    self.N_k,
+                    f_k_init,
+                    bootstrap_solver_protocol,
+                )
+                # save the random integers for computing expectations.
+                self.bootstrap_rints[b, :] = rints
+
+                if verbose:
+                    if b % maxfrac == 0:
+                        logger.info(f"Calculated {b+1:d}/{self.n_bootstraps:d} bootstrap samples")
+        elif n_bootstraps < 0:
+            logger.warning("n_bootstraps must be an integer >= 0")
+
+        # bootstrapped weight matrices not generated here, but when expectations are needed
+        # otherwise, it's too much memry to keep
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
@@ -543,7 +623,7 @@ class MBAR:
         warning_cutoff=1.0e-10,
         return_theta=False,
     ):
-        """Get the dimensionless free energy differences and uncertainties among all thermodynamic states.
+        """Compute and return  the dimensionless free energy differences and uncertainties among all thermodynamic states.
 
 
         Parameters
@@ -554,6 +634,7 @@ class MBAR:
             Choice of method used to compute asymptotic covariance method,
             or None to use default.  See help for _computeAsymptoticCovarianceMatrix()
             for more information on various methods. (default: svd)
+            The exception is the "bootstrap" option, which requires n_boostraps being defined upon initialization of MBAR.
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
             than this number (default: 1.0e-10)
@@ -593,11 +674,6 @@ class MBAR:
         >>> results = mbar.compute_free_energy_differences()
 
         """
-        Deltaf_ij, dDeltaf_ij, Theta_ij = (
-            None,
-            None,
-            None,
-        )  # By default, returns None for dDelta and Theta
 
         # Compute free energy differences and force cast back to mutable, normal ndarray (we're done with JAX here)
         # Cannot use asarray because that makes reference to the JAX memory, which NumPy doesn't own and is flagged
@@ -612,20 +688,39 @@ class MBAR:
 
         result_vals["Delta_f"] = Deltaf_ij
 
-        if compute_uncertainty or return_theta:
+        if uncertainty_method == "bootstrap" and (
+            self.n_bootstraps <= 0 or self.n_bootstraps is None
+        ):
+            raise ParameterError(
+                "Cannot request bootstrap sampling of free energy differences without any bootstraps."
+            )
+
+        if (compute_uncertainty and uncertainty_method != "bootstrap") or return_theta:
             # Compute asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
                 np.exp(self.Log_W_nk), self.N_k, method=uncertainty_method
             )
 
         if compute_uncertainty:
-            # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
-            dDeltaf_ij = np.array(self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff))
-            # zero out numerical error for thermodynamically identical states
-            self._zerosamestates(dDeltaf_ij)
-            # Return matrix of free energy differences and uncertainties.
-            dDeltaf_ij = np.array(dDeltaf_ij)
-            result_vals["dDelta_f"] = dDeltaf_ij
+            if uncertainty_method == "bootstrap":
+                diffm = np.zeros([self.n_bootstraps, self.K, self.K])
+                for b in range(self.n_bootstraps):
+                    # take the matrix of differences of f_ij
+                    # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
+                    diffm[b, :, :] = np.array(
+                        np.matrix(self.f_k_boots[b, :])
+                        - np.matrix(self.f_k_boots[b, :]).transpose()
+                    )
+                dDeltaf_ij = np.std(diffm, axis=0)
+                result_vals["dDelta_f"] = dDeltaf_ij
+            else:
+                # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
+                dDeltaf_ij = np.array(self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff))
+                # zero out numerical error for thermodynamically identical states
+                self._zerosamestates(dDeltaf_ij)
+                # Return matrix of free energy differences and uncertainties.
+                dDeltaf_ij = np.array(dDeltaf_ij)
+                result_vals["dDelta_f"] = dDeltaf_ij
 
         if return_theta:
             result_vals["Theta"] = Theta_ij
@@ -649,9 +744,9 @@ class MBAR:
         space functions [A_0(x),A_1(x),...,A_i(x)] along with the
         covariances of their estimates at multiple states.
 
-        intended as an internal function to keep all the optimized and
+        Intended as an internal function to keep all the optimized and
         robust expectation code in one place, but will leave it
-        open to allow for later modifications
+        open to allow for later modifications and uses.
 
         It calculates all input observables at all states which are
         specified by the list of states in the state list.
@@ -671,7 +766,9 @@ class MBAR:
             large number of different situations.
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for _computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+            See help for _computeAsymptoticCovarianceMatrix() for more information on various methods.
+            The exception is the "bootstrap" option, which required n_boostraps being defined at initialization of MBAR.
+            (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
         return_theta : bool, optional
@@ -692,6 +789,11 @@ class MBAR:
 
         'f' : np.ndarray, float, shape = (K+len(state_list)), 'free energies' of the new states (i.e. ln (<A>-Amin+logfactor)) as the log form is easier to work with.
 
+        'bootstrapped_observables' : np.ndarray, float, shape = (n_boostraps,S), array of the observables bootstrapped over random samples.
+
+        'bootstrapped_f' : np.ndarray, float, shape = (n_boostraps,S), free energies 'f' bootstrapped over random samples.
+
+
         Notes
         -----
 
@@ -707,8 +809,6 @@ class MBAR:
             state 2, and so forth.
 
         * Computing only free energies at new states.
-
-        * Would require additional work to work with potentials of mean force, because we need to ignore the functions that are zero when integrating.
 
         Examples
         --------
@@ -758,7 +858,7 @@ class MBAR:
         # required to prevent overflow in some examples.
         # WARNING: one issue to watch for is if one of the energies is extremely
         # low (-10^10 or lower), but most of the energies of interest are much higher.
-        # This could lead to roundoff problems (check with Levi N.)
+        # This could lead to roundoff problems.
 
         L_list = np.unique(state_list)
         NL = len(L_list)  # number of states we need to examine
@@ -786,60 +886,92 @@ class MBAR:
         N_k = np.zeros([msize], np.int64)  # counts
         f_k = np.zeros([msize], np.float64)  # free energies
 
-        # <A> = A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
-        # Fill in first section of matrix with existing q_k(x) from states.
-        Log_W_nk[:, 0:K] = self.Log_W_nk
-        N_k[0:K] = self.N_k
-        f_k[0:K] = self.f_k
+        if uncertainty_method == "bootstrap":
+            n_total = self.n_bootstraps + 1
+            A_i_bootstrap = np.zeros([self.n_bootstraps, S])
+            f_bootstrap = np.zeros([self.n_bootstraps, len(state_list)])
+        else:
+            n_total = 1
 
-        # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
-        states_with_samples = self.N_k > 0
-        log_denominator_n = logsumexp(
-            self.f_k[states_with_samples] - self.u_kn[states_with_samples].T,
-            b=self.N_k[states_with_samples],
-            axis=1,
-        )
-        # Compute row of W_nk matrix for the extra states corresponding to u_ln
-        # that the state list specifies
-        for l in L_list:
-            la = K + l  # l, augmented
-            # Calculate log normalizing constants and log weights via Eqns 13, 14
-            log_C_a = -logsumexp(-u_ln[l] - log_denominator_n)
-            Log_W_nk[:, la] = log_C_a - u_ln[l] - log_denominator_n
-            f_k[la] = log_C_a
+        for n in range(n_total):
+            # <A> = A(x_n) exp[f_{k} - q_{k}(x_n)] / \sum_{k'=1}^K N_{k'} exp[f_{k'} - q_{k'}(x_n)]
+            # Fill in first section of matrix with existing q_k(x) from states.
+            N_k[0:K] = self.N_k
+            if n == 0:
+                f_k[0:K] = self.f_k
+                u_kn = self.u_kn
+                Log_W_nk[:, 0:K] = self.Log_W_nk
+            else:
+                f_k[0:K] = self.f_k_boots[n - 1, :]
+                u_kn = self.u_kn[:, self.bootstrap_rints[n - 1]]
+                Log_W_nk[:, 0:K] = mbar_solvers.mbar_log_W_nk(u_kn, self.N_k, f_k[0:K])
 
-        # Compute the remaining rows/columns of W_nk, and calculate
-        # their normalizing constants c_k
-        for s in range(S):
-            sa = K + NL + s  # augmented s
-            l = K + state_map[0, s]
-            i = state_map[1, s]
-            Log_W_nk[:, sa] = np.log(A_n[i, :]) + Log_W_nk[:, l]
-            f_k[sa] = -logsumexp(Log_W_nk[:, sa])
-            Log_W_nk[:, sa] += f_k[sa]  # normalize this row
+            # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
 
-        # Compute estimates of A_i[s]
-        A_i = np.zeros([S], np.float64)
-        for s in range(S):
-            A_i[s] = np.exp(-f_k[K + NL + s])
+            states_with_samples = self.N_k > 0
+            log_denominator_n = logsumexp(
+                f_k[0:K][states_with_samples] - u_kn[0:K][states_with_samples].T,
+                b=self.N_k[states_with_samples],
+                axis=1,
+            )
+            # Compute row of W_nk matrix for the extra states corresponding to u_ln
+            # that the state list specifies
+            for l in L_list:
+                la = K + l  # l, augmented
+                # Calculate log normalizing constants and log weights via Eqns 13, 14
+                log_C_a = -logsumexp(
+                    -u_ln[l] - log_denominator_n
+                )  # how do we change these numbers?
+                Log_W_nk[:, la] = (
+                    log_C_a - u_ln[l] - log_denominator_n
+                )  # how do we change these numbers?
+                f_k[la] = log_C_a
 
-        # Now that covariances are computed, add the constants back to A_i that
-        # were required to enforce positivity
-        for s in range(S):
-            A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1, s]]
+            # Compute the remaining rows/columns of W_nk, and calculate
+            # their normalizing constants c_k
+            for s in range(S):
+                sa = K + NL + s  # augmented s
+                l = K + state_map[0, s]
+                i = state_map[1, s]
+                Log_W_nk[:, sa] = np.log(A_n[i, :]) + Log_W_nk[:, l]
+                f_k[sa] = -logsumexp(Log_W_nk[:, sa])
+                Log_W_nk[:, sa] += f_k[sa]  # normalize this row
+
+            # Compute estimates of A_i[s]
+            A_i = np.zeros([S], np.float64)
+            for s in range(S):
+                A_i[s] = np.exp(-f_k[K + NL + s])
+
+            # Now that covariances are computed, add the constants back to A_i that
+            # were required to enforce positivity
+            if n == 0:
+                for s in range(S):
+                    A_i[s] += A_min[state_map[1, s]] - logfactors[state_map[1, s]]
+                    # expectations of the observables at these states
+                    if S > 0:
+                        result_vals["observables"] = A_i
+                if return_theta:
+                    Theta_ij = self._computeAsymptoticCovarianceMatrix(
+                        np.exp(Log_W_nk), N_k, method=uncertainty_method
+                    )
+
+                # free energies at these new states. Not needed for bootstrapping?
+                result_vals["f"] = f_k[K + state_list]
+            else:
+                # we don't need to add a_min, since we did that when n=0
+                for s in range(S):
+                    A_i_bootstrap[n - 1, s] = A_i[s]
+                f_bootstrap[n - 1] = f_k[K + state_list]
+
+        if uncertainty_method == "bootstrap":
+            result_vals["bootstrapped_observables"] = A_i_bootstrap
+            result_vals["bootstrapped_f"] = f_bootstrap
 
         # these values may be used outside the routine, so copy back.
         for i in A_list:
             A_n[i, :] = A_n[i, :] + (A_min[i] - logfactors[i])
 
-        # expectations of the observables at these states
-        if S > 0:
-            result_vals["observables"] = A_i
-
         if return_theta:
-            Theta_ij = self._computeAsymptoticCovarianceMatrix(
-                np.exp(Log_W_nk), N_k, method=uncertainty_method
-            )
 
             # Note: these variances will be the same whether or not we
             # subtract a different constant from each A_i
@@ -862,9 +994,6 @@ class MBAR:
                 result_vals["Amin"] = (
                     A_min[state_map[1, np.arange(S)]] - logfactors[state_map[1, np.arange(S)]]
                 )
-
-        # free energies at these new states
-        result_vals["f"] = f_k[K + state_list]
 
         # Return expectations and uncertainties.
         return result_vals
@@ -968,7 +1097,7 @@ class MBAR:
         outputs : KxK variance matrix for the sums or differences ``\\sum a_i df_i``
         """
 
-        # todo: vectorize this.
+        # todo: vectorize this, use for computing entropy and enthalpy.
         var_ij = np.square(d_ij)
         d2 = np.zeros([K, K], float)
         n = len(a)
@@ -1026,7 +1155,8 @@ class MBAR:
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method,
             or None to use default See help for _computeAsymptoticCovarianceMatrix()
-            for more information on various methods. (default: None)
+            for more information on various methods. if uncertainty_method = "bootstrap",
+            then uncertainty over bootstrap samples is used. (default: None)
 
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
@@ -1065,6 +1195,13 @@ class MBAR:
         >>> A_n = u_kn[0,:]
         >>> results = mbar.compute_expectations(A_n, output='differences')
         """
+
+        if uncertainty_method == "bootstrap" and (
+            self.n_bootstraps <= 0 or self.n_bootstraps is None
+        ):
+            raise ParameterError(
+                "Cannot request bootstrap sampling of expectations without any bootstraps."
+            )
 
         dims = len(np.shape(A_n))
 
@@ -1123,7 +1260,7 @@ class MBAR:
         )
 
         result_vals = dict()
-        if compute_uncertainty or return_theta:
+        if (compute_uncertainty and uncertainty_method != "bootstrap") or return_theta:
             # we want the theta matrix for the exponentials of the
             # observables, which means we need to make the
             # transformation.
@@ -1142,16 +1279,28 @@ class MBAR:
         if output == "averages":
             result_vals["mu"] = inner_results["observables"]
             if compute_uncertainty:
-                result_vals["sigma"] = np.sqrt(covA_ij[0:K, 0:K].diagonal())
+                if uncertainty_method == "bootstrap":
+                    result_vals["sigma"] = np.std(
+                        inner_results["bootstrapped_observables"], axis=0
+                    )
+                else:
+                    result_vals["sigma"] = np.sqrt(covA_ij[0:K, 0:K].diagonal())
 
         if output == "differences":
             A_im = inner_results["observables"]
             result_vals["mu"] = A_im - np.vstack(A_im)  # Cast to A_ij
 
             if compute_uncertainty:
-                result_vals["sigma"] = self._ErrorOfDifferences(
-                    covA_ij, warning_cutoff=warning_cutoff
-                )
+                if uncertainty_method == "bootstrap":
+                    bootstrap_differences = np.zeros([self.n_bootstraps, len(A_im), len(A_im)])
+                    for b in range(self.n_bootstraps):
+                        A_b = inner_results["bootstrapped_observables"][b]
+                        bootstrap_differences[b, :, :] = A_b - np.vstack(A_b)
+                    result_vals["sigma"] = np.std(bootstrap_differences, axis=0)
+                else:
+                    result_vals["sigma"] = self._ErrorOfDifferences(
+                        covA_ij, warning_cutoff=warning_cutoff
+                    )
 
         if return_theta:
             result_vals["Theta"] = Theta
@@ -1192,7 +1341,9 @@ class MBAR:
             If True, calculate the covariance
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
+            with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1248,10 +1399,11 @@ class MBAR:
             warning_cutoff=warning_cutoff,
         )
         result_vals = dict()
-        expectations, uncertainties, covariances = None, None, None
         result_vals["mu"] = inner_results["observables"]
 
-        if compute_uncertainty or compute_covariance or return_theta:
+        if (
+            (compute_uncertainty or compute_covariance) and compute_uncertainty != "bootstrap"
+        ) or return_theta:
             Adiag = np.zeros([2 * I, 2 * I], dtype=np.float64)
             diag = np.ones(2 * I, dtype=np.float64)
             diag[0:I] = diag[I : 2 * I] = inner_results["observables"] - inner_results["Amin"]
@@ -1273,7 +1425,11 @@ class MBAR:
 
             if return_theta:
                 result_vals["Theta"] = Theta
-
+        if uncertainty_method == "bootstrap":
+            if compute_uncertainty:
+                result_vals["sigma"] = np.std(inner_results["bootstrapped_observables"], axis=0)
+            if compute_covariance:
+                result_vals["covariances"] = np.cov(inner_results["bootstrapped_observables"].T)
         return result_vals
 
     # =========================================================================
@@ -1293,7 +1449,9 @@ class MBAR:
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
+            with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1346,9 +1504,12 @@ class MBAR:
         result_vals["Delta_f"] = f_k - np.vstack(f_k)
 
         if compute_uncertainty:
-            result_vals["dDelta_f"] = self._ErrorOfDifferences(
-                inner_results["Theta"], warning_cutoff=warning_cutoff
-            )
+            if uncertainty_method == "bootstrap":
+                result_vals["dDelta_f"] = np.std(inner_results["bootstrapped_f"], axis=0)
+            else:
+                result_vals["dDelta_f"] = self._ErrorOfDifferences(
+                    inner_results["Theta"], warning_cutoff=warning_cutoff
+                )
 
         return result_vals
 
@@ -1369,7 +1530,9 @@ class MBAR:
             The energies of the state that are being used.
         uncertainty_method : str , optional
             Choice of method used to compute asymptotic covariance method, or None to use default
-            See help for computeAsymptoticCovarianceMatrix() for more information on various methods. (default: None)
+            See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
+            if method = "bootstrap" then uncertainty over bootstrap samples is used.
+            with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1438,58 +1601,75 @@ class MBAR:
         np.fill_diagonal(Adiag, diag)
         Theta = Adiag @ Theta @ Adiag
 
+        result_vals = dict()
         # Compute reduced free energy difference.
         f_k = inner_results["f"]
-        Delta_f_ij = f_k - np.vstack(f_k)
-        # compute uncertainty matrix in free energies:
-        covf = Theta[2 * K : 3 * K, 2 * K : 3 * K]
-        dDelta_f_ij = self._ErrorOfDifferences(covf, warning_cutoff=warning_cutoff)
-
+        result_vals["Delta_f"] = f_k - np.vstack(f_k)
         # Compute reduced enthalpy difference.
         u_k = inner_results["observables"]
-        Delta_u_ij = u_k - np.vstack(u_k)
-        # compute uncertainty matrix in energies:
-        covu = (
-            Theta[0:K, 0:K]
-            + Theta[K : 2 * K, K : 2 * K]
-            - Theta[0:K, K : 2 * K]
-            - Theta[K : 2 * K, 0:K]
-        )
-        dDelta_u_ij = self._ErrorOfDifferences(covu, warning_cutoff=warning_cutoff)
-
+        result_vals["Delta_u"] = u_k - np.vstack(u_k)
         # Compute reduced entropy difference
         s_k = u_k - f_k
-        Delta_s_ij = s_k - np.vstack(s_k)
-        # compute uncertainty matrix in entropies
-        # s_i = u_i - f_i
-        # cov(s_i) =   cov(u_i - f_i)
-        #         =   cov(exp(ln C_a - ln c_a) + ln c_a)
-        #         =   cov(exp(ln C_a - ln c_a), exp(ln C_a - ln c_a)) + cov(ln c_a, ln c_a)
-        #           + cov(exp(ln C_a - ln c_a), ln c_a) + cov(ln c_a, exp(ln C_a - ln c_a))
-        #         = cov(u,u) + cov(f,f)
-        #             + A cov(ln C_a - ln c_a, ln c_a) + A cov(ln c_a, ln C_a - ln c_a)
-        #         = cov(u,u) + cov(f,f)
-        #             + A cov(ln C_a, ln c_a) - A cov(ln c_a, ln c_a) + A cov(ln c_a, ln C_a) - A cov(ln c_a, ln c_a)
-        #         = cov(u,u) + cov(f,f) + A cov(ln C_a,ln c_a) + A cov(ln c_a, ln C_a) - 2A cov(ln_ca,ln_ca)
-        #
-        covs = (
-            covu
-            + covf
-            + Theta[0:K, 2 * K : 3 * K]
-            + Theta[2 * K : 3 * K, 0:K]
-            - Theta[K : 2 * K, 2 * K : 3 * K]
-            - Theta[2 * K : 3 * K, K : 2 * K]
-        )
-        # note: not clear that Theta[K:2*K,2*K:3*K] and Theta[K:2*K,2*K:3*K] are symmetric?
-        dDelta_s_ij = self._ErrorOfDifferences(covs, warning_cutoff=warning_cutoff)
+        result_vals["Delta_s"] = s_k - np.vstack(s_k)
 
-        result_vals = dict()
-        result_vals["Delta_f"] = Delta_f_ij
-        result_vals["dDelta_f"] = dDelta_f_ij
-        result_vals["Delta_u"] = Delta_u_ij
-        result_vals["dDelta_u"] = dDelta_u_ij
-        result_vals["Delta_s"] = Delta_s_ij
-        result_vals["dDelta_s"] = dDelta_s_ij
+        if uncertainty_method == "bootstrap":
+            # bootstrapped free energy
+            diffm = np.zeros([self.n_bootstraps, self.K, self.K])
+            for b in range(self.n_bootstraps):
+                # take the matrix of differences of f_ij
+                f = np.matrix(self.f_k_boots[b, :])
+                diffm[b, :, :] = f - f.transpose()
+            result_vals["dDelta_f"] = np.std(diffm, axis=0)
+
+            # bootstrapped enthalpy
+            for b in range(self.n_bootstraps):
+                # take the matrix of differences of f_ij
+                u = np.matrix(inner_results["bootstrapped_observables"][b])
+                diffm[b, :, :] = u - u.transpose()
+            result_vals["dDelta_u"] = np.std(diffm, axis=0)
+
+            # bootstrapped entropy
+            for b in range(self.n_bootstraps):
+                # take the matrix of differences of f_ij
+                s = np.matrix(inner_results["bootstrapped_observables"][b] - self.f_k_boots[b, :])
+                diffm[b, :, :] = s - s.transpose()
+            result_vals["dDelta_s"] = np.std(diffm, axis=0)
+        else:
+            # compute uncertainty matrix in free energies:
+            covf = Theta[2 * K : 3 * K, 2 * K : 3 * K]
+            result_vals["dDelta_f"] = self._ErrorOfDifferences(covf, warning_cutoff=warning_cutoff)
+
+            # compute uncertainty matrix in energies/enthalpies:
+            covu = (
+                Theta[0:K, 0:K]
+                + Theta[K : 2 * K, K : 2 * K]
+                - Theta[0:K, K : 2 * K]
+                - Theta[K : 2 * K, 0:K]
+            )
+            result_vals["dDelta_u"] = self._ErrorOfDifferences(covu, warning_cutoff=warning_cutoff)
+
+            # compute uncertainty matrix in entropies
+            # s_i = u_i - f_i
+            # cov(s_i) =   cov(u_i - f_i)
+            #         =   cov(exp(ln C_a - ln c_a) + ln c_a)
+            #         =   cov(exp(ln C_a - ln c_a), exp(ln C_a - ln c_a)) + cov(ln c_a, ln c_a)
+            #           + cov(exp(ln C_a - ln c_a), ln c_a) + cov(ln c_a, exp(ln C_a - ln c_a))
+            #         = cov(u,u) + cov(f,f)
+            #             + A cov(ln C_a - ln c_a, ln c_a) + A cov(ln c_a, ln C_a - ln c_a)
+            #         = cov(u,u) + cov(f,f)
+            #             + A cov(ln C_a, ln c_a) - A cov(ln c_a, ln c_a) + A cov(ln c_a, ln C_a) - A cov(ln c_a, ln c_a)
+            #         = cov(u,u) + cov(f,f) + A cov(ln C_a,ln c_a) + A cov(ln c_a, ln C_a) - 2A cov(ln_ca,ln_ca)
+            #
+            covs = (
+                covu
+                + covf
+                + Theta[0:K, 2 * K : 3 * K]
+                + Theta[2 * K : 3 * K, 0:K]
+                - Theta[K : 2 * K, 2 * K : 3 * K]
+                - Theta[2 * K : 3 * K, K : 2 * K]
+            )
+            # note: not clear that Theta[K:2*K,2*K:3*K] and Theta[K:2*K,2*K:3*K] are symmetric?
+            result_vals["dDelta_s"] = self._ErrorOfDifferences(covs, warning_cutoff=warning_cutoff)
 
         return result_vals
 
@@ -1589,14 +1769,20 @@ class MBAR:
           'svd-ew' is the same as 'svd', but uses the eigenvalue decomposition of W'W to bypass the need to perform an SVD (fastest)
           'approximate' only requires multiplication of KxN and NxK matrices, but is an approximate underestimate of the uncertainty.
 
+
         svd and svd-ew are described in appendix D of Shirts, 2007 JCP, while
         "approximate" in Section 4 of Kong, 2003. J. R. Statist. Soc. B.
 
         We currently recommend 'svd-ew'.
+
+        if uncertainty method = "bootstrap", we asked for uncertainties with bootstrap, so we probably don't care that
+        much about the theta matrix, and we will just default to using svd-ew, the best method.
+
+
         """
 
         # Set 'svd-ew' as default if uncertainty method specified as None.
-        if method == None:
+        if method == None or method == "bootstrap":
             method = "svd-ew"
 
         # Get dimensions of weight matrix.
@@ -1668,7 +1854,7 @@ class MBAR:
 
     # =========================================================================
 
-    def _initializeFreeEnergies(self, verbose=False, method="zeros"):
+    def _initializeFreeEnergies(self, verbose=False, method="zeros", f_k_init=None):
         """
         Compute an initial guess at the relative free energies.
 
@@ -1680,6 +1866,7 @@ class MBAR:
             Method for initializing guess at free energies.
             * zeros: all free energies are initially set to zero
             * mean-reduced-potential: the mean reduced potential is used
+            * 'BAR'
 
         """
 
@@ -1706,42 +1893,7 @@ class MBAR:
                 )
             self.f_k = means
         elif method == "BAR":
-            # For now, make a simple list of those states with samples.
-            initialization_order = np.where(self.N_k > 0)[0]
-            # Initialize all f_k to zero.
-            self.f_k[:] = 0.0
-            # Initialize the rest
-            for index in range(0, np.size(initialization_order) - 1):
-                k = initialization_order[index]
-                l = initialization_order[index + 1]
-                # forward work
-                # here, we actually need to distinguish which states are which
-                w_F = self.u_kn[l, self.x_kindices == k] - self.u_kn[k, self.x_kindices == k]
-                # self.u_kln[k, l, 0:self.N_k[k]] - self.u_kln[k, k, 0:self.N_k[k]])
-                # reverse work
-                w_R = self.u_kn[k, self.x_kindices == l] - self.u_kn[l, self.x_kindices == l]
-                # self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
-
-                if len(w_F) > 0 and len(w_R) > 0:
-                    # bar solution doesn't need to be incredibly accurate to
-                    # kickstart NR.
-                    from pymbar.other_estimators import bar
-
-                    self.f_k[l] = (
-                        self.f_k[k]
-                        + bar(
-                            w_F,
-                            w_R,
-                            relative_tolerance=0.000001,
-                            verbose=False,
-                            compute_uncertainty=False,
-                        )["Delta_f"]
-                    )
-                else:
-                    # no states observed, so we don't need to initialize this free energy anyway, as
-                    # the solution is noniterative.
-                    self.f_k[l] = 0
-
+            self.f_k = self._initialize_with_bar(self.u_kn, f_k_init)
         else:
             # The specified method is not implemented.
             raise ParameterError("Method " + method + " unrecognized.")
@@ -1767,3 +1919,58 @@ class MBAR:
           'log weights' here refers to \\log [ \\sum_{k=1}^K N_k exp[f_k - (u_k(x_n) - u(x_n)] ]
         """
         return -1.0 * logsumexp(self.f_k + u_n[:, np.newaxis] - self.u_kn.T, b=self.N_k, axis=1)
+
+    def _initialize_with_bar(self, u_kn, f_k_init=None):
+
+        """
+
+        Internal method for intializing free energies simulations with BAR.
+        Only useful to do when the states are in order.
+
+        """
+
+        from pymbar.other_estimators import bar
+
+        initialization_order = np.where(self.N_k > 0)[0]
+        # Initialize all f_k to zero.
+        if f_k_init is None:
+            f_k_init = np.zeros(len(self.f_k))
+
+        starting_f_k_init = f_k_init.copy()
+        for index in range(0, np.size(initialization_order) - 1):
+            k = initialization_order[index]
+            l = initialization_order[index + 1]
+            # forward work
+            # here, we actually need to distinguish which states are which
+            w_F = u_kn[l, self.x_kindices == k] - u_kn[k, self.x_kindices == k]
+            # self.u_kln[k, l, 0:self.N_k[k]] - self.u_kln[k, k, 0:self.N_k[k]])
+            # reverse work
+            w_R = u_kn[k, self.x_kindices == l] - u_kn[l, self.x_kindices == l]
+            # self.u_kln[l, k, 0:self.N_k[l]] - self.u_kln[l, l, 0:self.N_k[l]])
+
+            if len(w_F) > 0 and len(w_R) > 0:
+                # bar solution doesn't need to be incredibly accurate to
+                # kickstart NR.
+                try:
+                    f_k_init[l] = (
+                        f_k_init[k]
+                        + bar(
+                            w_F,
+                            w_R,
+                            method="bisection",  # Fast, so be more certain.
+                            DeltaF=starting_f_k_init[l] - starting_f_k_init[k],
+                            relative_tolerance=0.00001,
+                            verbose=False,
+                            maximum_iterations=100,  # If it doesn't converge fast, probably not worth it.
+                            compute_uncertainty=False,
+                        )["Delta_f"]
+                    )
+                except ConvergenceError:
+                    logger.warn("WARNING: BAR did not converge to within tolerance")
+                    f_k_init[l] = f_k_init[k]  # just assume zero if didn't converge.
+            else:
+                # no states observed, so we don't need to initialize this free energy anyway, as
+                # the solution is noniterative.
+                f_k_init[l] = 0
+
+        return f_k_init
