@@ -624,6 +624,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     Each call to `solve_mbar_once()` re-conditions the nonlinear
     equations using the current guess.
     """
+    
     if solver_protocol is None:
         solver_protocol = DEFAULT_SOLVER_PROTOCOL
 

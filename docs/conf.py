@@ -46,16 +46,18 @@ import pymbar
 #    'sphinx.ext.autosummary'
 # ]
 extensions = [
+    "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
-    "sphinx.ext.pngmath",
+    "sphinx.ext.imgmath",
     "sphinx.ext.ifconfig",
     "numpydoc",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
+    "sphinx.ext.mathjax",
     "sphinxcontrib.bibtex",
 ]
 
@@ -284,6 +286,7 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_domain_indices = True
 
+bibtex_bibfiles = ['references.bib']
 
 # -- Options for manual page output ---------------------------------------
 

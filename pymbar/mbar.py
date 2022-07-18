@@ -31,10 +31,6 @@ Please reference the following if you use this code in your research:
 [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
 J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
 
-This module contains implementations of
-
-* MBAR - multistate Bennett acceptance ratio estimator
-
 """
 
 from textwrap import dedent
@@ -102,10 +98,10 @@ class MBAR:
 
         Parameters
         ----------
-        u_kn : np.ndarray, float, shape=(K, N_max)
+        u_kn: np.ndarray, float, shape=(K, N_max)
             ``u_kn[k,n]`` is the reduced potential energy of uncorrelated
             configuration n evaluated at state ``k``.
-        u_kln : np.ndarray, float, shape (K, L, N_max)
+        u_kln: np.ndarray, float, shape (K, L, N_max)
             If the simulation is in form ``u_kln[k,l,n]`` it is converted to ``u_kn`` format
 
             .. code-block:: python
@@ -115,7 +111,7 @@ class MBAR:
                                                     . . .
                          u_k(x_1) u_k(x_2) u_k(x_3) . . . u_k(x_n)]
 
-        N_k :  np.ndarray, int, shape=(K)
+        N_k:  np.ndarray, int, shape=(K)
             ``N_k[k]`` is the number of uncorrelated snapshots sampled from state ``k``.
             Some may be zero, indicating that there are no samples from that state.
 
@@ -126,16 +122,16 @@ class MBAR:
             allow this assumption to be overwritten by parameters passed
             from above, once ``u_kln`` is phased out.
 
-        maximum_iterations : int, optional
+        maximum_iterations: int, optional
             Set to limit the maximum number of iterations performed (default 1000)
-        relative_tolerance : float, optional
+        relative_tolerance: float, optional
             Set to determine the relative tolerance convergence criteria (default 1.0e-6)
-        verbosity : bool, optional
+        verbosity: bool, optional
             Set to True if verbose debug output is desired (default False)
-        initial_f_k : np.ndarray, float, shape=(K), optional
+        initial_f_k: np.ndarray, float, shape=(K), optional
             Set to the initial dimensionless free energies to use as a
             guess (default None, which sets all f_k = 0)
-        solver_protocol : list(dict), string or None, optional, default=None
+        solver_protocol: list(dict), string or None, optional, default=None
             List of dictionaries to define a sequence of solver algorithms
             and options used to estimate the dimensionless free energies.
             See `pymbar.mbar_solvers.solve_mbar()` for details.  If None,
@@ -152,7 +148,7 @@ class MBAR:
             Newton-Raphson, where the method with the smallest
             gradient is chosen to improve numerical stability.
 
-        initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
+        initialize: 'zeros' or 'BAR', optional, Default: 'zeros'
             If equal to 'BAR', use bar between the pairwise state to
             initialize the free energies.  Eventually, should specify a path;
             for now, it just does it zipping up the states.
@@ -164,7 +160,8 @@ class MBAR:
             sense to think of states as adjacent, then choose 'zeroes'.
 
             (default: 'zeros', unless specific values are passed in.)
-        x_kindices
+
+        x_kindices: default?
             Which state is each x from?  Usually doesn't matter, but does for bar. We assume the samples
             are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
             the 1st state, and so forth.

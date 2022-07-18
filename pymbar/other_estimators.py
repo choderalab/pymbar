@@ -169,13 +169,13 @@ def bar(
 
     Parameters
     ----------
-    w_F : np.ndarray
+    w_F: np.ndarray
         w_F[t] is the forward work value from snapshot t.
         t = 0...(T_F-1)  Length T_F is deduced from vector.
-    w_R : np.ndarray
+    w_R: np.ndarray
         w_R[t] is the reverse work value from snapshot t.
         t = 0...(T_R-1)  Length T_R is deduced from vector.
-    DeltaF : float, optional, default=0.0
+    DeltaF: float, optional, default=0.0
         DeltaF can be set to initialize the free energy difference with a guess
     compute_uncertainty : bool, optional, default=True
         if False, only the free energy is returned
@@ -184,22 +184,22 @@ def bar(
         and is indicated by "MBAR". The other estimator, which is the one originally derived for BAR, only 
         agrees with MBAR in the limit of good overlap, and is designated 'BAR'
         See code comments below for derivations of the two methods.
-    maximum_iterations : int, optional, default=500
+    maximum_iterations: int, optional, default=500
         Can be set to limit the maximum number of iterations performed
-    relative_tolerance : float, optional, default=1E-11
+    relative_tolerance: float, optional, default=1E-11
         Can be set to determine the relative tolerance convergence criteria (defailt 1.0e-11)
-    verbose : bool
+    verbose: bool
         Should be set to True if verbse debug output is desired (default False)
-    method : str, optional, defualt='false-position'
+    method: str, optional, defualt='false-position'
         Choice of method to solve bar nonlinear equations: one of 'bisection', 'self-consistent-iteration' or 'false-position' (default: 'false-position').
-    iterated_solution : bool, optional, default=True
+    iterated_solution: bool, optional, default=True
         whether to fully solve the optimized bar equation to consistency, or to stop after one step, to be
         equivalent to transition matrix sampling.
 
     Returns
     -------
     dict
-        'Delta_f' : float
+        'Delta_f': float
             Free energy difference
         'dDelta_f': float
             Estimated standard deviation of free energy difference
@@ -579,17 +579,17 @@ def exp(w_F, compute_uncertainty=True, is_timeseries=False):
 
     Parameters
     ----------
-    w_F : np.ndarray, float
+    w_F: np.ndarray, float
         w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
-    compute_uncertainty : bool, optional, default=True
+    compute_uncertainty: bool, optional, default=True
         if False, will disable computation of the statistical uncertainty (default: True)
-    is_timeseries : bool, default=False
+    is_timeseries: bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
         Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
 
     Returns
     -------
-    'Delta_f' : float
+    'Delta_f': float
         Free energy difference
     'dDelta_f': float
         Estimated standard deviation of free energy difference
@@ -663,26 +663,26 @@ def exp_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
 
     Parameters
     ----------
-    w_F : np.ndarray, float
+    w_F: np.ndarray, float
         w_F[t] is the forward work value from snapshot t.  t = 0...(T-1)  Length T is deduced from vector.
-    compute_uncertainty : bool, optional, default=True
+    compute_uncertainty: bool, optional, default=True
         if False, will disable computation of the statistical uncertainty (default: True)
-    is_timeseries : bool, default=False
+    is_timeseries: bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
-        Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+        Use this option if you are providing correlated timeseries data and have not subsampled the data to 
+        produce uncorrelated samples.
 
     Returns
     -------
     Results dictionary with keys:
-    'Delta_f' : float
-        Free energy difference between the two states
-    'dDelta_f': float
-        Estimated standard deviation of free energy difference between the two states.
-
+        'Delta_f': float
+            Free energy difference between the two states
+        'dDelta_f': float
+            Estimated standard deviation of free energy difference between the two states
 
     Notes
     -----
-    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
+    If you are providing correlated timeseries data, be sure to set the 'timeseries' flag to ``True``
 
     Examples
     --------
