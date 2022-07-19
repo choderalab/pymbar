@@ -3,7 +3,6 @@ import pytest
 import pymbar
 from pymbar.utils_for_testing import (
     assert_array_almost_equal,
-    assert_almost_equal,
     oscillators,
     exponentials,
 )

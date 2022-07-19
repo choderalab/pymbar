@@ -2,6 +2,8 @@ import logging
 import warnings
 
 import numpy as np
+
+# Optimize imported here and below as the jax-optimized one is jax or passthrough, but this is required regardless
 import scipy.optimize
 from pymbar.utils import ensure_type, check_w_normalized, ParameterError
 
@@ -20,7 +22,6 @@ try:
     from jax.numpy.linalg import lstsq
     import jax.scipy.optimize as optimize_maybe_jax
     from jax.scipy.special import logsumexp
-    from jax.scipy.optimize import minimize
 
     from jax import jit as jit_or_passthrough
 
@@ -32,14 +33,17 @@ except ImportError:
     from numpy import exp, sum, newaxis, diag, dot, s_
     from numpy import pad as npad
     from numpy.linalg import lstsq
-    import scipy.optimize as optimize_maybe_jax
+    import scipy.optimize as optimize_maybe_jax  # pylint: disable=reimported
     from scipy.special import logsumexp
-    from scipy.optimize import minimize
 
     # No jit, so make a passthrough decorator
     def jit_or_passthrough(fn):
         return fn
 
+
+# Note on "pylint: disable=invalid-unary-operand-type"
+# Known issue with astroid<2.12 and numpy array returns, but 2.12 doesn't fix it due to returns being jax.
+# Can be mostly ignored
 
 logger = logging.getLogger(__name__)
 
@@ -153,9 +157,12 @@ def _jit_self_consistent_update(u_kn, N_k, f_k):
     N_k must be float (should be cast at a higher level)
 
     """
+    # Asteroid
     log_denominator_n = logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-    # All states can contribute to the numerator term.
-    return -1.0 * logsumexp(-log_denominator_n - u_kn, axis=1)  # check transpose
+    # All states can contribute to the numerator term. Check transpose
+    return -1.0 * logsumexp(
+        -log_denominator_n - u_kn, axis=1
+    )  # pylint: disable=invalid-unary-operand-type
 
 
 def jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):

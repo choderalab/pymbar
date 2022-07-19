@@ -184,7 +184,7 @@ def test_mbar_free_energies(mbar_and_test, uncertainty_method):
 
     """Can MBAR calculate moderately correct free energy differences?"""
     mbar, test = mbar_and_test["mbar"], mbar_and_test["test"]
-    
+
     results = mbar.compute_free_energy_differences(
         return_theta=True, uncertainty_method=uncertainty_method
     )
