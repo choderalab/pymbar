@@ -871,7 +871,7 @@ print("============================================")
 
 xrange = [[-3, 3], [-3, 3]]
 ndim = 2
-nsamples = 300
+nsamples = 500
 u_kn, u_n, x_n, f_k_analytical = generate_fes_data(
     K0=K0,
     Ku=Ku,
