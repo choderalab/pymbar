@@ -708,10 +708,8 @@ class MBAR:
                 for b in range(self.n_bootstraps):
                     # take the matrix of differences of f_ij
                     # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
-                    diffm[b, :, :] = np.array(
-                        np.matrix(self.f_k_boots[b, :])
-                        - np.matrix(self.f_k_boots[b, :]).transpose()
-                    )
+                    f = self.f_k_boots[b, :]
+                    diffm[b, :, :] = f - np.vstack(f)
                 dDeltaf_ij = np.std(diffm, axis=0)
                 result_vals["dDelta_f"] = dDeltaf_ij
             else:
@@ -1620,22 +1618,22 @@ class MBAR:
             diffm = np.zeros([self.n_bootstraps, self.K, self.K])
             for b in range(self.n_bootstraps):
                 # take the matrix of differences of f_ij
-                f = np.matrix(self.f_k_boots[b, :])
-                diffm[b, :, :] = f - f.transpose()
+                f = self.f_k_boots[b, :]
+                diffm[b, :, :] = f - np.vstack(f)
             result_vals["dDelta_f"] = np.std(diffm, axis=0)
 
             # bootstrapped enthalpy
             for b in range(self.n_bootstraps):
                 # take the matrix of differences of f_ij
-                u = np.matrix(inner_results["bootstrapped_observables"][b])
-                diffm[b, :, :] = u - u.transpose()
+                u = inner_results["bootstrapped_observables"][b]
+                diffm[b, :, :] = u - np.vstack(u)
             result_vals["dDelta_u"] = np.std(diffm, axis=0)
 
             # bootstrapped entropy
             for b in range(self.n_bootstraps):
                 # take the matrix of differences of f_ij
-                s = np.matrix(inner_results["bootstrapped_observables"][b] - self.f_k_boots[b, :])
-                diffm[b, :, :] = s - s.transpose()
+                s = inner_results["bootstrapped_observables"][b] - self.f_k_boots[b, :]
+                diffm[b, :, :] = s - np.vstack(s)
             result_vals["dDelta_s"] = np.std(diffm, axis=0)
         else:
             # compute uncertainty matrix in free energies:
