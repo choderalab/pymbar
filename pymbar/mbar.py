@@ -579,6 +579,7 @@ class MBAR:
                 diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose()
             dDeltaf_ij = np.std(diffm,axis=2)
             result_vals['dDelta_f'] = dDeltaf_ij
+            return_list.append(dDeltaf_ij)
 
         if (compute_uncertainty or return_theta) and uncertainty_method != 'bootstrap':
             # Compute asymptotic covariance matrix.
