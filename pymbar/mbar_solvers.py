@@ -722,9 +722,15 @@ def solve_mbar_once(
     grad = lambda x: mbar_gradient(u_kn_nonzero, N_k_nonzero, pad(x))[
         1:
     ]  # Objective function gradient
+
     grad_and_obj = lambda x: unpad_second_arg(
         *mbar_objective_and_gradient(u_kn_nonzero, N_k_nonzero, pad(x))
     )  # Objective function gradient and objective function
+
+    de_jax_grad_and_obj = lambda x: (
+        *map(np.array, grad_and_obj(x)),  # (...,) Casts to tuple instead of <map> object
+    )  # Force any jax-based array output to normal numpy for scipy.optimize.minimize. np.asarray does not work.
+
     hess = lambda x: mbar_hessian(u_kn_nonzero, N_k_nonzero, pad(x))[1:][
         :, 1:
     ]  # Hessian of objective function
@@ -748,7 +754,7 @@ def solve_mbar_once(
             if method in scipy_nohess_options:
                 hess = None  # To suppress warning from passing a hessian function.
             results = scipy.optimize.minimize(
-                grad_and_obj,
+                de_jax_grad_and_obj,
                 f_k_nonzero[1:],
                 jac=True,
                 hess=hess,
