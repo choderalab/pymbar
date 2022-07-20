@@ -45,5 +45,9 @@ The method `get_fes` return values of the free energy surface at the
 specified coordinates, and when available, returns the uncertainties
 in the values as well.
 
+Examples `parallel-tempering-2d` and `umbrella-sampling` have been
+rewnamed `parallel-tempering-2dfes and `umbrella-sampling` and
+rewritten to demonstrate the new functionality.
+
 .. autoclass:: pymbar.FES
    :members:

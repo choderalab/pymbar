@@ -65,9 +65,9 @@ would load in data and calculate free energies, instead of being
     :caption: Example of initializing ``MBAR`` in 3.0.5
 
     mbar = MBAR(u_kn, N_k)
-    results, errors = mbar.getFreeEnergyDifferences()                                                                                   
-    print(results[0])                                                                                                                   
-    print(errors[0])  
+    results, errors = mbar.getFreeEnergyDifferences()                                                                 
+    print(results[0])
+    print(errors[0]) 
 
     
 Would now be written as:
@@ -89,15 +89,15 @@ documentations for these return patterns.
 
 .. code-block:: python
 		
-   results = bar(w_F, w_R)                                                                                                          
+   results = bar(w_F, w_R)        
    print(f'Free energy difference is {results['Delta_f']:.3f} +- {results['Delta_f']:.3f} kT')
 
-   
+
    and:
 
 .. code-block:: python
 		
-   results = exp(w_F)                                                                                                               
+   results = exp(w_F)
    print(f"Forward free energy difference is {results['Delta_f']:.3f} +- {results['dDelta_f']:.3f} kT)
    results = exp(w_R)
    print(f"Reverse free energy difference is {results['Delta_f']:.3f} +- {results['dDelta_f']:.3f} kT)
@@ -125,9 +125,9 @@ that previously was set to standard out.  Note that for a given method
 to produce extensive information, even with logging, the verbose flag
 still needs to be set to true.
 
----------------------
+--------------------
 Free energy surfaces
----------------------
+--------------------
 
 Previously, ``pymbar`` had a method ``PMF`` that estimated a free
 energy from a series of umbrella samples using a histogram
@@ -152,7 +152,7 @@ calculation of biasing weights associated with umbrella samples, and
 the estimation of the free energy surface.
 
 For more information on the options for computing free energy surfaces
-with the code, please see: :ref:`fes_with_pymbar`.
+with the code, please see: :ref:`fes_with_pymbar`. 
 
 ------------
 Acceleration
@@ -165,4 +165,20 @@ approximately a 2x speed up when performed on most CPUs, and
 additional acceleration when a GPU can be detected (pymbar does not
 install the appropriate GPU libraries). ``jax`` will be installed when
 ``pymbar`` in installed via conda, but ``pymbar`` will function with
-or without ``jax`` installed.
+or without ``jax`` installed if there are issues with the JAX configuration.
+
+-------------
+Other changes
+-------------
+
+Additional changes not affecting the API:
+  * Removed legacy `old_mbar.py` support.
+  * Moved testing framework to pytest, added significant numbers of tests.
+  * Improved code linting using `black`l
+  * Bootstrapping for errors in free energies and expectations is now supported; see :ref:`strategies_for_solution` for more information.
+  * Added a `bar_overlap` function to find overlap when using just `bar`
+  * Fixed an error in computing expectations of small numbers.
+  * Improved automated adaptive choice of samplers; see :ref:`strategies_for_solution` for more information.
+  * Many instances of code cleanup.
+  * Improved docstring documentation.
+
