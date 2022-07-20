@@ -101,7 +101,6 @@ class FES:
             from above, once ``u_kln`` is phased out.
 
         mbar_options : dict
-
             The following options supported by mbar (see MBAR documentation)
 
             maximum_iterations : int, optional
@@ -238,7 +237,6 @@ class FES:
 
         Parameters
         ----------
-
         u_n : np.ndarray, float, shape=(N)
             u_n[n] is the reduced potential energy of snapshot n of state for which the FES is to be computed.
             Often, it will be one of the states in of u_kn, used in initializing the FES object, but we want
@@ -250,31 +248,37 @@ class FES:
         fes_type : str
              options = 'histogram', 'kde', 'spline'
 
-        histogram_parameters:
-            - bin_edges: list of ndim np.ndarray, each array shaped ndum+1
-                 The bin edges. Compatible with `bin_edges` output of np.histogram.
+        histogram_parameters: dictionary
 
-        kde_parameters:
-            - all the parameters from sklearn (https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html).
-              Defaults will be used if nothing changed.
+            Input dictionary with the following keys:
 
-        spline_parameters:
-            - 'spline_weights' : which type of fit to use:
-                -- 'biasedstates' : sum of log likelihood over all weighted states
-                -- 'unbiasedstate' : log likelihood of the single unbiased state
-                -- 'simplesum' : sum of log likelihoods from the biased simulation. Essentially equivalent to vFEP (York et al.)
-            - 'optimization_algorithm':
-                -- 'Custom-NR' : a custom Newton-Raphson that is particularly fast for close data, but can fail
-                -- 'Newton-CG' : scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
-                -- '         ' : scipy gradient based methods that work, but are generally slower (CG, BFGS, L-LBFGS-B, TNC, SLSQP)
-            - 'fkbias' : array of functions
-                  Return the Kth bias potential for each function
-            - 'nspline' : int
-                  Number of spline points
-            - 'kdegree' : int
-                  Degree of the spline.  Default is cubic ('3')
-            - 'objective' : string
-                  'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
+                 bin_edges: list of ndim np.ndarray, each array shaped ndum+1
+                     The bin edges. Compatible with `bin_edges` output of np.histogram.
+
+                 kde_parameters
+                     all the parameters from sklearn (https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html). Defaults will be used if nothing changed.
+
+                 spline_parameters 
+                      'spline_weights'  
+                           which type of fit to use:
+                           'biasedstates' - sum of log likelihood over all weighted states
+                           'unbiasedstate' - log likelihood of the single unbiased state
+                           'simplesum' - sum of log likelihoods from the biased simulation. Essentially equivalent to vFEP (York et al.)
+                      'optimization_algorithm':
+                           'Custom-NR' - a custom Newton-Raphson that is particularly fast for close data, but can fail
+                           'Newton-CG' - scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
+                           '         ' - scipy gradient based methods that work, but are generally slower (CG, BFGS, L-LBFGS-B, TNC, SLSQP)
+                      'fkbias' : array of functions
+                           Return the Kth bias potential for each function
+
+                      'nspline' : int
+                           Number of spline points
+
+                      'kdegree' : int
+                           Degree of the spline.  Default is cubic ('3')
+
+                      'objective' : string
+                           'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
 
         n_bootstraps : int, 0 or > 1, Default: 0
             Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done. Required if
