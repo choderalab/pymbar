@@ -48,7 +48,9 @@ def test_solvers(statesa, statesb, test_system):
         "TNC",
         "trust-ncg",
         "trust-krylov",
-        pytest.param("trust-exact", marks=pytest.mark.flaky(max_runs=2)),  # Can rarely NaN on Windows
+        pytest.param(
+            "trust-exact", marks=pytest.mark.flaky(max_runs=2)
+        ),  # Can rarely NaN on Windows
         "SLSQP",
     ],
 )
