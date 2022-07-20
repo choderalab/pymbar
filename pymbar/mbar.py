@@ -432,10 +432,7 @@ class MBAR:
                 if initialize == "BAR":
                     f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
-                    self.u_kn[:, rints],
-                    self.N_k,
-                    f_k_init,
-                    bootstrap_solver_protocol,
+                    self.u_kn[:, rints], self.N_k, f_k_init, bootstrap_solver_protocol,
                 )
                 # save the random integers for computing expectations.
                 self.bootstrap_rints[b, :] = rints
@@ -893,11 +890,12 @@ class MBAR:
                 f_k[0:K] = self.f_k
                 u_kn = self.u_kn
                 Log_W_nk[:, 0:K] = self.Log_W_nk
+                ri = np.arange(int(np.sum(self.N_k)))
             else:
                 f_k[0:K] = self.f_k_boots[n - 1, :]
-                u_kn = self.u_kn[:, self.bootstrap_rints[n - 1]]
+                ri = self.bootstrap_rints[n - 1]
+                u_kn = self.u_kn[:, ri]
                 Log_W_nk[:, 0:K] = mbar_solvers.mbar_log_W_nk(u_kn, self.N_k, f_k[0:K])
-
             # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
 
             states_with_samples = self.N_k > 0
@@ -912,10 +910,10 @@ class MBAR:
                 la = K + l  # l, augmented
                 # Calculate log normalizing constants and log weights via Eqns 13, 14
                 log_C_a = -logsumexp(
-                    -u_ln[l] - log_denominator_n
+                    -u_ln[l, ri] - log_denominator_n
                 )  # how do we change these numbers?
                 Log_W_nk[:, la] = (
-                    log_C_a - u_ln[l] - log_denominator_n
+                    log_C_a - u_ln[l, ri] - log_denominator_n
                 )  # how do we change these numbers?
                 f_k[la] = log_C_a
 
@@ -925,7 +923,7 @@ class MBAR:
                 sa = K + NL + s  # augmented s
                 l = K + state_map[0, s]
                 i = state_map[1, s]
-                Log_W_nk[:, sa] = np.log(A_n[i, :]) + Log_W_nk[:, l]
+                Log_W_nk[:, sa] = np.log(A_n[i, ri]) + Log_W_nk[:, l]
                 f_k[sa] = -logsumexp(Log_W_nk[:, sa])
                 Log_W_nk[:, sa] += f_k[sa]  # normalize this row
 
@@ -947,13 +945,14 @@ class MBAR:
                         np.exp(Log_W_nk), N_k, method=uncertainty_method
                     )
 
-                # free energies at these new states. Not needed for bootstrapping?
+                # free energies at these new states.
                 result_vals["f"] = f_k[K + state_list]
             else:
-                # we don't need to add a_min, since we did that when n=0
                 for s in range(S):
-                    A_i_bootstrap[n - 1, s] = A_i[s]
-                f_bootstrap[n - 1] = f_k[K + state_list]
+                    A_i_bootstrap[n - 1, s] = A_i[s] + (
+                        A_min[state_map[1, s]] - logfactors[state_map[1, s]]
+                    )
+                f_bootstrap[n - 1, :] = f_k[K + state_list]
 
         if uncertainty_method == "bootstrap":
             result_vals["bootstrapped_observables"] = A_i_bootstrap
@@ -1619,7 +1618,6 @@ class MBAR:
                 u = np.matrix(inner_results["bootstrapped_observables"][b])
                 diffm[b, :, :] = u - u.transpose()
             result_vals["dDelta_u"] = np.std(diffm, axis=0)
-
             # bootstrapped entropy
             for b in range(self.n_bootstraps):
                 # take the matrix of differences of f_ij
