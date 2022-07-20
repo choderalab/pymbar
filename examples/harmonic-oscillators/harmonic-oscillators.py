@@ -825,7 +825,7 @@ df_ih = results["df_i"]
 # now estimate the PDF with a kde
 kde_parameters = dict()
 kde_parameters["bandwidth"] = dx / 3.0
-fes.generate_fes(u_n, x_n, fes_type="kde", nbootstraps=20, kde_parameters=kde_parameters)
+fes.generate_fes(u_n, x_n, fes_type="kde", n_bootstraps=20, kde_parameters=kde_parameters)
 results_kde = fes.get_fes(
     bin_centers,
     reference_point="from-specified",
