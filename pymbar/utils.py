@@ -49,9 +49,9 @@ def kln_to_kn(kln, N_k=None, cleanup=False):
     cleanup : bool, optional
         optional command to clean up, since u_kln can get very large
 
-    Outputs
+    Returns
     -------
-    u_kn: np.ndarray, float, shape=(LxN)
+    u_kn : np.ndarray, float, shape=(LxN)
     """
 
     # rewrite into kn shape
@@ -80,15 +80,15 @@ def kn_to_n(kn, N_k=None, cleanup=False):
 
     Parameters
     ----------
-    u_kn: np.ndarray, float, shape=(KxN_max)
+    u_kn : np.ndarray, float, shape=(KxN_max)
     N_k : np.array, optional
         the N_k matrix from the previous formatting form
     cleanup : bool, optional
         optional command to clean up, since u_kln can get very large
 
-    Outputs
+    Returns
     -------
-    u_n: np.ndarray, float, shape=(N)
+    u_n : np.ndarray, float, shape=(N)
     """
 
     # print "warning: KxN arrays deprecated; convering into new preferred N shape"
@@ -302,11 +302,11 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     See Also
     --------
-    numpy.logaddexp, numpy.logaddexp2, scipy.misc.logsumexp (soon to be replaced with  scipy.special.logsumexp)
+    numpy.logaddexp, numpy.logaddexp2, scipy.special.logsumexp
 
     Notes
     -----
-    This is based on ``scipy.misc.logsumexp`` but with optional numexpr
+    This is based on ``scipy.special.logsumexp`` but with optional numexpr
     support for improved performance.
     """
 

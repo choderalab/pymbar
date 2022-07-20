@@ -440,7 +440,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
     OPTIONAL ARGUMENTS
     tol (float between 0 and 1) - relative tolerance for convergence (default 1.0e-12)
 
-    options: dictionary of options
+    options : dictionary of options
         gamma (float between 0 and 1) - incrementor for NR iterations (default 1.0).  Usually not changed now, since adaptively switch.
         maxiter (int) - maximum number of Newton-Raphson iterations (default 10000: either NR converges or doesn't, pretty quickly)
         verbose (boolean) - verbosity level for debug output
@@ -820,7 +820,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
         The number of samples in each state for the nonempty states
     f_k_nonzero : np.ndarray, shape=(n_states), dtype='float'
         The reduced free energies for the nonempty states
-    solver_protocol: tuple(dict()), optional, default=None
+    solver_protocol : tuple(dict()), optional, default=None
         Optional list of dictionaries of steps in solver protocol.
         If None, a default protocol will be used.
 
@@ -847,6 +847,9 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     Each call to `solve_mbar_once()` re-conditions the nonlinear
     equations using the current guess.
     """
+
+    if solver_protocol is None:
+        solver_protocol = DEFAULT_SOLVER_PROTOCOL
 
     all_fks = []
     all_gnorms = []
@@ -908,7 +911,7 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, states_with_samples, solver_protoc
         The number of samples in each state
     f_k : np.ndarray, shape=(n_states), dtype='float'
         The reduced free energies of each state
-    solver_protocol: tuple(dict()), optional, default=None
+    solver_protocol : tuple(dict()), optional, default=None
         Sequence of dictionaries of steps in solver protocol for final
         stage of refinement.
 

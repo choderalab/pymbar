@@ -46,16 +46,18 @@ import pymbar
 #    'sphinx.ext.autosummary'
 # ]
 extensions = [
+    "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
-    "sphinx.ext.pngmath",
+    "sphinx.ext.imgmath",
     "sphinx.ext.ifconfig",
     "numpydoc",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
+    "sphinx.ext.mathjax",
     "sphinxcontrib.bibtex",
 ]
 
@@ -102,7 +104,7 @@ version = release.split("+")[0]
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -284,6 +286,7 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_domain_indices = True
 
+bibtex_bibfiles = ['references.bib']
 
 # -- Options for manual page output ---------------------------------------
 

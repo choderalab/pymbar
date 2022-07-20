@@ -28,7 +28,7 @@ This module contains implementations of
 
 * bar - bidirectional estimator for free energy differences / Bennett acceptance ratio estimator
 * exp - unidirectional estimator for free energy differences based on Zwanzig relation / exponential averaging
-
+* exp_gauss - unidirectional estimator for free energy differences based on Zwanzig relation / exponential averaging, assuming the distribution is Gaussian.
 """
 
 # =============================================================================================
@@ -179,18 +179,20 @@ def bar(
         DeltaF can be set to initialize the free energy difference with a guess
     compute_uncertainty : bool, optional, default=True
         if False, only the free energy is returned
-    uncertainty_method: string, optional, default=BAR
-        There are two possible uncertainty estimates for bar.  One agrees with MBAR for two states exactly;
-        The other only agrees with MBAR in the limit of good overlap. See below.
+    uncertainty_method : string, optional, default=''BAR''
+        There are two possible uncertainty estimates for BAR.  One agrees with MBAR for two states exactly,
+        and is indicated by "MBAR". The other estimator, which is the one originally derived for BAR, only
+        agrees with MBAR in the limit of good overlap, and is designated 'BAR'
+        See code comments below for derivations of the two methods.
     maximum_iterations : int, optional, default=500
-        can be set to limit the maximum number of iterations performed
+        Can be set to limit the maximum number of iterations performed
     relative_tolerance : float, optional, default=1E-11
-        can be set to determine the relative tolerance convergence criteria (defailt 1.0e-11)
+        Can be set to determine the relative tolerance convergence criteria (defailt 1.0e-11)
     verbose : bool
-        should be set to True if verbse debug output is desired (default False)
-    method : str, optional, defualt='false-position'
-        choice of method to solve bar nonlinear equations, one of 'self-consistent-iteration' or 'false-position' (default: 'false-position')
-    iterated_solution : bool, optional, default=True
+        Should be set to True if verbse debug output is desired (default False)
+    method: str, optional, defualt='false-position'
+        Choice of method to solve bar nonlinear equations: one of 'bisection', 'self-consistent-iteration' or 'false-position' (default : 'false-position').
+    iterated_solution: bool, optional, default=True
         whether to fully solve the optimized bar equation to consistency, or to stop after one step, to be
         equivalent to transition matrix sampling.
 
@@ -199,7 +201,7 @@ def bar(
     dict
         'Delta_f' : float
             Free energy difference
-        'dDelta_f': float
+        'dDelta_f' : float
             Estimated standard deviation of free energy difference
 
     References
@@ -533,6 +535,7 @@ def bar(
 
 def bar_overlap(w_F, w_R):
     """Compute overlap between forward and backward ensembles (using MBAR definition of overlap)
+
     Parameters
     ----------
     w_F : np.ndarray
@@ -541,6 +544,7 @@ def bar_overlap(w_F, w_R):
     w_R : np.ndarray
         w_R[t] is the reverse work value from snapshot t.
         t = 0...(T_R-1)  Length T_R is deduced from vector.
+
     Returns
     -------
     overlap : float
@@ -567,11 +571,6 @@ def bar_overlap(w_F, w_R):
     return mbar.compute_overlap()["scalar"]
 
 
-# =============================================================================================
-# One-sided exponential averaging (EXP).
-# =============================================================================================
-
-
 def exp(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP).
 
@@ -589,7 +588,7 @@ def exp(w_F, compute_uncertainty=True, is_timeseries=False):
     -------
     'Delta_f' : float
         Free energy difference
-    'dDelta_f': float
+    'dDelta_f' : float
         Estimated standard deviation of free energy difference
 
     Notes
@@ -651,11 +650,6 @@ def exp(w_F, compute_uncertainty=True, is_timeseries=False):
     return result_vals
 
 
-# =============================================================================================
-# Gaussian approximation to exponential averaging (Gauss).
-# =============================================================================================
-
-
 def exp_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
     """Estimate free energy difference using gaussian approximation to one-sided (unidirectional) exponential averaging.
 
@@ -667,20 +661,20 @@ def exp_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
         if False, will disable computation of the statistical uncertainty (default: True)
     is_timeseries : bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
-        Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
+        Use this option if you are providing correlated timeseries data and have not subsampled the data to
+        produce uncorrelated samples.
 
     Returns
     -------
     Results dictionary with keys:
-    'Delta_f' : float
-        Free energy difference between the two states
-    'dDelta_f': float
-        Estimated standard deviation of free energy difference between the two states.
-
+        'Delta_f' : float
+            Free energy difference between the two states
+        'dDelta_f' : float
+            Estimated standard deviation of free energy difference between the two states
 
     Notes
     -----
-    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
+    If you are providing correlated timeseries data, be sure to set the 'timeseries' flag to ``True``
 
     Examples
     --------

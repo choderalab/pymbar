@@ -690,10 +690,6 @@ def subsample_correlated_data(A_t, g=None, fast=False, conservative=False, verbo
     -----
     The statistical inefficiency is computed with the function computeStatisticalInefficiency().
 
-    ToDo
-    ----
-    Instead of using regular stride, use irregular stride so more data can be fit in when g is non-integral.
-
     Examples
     --------
 
@@ -793,10 +789,6 @@ def detect_equilibration(A_t, fast=True, nskip=1):
     Neff_max : float
         number of uncorrelated samples
 
-    ToDo
-    ----
-    Consider implementing a binary search for Neff_max.
-
     Notes
     -----
     If your input consists of some period of equilibration followed by
@@ -821,6 +813,8 @@ def detect_equilibration(A_t, fast=True, nskip=1):
     >>> [t, g, Neff_max] = detect_equilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
 
     """
+    # TODO: Consider implementing a binary search for Neff_max.
+
     T = A_t.size
 
     # Special case if timeseries is constant.

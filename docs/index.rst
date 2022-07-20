@@ -16,10 +16,14 @@ Documentation
    :maxdepth: 2
 
    getting_started
+   moving_from_pymbar3
+   strategies_for_solution
    mbar
+   fes_with_pymbar
+   other_estimators
    timeseries
-   testsystems
-   references
+   utils
+   zbibliography
 
 Indices and tables
 ==================

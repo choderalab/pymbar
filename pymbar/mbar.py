@@ -22,6 +22,10 @@
 ##############################################################################
 
 """
+###########
+pymbar.MBAR
+###########
+
 A module implementing the multistate Bennett acceptance ratio (MBAR) method for the analysis
 of equilibrium samples from multiple arbitrary thermodynamic states in computing equilibrium
 expectations, free energy differences, potentials of mean force, and entropy and enthalpy contributions.
@@ -30,10 +34,6 @@ Please reference the following if you use this code in your research:
 
 [1] Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.
 J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
-
-This module contains implementations of
-
-* MBAR - multistate Bennett acceptance ratio estimator
 
 """
 
@@ -60,8 +60,6 @@ BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
 # =========================================================================
 # MBAR class definition
 # =========================================================================
-
-
 class MBAR:
     """
 
@@ -172,12 +170,11 @@ class MBAR:
             If you are uncertain what the order of states should be, or if it does not make
             sense to think of states as adjacent, then choose 'zeros'.
 
-            (default: 'zeros', unless specific values are passed in.)
-
-        x_kindices
-            Which state is each x from?  Usually doesn't matter, but does for bar. We assume the samples
-            are in ``K`` order (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` samples from
-            the 1st state, and so forth.
+        x_kindices : np.ndarray, int, shape=(K), default = [0,1,2,3,4...K]
+            Describes which state is each sample *x* is from?  Usually doesn't matter,
+            but it does for bar. As a default, we assume the samples are in ``K`` order
+            (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]``
+            samples from the 1st state, and so forth.
 
         n_bootstraps: int
             How many bootstrap free energies will be computed? If None, no bootstraps will be computed.
@@ -577,7 +574,7 @@ class MBAR:
         'eigenvalues' : np.ndarray, float, shape=(K)
             The sorted (descending) eigenvalues of the overlap matrix.
         'matrix' : np.ndarray, float, shape=(K, K)
-            Estimated state overlap matrix: O[i,j] is an estimate
+            Estimated state overlap matrix : O[i,j] is an estimate
             of the probability of observing a sample from state i in state j
 
         Notes
@@ -630,15 +627,15 @@ class MBAR:
         Parameters
         ----------
         compute_uncertainty : bool, optional
-            If False, the uncertainties will not be computed (default: True)
+            If False, the uncertainties will not be computed (default : True)
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method,
             or None to use default.  See help for _computeAsymptoticCovarianceMatrix()
-            for more information on various methods. (default: svd)
+            for more information on various methods. (default : svd)
             The exception is the "bootstrap" option, which requires n_boostraps being defined upon initialization of MBAR.
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
-            than this number (default: 1.0e-10)
+            than this number (default : 1.0e-10)
         return_theta : bool, optional
             Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
@@ -781,7 +778,7 @@ class MBAR:
 
         Keys in the result_vals dictionary:
 
-        'observables': np.ndarray, float, shape = (S)
+        'observables' : np.ndarray, float, shape = (S)
             results_vals['observables'][i] is the estimate for the expectation of A_state_map[i](x) at the state specified by u_n[state_map[i],:]
 
         'Theta' : np.ndarray, float, shape = (K+len(state_list), K+len(state_list)) the covariance matrix of log weights.
@@ -798,12 +795,12 @@ class MBAR:
         Notes
         -----
 
-        Situations this will be used for :
+        Situations this will be used for:
 
         * Multiple observables, single state (called though compute_multiple_expectations)
         * Single observable, multiple states (called through compute_expectations)
 
-            This has two cases: observables that don't change with state, and observables that
+            This has two cases : observables that don't change with state, and observables that
             do change with state.
             For example, the set of energies at state k consist in energy function of state
             1 evaluated at state 1, energies of state 2 evaluated at
@@ -1153,7 +1150,7 @@ class MBAR:
             a matrix of differences in the observables.
 
         compute_uncertainty : bool, optional
-            If False, the uncertainties will not be computed (default: True)
+            If False, the uncertainties will not be computed (default : True)
 
         uncertainty_method : string, optional
             Choice of method used to compute asymptotic covariance method,
@@ -1164,7 +1161,7 @@ class MBAR:
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
-        state_dependent: bool, whether the expectations are state-dependent.
+        state_dependent : bool, whether the expectations are state-dependent.
 
         Returns
         -------
@@ -1180,7 +1177,7 @@ class MBAR:
             or
             dA_ij (K np float64 array) - dA_ij[i,j] is uncertainty estimate (one standard deviation) for the difference in A beteen i and j
             or None, if compute_uncertainty is False.
-        'Theta' ((KxK np float64 array): Covariance matrix of log weights
+        'Theta' : ((KxK np float64 array): Covariance matrix of log weights
 
         References
         ----------
@@ -1331,9 +1328,8 @@ class MBAR:
         state.
 
 
-        Parameters:
-        -------------
-
+        Parameters
+        ----------
         A_in : np.ndarray, float, shape=(I, k, N)
             A_in[i,n] = A_i(x_n), the value of phase observable i for configuration n at state of interest
         u_n : np.ndarray, float, shape=(N)
@@ -1348,10 +1344,10 @@ class MBAR:
             if method = "bootstrap" then uncertainty over bootstrap samples is used.
             with bootstraps. (default: None)
         warning_cutoff : float, optional
-            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default : 1.0e-10)
 
         Returns
-        -------------
+        -------
         Results dictionary with the following keys
 
         'mu' : np.ndarray, float, shape=(I)
@@ -1362,7 +1358,7 @@ class MBAR:
         'covariances' : np.ndarray, float, shape=(I, I)
             result_vals['covariances'] is the COVARIANCE in the estimates of A_i[i] and A_i[j]: we can't actually take a square root
             or None if compute_covariance is False
-        'Theta': np.ndarray, float, shape=(I, I), covariances of the log weights, useful for some additional calculations.
+        'Theta' : np.ndarray, float, shape=(I, I), covariances of the log weights, useful for some additional calculations.
 
         Examples
         --------
@@ -1761,7 +1757,7 @@ class MBAR:
 
         Returns
         -------
-        Theta: np.ndarray, shape=(K, K), dtype='float'
+        Theta : np.ndarray, shape=(K, K), dtype='float'
             Asymptotic covariance matrix
 
         Notes
@@ -1866,9 +1862,9 @@ class MBAR:
             If True, will print debug information
         method : str, optional=zeros
             Method for initializing guess at free energies.
-            * zeros: all free energies are initially set to zero
-            * mean-reduced-potential: the mean reduced potential is used
-            * 'BAR'
+            * zeros : all free energies are initially set to zero
+            * mean-reduced-potential : the mean reduced potential is used
+            * 'BAR' : BAR is used to find the free energy difference between consecutive states
 
         """
 
