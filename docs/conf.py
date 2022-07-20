@@ -46,14 +46,13 @@ import pymbar
 #    'sphinx.ext.autosummary'
 # ]
 extensions = [
-    "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx.ext.imgmath",
     "sphinx.ext.ifconfig",
-    "numpydoc",
+    "sphinx.ext.napoleon",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.autosummary",
     "sphinx.ext.extlinks",
@@ -181,7 +180,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path = []
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
