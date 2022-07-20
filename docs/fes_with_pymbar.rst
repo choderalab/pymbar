@@ -3,9 +3,6 @@
 Free energy surfaces with pymbar
 #################################
 
-Installing ``pymbar``
-=====================
-
 -------------------
 Free energy surfces
 -------------------
