@@ -72,7 +72,6 @@ def test_statistical_inefficiency_fft(data):
     assert_almost_equal(g0, g2, decimal=6)
     assert_almost_equal(g0, g3, decimal=6)
 
-
 @has_statmodels
 def test_statistical_inefficiency_fft_gaussian():
 
@@ -114,7 +113,6 @@ def test_detectEquil():
 def test_detectEquil_binary():
     x = np.random.normal(size=10000)
     t, g, Neff_max = timeseries.detect_equilibration_binary_search(x)
-
 
 @has_statmodels
 def test_compare_detectEquil(show_hist=False):

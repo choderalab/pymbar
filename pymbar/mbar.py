@@ -444,7 +444,7 @@ class MBAR:
             logger.warning("n_bootstraps must be an integer >= 0")
 
         # bootstrapped weight matrices not generated here, but when expectations are needed
-        # otherwise, it's too much memry to keep
+        # otherwise, it's too much memory to keep
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.

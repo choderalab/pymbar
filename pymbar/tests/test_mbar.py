@@ -255,7 +255,6 @@ def test_mbar_compute_expectations_position2(mbar_and_test):
     z = (mu0 - mu) / sigma
     assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
-
 def test_mbar_compute_expectations_potential(mbar_and_test):
 
     """Can MBAR calculate E(u_kn)??"""

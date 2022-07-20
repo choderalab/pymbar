@@ -1,5 +1,5 @@
 numpy
-nose
+pytest
 numpydoc
 scipy
 sphinxcontrib-bibtex
