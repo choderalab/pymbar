@@ -12,7 +12,7 @@ and expectation values from all of the samples simultaneously.
 
 setup(
     name="pymbar",
-    author="Levi N. Naden and Jaime Rodríguez-Guerra and Michael R. Shirts and John D. Chodera",
+    author="Levi N. Naden and Jaime Rodriguez-Guerra and Michael R. Shirts and John D. Chodera",
     author_email="levi.naden@choderalab.org, jaime.rodriguez-guerra@choderalab.org, michael.shirts@virginia.edu, john.chodera@choderalab.org",
     description="Python implementation of the multistate Bennett acceptance ratio (MBAR) method",
     license="MIT",
