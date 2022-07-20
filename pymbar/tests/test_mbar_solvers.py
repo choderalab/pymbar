@@ -15,6 +15,12 @@ def base_oscillator():
     return {"name": name, "u_kn": u_kn, "N_k": N_k, "s_n": s_n, "test": test}
 
 
+@pytest.fixture(scope="module")
+def more_oscillators():
+    name, u_kn, N_k, s_n, test = oscillators(50, 500, provide_test=True)
+    return {"name": name, "u_kn": u_kn, "N_k": N_k, "s_n": s_n, "test": test}
+
+
 @pytest.mark.flaky(max_runs=2)  # Uses flaky plugin for pytest
 @pytest.mark.parametrize(
     "statesa, statesb, test_system",
@@ -34,6 +40,19 @@ def test_solvers(statesa, statesb, test_system):
     )
 
 
+def run_mbar_protocol(oscillator_bundle, protocol):
+    test = oscillator_bundle["test"]
+    u_kn = oscillator_bundle["u_kn"]
+    N_k = oscillator_bundle["N_k"]
+    fa = test.analytical_free_energies()
+    fa = fa[1:] - fa[0]
+    # Solve MBAR with zeros for initial weights
+    mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({"method": protocol},))
+    # Solve MBAR with the correct f_k used for the initial weights
+    mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({"method": protocol},))
+    return mbar, fa
+
+
 @pytest.mark.parametrize(
     "protocol",
     [
@@ -48,28 +67,22 @@ def test_solvers(statesa, statesb, test_system):
         "TNC",
         "trust-ncg",
         "trust-krylov",
-        pytest.param(
-            "trust-exact", marks=pytest.mark.flaky(max_runs=2)
-        ),  # Can rarely NaN on Windows
+        "trust-exact",
         "SLSQP",
     ],
 )
-def test_protocols(base_oscillator, protocol):
+def test_protocols(base_oscillator, more_oscillators, protocol):
     """
     Test that free energy is moderately equal to analytical solution, independent of solver protocols
     """
 
     # Importing the hacky fix to asert that free energies are moderately correct
 
-    test = base_oscillator["test"]
-    u_kn = base_oscillator["u_kn"]
-    N_k = base_oscillator["N_k"]
-    fa = test.analytical_free_energies()
-    fa = fa[1:] - fa[0]
-    # Solve MBAR with zeros for initial weights
-    mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({"method": protocol},))
-    # Solve MBAR with the correct f_k used for the inital weights
-    mbar = pymbar.MBAR(u_kn, N_k, initial_f_k=mbar.f_k, solver_protocol=({"method": protocol},))
+    try:
+        mbar, fa = run_mbar_protocol(base_oscillator, protocol)
+    except Exception as e:
+        print(f"Caught error in initial oscillator test, trying with more samples. Error:\n\n{e}")
+        mbar, fa = run_mbar_protocol(more_oscillators, protocol)
     results = mbar.compute_free_energy_differences()
     fe = results["Delta_f"][0, 1:]
     fe_sigma = results["dDelta_f"][0, 1:]
