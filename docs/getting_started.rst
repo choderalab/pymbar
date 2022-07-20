@@ -43,4 +43,4 @@ The test suite uses `pytest <https://pytest.readthedocs.org/en/latest/>`_, in ad
 You can then run the tests with:
 
 ::
-   $ pytest -vv pymbar
+   $ pytest -v pymbar

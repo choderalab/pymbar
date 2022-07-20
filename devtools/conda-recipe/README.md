@@ -6,7 +6,7 @@ it, running the tests, and then if successful pushing the package to binstar
 (and the docs to AWS S3). The binstar auth token is an encrypted environment
 variable generated using:
 
-binstar auth -n repex-travis -o omnia --max-age 22896000 -c --scopes api:write
+binstar auth -n repex-travis -o conda-forge --max-age 22896000 -c --scopes api:write
 
 and then saved in the environment variable BINSTAR_TOKEN.
 

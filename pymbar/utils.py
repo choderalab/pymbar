@@ -23,15 +23,10 @@
 # imports
 ##############################################################################
 
-from six.moves import zip_longest
+from itertools import zip_longest
 import warnings
 import numpy as np
-
-try:  # numexpr used in logsumexp when available.
-    import numexpr
-    HAVE_NUMEXPR = True
-except ImportError:
-    HAVE_NUMEXPR = False
+import numexpr
 
 
 ##############################################################################
@@ -43,18 +38,15 @@ class TypeCastPerformanceWarning(RuntimeWarning):
     pass
 
 
-def kln_to_kn(kln, N_k = None, cleanup = False):
-
-    """ Convert KxKxN_max array to KxN max array
-
-    if self.N is not initialized, it will be here.
+def kln_to_kn(kln, N_k=None, cleanup=False):
+    """Convert KxKxN_max array to KxN max array
 
     Parameters
     ----------
     u_kln : np.ndarray, float, shape=(KxLxN_max)
-    N_k (optional) : np.array
+    N_k : np.array, optional
         the N_k matrix from the previous formatting form
-    cleanup (optional) : bool
+    cleanup : bool, optional
         optional command to clean up, since u_kln can get very large
 
     Outputs
@@ -62,10 +54,8 @@ def kln_to_kn(kln, N_k = None, cleanup = False):
     u_kn: np.ndarray, float, shape=(LxN)
     """
 
-    #print "warning: KxLxN_max arrays deprecated; convering into new preferred KxN shape"
-
     # rewrite into kn shape
-    [K, L, N_max] = np.shape(kln)
+    K, L, N_max = np.shape(kln)
 
     if N_k is None:
         # We assume that all N_k are N_max.
@@ -80,21 +70,20 @@ def kln_to_kn(kln, N_k = None, cleanup = False):
             kn[:, i] = kln[k, :, ik]
             i += 1
     if cleanup:
-        del(kln)  # very big, let's explicitly delete
+        del kln  # very big, let's explicitly delete
 
     return kn
 
 
-def kn_to_n(kn, N_k = None, cleanup = False):
-
-    """ Convert KxN_max array to N array
+def kn_to_n(kn, N_k=None, cleanup=False):
+    """Convert KxN_max array to N array
 
     Parameters
     ----------
     u_kn: np.ndarray, float, shape=(KxN_max)
-    N_k (optional) : np.array
+    N_k : np.array, optional
         the N_k matrix from the previous formatting form
-    cleanup (optional) : bool
+    cleanup : bool, optional
         optional command to clean up, since u_kln can get very large
 
     Outputs
@@ -102,16 +91,16 @@ def kn_to_n(kn, N_k = None, cleanup = False):
     u_n: np.ndarray, float, shape=(N)
     """
 
-    #print "warning: KxN arrays deprecated; convering into new preferred N shape"
+    # print "warning: KxN arrays deprecated; convering into new preferred N shape"
     # rewrite into kn shape
 
     # rewrite into kn shape
-    [K, N_max] = np.shape(kn)
+    K, N_max = np.shape(kn)
 
     if N_k is None:
         # We assume that all N_k are N_max.
         # Not really an easier way to do this without being given the answer.
-        N_k = N_max*np.ones([K], dtype=np.int64)
+        N_k = N_max * np.ones([K], dtype=np.int64)
     N = np.sum(N_k)
 
     n = np.zeros([N], dtype=np.float64)
@@ -121,12 +110,21 @@ def kn_to_n(kn, N_k = None, cleanup = False):
             n[i] = kn[k, ik]
             i += 1
     if cleanup:
-        del(kn)  # very big, let's explicitly delete
+        del kn  # very big, let's explicitly delete
     return n
 
 
-def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=None,
-                warn_on_cast=True, add_newaxis_on_deficient_ndim=False):
+def ensure_type(
+    val,
+    dtype,
+    ndim,
+    name,
+    length=None,
+    can_be_none=False,
+    shape=None,
+    warn_on_cast=True,
+    add_newaxis_on_deficient_ndim=False,
+):
     """Typecheck the size, shape and dtype of a numpy array, with optional
     casting.
 
@@ -184,33 +182,41 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
         if add_newaxis_on_deficient_ndim and ndim == 1 and np.isscalar(val):
             val = np.array([val])
         else:
-            raise TypeError(("%s must be numpy array. "
-                             " You supplied type %s" % (name, type(val))))
+            raise TypeError(
+                ("{} must be numpy array. " " You supplied type {}".format(name, type(val)))
+            )
 
     if warn_on_cast and val.dtype != dtype:
-        warnings.warn("Casting %s dtype=%s to %s " % (name, val.dtype, dtype),
-                      TypeCastPerformanceWarning)
+        warnings.warn(
+            "Casting {} dtype={} to {} ".format(name, val.dtype, dtype), TypeCastPerformanceWarning
+        )
 
     if not val.ndim == ndim:
         if add_newaxis_on_deficient_ndim and val.ndim + 1 == ndim:
             val = val[np.newaxis, ...]
         else:
-            raise ValueError(("%s must be ndim %s. "
-                              "You supplied %s" % (name, ndim, val.ndim)))
+            raise ValueError(
+                ("{} must be ndim {}. " "You supplied {}".format(name, ndim, val.ndim))
+            )
 
     val = np.ascontiguousarray(val, dtype=dtype)
 
     if length is not None and len(val) != length:
-        raise ValueError(("%s must be length %s. "
-                          "You supplied %s" % (name, length, len(val))))
+        raise ValueError(
+            ("{} must be length {}. " "You supplied {}.".format(name, length, len(val)))
+        )
 
     if shape is not None:
         # the shape specified given by the user can look like (None, None 3)
         # which indicates that ANY length is accepted in dimension 0 or
         # dimension 1
         sentenel = object()
-        error = ValueError(("%s must be shape %s. You supplied  "
-                            "%s" % (name, str(shape).replace('None', 'Any'), val.shape)))
+        error = ValueError(
+            (
+                "{} must be shape {}. You supplied  "
+                "{}".format(name, str(shape).replace("None", "Any"), val.shape)
+            )
+        )
         for a, b in zip_longest(val.shape, shape, fillvalue=sentenel):
             if a is sentenel or b is sentenel:
                 # if the sentenel was reached, it means that the ndim didn't
@@ -228,6 +234,7 @@ def ensure_type(val, dtype, ndim, name, length=None, can_be_none=False, shape=No
 
 def _logsum(a_n):
     """Compute the log of a sum of exponentiated terms exp(a_n) in a numerically-stable manner.
+
     NOTE: this function has been deprecated in favor of logsumexp.
 
     Parameters
@@ -243,17 +250,17 @@ def _logsum(a_n):
     Notes
     -----
 
-    _logsum a_n = max_arg + \log \sum_{n=1}^N \exp[a_n - max_arg]
+    _logsum a_n = max_arg + \\log \\sum_{n=1}^N \\exp[a_n - max_arg]
 
     where max_arg = max_n a_n.  This is mathematically (but not numerically) equivalent to
 
-    _logsum a_n = \log \sum_{n=1}^N \exp[a_n]
+    _logsum a_n = \\log \\sum_{n=1}^N \\exp[a_n]
 
 
     Example
     -------
     >>> a_n = np.array([0.0, 1.0, 1.2], np.float64)
-    >>> print('%.3e' % _logsum(a_n))
+    >>> print('{:.3e}'.format(_logsum(a_n)))
     1.951e+00
     """
 
@@ -267,6 +274,7 @@ def _logsum(a_n):
     log_sum = np.log(np.sum(terms)) + max_log_term
 
     return log_sum
+
 
 def logsumexp(a, axis=None, b=None, use_numexpr=True):
     """Compute the log of the sum of exponentials of input elements.
@@ -298,7 +306,7 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     Notes
     -----
-    This is based on scipy.misc.logsumexp but with optional numexpr
+    This is based on ``scipy.misc.logsumexp`` but with optional numexpr
     support for improved performance.
     """
 
@@ -313,12 +321,12 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     if b is not None:
         b = np.asarray(b)
-        if use_numexpr and HAVE_NUMEXPR:
+        if use_numexpr:
             out = np.log(numexpr.evaluate("b * exp(a - a_max)").sum(axis))
         else:
             out = np.log(np.sum(b * np.exp(a - a_max), axis=axis))
     else:
-        if use_numexpr and HAVE_NUMEXPR:
+        if use_numexpr:
             out = np.log(numexpr.evaluate("exp(a - a_max)").sum(axis))
         else:
             out = np.log(np.sum(np.exp(a - a_max), axis=axis))
@@ -329,7 +337,7 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
     return out
 
 
-def check_w_normalized(W, N_k, tolerance = 1.0e-4):
+def check_w_normalized(W, N_k, tolerance=1.0e-4):
     """Check the weight matrix W is properly normalized. The sum over N should be 1, and the sum over k by N_k should aslo be 1
 
     Parameters
@@ -345,30 +353,45 @@ def check_w_normalized(W, N_k, tolerance = 1.0e-4):
     Returns
     -------
     None : NoneType
-        Returns a None object if test passes, otherwise raises a ParameterError with appropriate message if W is not normalized within tolerance.
+        Returns a None object if test passes
+
+    Raises
+    ------
+    ParameterError
+        Appropriate message if W is not normalized within tolerance.
     """
 
-    [N, K] = W.shape
+    N, K = W.shape
 
     column_sums = np.sum(W, axis=0)
-    badcolumns = (np.abs(column_sums - 1) > tolerance)
+    badcolumns = np.abs(column_sums - 1) > tolerance
     if np.any(badcolumns):
         which_badcolumns = np.arange(K)[badcolumns]
         firstbad = which_badcolumns[0]
         raise ParameterError(
-            'Warning: Should have \sum_n W_nk = 1.  Actual column sum for state %d was %f. %d other columns have similar problems' %
-            (firstbad, column_sums[firstbad], np.sum(badcolumns)))
+            (
+                "Warning: Should have \\sum_n W_nk = 1. "
+                f"Actual column sum for state {firstbad:d} was {column_sums[firstbad]:f}. "
+                f"{np.sum(badcolumns):d} other columns have similar problems. \n"
+                "This generally indicates the free energies are not converged."
+            )
+        )
 
     row_sums = np.sum(W * N_k, axis=1)
-    badrows = (np.abs(row_sums - 1) > tolerance)
+    badrows = np.abs(row_sums - 1) > tolerance
     if np.any(badrows):
         which_badrows = np.arange(N)[badrows]
         firstbad = which_badrows[0]
         raise ParameterError(
-            'Warning: Should have \sum_k N_k W_nk = 1.  Actual row sum for sample %d was %f. %d other rows have similar problems' %
-            (firstbad, row_sums[firstbad], np.sum(badrows)))
-
+            (
+                "Warning: Should have \\sum__k N_k W_nk = 1. "
+                f"Actual row sum for state {firstbad:d} was {row_sums[firstbad]:f}. "
+                f"{np.sum(badrows):d} other columns have similar problems. \n"
+                "This generally indicates the free energies are not converged."
+            )
+        )
     return
+
 
 # ============================================================================================
 # Exception classes
@@ -379,33 +402,25 @@ class ParameterError(Exception):
 
     """
     An error in the input parameters has been detected.
-
     """
-    pass
 
 
 class ConvergenceError(Exception):
 
     """
     Convergence could not be achieved.
-
     """
-    pass
 
 
 class BoundsError(Exception):
 
     """
     Could not determine bounds on free energy
-
     """
-    pass
 
 
 class DataError(Exception):
 
     """
     Data is inconsistent.
-
     """
-    pass

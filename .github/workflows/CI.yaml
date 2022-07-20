@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - 'master'
-      - 'main'
-      - 'pymbar3'
+      - 'pymbar4'
+      - 'gha'
   pull_request:
     branches:
       - 'master'
-      - 'main'
-      - 'pymbar3'
+      - 'pymbar4'
+      - 'gha'
   schedule:
     # Nightly Tests
     - cron: '0 0 * * *'
@@ -24,6 +24,10 @@ jobs:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
         python-version: [3.8, 3.9]
+        jax: ["", "_jax"]
+        exclude:  # Skip win + jax
+          - jax: "_jax"
+            os: windows-latest
     env:
       PYVER: ${{ matrix.python-version }}
       CI_OS: ${{ matrix.os }}
@@ -31,7 +35,7 @@ jobs:
 
     steps:
     - name: Checkout the code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
 
     - name: Additional info about the build
       shell: bash
@@ -39,28 +43,48 @@ jobs:
         uname -a
         df -h
         ulimit -a
-    - name: Setup Conda
-      uses: conda-incubator/setup-miniconda@v2
+
+    - name: Setup Conda via Mamba
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        python-version: ${{ matrix.python-version }}
-        environment-file: devtools/conda-envs/test_env.yaml
-
+        environment-file: devtools/conda-envs/test_env${{ matrix.jax }}.yaml
+        environment-name: test
         channels: conda-forge,defaults
-
-        activate-environment: test
-        auto-update-conda: false
-        auto-activate-base: false
-        show-channel-urls: true
+        extra-specs: |
+          python=${{ matrix.python-version }}
 
     - name: Install package
       shell: bash -l {0}
       run: |
         python -m pip install . --no-deps
-        conda list --show-channel-urls
+        micromamba list
+
     - name: Run tests (pytest)
       shell: bash -l {0}
       run: |
         pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/
+
+    - name: Run examples
+      shell: bash -l {0}
+      run: |
+        ### constant-force-optical-trap
+        cd examples/constant-force-optical-trap
+        python extract-data.py
+        python force-bias-optical-trap.py
+        ### harmonic-oscillators
+        cd ../harmonic-oscillators
+        python harmonic-oscillators.py
+        python harmonic-oscillators-distributions.py
+        cd ../heat-capacity
+        python heat-capacity.py -b 2
+        ### parallel-tempering-2dfes
+        cd ../parallel-tempering-2dfes
+        python parallel-tempering-2dfes.py
+        ### umbrella-sampling-fes
+        cd ../umbrella-sampling-fes
+        python umbrella-sampling.py
+        python umbrella-sampling-advanced-fes.py
+
     - name: CodeCov
       uses: codecov/codecov-action@v1
       with:
@@ -68,3 +92,43 @@ jobs:
         file: ./coverage.xml
         flags: unittests
         yml: ./.codecov.yml
+
+  lint-format:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
+    env:
+      PACKAGE: "pymbar"
+
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v1
+
+    - name: Setup Conda via Mamba
+      uses: mamba-org/provision-with-micromamba@main
+      with:
+        environment-file: devtools/conda-envs/test_env.yaml
+        environment-name: test
+        channels: conda-forge,defaults
+        extra-specs: |
+          python=${{ matrix.python-version }}
+
+    - name: Install linter and formatter
+      shell: bash -l {0}
+      run: |
+        micromamba install pylint black
+
+    - name: Run pylint
+      shell: bash -l {0}
+      run: |
+        pylint $PACKAGE/
+
+    # Black has a default --exclude which reads .gitignore.
+    # Black's --exclude and --extend-exclude are single specified RegEx patterns and overwrite if multi-marked.
+    - name: Run black check
+      shell: bash -l {0}
+      if: always()
+      run: |
+        black --check -l 99 $PACKAGE/ examples/ --extend-exclude "$PACKAGE/_version.py"

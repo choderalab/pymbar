@@ -1,5 +1,4 @@
 import numpy as np
-from pymbar.utils import ensure_type
 
 
 class HarmonicOscillatorsTestCase(object):
@@ -12,7 +11,7 @@ class HarmonicOscillatorsTestCase(object):
     Generate energy samples with default parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase()
-    >>> [x_kn, u_kln, N_k, s_n] = testcase.sample()
+    >>> x_kn, u_kln, N_k, s_n = testcase.sample()
 
     Retrieve analytical properties.
 
@@ -24,17 +23,19 @@ class HarmonicOscillatorsTestCase(object):
 
     Generate energy samples with default parameters in one line.
 
-    >>> (x_kn, u_kln, N_k, s_n) = HarmonicOscillatorsTestCase().sample()
+    >>> x_kn, u_kln, N_k, s_n = HarmonicOscillatorsTestCase().sample()
 
     Generate energy samples with specified parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase(O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
-    >>> (x_kn, u_kln, N_k, s_n) = testcase.sample(N_k=[10, 20, 30, 40, 50])
+    >>> x_kn, u_kln, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50])
 
     Test sampling in different output modes.
 
-    >>> (x_kn, u_kln, N_k) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
-    >>> (x_n, u_kn, N_k, s_n) = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> x_kn, u_kln, N_k = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kln')
+    >>> x_n, u_kn, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50], mode='u_kn')
+    >>> testcase = HarmonicOscillatorsTestCase(O_k=[0, 1], K_k=[1, 2])
+    >>> w_F, w_R, N_k = testcase.sample(N_k=[40, 50], mode='wFwR')
 
     """
 
@@ -66,26 +67,28 @@ class HarmonicOscillatorsTestCase(object):
         self.K_k = np.array(K_k, np.float64)
 
         if len(self.K_k) != self.n_states:
-            raise ValueError('Lengths of K_k={} and O_k={} should be equal'.format(len(self.O_k), len(self.K_k)))
+            raise ValueError(
+                "Lengths of K_k={} and O_k={} should be equal".format(len(self.O_k), len(self.K_k))
+            )
 
     def analytical_means(self):
         return self.O_k
 
     def analytical_variances(self):
-        return (self.beta * self.K_k) ** -1.
+        return (self.beta * self.K_k) ** -1.0
 
     def analytical_standard_deviations(self):
         return (self.beta * self.K_k) ** -0.5
 
-    def analytical_observable(self, observable='position'):
+    def analytical_observable(self, observable="position"):
 
-        if observable == 'position':
+        if observable == "position":
             return self.analytical_means()
-        if observable == 'potential energy':
-            return (0.5/self.beta)*np.ones(self.n_states)
-        if observable == 'position^2':
-            return 1.0/(self.beta*self.K_k) + np.square(self.O_k)
-        if observable == 'RMS displacement':
+        if observable == "potential energy":
+            return (0.5 / self.beta) * np.ones(self.n_states)
+        if observable == "position^2":
+            return 1.0 / (self.beta * self.K_k) + np.square(self.O_k)
+        if observable == "RMS displacement":
             return self.analytical_standard_deviations()
 
     def analytical_free_energies(self, subtract_component=0):
@@ -94,10 +97,12 @@ class HarmonicOscillatorsTestCase(object):
             fe -= fe[subtract_component]
         return fe
 
-    def analytical_entropies(self, subtract_component = 0):
-        return self.analytical_observable(observable = 'potential energy') - self.analytical_free_energies(subtract_component)
+    def analytical_entropies(self, subtract_component=0):
+        return self.analytical_observable(
+            observable="potential energy"
+        ) - self.analytical_free_energies(subtract_component)
 
-    def sample(self, N_k=[10, 20, 30, 40, 50], mode='u_kn', seed = None):
+    def sample(self, N_k=(10, 20, 30, 40, 50), mode="u_kn", seed=None):
         """Draw samples from the distribution.
 
         Parameters
@@ -106,8 +111,12 @@ class HarmonicOscillatorsTestCase(object):
         N_k : np.ndarray, int
             number of samples per state
         mode : str, optional, default='u_kn'
-            If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
-            If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential of sample n (in concatenated indexing) evaluated at state k.
+            If 'u_kln', return K x K x N_max matrix where u_kln[k,l,n] is reduced
+            potential of sample n from state k evaluated at state l.
+            If 'u_kn', return K x N_tot matrix where u_kn[k,n] is reduced potential
+            of sample n (in concatenated indexing) evaluated at state k.
+            If 'wFwR', check that len(N_k) involves only two states, and calculate
+            the forward and reverse work distributions.
 
         seed: int, optional, default=None.  Provides control over the random seed for replicability.
 
@@ -131,13 +140,34 @@ class HarmonicOscillatorsTestCase(object):
         N_k : np.ndarray, shape=(n_states), dtype=int32
            N_k[k] is the number of samples generated from state k
 
+        if mode == 'wFwR':
+
+        w_F : np.ndarray, shape=(N_k[0]), dtype=float
+            Work generated switching from state 0 to 1
+        w_R : np.ndaarry, shape=(N_k[1]), dtype=float
+            Work generated switching from state 1 to 0
+        N_k : np.ndarray, shape=(2), dtype=float
+           N_k[k] is the number of samples generated from state k
+
         """
 
         np.random.seed(seed)
 
-        N_k = np.array(N_k, np.int32)
+        N_k = np.array(N_k, int)
         if len(N_k) != self.n_states:
-            raise Exception("N_k has %d states while self.n_states has %d states." % (len(N_k), self.n_states))
+            raise Exception(
+                "N_k has {:d} states while self.n_states has {:d} states.".format(
+                    len(N_k), self.n_states
+                )
+            )
+
+        if mode == "wFwR":
+            if len(N_k) != 2:
+                raise Exception(
+                    "N_k has {:d} states instead of 2, we cannot generate forward and reverse work distributions".format(
+                        len(N_k)
+                    )
+                )
 
         N_max = N_k.max()  # maximum number of samples per state
         N_tot = N_k.sum()  # total number of samples
@@ -145,7 +175,7 @@ class HarmonicOscillatorsTestCase(object):
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
         x_n = np.zeros([N_tot], np.float64)
-        s_n = np.zeros([N_tot], np.int)
+        s_n = np.zeros([N_tot], int)
         u_kn = np.zeros([self.n_states, N_tot], np.float64)
         index = 0
         for k, N in enumerate(N_k):
@@ -153,25 +183,39 @@ class HarmonicOscillatorsTestCase(object):
             sigma = (self.beta * self.K_k[k]) ** -0.5
             x = np.random.normal(loc=x0, scale=sigma, size=N)
             x_kn[k, 0:N] = x
-            x_n[index:(index + N)] = x
-            s_n[index:(index + N)] = k
+            x_n[index : (index + N)] = x
+            s_n[index : (index + N)] = k
             for l in range(self.n_states):
                 u = self.beta * 0.5 * self.K_k[l] * (x - self.O_k[l]) ** 2.0
                 u_kln[k, l, 0:N] = u
-                u_kn[l, index:(index + N)] = u
+                u_kn[l, index : (index + N)] = u
             index += N
 
-        if (mode == 'u_kn'):
+        if mode == "u_kn":
             return x_n, u_kn, N_k, s_n
-        elif (mode == 'u_kln'):
+        elif mode == "u_kln":
             return x_kn, u_kln, N_k
+        elif mode == "wFwR":
+            return (
+                u_kln[0, 1, : N_k[0]] - u_kln[0, 0, : N_k[0]],
+                u_kln[1, 0, : N_k[1]] - u_kln[1, 1, : N_k[1]],
+                N_k,
+            )
         else:
-            raise Exception("Unknown mode '%s'" % mode)
+            raise Exception("Unknown mode '{}'".format(mode))
 
         return
 
     @classmethod
-    def evenly_spaced_oscillators(cls, n_states, n_samples_per_state, lower_O_k=1.0, upper_O_k=5.0, lower_k_k=1.0, upper_k_k=3.0):
+    def evenly_spaced_oscillators(
+        cls,
+        n_states,
+        n_samples_per_state,
+        lower_O_k=1.0,
+        upper_O_k=5.0,
+        lower_k_k=1.0,
+        upper_k_k=3.0,
+    ):
         """Generate samples from evenly spaced harmonic oscillators.
 
         Parameters
@@ -205,13 +249,13 @@ class HarmonicOscillatorsTestCase(object):
         s_n : np.ndarray, shape=(n_samples)
             State of origin of each sample
         """
-        name = "%dx%d oscillators" % (n_states, n_samples_per_state)
+        name = "{:d}x{:d} oscillators", format(n_states, n_samples_per_state)
 
         O_k = np.linspace(lower_O_k, upper_O_k, n_states)
         k_k = np.linspace(lower_k_k, upper_k_k, n_states)
-        N_k = (np.ones(n_states) * n_samples_per_state).astype('int')
+        N_k = (np.ones(n_states) * n_samples_per_state).astype("int")
 
         testsystem = cls(O_k, k_k)
-        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode='u_kn', seed=seed)
+        x_n, u_kn, N_k_output, s_n = testsystem.sample(N_k, mode="u_kn", seed=seed)
 
         return name, testsystem, x_n, u_kn, N_k_output, s_n

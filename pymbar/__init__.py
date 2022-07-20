@@ -25,23 +25,29 @@ ratio (MBAR) estimator.
 
 __author__ = "Michael R. Shirts and John D. Chodera"
 __license__ = "MIT"
-__maintainer__ = "Levi N. Naden, Michael R. Shirts and John D. Chodera"
-__email__ = "levi.naden@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
+__maintainer__ = "Levi N. Naden, Jaime Rodríguez-Guerra, Michael R. Shirts and John D. Chodera"
+__email__ = "levi.naden@choderalab.org,jaime.rodriguez-guerra@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
 
-from pymbar import timeseries, testsystems, confidenceintervals, version
-from pymbar.mbar import MBAR
-from pymbar.bar import BAR, BARoverlap, BARzero
-from pymbar.exp import EXP, EXPGauss
-import pymbar.old_mbar
+from . import timeseries, testsystems, confidenceintervals
+from .mbar import MBAR
+from .other_estimators import bar, bar_overlap, bar_zero, exp, exp_gauss
+from .fes import FES
 
-try:
-    from pymbar import version
-except:
-    # Fill in information manually.
-    # TODO: See if we can at least get the git revision info in here.
-    version = 'dev'
-    full_version = 'dev'
-    git_revision = 'dev'
-    isrelease = False
+from ._version import get_versions
 
-__all__ = ['EXP', 'EXPGauss', 'BAR', 'BARzero', 'MBAR', 'timeseries', 'testsystems', 'confidenceintervals', 'utils']
+__version__ = get_versions()["version"]
+del get_versions
+
+__all__ = [
+    "exp",
+    "exp_gauss",
+    "bar",
+    "bar_overlap",
+    "bar_zero",
+    "MBAR",
+    "timeseries",
+    "testsystems",
+    "confidenceintervals",
+    "utils",
+    "FES",
+]

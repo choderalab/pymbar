@@ -1,4 +1,4 @@
-The alchemical_analysis.y script has been moved to
+The alchemical_analysis.py script has been moved to
 
 https://github.com/MobleyLab/alchemical-analysis
 

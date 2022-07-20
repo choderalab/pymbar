@@ -1,98 +1,109 @@
-# Extract forces and extension timeseries data from Excel spreadsheet files (.xls) provided by Michael T. Woodside
-#
-# REQUIREMENTS
-#
-# xlrd (pure Python Excel spreadsheet (.xls) file reader)
-# http://www.lexicon.net/sjmachin/xlrd.htm
+"""
+Extract forces and extension timeseries data from Excel spreadsheet files (.xls) provided by Michael T. Woodside
 
-#=============================================================================================
+REQUIREMENTS:
+
+* xlrd (pure Python Excel spreadsheet (.xls) file reader) - http://www.lexicon.net/sjmachin/xlrd.htm
+"""
+
+# =============================================================================================
 # IMPORTS
-#=============================================================================================
+# =============================================================================================
 
-from __future__ import print_function
-from numpy import * # array routines
-import numpy
-import os
-import os.path
 import sys
+import bz2
+import tempfile
+from pathlib import Path
+
+from numpy import zeros, float64
 
 try:
-    import xlrd # pure Python Excel spreadsheet (.xls) file reader
+    import xlrd  # pure Python Excel spreadsheet (.xls) file reader
 except ImportError:
-    print("Can't run, requires the xlrd .xls file reader module, at http://www.lexicon.net/sjmachin/xlrd.htm")
+    print("ERROR: This example requires xlrd, run:", "  pip install xlrd", sep="\n")
     sys.exit()
 
-#=============================================================================================
+# =============================================================================================
 # PARAMETERS
-#=============================================================================================
+# =============================================================================================
+# location of original data (.xls files)
+original_data_directory = Path("original-data")
+# location for where processed data is to be stored
+processed_data_directory = Path("processed-data")
+# prefixes of datasets to process (filenames are f'({prefix}_data.xls')
+datasets = ["20R55_4T"]
 
-original_data_directory = 'original-data' # location of original data (.xls files)
-processed_data_directory = 'processed-data' # location for where processed data is to be stored
-datasets = ['20R55_4T'] # prefixes of datasets to process (filenames are '%(prefix)_data.xls')
-
-#=============================================================================================
+# =============================================================================================
 # SUBROUTINES
-#=============================================================================================
+# =============================================================================================
 
-#=============================================================================================
+# =============================================================================================
 # MAIN
-#=============================================================================================
+# =============================================================================================
 
-# process all datasets
-for dataset in datasets:
-    print("Extracting data from dataset '%s'..." % dataset)
 
-    # Open Excel spreadsheet file.
-    workbook_filename = os.path.join(original_data_directory, dataset + '_data.xls')
-    workbook = xlrd.open_workbook(workbook_filename)
+def main():
+    ORIGINAL_DATA = Path(original_data_directory)
+    PROCESSED_DATA = Path(processed_data_directory)
+    # process all datasets
+    for dataset in datasets:
+        print(f"Extracting data from dataset '{dataset}'...")
 
-    # DEBUG
-    print("Workbook contains %d worksheets:" % workbook.nsheets)
-    print(workbook.sheet_names())
+        # Extract compressed Excel spreadsheet file and load it with xlrd
+        with bz2.open(ORIGINAL_DATA / f"{dataset}_data.xls.bz2") as f:
+            with tempfile.NamedTemporaryFile(suffix=".xls", delete=False) as temp:
+                temp.write(f.read())
+        workbook = xlrd.open_workbook(temp.name)
 
-    # Get the first worksheet.
-    worksheet = workbook.sheet_by_index(0)
+        # DEBUG
+        print(
+            f"Workbook contains {workbook.nsheets:d} worksheets:", workbook.sheet_names(), sep="\n"
+        )
 
-    # DEBUG
-    print("First worksheet (named '%s') has %d columns and %d rows." % (worksheet.name, worksheet.ncols, worksheet.nrows))
+        # Get the first worksheet.
+        worksheet = workbook.sheet_by_index(0)
 
-    # Extract biasing forces.
-    K = worksheet.ncols - 1
-    biasing_force_k = zeros([K], float64)
-    for k in range(K):
-        biasing_force_k[k] = worksheet.cell_value(rowx = 1, colx = 1 + k)
-    print("%d biasing forces (in pN):" % K)
-    print(biasing_force_k)
+        # DEBUG
+        print(
+            f"1st worksheet '{worksheet.name}' has {worksheet.ncols:d} columns and {worksheet.nrows:d} rows."
+        )
 
-    # Write biasing forces.
-    filename = os.path.join(processed_data_directory, dataset + '.forces')
-    print("Writing biasing forces to '%s'..." % filename)
-    outfile = open(filename, 'w')
-    for k in range(K):
-        if (k > 0): outfile.write(' ')
-        outfile.write('%.2f' % biasing_force_k[k])
-    outfile.close()
-
-    # Read trajectories.
-    T_max = worksheet.nrows - 3
-    x_kt = zeros([K, T_max])
-    for k in range(K):
-        print("Reading trajectory %d / %d..." % (k+1, K+1))
-        for t in range(T_max):
-            x_kt[k,t] = worksheet.cell_value(colx = 1 + k, rowx = 3 + t)
-    print("Read %d trajectories of %d samples each." % (K, T_max))
-    
-    # Write trajectories.
-    filename = os.path.join(processed_data_directory, dataset + '.trajectories')
-    print("Writing trajectories to '%s'..." % filename)
-    outfile = open(filename, 'w')
-    for t in range(T_max):
+        # Extract biasing forces.
+        K = worksheet.ncols - 1
+        biasing_force_k = zeros([K], float64)
         for k in range(K):
-            if (k > 0): outfile.write(' ')
-            outfile.write('%f' % x_kt[k,t])
-        outfile.write('\n')
-    outfile.close()
+            biasing_force_k[k] = worksheet.cell_value(rowx=1, colx=1 + k)
+        print(f"{K:d} biasing forces (in pN):", biasing_force_k, sep="\n")
+
+        # Write biasing forces.
+        filename = PROCESSED_DATA / f"{dataset}.forces"
+        print(f"Writing biasing forces to '{filename}'...")
+        with open(filename, "w") as outfile:
+            for k in range(K):
+                if k > 0:
+                    outfile.write(" ")
+                outfile.write(f"{biasing_force_k[k]:.2f}")
+
+        # Read trajectories.
+        T_max = worksheet.nrows - 3
+        x_kt = zeros([K, T_max])
+        for k in range(K):
+            print(f"Reading trajectory {k + 1:d} / {K + 1:d}...")
+            for t in range(T_max):
+                x_kt[k, t] = worksheet.cell_value(colx=1 + k, rowx=3 + t)
+        print(f"Read {K:d} trajectories of {T_max:d} samples each.")
+
+        # Write trajectories.
+        filename = PROCESSED_DATA / f"{dataset}.trajectories"
+        print(f"Writing trajectories to '{filename}'...")
+        with open(filename, "w") as outfile:
+            for t in range(T_max):
+                for k in range(K):
+                    if k > 0:
+                        outfile.write(" ")
+                    outfile.write(f"{x_kt[k, t]:f}")
+                outfile.write("\n")
 
 
-    
-
+if __name__ == "__main__":
+    main()

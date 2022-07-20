@@ -30,28 +30,28 @@ def gaussian_work_example(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, 
     -----
     By the Crooks fluctuation theorem (CFT), the forward and backward work distributions are related by
 
-    P_R(-w) = P_F(w) \exp[DeltaF - w]
+    P_R(-w) = P_F(w) \\exp[DeltaF - w]
 
-    If the forward distribution is Gaussian with mean \mu_F and std dev \sigma_F, then
+    If the forward distribution is Gaussian with mean \\mu_F and std dev \\sigma_F, then
 
-    P_F(w) = (2 \pi)^{-1/2} \sigma_F^{-1} \exp[-(w - \mu_F)^2 / (2 \sigma_F^2)]
+    P_F(w) = (2 \\pi)^{-1/2} \\sigma_F^{-1} \\exp[-(w - \\mu_F)^2 / (2 \\sigma_F^2)]
 
     With some algebra, we then find the corresponding mean and std dev of the reverse distribution are
 
-    \mu_R = - \mu_F + \sigma_F^2
-    \sigma_R = \sigma_F \exp[\mu_F - \sigma_F^2 / 2 + \Delta F]
+    \\mu_R = - \\mu_F + \\sigma_F^2
+    \\sigma_R = \\sigma_F \\exp[\\mu_F - \\sigma_F^2 / 2 + \\Delta F]
 
     where all quantities are in reduced units (e.g. divided by kT).
 
-    Note that \mu_F and \Delta F are not independent!  By the Zwanzig relation,
+    Note that \\mu_F and \\Delta F are not independent!  By the Zwanzig relation,
 
-    E_F[exp(-w)] = \int dw \exp(-w) P_F(w) = \exp[-\Delta F]
+    E_F[exp(-w)] = \\int dw \\exp(-w) P_F(w) = \\exp[-\\Delta F]
 
     which, with some integration, gives
 
-    \Delta F = \mu_F + \sigma_F^2/2
+    \\Delta F = \\mu_F + \\sigma_F^2/2
 
-    which can be used to determine either \mu_F or \DeltaF.
+    which can be used to determine either \\mu_F or \\DeltaF.
 
     Examples
     --------
@@ -80,21 +80,23 @@ def gaussian_work_example(N_F=200, N_R=200, mu_F=2.0, DeltaF=None, sigma_F=1.0, 
 
     # Make sure either mu_F or DeltaF, but not both, are specified.
     if (mu_F is not None) and (DeltaF is not None):
-        raise ValueError("mu_F and DeltaF are not independent, and cannot both be specified; one must be set to None.")
+        raise ValueError(
+            "mu_F and DeltaF are not independent, and cannot both be specified; one must be set to None."
+        )
     if (mu_F is None) and (DeltaF is None):
         raise ValueError("Either mu_F or DeltaF must be specified.")
-    if (mu_F is None):
-        mu_F = DeltaF + sigma_F ** 2 / 2.0
-    if (DeltaF is None):
-        DeltaF = mu_F - sigma_F ** 2 / 2.0
+    if mu_F is None:
+        mu_F = DeltaF + sigma_F**2 / 2.0
+    if DeltaF is None:
+        DeltaF = mu_F - sigma_F**2 / 2.0
 
     # Set random number generator into a known state for reproducibility.
     random = np.random.RandomState(seed)
 
     # Determine mean and variance of reverse work distribution by Crooks
     # fluctuation theorem (CFT).
-    mu_R = - mu_F + sigma_F ** 2
-    sigma_R = sigma_F * np.exp(mu_F - sigma_F ** 2 / 2.0 - DeltaF)
+    mu_R = -mu_F + sigma_F**2
+    sigma_R = sigma_F * np.exp(mu_F - sigma_F**2 / 2.0 - DeltaF)
 
     # Draw samples from forward and reverse distributions.
     w_F = random.randn(N_F) * sigma_F + mu_F
