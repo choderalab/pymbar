@@ -212,7 +212,6 @@ The solutions for bootstrapped data should be relatively close to the
 solutions for the original data set; additionally, they do not need to
 be quite as accurate, since they are used to compute the variances.
 
-
 Bootstrapped uncertainties (using ``uncertainty_method=bootstrap`` is
 also available for all functions calculating expectations, but again
 requires initialization with "n_bootstraps" when initalizing the MBAR
