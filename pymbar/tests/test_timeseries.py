@@ -28,7 +28,7 @@ def data(N=10000, K=10):
     X = np.random.normal(np.zeros(K * N), var).reshape((K, N)) / 10.0
     Y = np.random.normal(np.zeros(K * N), var).reshape((K, N))
 
-    energy = 10 * (X**2) / 2.0 + (Y**2) / 2.0
+    energy = 10 * (X ** 2) / 2.0 + (Y ** 2) / 2.0
 
     return X, Y, energy
 
@@ -50,7 +50,7 @@ def test_statistical_inefficiency_single(data):
 def test_statistical_inefficiency_multiple(data):
     X, Y, energy = data
     timeseries.statistical_inefficiency_multiple(X)
-    timeseries.statistical_inefficiency_multiple(X**2)
+    timeseries.statistical_inefficiency_multiple(X ** 2)
     timeseries.statistical_inefficiency_multiple(X[0, :] ** 2)
     timeseries.statistical_inefficiency_multiple(X[0:2, :] ** 2)
     timeseries.statistical_inefficiency_multiple(energy)
@@ -71,6 +71,7 @@ def test_statistical_inefficiency_fft(data):
     assert_almost_equal(g0, g1, decimal=6)
     assert_almost_equal(g0, g2, decimal=6)
     assert_almost_equal(g0, g3, decimal=6)
+
 
 @has_statmodels
 def test_statistical_inefficiency_fft_gaussian():
@@ -113,6 +114,7 @@ def test_detectEquil():
 def test_detectEquil_binary():
     x = np.random.normal(size=10000)
     t, g, Neff_max = timeseries.detect_equilibration_binary_search(x)
+
 
 @has_statmodels
 def test_compare_detectEquil(show_hist=False):
