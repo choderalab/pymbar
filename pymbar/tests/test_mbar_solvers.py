@@ -80,7 +80,7 @@ def test_protocols(base_oscillator, more_oscillators, protocol):
 
     try:
         mbar, fa = run_mbar_protocol(base_oscillator, protocol)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Caught error in initial oscillator test, trying with more samples. Error:\n\n{e}")
         mbar, fa = run_mbar_protocol(more_oscillators, protocol)
     results = mbar.compute_free_energy_differences()
