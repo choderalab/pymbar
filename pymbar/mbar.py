@@ -54,6 +54,7 @@ from pymbar.utils import (
 logger = logging.getLogger(__name__)
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
+JAX_SOLVER_PROTOCOL = mbar_solvers.JAX_SOLVER_PROTOCOL
 BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
 
 # =========================================================================
@@ -372,6 +373,8 @@ class MBAR:
                 prot = defl
             elif prot == "robust":
                 prot = rob
+            elif prot == "jax":
+                prot = JAX_SOLVER_PROTOCOL
             else:
                 for solver in prot:
                     if not isinstance(solver, dict):
@@ -408,7 +411,7 @@ class MBAR:
             np.random.seed(rseed)
 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(
-            self.u_kn, self.N_k, self.f_k, solver_protocol
+            self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
         )
 
         if n_bootstraps > 0:
@@ -419,7 +422,7 @@ class MBAR:
             allN = int(np.sum(N_k))
             self.bootstrap_rints = np.zeros([self.n_bootstraps, allN], int)
             for b in range(self.n_bootstraps):
-                f_k_init = self.f_k.copy()
+                f_k_init = np.array(self.f_k.copy())
                 # picking random samples from the same N_k states.
                 rints = np.zeros(allN, int)
                 for k in range(K):
@@ -432,7 +435,11 @@ class MBAR:
                 if initialize == "BAR":
                     f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
-                    self.u_kn[:, rints], self.N_k, f_k_init, bootstrap_solver_protocol,
+                    self.u_kn[:, rints],
+                    self.N_k,
+                    f_k_init,
+                    self.states_with_samples,
+                    bootstrap_solver_protocol,
                 )
                 # save the random integers for computing expectations.
                 self.bootstrap_rints[b, :] = rints
@@ -539,7 +546,7 @@ class MBAR:
         N_eff = np.zeros(self.K)
         for k in range(self.K):
             w = np.exp(self.Log_W_nk[:, k])
-            N_eff[k] = 1 / np.sum(w ** 2)
+            N_eff[k] = 1 / np.sum(w**2)
             if verbose:
                 logger.info(
                     "Effective number of sample in state {:d} is {:10.3f}".format(k, N_eff[k])
@@ -669,8 +676,11 @@ class MBAR:
 
         """
 
-        # Compute free energy differences.
-        Deltaf_ij = self.f_k - np.vstack(self.f_k)
+        # Compute free energy differences and force cast back to mutable, normal ndarray (we're done with JAX here)
+        # Cannot use asarray because that makes reference to the JAX memory, which NumPy doesn't own and is flagged
+        # read-only (.flags(write=0)). Using .array makes a copy of the data to a new memory address, and is thus
+        # mutable
+        Deltaf_ij = np.array(self.f_k - np.vstack(self.f_k))
 
         # zero out numerical error for thermodynamically identical states
         self._zerosamestates(Deltaf_ij)
@@ -697,14 +707,16 @@ class MBAR:
                 diffm = np.zeros([self.n_bootstraps, self.K, self.K])
                 for b in range(self.n_bootstraps):
                     # take the matrix of differences of f_ij
-                    diffm[b, :, :] = (
-                        np.matrix(self.f_k_boots[b, :])
-                        - np.matrix(self.f_k_boots[b, :]).transpose()
-                    )
+                    # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
+                    f = self.f_k_boots[b, :]
+                    diffm[b, :, :] = f - np.vstack(f)
                 dDeltaf_ij = np.std(diffm, axis=0)
                 result_vals["dDelta_f"] = dDeltaf_ij
             else:
-                dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
+                # Cast to np.ndarray if JAX array. See Deltaf_ij assignment above for details.
+                dDeltaf_ij = np.array(
+                    self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
+                )
                 # zero out numerical error for thermodynamically identical states
                 self._zerosamestates(dDeltaf_ij)
                 # Return matrix of free energy differences and uncertainties.
@@ -1608,21 +1620,21 @@ class MBAR:
             diffm = np.zeros([self.n_bootstraps, self.K, self.K])
             for b in range(self.n_bootstraps):
                 # take the matrix of differences of f_ij
-                f = np.matrix(self.f_k_boots[b, :])
-                diffm[b, :, :] = f - f.transpose()
+                f = self.f_k_boots[b, :]
+                diffm[b, :, :] = f - np.vstack(f)
             result_vals["dDelta_f"] = np.std(diffm, axis=0)
 
             # bootstrapped enthalpy
             for b in range(self.n_bootstraps):
                 # take the matrix of differences of f_ij
-                u = np.matrix(inner_results["bootstrapped_observables"][b])
-                diffm[b, :, :] = u - u.transpose()
+                u = inner_results["bootstrapped_observables"][b]
+                diffm[b, :, :] = u - np.vstack(u)
             result_vals["dDelta_u"] = np.std(diffm, axis=0)
             # bootstrapped entropy
             for b in range(self.n_bootstraps):
                 # take the matrix of differences of f_ij
-                s = np.matrix(inner_results["bootstrapped_observables"][b] - self.f_k_boots[b, :])
-                diffm[b, :, :] = s - s.transpose()
+                s = inner_results["bootstrapped_observables"][b] - self.f_k_boots[b, :]
+                diffm[b, :, :] = s - np.vstack(s)
             result_vals["dDelta_s"] = np.std(diffm, axis=0)
         else:
             # compute uncertainty matrix in free energies:
@@ -1719,12 +1731,14 @@ class MBAR:
         """
         zeros out states that should be identical
 
+        Since this is in place update, must be normal NumPy ndarray instead of JAX DeviceArray
+
         REQUIRED ARGUMENTS
 
-        A: the matrix whose entries are to be zeroed.
+        A: np.ndarray
+            The matrix whose entries are to be zeroed.
 
         """
-
         for pair in self.samestates:
             A[pair[0], pair[1]] = 0
             A[pair[1], pair[0]] = 0

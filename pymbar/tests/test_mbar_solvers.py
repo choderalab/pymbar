@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import pymbar
 from pymbar.utils_for_testing import (
-    assert_almost_equal,
+    assert_array_almost_equal,
     oscillators,
     exponentials,
 )
@@ -24,12 +24,12 @@ def test_solvers(statesa, statesb, test_system):
     name, U, N_k, s_n, _ = test_system(statesa, statesb, provide_test=True)
     print(name)
     mbar = pymbar.MBAR(U, N_k)
-    assert_almost_equal(
+    assert_array_almost_equal(
         pymbar.mbar_solvers.mbar_gradient(U, N_k, mbar.f_k), np.zeros(N_k.shape), decimal=8
     )
-    assert_almost_equal(np.exp(mbar.Log_W_nk).sum(0), np.ones(len(N_k)), decimal=10)
-    assert_almost_equal(np.exp(mbar.Log_W_nk).dot(N_k), np.ones(U.shape[1]), decimal=10)
-    assert_almost_equal(
+    assert_array_almost_equal(np.exp(mbar.Log_W_nk).sum(0), np.ones(len(N_k)), decimal=10)
+    assert_array_almost_equal(np.exp(mbar.Log_W_nk).dot(N_k), np.ones(U.shape[1]), decimal=10)
+    assert_array_almost_equal(
         pymbar.mbar_solvers.self_consistent_update(U, N_k, mbar.f_k), mbar.f_k, decimal=10
     )
 
@@ -47,6 +47,10 @@ def test_solvers(statesa, statesb, test_system):
         "Newton-CG",
         "TNC",
         "trust-ncg",
+        "trust-krylov",
+        pytest.param(
+            "trust-exact", marks=pytest.mark.flaky(max_runs=2)
+        ),  # Can rarely NaN on Windows
         "SLSQP",
     ],
 )
@@ -62,9 +66,6 @@ def test_protocols(base_oscillator, protocol):
     N_k = base_oscillator["N_k"]
     fa = test.analytical_free_energies()
     fa = fa[1:] - fa[0]
-    # scipy.optimize.minimize methods, same ones that are checked for in mbar_solvers.py
-    # subsampling_protocols = ['adaptive', 'L-BFGS-B', 'dogleg', 'CG', 'BFGS', 'Newton-CG', 'TNC', 'trust-ncg', 'SLSQP']
-    # scipy.optimize.root methods. Omitting methods which do not use the Jacobian. Adding the custom adaptive protocol.
     # Solve MBAR with zeros for initial weights
     mbar = pymbar.MBAR(u_kn, N_k, solver_protocol=({"method": protocol},))
     # Solve MBAR with the correct f_k used for the inital weights
@@ -73,4 +74,4 @@ def test_protocols(base_oscillator, protocol):
     fe = results["Delta_f"][0, 1:]
     fe_sigma = results["dDelta_f"][0, 1:]
     z = (fe - fa) / fe_sigma
-    assert_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+    assert_array_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
