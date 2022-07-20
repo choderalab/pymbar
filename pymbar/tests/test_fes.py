@@ -401,7 +401,7 @@ def test_1d_fes_kde(fes_1d, gen_kwargs, reference_point):
 def test_1d_fes_kde_bootstraped(fes_1d):
     # Make tests faster overall by only testing bootstraps once.
     # Once more paths are fixed, this can be folded into the gen_kwargs of the more general test
-    base_1d_fes_kde(fes_1d, {"nbootstraps": 2}, "from-lowest")
+    base_1d_fes_kde(fes_1d, {"n_bootstraps": 2}, "from-lowest")
 
 
 def base_1d_fes_spline(fes_1d, gen_kwargs, reference_point):
@@ -474,7 +474,7 @@ def test_1d_fes_spline(fes_1d, gen_kwargs, reference_point):
 def test_1d_fes_spline_bootstraped(fes_1d):
     # Make tests faster overall by only testing bootstraps once.
     # Once more paths are fixed, this can be folded into the gen_kwargs of the more general test
-    base_1d_fes_spline(fes_1d, {"nbootstraps": 2}, "from-lowest")
+    base_1d_fes_spline(fes_1d, {"n_bootstraps": 2}, "from-lowest")
 
 
 @pytest.mark.parametrize(

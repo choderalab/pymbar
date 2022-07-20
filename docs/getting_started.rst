@@ -40,11 +40,13 @@ Running the tests
 =================
 
 Running the tests is a great way to verify that everything is working.
+
 The test suite uses `pytest <https://docs.pytest.org/>`_, in addition to `statsmodels <http://statsmodels.sourceforge.net/>`_ and `pytables <http://www.pytables.org/>`_, which you can install via ``conda``:
 
 .. code-block:: console
 
    $ conda install pytest statsmodels
+
 
 You can then run the tests from within the `pymbar` directory with:
 
