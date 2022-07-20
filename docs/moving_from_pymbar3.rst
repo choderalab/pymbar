@@ -16,7 +16,7 @@ The main changes include:
 Snake case
 ----------
 
-Previous version of pymbar had mixed cases in functions. We have
+Previous version of `pymbar` had mixed cases in functions. We have
 standardized on snake case, and tried to make the method names that do
 similar things more consistent.  Specific changes include:
 
@@ -62,7 +62,7 @@ As an example of both API changes of API, a short bit of code that
 would load in data and calculate free energies, instead of being
 
 .. code-block:: python
-    :caption: Example of initializing ``MBAR`` in 3.0.5
+    :caption: Example of initializing ``MBAR`` in 3.0.7
 
     mbar = MBAR(u_kn, N_k)
     results, errors = mbar.getFreeEnergyDifferences()                                                                 
@@ -174,7 +174,7 @@ Other changes
 Additional changes not affecting the API:
   * Removed legacy `old_mbar.py` support.
   * Moved testing framework to pytest, added significant numbers of tests.
-  * Improved code linting using `black`l
+  * Improved code linting using `black`
   * Bootstrapping for errors in free energies and expectations is now supported; see :ref:`strategies_for_solution` for more information.
   * Added a `bar_overlap` function to find overlap when using just `bar`
   * Fixed an error in computing expectations of small numbers.

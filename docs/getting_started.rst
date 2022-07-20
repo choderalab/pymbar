@@ -8,7 +8,7 @@ Getting started
 Installing ``pymbar``
 =====================
 
-This documentation covers ``pymbar`` 4.  For the previous versions of pymbar (still the latest version on conda), see: `pymbar 3.0.8 <http:https://pymbar.readthedocs.io/en/3.0.7//>`_.
+This documentation covers ``pymbar`` 4.  For the previous versions of pymbar, see: `pymbar 3.0.7 <https://pymbar.readthedocs.io/en/3.0.7/>`_.
 
 conda (recommended)
 -------------------
