@@ -865,15 +865,16 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
         if results["success"]:
             success = True
             best_gnorm = all_gnorms[-1]
+            logger.info(f"Reached a solution to within tolerance with {solver['method']}")
             break
         else:
             logger.warning(
                 f"Failed to reach a solution to within tolerance with {solver['method']}: trying next method"
             )
-            logger.info(f"Ending gnorm of method {solver['method']} = {all_gnorms[-1]:e}")
-            if solver["continuation"]:
-                f_k_nonzero = f_k_nonzero_result
-                logger.info("Will continue with results from previous method")
+        logger.info(f"Ending gnorm of method {solver['method']} = {all_gnorms[-1]:e}")
+        if solver["continuation"]:
+            f_k_nonzero = f_k_nonzero_result
+            logger.info("Will continue with results from previous method")
 
     if results["success"]:
         logger.info("Solution found within tolerance!")
