@@ -118,8 +118,8 @@ def statistical_inefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     References
     ----------
     [1] J. D. Chodera, W. C. Swope, J. W. Pitera, C. Seok, and K. A. Dill. Use of the weighted
-        histogram analysis method for the analysis of simulated and parallel tempering simulations.
-        JCTC 3(1):26-41, 2007.
+    histogram analysis method for the analysis of simulated and parallel tempering simulations.
+    JCTC 3(1):26-41, 2007.
 
     Examples
     --------
