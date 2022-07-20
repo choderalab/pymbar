@@ -19,12 +19,12 @@ requirements:
 
 test:
   requires:
-    - nose
-    - statsmodels
+    - pytest
+    - statsmodels <0.13
   imports:
     - pymbar
   commands:
-    - nosetests pymbar --with-doctest --doctest-tests -v
+    - pytest -v --color=yes --doctest-modules pymbar/
 
 about:
   home: https://github.com/choderalab/pymbar

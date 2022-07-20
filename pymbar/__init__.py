@@ -32,7 +32,6 @@ from . import timeseries, testsystems, confidenceintervals
 from .mbar import MBAR
 from .other_estimators import bar, bar_overlap, bar_zero, exp, exp_gauss
 from .fes import FES
-from . import old_mbar
 
 from ._version import get_versions
 

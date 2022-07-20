@@ -227,7 +227,7 @@ class FES:
         histogram_parameters=None,
         kde_parameters=None,
         spline_parameters=None,
-        nbootstraps=0,
+        n_bootstraps=0,
         seed=-1,
     ):
 
@@ -276,7 +276,7 @@ class FES:
             - 'objective' : string
                   'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
 
-        nbootstraps : int, 0 or > 1, Default: 0
+        n_bootstraps : int, 0 or > 1, Default: 0
             Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done. Required if
             one uses uncertainty_method = 'bootstrap' in get_fes
 
@@ -351,11 +351,11 @@ class FES:
         #    self._seed = seed
 
         # we need to save this for calculating uncertainties.
-        if not np.issubdtype(type(nbootstraps), np.integer) or nbootstraps == 1:
+        if not np.issubdtype(type(n_bootstraps), np.integer) or n_bootstraps == 1:
             raise ValueError(
-                f"nbootstraps must be an integer of 0 or >=2, it was set to {nbootstraps}"
+                f"n_bootstraps must be an integer of 0 or >=2, it was set to {n_bootstraps}"
             )
-        self.nbootstraps = nbootstraps
+        self.n_bootstraps = n_bootstraps
 
         if self.timings:
             start = timer()
@@ -382,7 +382,7 @@ class FES:
         K = self.mbar.K
         N = np.sum(N_k)
 
-        for b in range(nbootstraps + 1):  # generate bootstrap samples.
+        for b in range(n_bootstraps + 1):  # generate bootstrap samples.
             # we bootstrap from each simulation separately.
             if b == 0:  # the default
                 bootstrap_indices = np.arange(0, N)
@@ -466,7 +466,7 @@ class FES:
         self.histogram_parameters = histogram_parameters
 
         self.histogram_data = None
-        if self.nbootstraps > 0:
+        if self.n_bootstraps > 0:
             self.histogram_datas = list()
         else:
             self.histogram_datas = None
@@ -640,7 +640,7 @@ class FES:
         kde.set_params(**kde_defaults)
 
         self.kde_parameters = kde_parameters
-        if self.nbootstraps > 0:
+        if self.n_bootstraps > 0:
             self.kdes = list()
         else:
             self.kdes = None
@@ -803,7 +803,7 @@ class FES:
 
         self.spline_data = self._get_initial_spline(xinit, yinit)
 
-        if self.nbootstraps > 0:
+        if self.n_bootstraps > 0:
             self.fes_functions = list()
         else:
             self.fes_functions = None
@@ -1320,7 +1320,7 @@ class FES:
                     "Can't calculate uncertainties via bootstrap if bootstrapping was not performed when running get_fes"
                 )
             else:
-                nbootstraps = len(self.histogram_datas)
+                n_bootstraps = len(self.histogram_datas)
 
         # set up structure for return data
         result_vals = {}
@@ -1420,8 +1420,8 @@ class FES:
                     )
 
             elif uncertainty_method == "bootstrap":
-                fall = np.zeros([len(histogram_data["f"]), nbootstraps])
-                for b in range(nbootstraps):
+                fall = np.zeros([len(histogram_data["f"]), n_bootstraps])
+                for b in range(n_bootstraps):
                     h = histogram_datas[b]  # just to make this shorter
                     fall[:, b] = h["f"] - h["f"][j]
                 df_i = np.std(fall, axis=1)
@@ -1511,8 +1511,8 @@ class FES:
 
             elif uncertainty_method == "bootstrap":  # TODO: check this is working!
                 dfxij_vals = np.zeros([len(histogram_data["f"]), len(histogram_data["f"])])
-                fall = np.zeros([len(histogram_data["f"]), len(histogram_data["f"]), nbootstraps])
-                for b in range(nbootstraps):
+                fall = np.zeros([len(histogram_data["f"]), len(histogram_data["f"]), n_bootstraps])
+                for b in range(n_bootstraps):
                     h = histogram_datas[b]
                     for i in range(nbins):
                         fall[i, j, b] = (
@@ -1599,10 +1599,10 @@ class FES:
                     f"Cannot calculate bootstrap error of boostrap KDE's not determined"
                 )
             else:
-                nbootstraps = len(self.kdes)
+                n_bootstraps = len(self.kdes)
 
-            fall = np.zeros([len(x), nbootstraps])
-            for b in range(nbootstraps):
+            fall = np.zeros([len(x), n_bootstraps])
+            for b in range(n_bootstraps):
                 fall[:, b] = -self.kdes[b].score_samples(x) - fmin
             df_i = np.std(fall, axis=1)
         else:
@@ -1684,11 +1684,11 @@ class FES:
                     "Cannot calculate via uncertainties error if boostrapping was not peformed running get_fes"
                 )
             else:
-                nbootstraps = len(self.fes_functions)
+                n_bootstraps = len(self.fes_functions)
 
-            dim_breakdown = [d for d in x.shape] + [nbootstraps]
+            dim_breakdown = [d for d in x.shape] + [n_bootstraps]
             fall = np.zeros(dim_breakdown)
-            for b in range(nbootstraps):
+            for b in range(n_bootstraps):
                 fall[:, b] = self.fes_functions[b](x) - fmin
             df_i = np.std(fall, axis=-1)
 

@@ -46,7 +46,7 @@ def mbar_and_test(request):
     name, test = request.param()
     x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode="u_kn")
     assert_equal(N_k, N_k_output)
-    mbar = MBAR(u_kn, N_k, verbose=True)
+    mbar = MBAR(u_kn, N_k, verbose=True, n_bootstraps=200)  # Bootstrap needed for a few tests
     yield_bundle = {"mbar": mbar, "test": test, "x_n": x_n, "u_kn": u_kn}
     yield yield_bundle
 
@@ -75,6 +75,12 @@ def mbar_and_test_kln():
 def fixed_harmonic_sample():
     _, test = generate_ho()
     return test
+
+
+@pytest.fixture()
+def single_harmonic_u_kn(fixed_harmonic_sample):
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode="u_kn")
+    return u_kn
 
 
 def free_energies_almost_equal(mbar_fe, err_fe, analytical_fe):
@@ -165,18 +171,34 @@ def test_sample(system_generator):
 
 @pytest.mark.parametrize(
     "uncertainty_method",
-    [None, "approximate", "svd", "svd-ew", pytest.param("waffles", marks=pytest.mark.xfail)],
+    [
+        None,
+        "approximate",
+        "svd",
+        "svd-ew",
+        "bootstrap",
+        pytest.param("waffles", marks=pytest.mark.xfail),
+    ],
 )
 def test_mbar_free_energies(mbar_and_test, uncertainty_method):
 
     """Can MBAR calculate moderately correct free energy differences?"""
     mbar, test = mbar_and_test["mbar"], mbar_and_test["test"]
+
     results = mbar.compute_free_energy_differences(
         return_theta=True, uncertainty_method=uncertainty_method
     )
     fe = results["Delta_f"]
     fe_sigma = results["dDelta_f"]
     free_energies_almost_equal(fe, fe_sigma, test.analytical_free_energies())
+
+
+@pytest.mark.xfail(strict=True)  # This whole test should always fail and passes are problems
+@pytest.mark.parametrize("n_bootstrap", [None, -4, 0, 100.3])
+def test_mbar_bad_bootstrap(single_harmonic_u_kn, n_bootstrap):
+    """Test that bad parameters for n_bootstraps makes bootstrap fail"""
+    mbar = MBAR(single_harmonic_u_kn, N_k, verbose=True, n_bootstraps=n_bootstrap)
+    mbar.compute_free_energy_differences(uncertainty_method="bootstrap")
 
 
 @pytest.mark.parametrize(
@@ -211,7 +233,6 @@ def test_mbar_compute_expectations_position_averages(mbar_and_test):
 def test_mbar_compute_expectations_position_differences(mbar_and_test):
 
     """Can MBAR calculate E(x_n)??"""
-
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
     results = mbar.compute_expectations(x_n, output="differences")
     mu_ij = results["mu"]
@@ -507,6 +528,7 @@ def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
 def test_mbar_compute_expectations_inner(mbar_and_test):
 
     """Can MBAR calculate general expectations inner code (note: this just tests completion)"""
+
     mbar, test, x_n, u_kn = (
         mbar_and_test["mbar"],
         mbar_and_test["test"],
