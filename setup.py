@@ -20,7 +20,7 @@ setup(
     url="http://github.com/choderalab/pymbar",
     packages=find_packages(),
     long_description=long_description[1:],
-    classifiers=["License :: OSI Approved :: MIT", "Programming Language :: Python :: 3"],
+    classifiers=["License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3"],
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     python_requires=">=3.6",

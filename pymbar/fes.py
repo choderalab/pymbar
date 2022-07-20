@@ -258,8 +258,8 @@ class FES:
                  kde_parameters
                      all the parameters from sklearn (https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html). Defaults will be used if nothing changed.
 
-                 spline_parameters 
-                      'spline_weights'  
+                 spline_parameters
+                      'spline_weights'
                            which type of fit to use:
                            'biasedstates' - sum of log likelihood over all weighted states
                            'unbiasedstate' - log likelihood of the single unbiased state
