@@ -28,7 +28,7 @@ def data(N=10000, K=10):
     X = np.random.normal(np.zeros(K * N), var).reshape((K, N)) / 10.0
     Y = np.random.normal(np.zeros(K * N), var).reshape((K, N))
 
-    energy = 10 * (X**2) / 2.0 + (Y**2) / 2.0
+    energy = 10 * (X ** 2) / 2.0 + (Y ** 2) / 2.0
 
     return X, Y, energy
 
@@ -50,7 +50,7 @@ def test_statistical_inefficiency_single(data):
 def test_statistical_inefficiency_multiple(data):
     X, Y, energy = data
     timeseries.statistical_inefficiency_multiple(X)
-    timeseries.statistical_inefficiency_multiple(X**2)
+    timeseries.statistical_inefficiency_multiple(X ** 2)
     timeseries.statistical_inefficiency_multiple(X[0, :] ** 2)
     timeseries.statistical_inefficiency_multiple(X[0:2, :] ** 2)
     timeseries.statistical_inefficiency_multiple(energy)
