@@ -166,9 +166,9 @@ class MBAR:
             sense to think of states as adjacent, then choose 'zeroes'.
 
         x_kindices : np.ndarray, int, shape=(K), default = [0,1,2,3,4...K]
-            Describes which state is each sample *x* is from?  Usually doesn't matter, 
-            but it does for bar. As a default, we assume the samples are in ``K`` order 
-            (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]`` 
+            Describes which state is each sample *x* is from?  Usually doesn't matter,
+            but it does for bar. As a default, we assume the samples are in ``K`` order
+            (the first ``N_k[0]`` samples are from the 0th state, the next ``N_k[1]``
             samples from the 1st state, and so forth.
 
         Notes

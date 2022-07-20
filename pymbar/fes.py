@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 # FES class definition
 # =========================================================================
 
+
 class FES:
     """
 
@@ -266,13 +267,13 @@ class FES:
                 -- 'Custom-NR' : a custom Newton-Raphson that is particularly fast for close data, but can fail
                 -- 'Newton-CG' : scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
                 -- '         ' : scipy gradient based methods that work, but are generally slower (CG, BFGS, L-LBFGS-B, TNC, SLSQP)
-            - 'fkbias' : array of functions 
+            - 'fkbias' : array of functions
                   Return the Kth bias potential for each function
-            - 'nspline' : int 
+            - 'nspline' : int
                   Number of spline points
-            - 'kdegree' : int 
+            - 'kdegree' : int
                   Degree of the spline.  Default is cubic ('3')
-            - 'objective' : string 
+            - 'objective' : string
                   'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
 
         nbootstraps : int, 0 or > 1, Default: 0
@@ -1152,7 +1153,7 @@ class FES:
         Returns
         -------
 
-        float : 
+        float :
            value of information criteria
 
         """
@@ -1718,7 +1719,7 @@ class FES:
                  the frequency in steps at which the MC timeseries is saved.
             print_every : int
                  the frequency in steps aat which the MC timeseries is saved to log.
-            logprior : function, 
+            logprior : function,
                  the function of parameters, the Function must take a single argument, an array the size of parameters
                  in in the same order as a used by the internal functions.
 
@@ -1769,7 +1770,7 @@ class FES:
         if "print_every" not in mc_parameters:
             mc_parameters["print_every"] = 1000
         if "logprior" not in mc_parameters:
-            mc_parameters["logprior"] = lambda x : 0
+            mc_parameters["logprior"] = lambda x: 0
 
         niterations = mc_parameters["niterations"]
         fraction_change = mc_parameters["fraction_change"]
@@ -2203,7 +2204,7 @@ class FES:
 
         xi : array of floats, size nspline-1
             spline coefficients,
-        w_n : array of floats 
+        w_n : array of floats
             weights for each sample.
         x_n : array of floats
             values of each sample.

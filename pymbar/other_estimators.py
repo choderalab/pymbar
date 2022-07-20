@@ -152,6 +152,7 @@ def bar_zero(w_F, w_R, DeltaF):
     )  # return options to standard settings so we don't disturb other functionality.
     return fzero
 
+
 def bar(
     w_F,
     w_R,
@@ -179,8 +180,8 @@ def bar(
     compute_uncertainty : bool, optional, default=True
         if False, only the free energy is returned
     uncertainty_method : string, optional, default=''BAR''
-        There are two possible uncertainty estimates for BAR.  One agrees with MBAR for two states exactly, 
-        and is indicated by "MBAR". The other estimator, which is the one originally derived for BAR, only 
+        There are two possible uncertainty estimates for BAR.  One agrees with MBAR for two states exactly,
+        and is indicated by "MBAR". The other estimator, which is the one originally derived for BAR, only
         agrees with MBAR in the limit of good overlap, and is designated 'BAR'
         See code comments below for derivations of the two methods.
     maximum_iterations : int, optional, default=500
@@ -531,6 +532,7 @@ def bar(
         result_vals["Delta_f"] = DeltaF
         return result_vals
 
+
 def bar_overlap(w_F, w_R):
     """Compute overlap between forward and backward ensembles (using MBAR definition of overlap)
 
@@ -659,7 +661,7 @@ def exp_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
         if False, will disable computation of the statistical uncertainty (default: True)
     is_timeseries : bool, default=False
         if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
-        Use this option if you are providing correlated timeseries data and have not subsampled the data to 
+        Use this option if you are providing correlated timeseries data and have not subsampled the data to
         produce uncorrelated samples.
 
     Returns

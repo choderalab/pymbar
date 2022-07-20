@@ -813,7 +813,7 @@ def detect_equilibration(A_t, fast=True, nskip=1):
     >>> [t, g, Neff_max] = detect_equilibration(C_t, nskip=50) # compute indices of uncorrelated timeseries
 
     """
-    #TODO: Consider implementing a binary search for Neff_max.
+    # TODO: Consider implementing a binary search for Neff_max.
 
     T = A_t.size
 
