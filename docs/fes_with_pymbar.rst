@@ -49,3 +49,4 @@ specified coordinates, and when available, returns the uncertainties
 in the values as well.
 
 .. autoclass:: pymbar.FES
+   :members:

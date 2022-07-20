@@ -18,7 +18,6 @@
 
 """
 A module implementing calculation of free energy surfaces (profiles) from biased simulations.
-
 """
 
 import logging
@@ -80,31 +79,8 @@ class FES:
         states are computed.  This may take anywhere from seconds to
         minutes, depending upon the quantity of data.
 
-        This creates an internal mbar object that is used to create
+        This also creates an internal mbar object that is used to create
         the free energy surface.
-
-        External methods are:
-
-           __init__: initialized MBAR for the umbrella samples, and processes parameters
-
-           generate_fes: given an intialized MBAR object, a set of points,
-                        the desired energies at that point, and a method, generate
-                        an object that contains the FES information.
-
-           get_fes: given coordinates, generate the FES at each coordinate (and uncertainty)
-
-           get_mbar: return the underlying mbar object.
-
-           get_kde: return the underlying kde object.
-
-           sample_parameter_distribution: Only works for fes_type =
-           'spline'. Sample the space of spline parameters according
-           to the likelihood function.
-
-           get_confidence_intervals: if sample_parameter_distribution has
-           been called, generates confidence intervals for the curves
-           given the posterior distribution.
-
 
         Parameters
         ----------
@@ -123,7 +99,9 @@ class FES:
             allow this assumption to be overwritten by parameters passed
             from above, once ``u_kln`` is phased out.
 
-        mbar_options: dict, with the following options supported by mbar (see MBAR documentation)
+        mbar_options : dict
+
+            The following options supported by mbar (see MBAR documentation)
 
             maximum_iterations : int, optional
             relative_tolerance : float, optional
@@ -131,7 +109,7 @@ class FES:
             initial_f_k : np.ndarray, float, shape=(K), optional
             solver_protocol : list(dict) or None, optional, default=None
             initialize : 'zeros' or 'BAR', optional, Default: 'zeros'
-            x_kindices : which state index each sample is from.
+            x_kindices : array of ints, shape=(K), which state index each sample is from.
 
         Examples
         --------
@@ -141,6 +119,7 @@ class FES:
         >>> fes = FES(u_kn, N_k)
 
         """
+
         for key, val in kwargs.items():
             logging.warning(
                 "Warning: parameter {:s}={:s} is unrecognized and unused.".format(key, val)
@@ -267,7 +246,7 @@ class FES:
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
-        fes_type: str
+        fes_type : str
              options = 'histogram', 'kde', 'spline'
 
         histogram_parameters:
@@ -279,24 +258,28 @@ class FES:
               Defaults will be used if nothing changed.
 
         spline_parameters:
-            - 'spline_weights': which type of fit to use:
-                -- 'biasedstates' - sum of log likelihood over all weighted states
-                -- 'unbiasedstate' - log likelihood of the single unbiased state
-                -- 'simplesum': sum of log likelihoods from the biased simulation. Essentially equivalent to vFEP (York et al.)
+            - 'spline_weights' : which type of fit to use:
+                -- 'biasedstates' : sum of log likelihood over all weighted states
+                -- 'unbiasedstate' : log likelihood of the single unbiased state
+                -- 'simplesum' : sum of log likelihoods from the biased simulation. Essentially equivalent to vFEP (York et al.)
             - 'optimization_algorithm':
-                -- 'Custom-NR': a custom Newton-Raphson that is particularly fast for close data, but can fail
-                -- 'Newton-CG': scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
-                -- '         ': scipy gradient based methods that work, but are generally slower (CG, BFGS, L-LBFGS-B, TNC, SLSQP)
-            - 'fkbias': array of functions that return the Kth bias potential for each function
-            - 'nspline': number of spline points
-            - 'kdegree': degree of the spline.  Default is cubic ('3')
-            - 'objective': - 'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
+                -- 'Custom-NR' : a custom Newton-Raphson that is particularly fast for close data, but can fail
+                -- 'Newton-CG' : scipy Newton-CG, only Hessian based method that works correctly because of data ordering.
+                -- '         ' : scipy gradient based methods that work, but are generally slower (CG, BFGS, L-LBFGS-B, TNC, SLSQP)
+            - 'fkbias' : array of functions 
+                  Return the Kth bias potential for each function
+            - 'nspline' : int 
+                  Number of spline points
+            - 'kdegree' : int 
+                  Degree of the spline.  Default is cubic ('3')
+            - 'objective' : string 
+                  'ml','map' # whether to fit the maximum likelihood or the maximum a posteriori
 
         nbootstraps : int, 0 or > 1, Default: 0
             Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done. Required if
             one uses uncertainty_method = 'bootstrap' in get_fes
 
-        seed : int, Default: -1
+        seed : int, Default = -1
             Set the randomization seed. Settting should get the
             randomization (assuming the same calls are made in the
             same order) to return the same numbers.  This is local to
@@ -457,7 +440,7 @@ class FES:
 
         Parameters
         ----------
-        histogram_parameters: dict()
+        histogram_parameters : dict()
             A options:values dictonary for parameters to create the FES using histogramss
 
         Returns
@@ -492,10 +475,10 @@ class FES:
         """
         Parameters
         ----------
-        b: int
+        b : int
             the bootstrap sample this is on (for non-bootstrap methods, will be 0)
 
-        x_n: ndarray, length self.N
+        x_n : ndarray, length self.N
             The data point set used in this bootstrap
 
         log_w_n : np.ndarray, float, shape=(self.N)
@@ -621,7 +604,7 @@ class FES:
 
         Parameters
         ----------
-        kde_parameters: dict()
+        kde_parameters : dict()
             A options:values dictonary for parameters to create the FES using the kernel density approach.
             Parameters are passsed on to sklearn KernelDensity.
 
@@ -673,21 +656,19 @@ class FES:
         ----------
 
         b : int
-
             Which bootstrap this is: b==0 is the initial value with the "untouched" data.
 
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
         w_n : np.ndarray, float, shape=(sself.N)
-
             Weights for each sample for the state in which we want the FES (usually, the unbiased state)
 
         Returns
         -------
         None
 
-        Data is stored in self.kde or self.kdes (for bootstrap replicates).
+        Data is stored in ``self.kde`` or ``self.kdes`` (for bootstrap replicates).
 
         """
 
@@ -724,7 +705,7 @@ class FES:
 
         Parameters
         ----------
-        spline_parameters: dict()
+        spline_parameters : dict()
             A options:values dictonary for parameters to create the FES using the spline approach.
             Parameters are explained in docstring of
 
@@ -838,9 +819,9 @@ class FES:
 
         Returns
         -------
-        xinit: ndarray, float
+        xinit : ndarray, float
             x-values of spline to be fit for start of minimizaton
-        yinit: ndarray, float, shape
+        yinit : ndarray, float, shape
             y-values of spline to be fit for start of minimizaton
 
         """
@@ -909,15 +890,15 @@ class FES:
 
         Parameters
         ----------
-        xinit: ndarray, float:
+        xinit : ndarray, float:
             x-values of spline to fit
-        yinit: ndarray, float:
+        yinit : ndarray, float:
             y-values of spline to fit
 
 
         Returns
         -------
-        spline_data: dict() of information used in optimizing the spline parameters
+        spline_data : dict() of information used in optimizing the spline parameters
 
         """
 
@@ -1139,8 +1120,8 @@ class FES:
         Results
         -------
 
-        results : dict of results.  Keys are "aic" (Akaike information critera)
-        and "bic" (Bayesian information criteria), values
+        results : dictionary
+            Keys are "aic" (Akaike information critera) and "bic" (Bayesian information criteria)
 
         """
         results = {}
@@ -1165,12 +1146,14 @@ class FES:
         Parameters
         ----------
 
-        type: string, Either 'Akaike' or 'Bayesian'
+        type : string
+           either 'Akaike' (or 'akaike' or 'aic') or 'Bayesian' (or 'bayesian' or 'bic')
 
-        Output
-        ------
+        Returns
+        -------
 
-        float: information criteria
+        float : 
+           value of information criteria
 
         """
 
@@ -1196,10 +1179,10 @@ class FES:
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
+        x : numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
-            Method for reporting values and uncertainties (default: 'from-lowest')
+            Method for reporting values and uncertainties (default : 'from-lowest')
 
             * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
@@ -1209,7 +1192,7 @@ class FES:
         uncertainty_method : str, optional
             Method for computing uncertainties (default: None)
 
-        fes_reference :
+        fes_reference:
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1292,10 +1275,10 @@ class FES:
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
+        x : numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
-            Method for reporting values and uncertainties (default: 'from-lowest')
+            Method for reporting values and uncertainties (default : 'from-lowest')
 
             * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
@@ -1305,7 +1288,7 @@ class FES:
         uncertainty_method : str, optional
             Method for computing uncertainties (default: None)
 
-        fes_reference :
+        fes_reference:
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1551,10 +1534,10 @@ class FES:
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
+        x : numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
-            Method for reporting values and uncertainties (default: 'from-lowest')
+            Method for reporting values and uncertainties (default : 'from-lowest')
 
             * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
@@ -1562,9 +1545,9 @@ class FES:
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         uncertainty_method : str, optional
-            Method for computing uncertainties (default: None)
+            Method for computing uncertainties (default : None)
 
-        fes_reference :
+        fes_reference:
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1640,10 +1623,10 @@ class FES:
         Parameters
         ----------
 
-        x: numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
+        x : numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
 
         reference_point : str, optional
-            Method for reporting values and uncertainties (default: 'from-lowest')
+            Method for reporting values and uncertainties (default : 'from-lowest')
 
             * 'from-lowest' - the uncertainties in the free energy difference with lowest point on FES are reported
             * 'from-specified' - same as from lowest, but from a user specified point
@@ -1651,9 +1634,9 @@ class FES:
             * 'all-differences' - the nbins x nbins matrix df_ij of uncertainties in free energy differences is returned instead of df_i
 
         uncertainty_method : str, optional
-            Method for computing uncertainties (default: None)
+            Method for computing uncertainties (default : None)
 
-        fes_reference :
+        fes_reference:
             an N-d point specifying the reference state. Ignored except with uncertainty method ``from_specified``
 
         Returns
@@ -1719,36 +1702,35 @@ class FES:
         self, x_n, mc_parameters=None, decorrelate=True, verbose=True
     ):
         """
-
         Samples the valus of the spline parameters with MC.
 
         Parameters
         ----------
+        x_n : numpy.ndarray of D dimensions
+           D is the dimensionality of the FES defined.
 
-        x_n : numpy.ndarray of D dimensions, where D is the dimensionality of the FES defined.
+        mc_parameters: dictionary
+            niteratons : int
+                 number of iterations of the Monte Carlo procedure
+            fraction_change : float
+                 which fraction of the range of input parameters is used to make new MC moves.
+            sample_every : int
+                 the frequency in steps at which the MC timeseries is saved.
+            print_every : int
+                 the frequency in steps aat which the MC timeseries is saved to log.
+            logprior : function, 
+                 the function of parameters, the Function must take a single argument, an array the size of parameters
+                 in in the same order as a used by the internal functions.
 
-        mc_parameters :
-            A dictionary of Monte Carlo parameters:
-
-            niteratons : int, number of iterations of the Monte Carlo procedure
-
-            fraction_change: float, which fraction of the range of input parameters is used to make new MC moves.
-
-            sample_every : int, the frequency in steps at which the MC timeseries is saved.
-
-            print_every : int, the frequency in steps aat which the MC timeseries is saved to log.
-
-            logprior: function, the function of parameters.  Must take a single argument, array the size of parameters
-                      in in the same order as a used by the internal functions.
-
-        decorrelate : boolean,
+        decorrelate : boolean
             Whether to decorrelate the time series of output points
 
-        verbose : Whether to print high levels of information to the logger
+        verbose : boolean
+            Whether to print high levels of information to the logger
 
         Returns
         -------
-            None
+        None
 
         """
 
@@ -1787,7 +1769,7 @@ class FES:
         if "print_every" not in mc_parameters:
             mc_parameters["print_every"] = 1000
         if "logprior" not in mc_parameters:
-            mc_parameters["logprior"] = lambda x: 0
+            mc_parameters["logprior"] = lambda x : 0
 
         niterations = mc_parameters["niterations"]
         fraction_change = mc_parameters["fraction_change"]
@@ -1858,7 +1840,7 @@ class FES:
             for nc in range(len(c)):
                 g_c[nc] = timeseries.statistical_inefficiency(csamples[nc, t_mc:])
             if verbose:
-                logger.info("Time series for spline parameters are: {:s}".format(str(g_c)))
+                logger.info("Time series for spline parameters are : {:s}".format(str(g_c)))
             maxgc = np.max(g_c)
             meangc = np.mean(g_c)
             guse = g_mc  # doesn't affect the distribution that much
@@ -1866,14 +1848,14 @@ class FES:
             logposteriors = equil_logp[indices]
             csamples = (csamples[:, t_mc:])[:, indices]
             if verbose:
-                logger.info("samples after decorrelation: {:d}".format(np.shape(csamples)[1]))
+                logger.info("samples after decorrelation : {:d}".format(np.shape(csamples)[1]))
 
         self.mc_data["samples"] = csamples
         self.mc_data["logposteriors"] = logposteriors
         self.mc_data["mc_parameters"] = mc_parameters
         self.mc_data["acceptance_ratio"] = self.mc_data["naccept"] / niterations
         if verbose:
-            logger.info("Acceptance rate: {:5.3f}".format(self.mc_data["acceptance_ratio"]))
+            logger.info("Acceptance rate : {:5.3f}".format(self.mc_data["acceptance_ratio"]))
         self.mc_data["nequil"] = t_mc  # the start of the "equilibrated" data set
         self.mc_data["g_logposterior"] = g_mc  # statistical efficiency of the log posterior
         self.mc_data["g_parameters"] = g_c  # statistical efficiency of the parametere
@@ -1884,23 +1866,25 @@ class FES:
         """
         Parameters
         ----------
-        xplot :
+        xplot:
             data points we want to plot at
-        plow :
+        plow:
             lowest percentile
-        phigh :
+        phigh:
             highest percentile
 
         Returns
         -------
 
         Dictionary of results.  Contains:
-
-            plow : ndarray of float, len(xplot) value of the parameter at plow percentile of the distribution at each x in xplot.
-            phigh: ndarray of float, value of the parameter at phigh percentile of the distribution at each x in xplot.
-            median: ndarray of float, value of the parameter at the median of the distribution at each x in xplot.
-            values: ndarray of float, shape [niterations//sample_every, len(xplot)] of the FES saved during
-                    the MCMC sampling at each input value of xplot.
+            plow : ndarray of float
+                len(xplot) value of the parameter at plow percentile of the distribution at each x in xplot.
+            phigh : ndarray of float
+                value of the parameter at phigh percentile of the distribution at each x in xplot.
+            median : ndarray of float
+                value of the parameter at the median of the distribution at each x in xplot.
+            values : ndarray of float
+                shape [niterations//sample_every, len(xplot)] of the FES saved during the MCMC sampling at each input value of xplot.
 
         """
         if self.mc_data is None:
@@ -1958,14 +1942,14 @@ class FES:
         Returns
         -------
         dict
-            samples: samples of the parameters with size [len(parameters) times niterations/sample_every]
-            logposteriors: log posteriors (which might be defined with respect to some reference) as a time series size [# points]
-            mc_parameters: dictionary of parameters that were run with (see definitons in sample_parameter_distrbution)
-            acceptance_ratio: overall acceptance ratio of the MC chain
-            nequil: the start of the "equilibrated" data set (i.e. nequil-1 is the number that werer thrown out)
-            g_logposterior: statistical efficiency of the log posterior
-            g_parameters: statistical efficiency of the parametere
-            g: statistical efficiency used for subsampling
+            samples : samples of the parameters with size [len(parameters) times niterations/sample_every]
+            logposteriors : log posteriors (which might be defined with respect to some reference) as a time series size [# points]
+            mc_parameters : dictionary of parameters that were run with (see definitons in sample_parameter_distrbution)
+            acceptance_ratio : overall acceptance ratio of the MC chain
+            nequil : the start of the "equilibrated" data set (i.e. nequil-1 is the number that werer thrown out)
+            g_logposterior : statistical efficiency of the log posterior
+            g_parameters : statistical efficiency of the parametere
+            g : statistical efficiency used for subsampling
 
         """
 
@@ -1980,7 +1964,7 @@ class FES:
         Parameters
         ----------
 
-                x_n : np.ndarray, float, shape=(N,D)
+        x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
         w_n : np.ndarray, float, shape=(sself.N)
@@ -2000,7 +1984,7 @@ class FES:
         -------
 
         loglikelihood : float
-           loglikelihood of this spline
+           log-likelihood of this spline
 
         """
 
@@ -2039,25 +2023,25 @@ class FES:
 
         Parameters
         ----------
-        x_n :
+        x_n:
             samples from the biased distribution
-        w_n :
+        w_n:
             weights of each sample.
-        stepsize :
+        stepsize:
             sigma of the normal distribution used to propose steps
-        xrange :
+        xrange:
             Range the probility distribution is defined o er.
-        spline_weights :
+        spline_weights:
             Type of weighting used for maximum likelihood for splines.  See class
                         definition for description of types.
-        logprior :
+        logprior:
             function describing the prior of the parameters. Default is uniform.
 
         Outputs
         -------
         dict
-            * 'c': the value of the spline constants (len nsplines - we always assume normalized
-            * 'logposterior': the current value of the logposterior.
+            * 'c' : the value of the spline constants (len nsplines - we always assume normalized
+            * 'logposterior' : the current value of the logposterior.
 
         Notes
         -----
@@ -2133,9 +2117,9 @@ class FES:
 
         xi : array of floats size nspline-1
             spline coefficients,
-        w_n :
+        w_n:
             weights for each sample.
-        x_n :
+        x_n:
             values of each sample.
 
         Output
@@ -2217,17 +2201,17 @@ class FES:
         Parameters
         -----------
 
-        xi : array of floats size nspline-1
+        xi : array of floats, size nspline-1
             spline coefficients,
-        w_n :
+        w_n : array of floats 
             weights for each sample.
-        x_n :
+        x_n : array of floats
             values of each sample.
 
         Output
         ------
 
-        gradient: float, size (nspline-1)
+        gradient: array of floats, size (nspline-1)
 
         """
         ##### COMPUTE THE GRADIENT #######
@@ -2338,11 +2322,11 @@ class FES:
         Parameters
         ----------
 
-        xi: array of floats size nspline-1
+        xi : array of floats size nspline-1
             spline coefficients
-        w_n:
+        w_n : array of floats, size number of points
             weights for each sample
-        x_n:
+        x_n : array of floats, size number of points
             values of each sample
 
         Output
@@ -2461,12 +2445,12 @@ class FES:
 
         Parameters
         ----------
-        x:
+        x : float, array
             the last N-1 coefficients for a bspline; we assume the initial coefficient is set to zero.
 
         Returns
         -------
-        A bspline object (or function returning -log (bspline) object if we need it)
+        bspline : A bspline object (or function returning -log (bspline) object if we need it)
 
         """
 

@@ -39,7 +39,7 @@ mc_methods = ["unbiased-map"]  # which methods to run MCMC sampling on (much slo
 # Just replace '3' with the desired degree below. 1-5 suggested.
 spline_degree = 3
 nspline = 11  # number of spline knots used for the fit.
-nbootstraps = 3  # should increase to ~50 for good statistics
+n_bootstraps = 3  # should increase to ~50 for good statistics
 mc_iterations = 1000  # could take a while?
 smoothness_scalefac = 0.01
 fig_suffix = "test1"  # figure suffix for identifiability of the output!
@@ -298,7 +298,7 @@ for methodfull in methods:
             chi_n,
             fes_type="histogram",
             histogram_parameters=histogram_parameters,
-            nbootstraps=nbootstraps,
+            n_bootstraps=n_bootstraps,
         )
 
     if method == "kde":
@@ -307,7 +307,7 @@ for methodfull in methods:
         # set the sigma for the spline.
         kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
         fes.generate_fes(
-            u_kn, chi_n, fes_type="kde", kde_parameters=kde_parameters, nbootstraps=nbootstraps
+            u_kn, chi_n, fes_type="kde", kde_parameters=kde_parameters, n_bootstraps=n_bootstraps
         )
 
         # save this for initializing other types
@@ -365,7 +365,7 @@ for methodfull in methods:
             chi_n,
             fes_type="spline",
             spline_parameters=spline_parameters,
-            nbootstraps=nbootstraps,
+            n_bootstraps=n_bootstraps,
         )
 
     end = timer()

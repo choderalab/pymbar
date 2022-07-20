@@ -3,9 +3,6 @@
 Strategies for solution
 #######################
 
-Approaching the MBAR equations
-==============================
-
 ----------------------------------------
 Approaches to solving the MBAR equations
 ----------------------------------------

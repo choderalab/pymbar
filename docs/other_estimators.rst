@@ -7,6 +7,5 @@ Other estimators
 Bennett Acceptance Ratio, exponential averaging, and a Gaussian
 approximation to exponential averaging.
 
-.. automodule:: pymbar.other_estimators.bar
-.. automodule:: pymbar.other_estimators.exp
-.. automodule:: pymbar.other_estimators.exp_gauss
+.. automodule:: pymbar.other_estimators
+   :members:

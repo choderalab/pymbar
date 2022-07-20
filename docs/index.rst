@@ -22,7 +22,6 @@ Documentation
    fes_with_pymbar
    other_estimators
    timeseries
-   testsystems
    utils
    zbibliography
 
