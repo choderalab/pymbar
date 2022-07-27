@@ -52,7 +52,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphin
 autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
 numpydoc_show_class_members = False
-
+bibtex_bibfiles = ["references.bib"]
 # concatenate both class and __init__ docstrings when generating autodoc class
 # docs
 autoclass_content = 'both'
