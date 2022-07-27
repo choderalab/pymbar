@@ -44,6 +44,7 @@ from pymbar import mbar_solvers
 from pymbar.utils import kln_to_kn, kn_to_n, ParameterError, DataError, logsumexp, check_w_normalized
 
 DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
+DEFAULT_SOLVER_TOLERANCE = mbar_solvers.DEFAULT_SOLVER_TOLERANCE
 
 # =========================================================================
 # MBAR class definition
@@ -70,8 +71,9 @@ class MBAR:
     """
     # =========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, verbose=False, initial_f_k=None,
-                 solver_protocol=None, initialize='zeros', x_kindices=None, **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, solver_tolerance=DEFAULT_SOLVER_TOLERANCE, verbose=False, initial_f_k=None,
+                 solver_protocol=None, initialize='zeros', x_kindices=None, nbootstraps=None, rseed=None, **kwargs):
+
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
         Upon initialization, the dimensionless free energies for all states are computed.
@@ -106,9 +108,11 @@ class MBAR:
             from above, once ``u_kln`` is phased out.
 
         maximum_iterations : int, optional
-            Set to limit the maximum number of iterations performed (default 1000)
+            Set to limit the maximum number of iterations performed (default 10000)
         relative_tolerance : float, optional
-            Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+            Set to determine the relative tolerance convergence criteria (default 1.0e-7)
+        solver_tolerance : float, optional
+            Set the tolerance for which to use for solving the mbar equation (see solve_mbar_once()) (default 1.0e-12)
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
         initial_f_k : np.ndarray, float, shape=(K), optional
@@ -302,7 +306,36 @@ class MBAR:
                 # which might involve passing in different combinations of options, and passing out other strings.
                 solver['options']['verbose'] = self.verbose
 
-        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol)
+        np.random.seed(rseed)
+        self.rstate = np.random.get_state()
+
+        self.f_k = mbar_solvers.solve_mbar_for_all_states(self.u_kn, self.N_k, self.f_k, solver_protocol, solver_tolerance)
+
+        self.nbootstraps = None
+        if nbootstraps != None:
+            self.nbootstraps = nbootstraps
+
+            # Set min_sc_iter to 0 for bootstrapping
+            for solver in solver_protocol:
+                solver['options']['min_sc_iter'] = 0
+
+            self.f_k_boots = np.zeros([self.nbootstraps,self.K])
+            allN = int(np.sum(self.N_k))
+            rinit = np.zeros(allN, int)
+            for b in range(self.nbootstraps):
+                f_k_init = self.f_k.copy()  # we need to pass a copy so we don't overwrite the original
+                for k in range(K): # randomize within the indices with the same K.
+                    # which of the indices are equal to K
+                    k_indices = np.where(self.x_kindices == k)[0]
+                    # pick new random ones of these K.
+                    new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
+                    rinit[k_indices] = new_kindices
+                
+                self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol, solver_tolerance)
+                if verbose:
+                    if b%10==0:
+                        print("Calculated {:d}/{:d} bootstrap samples".format(b,self.nbootstraps)) 
+                        
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
@@ -520,7 +553,9 @@ class MBAR:
         >>> results = mbar.getFreeEnergyDifferences(return_dict=True)
 
         """
-        Deltaf_ij, dDeltaf_ij, Theta_ij = None, None, None  # By default, returns None for dDelta and Theta
+
+        if uncertainty_method == 'bootstrap' and self.nbootstraps == None:
+            raise ParameterError("Cannot request bootstrap sampling of free energy differences without any bootstraps")
 
         # Compute free energy differences.
         f_i = np.matrix(self.f_k)
@@ -537,12 +572,21 @@ class MBAR:
         result_vals['Delta_f'] = Deltaf_ij
         return_list.append(Deltaf_ij)
 
-        if compute_uncertainty or return_theta:
+        if compute_uncertainty and uncertainty_method == 'bootstrap':
+            diffm = np.zeros([self.K,self.K,self.nbootstraps])
+            # take the matrix of differences of f_ij
+            for b in range(self.nbootstraps):
+                diffm[:,:,b] = np.matrix(self.f_k_boots[b,:]) - np.matrix(self.f_k_boots[b,:]).transpose()
+            dDeltaf_ij = np.std(diffm,axis=2)
+            result_vals['dDelta_f'] = dDeltaf_ij
+            return_list.append(dDeltaf_ij)
+
+        if (compute_uncertainty or return_theta) and uncertainty_method != 'bootstrap':
             # Compute asymptotic covariance matrix.
             Theta_ij = self._computeAsymptoticCovarianceMatrix(
                 np.exp(self.Log_W_nk), self.N_k, method=uncertainty_method)
 
-        if compute_uncertainty:
+        if compute_uncertainty and uncertainty_method != 'bootstrap':
             dDeltaf_ij = self._ErrorOfDifferences(Theta_ij, warning_cutoff=warning_cutoff)
             # zero out numerical error for thermodynamically identical states
             self._zerosamestates(dDeltaf_ij)
@@ -708,6 +752,7 @@ class MBAR:
         Log_W_nk[:, 0:K] = self.Log_W_nk
         N_k[0:K] = self.N_k
         f_k[0:K] = self.f_k
+
 
         # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
         states_with_samples = (self.N_k > 0)
@@ -1227,13 +1272,12 @@ class MBAR:
         Deltaf_ij, dDeltaf_ij = None, None
 
         f_k = np.matrix(inner_results['f'])
-
         result_vals = dict()
         results_list = []
         result_vals['Delta_f'] = np.array(f_k - f_k.transpose())
         results_list.append(result_vals['Delta_f'])
 
-        if (compute_uncertainty):
+        if compute_uncertainty:
             result_vals['dDelta_f'] = self._ErrorOfDifferences(inner_results['Theta'],warning_cutoff=warning_cutoff)
             results_list.append(result_vals['dDelta_f'])
 

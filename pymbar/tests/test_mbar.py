@@ -87,6 +87,40 @@ def test_mbar_free_energies():
         z = (fe - fe0) / fe_sigma
         eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
 
+        # now test the bootstrap uncertainty
+        mbar = MBAR(u_kn, N_k, nbootstraps = 40)
+        results = mbar.getFreeEnergyDifferences(uncertainty_method='bootstrap', return_dict=True)
+        fe = results['Delta_f']
+        fe_sigma = results['dDelta_f']
+        fe, fe_sigma = fe[0,1:], fe_sigma[0,1:]
+
+        fe0 = test.analytical_free_energies()
+        fe0 = fe0[1:] - fe0[0]
+
+        z = (fe - fe0) / fe_sigma
+        eq(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+
+def test_mbar_free_energies_bootstrapping():
+
+    """Is the boostrapped uncertainty similar to the non-bootstrapped uncertainty? """
+
+    # Generate harmonic oscillator with plenty of samples for each state
+    testcase = harmonic_oscillators.HarmonicOscillatorsTestCase()
+    [x_kn, u_kn, N_k, s_n] = testcase.sample(N_k=[10000, 10000, 10000, 10000, 10000])
+
+    # Compute non-bootstrapped uncertainty
+    mbar = MBAR(u_kn, N_k)
+    results = mbar.getFreeEnergyDifferences(compute_uncertainty=True, return_dict=True)
+    stderr = results['dDelta_f'][0, -1]
+
+    # Compute bootstrapped uncertainty
+    mbar_boots = MBAR(u_kn, N_k, nbootstraps=200, solver_tolerance=1e-6, initialize='BAR')
+    results_boots = mbar_boots.getFreeEnergyDifferences(compute_uncertainty=True, uncertainty_method='bootstrap', return_dict=True)
+    stderr_boots = results_boots['dDelta_f'][0, -1]
+
+    assert stderr_boots < 2 * stderr, f"Bootstrapped standard error ({stderr_boots}) is more than 2 * the unbootstrapped standard error ({2* stderr})"
+    assert stderr_boots > -2 * stderr, f"Bootstrapped standard error ({stderr_boots}) is less than -2 * the unbootstrapped standard error ({-2* stderr})"
+
 def test_mbar_computeExpectations_position_averages():
 
     """Can MBAR calculate E(x_n)??"""
