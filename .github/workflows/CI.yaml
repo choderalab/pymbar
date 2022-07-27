@@ -5,12 +5,12 @@ on:
     branches:
       - 'master'
       - 'main'
-      - 'pymbar3'
+      - 'pymbar-3-lts'
   pull_request:
     branches:
       - 'master'
       - 'main'
-      - 'pymbar3'
+      - 'pymbar-3-lts'
   schedule:
     # Nightly Tests
     - cron: '0 0 * * *'
