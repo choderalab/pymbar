@@ -688,12 +688,14 @@ class MBAR:
         >>> results = mbar.computeExpectationsInner(A_n, u_n, state_map)
 
         """
+        
+        logfactor = 4.0 * np.finfo(np.float64).eps
+        # make sure all results are larger than this number.
+        # We tried 1 before, but expecations that are all very small (like
+        # fraction folded when it is low) cannot be computed accurately.
+        # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
+        # and even occasionally 2*eps, so we chooose 4*eps
 
-        logfactor = 0  # make sure all results are larger than this number.
-                       # We tried 1 before, but expecations that are all very small (like
-                       # fraction folded when it is low) cannot be computed accurately. 
-                       # it's possible  that something really small but > 0 might avoid
-                       # errors, but no errors have occured yet. 
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map) # number of computed expectations we desire
                                                # need to convert to matrix to be able to pick up D=1
@@ -733,9 +735,13 @@ class MBAR:
         else:
             A_list = np.zeros(0,dtype=int)
 
+        logfactors = np.zeros(len(A_list))
         for i in A_list:
-            A_min[i] = np.min(A_n[i, :]) #find the minimum
-            A_n[i, :] = A_n[i,:] - (A_min[i] - logfactor)  #all values now positive so that we can work in logarithmic scale
+            A_min[i] = np.min(A_n[i, :])  # find the minimum
+            logfactors[i] = np.abs(logfactor * A_min[i])
+            A_n[i, :] = A_n[i, :] - (
+                A_min[i] - logfactors[i]
+            )  # all values now positive so that we can work in logarithmic scale
 
         # Augment W_nk, N_k, and c_k for q_A(x) for the observables, with one
         # row for the specified state and I rows for the observable at that
