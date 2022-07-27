@@ -44,7 +44,7 @@ import os
 #    'sphinx.ext.autosummary'
 #]
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
-              'sphinx.ext.todo', 'sphinx.ext.pngmath', 'sphinx.ext.ifconfig',
+              'sphinx.ext.todo', 'sphinx.ext.imgmath', 'sphinx.ext.ifconfig',
               'numpydoc', 'sphinx.ext.inheritance_diagram',
               'sphinx.ext.autosummary', 'sphinx.ext.extlinks',
               'sphinxcontrib.bibtex']
