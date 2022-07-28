@@ -11,26 +11,27 @@ Installing ``pymbar``
 conda (recommended)
 -------------------
 
-The easiest way to install the ``pymbar`` release is via `conda <http://conda.pydata.org>`_:
+This documentation covers ``pymbar`` 3.
+This is a long term support branch of ``pymbar``.
+The easiest way to install the LTS version of ``pymbar`` release is via `conda <http://conda.pydata.org>`_:
 
-::
-   $ conda install -c conda-forge pymbar
+.. code-block:: console
 
-pip
----
+   $ conda install -c conda-forge "pymbar<4"
 
-You can also install ``pymbar`` from the `Python package index <https://pypi.python.org/pypi/pymbar>`_ using ``pip``:
+pip (pypi)
+----------
 
-::
-   $ pip install pymbar
+Note: We are currently not releasing new versions of the LTS branch on ``PyPI``.
 
 Development version
 -------------------
 
 The development version can be installed directly from github via ``pip``:
 
-::
-   $ pip install git+https://github.com/choderalab/pymbar.git
+.. code-block:: console
+
+   $ pip install git+https://github.com/choderalab/pymbar.git@pymbar-3-lts
 
 Running the tests
 =================
@@ -42,5 +43,6 @@ The test suite uses `pytest <https://pytest.readthedocs.org/en/latest/>`_, in ad
 
 You can then run the tests with:
 
-::
+.. code-block:: console
+
    $ pytest -vv pymbar

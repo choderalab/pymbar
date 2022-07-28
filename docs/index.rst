@@ -18,8 +18,8 @@ Documentation
    getting_started
    mbar
    timeseries
-   testsystems
-   references
+   utils
+   zbibliography
 
 Indices and tables
 ==================
