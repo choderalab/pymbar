@@ -4,8 +4,12 @@
 [![PyPI Version](https://badge.fury.io/py/pymbar.png)](https://pypi.python.org/pypi/pymbar)
 [![DOI](https://zenodo.org/badge/9991771.svg)](https://zenodo.org/badge/latestdoi/9991771)
 
-pymbar
+pymbar 3 LTS
 ======
+
+**Warning**
+You are looking at the documentation for pymbar 3 LTS.
+If you want the latest version, look [here](https://github.com/choderalab/pymbar)
 
 Python implementation of the [multistate Bennett acceptance ratio (MBAR)](http://www.alchemistry.org/wiki/Multistate_Bennett_Acceptance_Ratio) method for estimating expectations and free energy differences from equilibrium samples from multiple probability densities.
 See our [docs](http://pymbar.readthedocs.org/en/latest/).
@@ -16,15 +20,11 @@ Installation
 
 The easiest way to install the `pymbar` release is via [conda](http://conda.pydata.org):
 ```bash
-conda install -c conda-forge pymbar
-```
-You can also install `pymbar` from the [Python package index](https://pypi.python.org/pypi/pymbar) using `pip`:
-```bash
-pip install pymbar
+conda install -c conda-forge "pymbar<4"
 ```
 The development version can be installed directly from github via `pip`:
 ```bash
-pip install git+https://github.com/choderalab/pymbar.git
+pip install git+https://github.com/choderalab/pymbar.git@pymbar-3-lts
 ```
 
 Usage

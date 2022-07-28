@@ -330,12 +330,12 @@ class MBAR:
                     # pick new random ones of these K.
                     new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
                     rinit[k_indices] = new_kindices
-                
+
                 self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol, solver_tolerance)
                 if verbose:
                     if b%10==0:
-                        print("Calculated {:d}/{:d} bootstrap samples".format(b,self.nbootstraps)) 
-                        
+                        print("Calculated {:d}/{:d} bootstrap samples".format(b,self.nbootstraps))
+
         self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
@@ -688,7 +688,7 @@ class MBAR:
         >>> results = mbar.computeExpectationsInner(A_n, u_n, state_map)
 
         """
-        
+
         logfactor = 4.0 * np.finfo(np.float64).eps
         # make sure all results are larger than this number.
         # We tried 1 before, but expecations that are all very small (like
@@ -1115,9 +1115,9 @@ class MBAR:
         which is the energy of the n samples evaluated at a the chosen
         state.
 
-        
+
         Parameters:
-        -------------
+        -----------
 
         A_in : np.ndarray, float, shape=(I, k, N)
             A_in[i,n] = A_i(x_n), the value of phase observable i for configuration n at state of interest
@@ -1136,7 +1136,7 @@ class MBAR:
             If true, return is a dictionary, else its a tuple
 
         Returns
-        -------------
+        -------
         'mu' : np.ndarray, float, shape=(I)
             result_vals['mu'] is the estimate for the expectation of A_i(x) at the state specified by u_kn
             If return_dict, key will be 'mu'

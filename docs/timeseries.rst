@@ -67,3 +67,4 @@ A number of other useful functions for computing autocorrelation functions from 
 same process are also provided.
 
 .. automodule:: pymbar.timeseries
+   :members:
