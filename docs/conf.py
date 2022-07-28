@@ -313,3 +313,7 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+rst_prolog = """.. attention::
+    You are looking at the documentation for the pymbar 3 LTS branch.
+    If you want to update to the latest pymbar version, see this page https://pymbar.readthedocs.io/en/stable/moving_from_pymbar3.html
+"""
