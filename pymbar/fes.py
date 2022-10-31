@@ -542,9 +542,11 @@ class FES:
                 sample_label[n] = -1
             else:
                 # how do we label the bins? if N-dimensional:
-                # bins[0] + bins[1]*bin_length[1]**1 + bins[2]*bin_length[2]**2
+                # bins[0] + 
+                # bins[1]*(bin_length[0]+bin_length[1])**1 + 
+                # bins[2]*(bin_length[0]+bin_length[1]+bin_length[2])**2 + ...
                 sample_label[n] = int(
-                    np.sum([bin_n[n][d] * bin_length[d] ** d for d in range(dims)])
+                    np.sum([bin_n[n][d] * np.sum(bin_length[:d+1]) ** d for d in range(dims)])
                 )
             if bin not in nonzero_bins:
                 nonzero_bins.append(bin)
