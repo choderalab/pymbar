@@ -71,8 +71,8 @@ class MBAR:
     """
     # =========================================================================
 
-    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, solver_tolerance=DEFAULT_SOLVER_TOLERANCE, verbose=False, initial_f_k=None,
-                 solver_protocol=None, initialize='zeros', x_kindices=None, nbootstraps=None, rseed=None, **kwargs):
+    def __init__(self, u_kn, N_k, maximum_iterations=10000, relative_tolerance=1.0e-7, solver_tolerance=DEFAULT_SOLVER_TOLERANCE, bootstrap_solver_tolerance=DEFAULT_SOLVER_TOLERANCE, 
+                 verbose=False, initial_f_k=None, solver_protocol=None, initialize='zeros', x_kindices=None, nbootstraps=None, rseed=None, **kwargs):
 
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -113,6 +113,8 @@ class MBAR:
             Set to determine the relative tolerance convergence criteria (default 1.0e-7)
         solver_tolerance : float, optional
             Set the tolerance for which to use for solving the mbar equation (see solve_mbar_once()) (default 1.0e-12)
+        bootstrap_solver_tolerance : float, optional
+            Set the tolerance for which to use for solving the mbar equation (see solve_mbar_once()) (default 1.0e-12) when bootstrapping
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
         initial_f_k : np.ndarray, float, shape=(K), optional
@@ -331,7 +333,7 @@ class MBAR:
                     new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
                     rinit[k_indices] = new_kindices
 
-                self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol, solver_tolerance)
+                self.f_k_boots[b,:] = mbar_solvers.solve_mbar_for_all_states(self.u_kn[:,rinit], self.N_k, f_k_init, solver_protocol, bootstrap_solver_tolerance)
                 if verbose:
                     if b%10==0:
                         print("Calculated {:d}/{:d} bootstrap samples".format(b,self.nbootstraps))
