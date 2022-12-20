@@ -212,7 +212,7 @@ else:
 # ===================================================================================================
 
 # Create a list of indices of all configurations in kn-indexing.
-mask_kn = np.zeros([K, N_max], dtype=np.bool)
+mask_kn = np.zeros([K, N_max], dtype=bool)
 for k in range(K):
     mask_kn[k, 0 : N_k[k]] = True
 # Create a list from this mask.
