@@ -7,5 +7,13 @@ build:
   tools:
     python: "mambaforge-4.10"
 
+python:
+  install:
+    - method: pip
+      path: .
+
+sphinx:
+   configuration: docs/conf.py
+
 conda:
   environment: devtools/conda-envs/test_env_jax.yaml
