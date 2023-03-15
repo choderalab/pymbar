@@ -8,4 +8,4 @@ build:
     python: "mambaforge-4.10"
 
 conda:
-  environment: docs/environment.yml
+  environment: devtools/conda-envs/test_env_jax.yaml
