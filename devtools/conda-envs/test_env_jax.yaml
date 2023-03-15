@@ -11,7 +11,6 @@ dependencies:
   - numexpr
   - jaxlib
   - jax
-
     # Testing
   - pytest
   - pytest-cov
@@ -21,3 +20,6 @@ dependencies:
   - scikit-learn  # Provides the sklearn module
   - matplotlib-base
   - xlrd
+    # Docs
+  - numpydoc
+  - sphinxcontrib-bibtex
