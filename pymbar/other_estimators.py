@@ -566,7 +566,7 @@ def bar_overlap(w_F, w_R):
 
     assert np.isclose(
         mbar.f_k[1] - mbar.f_k[0], bar_df
-    ), f"BAR: {bar_df} +- {bar_ddF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}"
+    ), f"BAR: {bar_df} +- {bar_ddf} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}"
 
     return mbar.compute_overlap()["scalar"]
 
