@@ -566,7 +566,7 @@ def bar_overlap(w_F, w_R):
 
     assert np.isclose(
         mbar.f_k[1] - mbar.f_k[0], bar_df
-    ), f"BAR: {bar_df} +- {bar_ddF} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}"
+    ), f"BAR: {bar_df} +- {bar_ddf} | MBAR: {mbar.f_k[1] - mbar.f_k[0]}"
 
     return mbar.compute_overlap()["scalar"]
 
@@ -586,10 +586,9 @@ def exp(w_F, compute_uncertainty=True, is_timeseries=False):
 
     Returns
     -------
-    'Delta_f' : float
-        Free energy difference
-    'dDelta_f' : float
-        Estimated standard deviation of free energy difference
+    dict_vals: dict[float]
+        Dictionary with keys `Delta_f` and `dDelta_f` for the free energy difference and its
+        esimated deviation, respectively.
 
     Notes
     -----
