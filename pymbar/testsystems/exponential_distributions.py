@@ -114,7 +114,7 @@ class ExponentialTestCase(object):
         N_k : np.ndarray, shape=(n_states), dtype=float
            N_k[k] is the number of samples generated from state k
         s_n : np.ndarray, shape=(n_samples), dtype='int'
-            s_n is the state of origin of x_n           
+            s_n is the state of origin of x_n
 
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
             1D harmonic oscillator positions
@@ -138,7 +138,7 @@ class ExponentialTestCase(object):
         x_kn = np.zeros([self.n_states, N_max], np.float64)
         u_kln = np.zeros([self.n_states, self.n_states, N_max], np.float64)
         x_n = np.zeros([N_tot], np.float64)
-        s_n = np.zeros([N_tot], np.int)
+        s_n = np.zeros([N_tot], int)
         u_kn = np.zeros([self.n_states, N_tot], np.float64)
         index = 0
         for k, N in enumerate(N_k):
@@ -160,7 +160,7 @@ class ExponentialTestCase(object):
             raise Exception("Unknown mode '{}'".format(mode))
 
         return
-    
+
     @classmethod
     def evenly_spaced_exponentials(cls, n_states, n_samples_per_state, lower_rate=1.0, upper_rate=3.0):
         """Generate samples from evenly spaced exponential distributions.
@@ -196,7 +196,7 @@ class ExponentialTestCase(object):
         s_n : np.ndarray, shape=(n_samples)
             State of origin of each sample
         """
-                
+
         name = "%dx%d exponentials" % (n_states, n_samples_per_state)
 
         rates = np.linspace(lower_rate, upper_rate, n_states)
