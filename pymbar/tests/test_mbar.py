@@ -374,7 +374,7 @@ def test_mbar_computePMF():
     xmin = test.O_k[refstate] - 1
     xmax = test.O_k[refstate] + 1
     within_bounds = (x_n >= xmin) & (x_n < xmax)
-    bin_centers = dx*np.arange(np.int(xmin/dx),np.int(xmax/dx)) + dx/2
+    bin_centers = dx*np.arange(int(xmin/dx),int(xmax/dx)) + dx/2
     bin_n = np.zeros(len(x_n),int)
     bin_n[within_bounds] = 1 + np.floor((x_n[within_bounds]-xmin)/dx)
     # 0 is reserved for samples outside the domain.  We will ignore this state
