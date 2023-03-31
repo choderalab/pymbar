@@ -15,7 +15,6 @@ try:
         raise ImportError("Jax disabled by force_no_jax in mbar_solvers.py")
     from jax.config import config
 
-    config.update("jax_enable_x64", True)
 
     from jax.numpy import exp, sum, newaxis, diag, dot, s_
     from jax.numpy import pad as npad
