@@ -1474,8 +1474,14 @@ class FES:
                 fx_vals[i] = np.nan
                 dfx_vals[i] = np.nan
                 continue
-
-            bin_label = histogram_data["bin_label"][tuple(l)]
+            
+            # edit by Reilly Osadchey Brown 6.8.2023
+            # original line: bin_label = histogram_data["bin_label"][tuple(l)]
+            # Key Error is now not thrown when the key doesn't exist in dictionary
+            # Instead it returns -1 such that the bin gets NaN value but at least it doesn't crash
+            # this issue is likely due to somethign going wrong upstream 
+            bin_label = histogram_data["bin_label"].get( tuple(l) , -1) # return -1 for not found key
+            
             if bin_label >= 0:
                 fx_vals[i] = f_i[bin_order[bin_label]]
                 dfx_vals[i] = df_i[bin_order[bin_label]]
