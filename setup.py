@@ -27,7 +27,10 @@ setup(
     install_requires=["numpy>=1.12",
                       "scipy",
                       "numexpr",
-                      "jaxlib;platform_system!='Windows'",
-                      "jax;platform_system!='Windows'"
                       ],
+    extras_require={
+        "jax": ["jaxlib;platform_system!='Windows'",
+                "jax;platform_system!='Windows'"
+                ],
+    },
 )

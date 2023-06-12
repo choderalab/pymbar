@@ -12,20 +12,34 @@ force_no_jax = False  # Temporary until we can make a proper setting to enable/d
 try:
     #### JAX related imports
     if force_no_jax:
+        # Capture user-disabled JAX instead "JAX not found"
         raise ImportError("Jax disabled by force_no_jax in mbar_solvers.py")
-    from jax.config import config
+    try:
+        from jax.config import config
 
-    config.update("jax_enable_x64", True)
+        config.update("jax_enable_x64", True)
 
-    from jax.numpy import exp, sum, newaxis, diag, dot, s_
-    from jax.numpy import pad as npad
-    from jax.numpy.linalg import lstsq
-    import jax.scipy.optimize as optimize_maybe_jax
-    from jax.scipy.special import logsumexp
+        from jax.numpy import exp, sum, newaxis, diag, dot, s_
+        from jax.numpy import pad as npad
+        from jax.numpy.linalg import lstsq
+        import jax.scipy.optimize as optimize_maybe_jax
+        from jax.scipy.special import logsumexp
 
-    from jax import jit as jit_or_passthrough
+        from jax import jit as jit_or_passthrough
 
-    use_jit = True
+        use_jit = True
+    except ImportError:
+        # Catch no JAX and throw a warning
+        warnings.warn("********* JAX NOT FOUND *********\n"
+                      " PyMBAR can run faster with JAX  \n"
+                      " But will work fine without it   \n"
+                      "Either install with pip or conda:\n"
+                      "      pip install pybar[jax]     \n"
+                      "               OR                \n"
+                      "      conda install pymbar       \n"
+                      "*********************************"
+                      )
+        raise  # Continue with the raised Import Error
 
 except ImportError:
     # No JAX found, overlap imports
