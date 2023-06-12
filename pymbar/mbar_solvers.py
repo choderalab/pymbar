@@ -30,7 +30,8 @@ try:
         use_jit = True
     except ImportError:
         # Catch no JAX and throw a warning
-        warnings.warn("********* JAX NOT FOUND *********\n"
+        warnings.warn("\n"
+                      "********* JAX NOT FOUND *********\n"
                       " PyMBAR can run faster with JAX  \n"
                       " But will work fine without it   \n"
                       "Either install with pip or conda:\n"
