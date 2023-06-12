@@ -290,7 +290,6 @@ def bar(
     # Iterate to convergence or until maximum number of iterations has been exceeded.
 
     for iteration in range(maximum_iterations + 1):
-
         DeltaF_old = DeltaF
 
         if method == "false-position":
@@ -370,7 +369,6 @@ def bar(
             raise ConvergenceError(message)
 
     if compute_uncertainty:
-
         #############
         # Compute asymptotic variance estimate using Eq. 10a of Bennett,
         # 1976 (except with n_1<f>_1^2 in the second denominator, it is

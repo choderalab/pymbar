@@ -17,7 +17,6 @@ z_scale_factor = 12.0
 
 
 def generate_fes_data(ndim=1, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, xrange=None):
-
     x0 = np.zeros([ndim])  # center of base potential
     numbrellas = 1
     nperdim = np.zeros([ndim], int)
@@ -98,7 +97,6 @@ def generate_fes_data(ndim=1, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, x
 
 @pytest.fixture(scope="module")
 def fes_1d():
-
     gridscale = 0.2
     nbinsperdim = 15
     xrange = [[-3, 3]]
@@ -190,7 +188,6 @@ def fes_1d():
 
 @pytest.fixture(scope="module")
 def fes_2d():
-
     xrange = [[-3, 3], [-3, 3]]
     ndim = 2
     nsamples = 300
@@ -320,7 +317,6 @@ def fes_2d():
     ],
 )
 def test_1d_fes_histogram(fes_1d, reference_point):
-
     fes = fes_1d["fes"]
 
     histogram_parameters = dict()
@@ -345,7 +341,6 @@ def test_1d_fes_histogram(fes_1d, reference_point):
 
 
 def base_1d_fes_kde(fes_1d, gen_kwargs, reference_point):
-
     fes = fes_1d["fes"]
 
     kde_parameters = dict()
@@ -405,7 +400,6 @@ def test_1d_fes_kde_bootstraped(fes_1d):
 
 
 def base_1d_fes_spline(fes_1d, gen_kwargs, reference_point):
-
     fes = fes_1d["fes"]
     bin_centers = fes_1d["bin_centers"]
     fes_analytical = fes_1d["fes_analytical"]
@@ -487,7 +481,6 @@ def test_1d_fes_spline_bootstraped(fes_1d):
     ],
 )
 def test_2d_fes_histogram(fes_2d, reference_point):
-
     """testing fes_generate_fes and fes_get_fes in 2D"""
 
     fes = fes_2d["fes"]
@@ -536,7 +529,6 @@ def test_2d_fes_histogram(fes_2d, reference_point):
     ],
 )
 def test_2d_fes_kde(fes_2d, gen_kwargs, reference_point):
-
     fes = fes_2d["fes"]
     fes_analytical = fes_2d["fes_analytical"]
 

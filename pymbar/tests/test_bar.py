@@ -58,7 +58,6 @@ def test_sample(system_generator):
 
 
 def test_bar_free_energies(bar_and_test):
-
     """Can bar calculate moderately correct free energy differences?"""
 
     bars, test = bar_and_test["bars"], bar_and_test["test"]
@@ -100,7 +99,6 @@ def test_bar_free_energies(bar_and_test):
 
 
 def test_bar_overlap():
-
     for system_generator in system_generators:
         name, test = system_generator()
         x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode="u_kn")

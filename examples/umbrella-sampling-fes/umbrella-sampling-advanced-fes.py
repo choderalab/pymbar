@@ -277,7 +277,6 @@ xstart = np.linspace(chi_min, chi_max, nbins * 3)
 
 feses = {}
 for methodfull in methods:
-
     # create a fresh copy of the initialized fes object. Operate on that within the loop.
     # do the deepcopy here since there seem to be issues if it's done after data is added
     # For example, the scikit-learn kde object fails to deepopy.
@@ -302,7 +301,6 @@ for methodfull in methods:
         )
 
     if method == "kde":
-
         kde_parameters = {}
         # set the sigma for the spline.
         kde_parameters["bandwidth"] = 0.5 * ((chi_max - chi_min) / nbins)
@@ -315,7 +313,6 @@ for methodfull in methods:
         f_i_kde = results["f_i"]  # kde results
 
     if method in ["unbiased", "biased", "simple"]:
-
         spline_parameters = {}
         if method == "unbiased":
             spline_parameters["spline_weights"] = "unbiasedstate"

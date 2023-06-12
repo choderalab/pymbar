@@ -30,16 +30,17 @@ try:
         use_jit = True
     except ImportError:
         # Catch no JAX and throw a warning
-        warnings.warn("\n"
-                      "********* JAX NOT FOUND *********\n"
-                      " PyMBAR can run faster with JAX  \n"
-                      " But will work fine without it   \n"
-                      "Either install with pip or conda:\n"
-                      "      pip install pybar[jax]     \n"
-                      "               OR                \n"
-                      "      conda install pymbar       \n"
-                      "*********************************"
-                      )
+        warnings.warn(
+            "\n"
+            "********* JAX NOT FOUND *********\n"
+            " PyMBAR can run faster with JAX  \n"
+            " But will work fine without it   \n"
+            "Either install with pip or conda:\n"
+            "      pip install pybar[jax]     \n"
+            "               OR                \n"
+            "      conda install pymbar       \n"
+            "*********************************"
+        )
         raise  # Continue with the raised Import Error
 
 except ImportError:
@@ -446,7 +447,6 @@ def mbar_W_nk(u_kn, N_k, f_k):
 
 
 def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
-
     """
     Determine dimensionless free energies by a combination of Newton-Raphson iteration and self-consistent iteration.
     Picks whichever method gives the lowest gradient.
@@ -512,7 +512,6 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
     min_sc_iter = options["min_sc_iter"]
     warn = "Did not converge."
     for iteration in range(0, maxiter):
-
         if use_jit:
             (f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr) = jax_core_adaptive(
                 u_kn, N_k, f_k, options["gamma"]

@@ -19,21 +19,23 @@ The easiest way to install the `pymbar` release is via [conda](http://conda.pyda
 ```bash
 conda install -c conda-forge pymbar
 ```
-
-TODO: Add notes about a pymbar-core for non-jax acceleration.
+which will come with JAX to speed up the code. Or to get the non-JAX accelerated version:
+```bash
+conda install -c conda-forge pymbar-core
+```
 
 You can also install JAX accelerated `pymbar` from the [Python package index](https://pypi.python.org/pypi/pymbar) 
 using `pip`:
-
 ```bash
 pip install pymbar[jax]
 ```
-or the non-jax-accelerated version (which is smaller in dependencies) with
+or the non-jax-accelerated version with
 ```bash
 pip install pymbar
 ```
 Whether you install the JAX accelerated or non-JAX-accelerated version does not 
-change any calls or how the code is run. 
+change any calls or how the code is run. The non-Jax version is smaller on disk due to smaller
+dependencies, but may not run as fast.
 
 
 The development version can be installed directly from github via `pip`:
