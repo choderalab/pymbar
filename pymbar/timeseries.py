@@ -177,7 +177,6 @@ def statistical_inefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
     t = 1
     increment = 1
     while t < N - 1:
-
         # compute normalized fluctuation correlation function at time t
         C = np.sum(dA_n[0 : (N - t)] * dB_n[t:N] + dB_n[0 : (N - t)] * dA_n[t:N]) / (
             2.0 * float(N - t) * sigma2_AB

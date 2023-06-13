@@ -39,7 +39,6 @@ def stddev_away(namex, errorx, dx):
 
 
 def get_analytical(beta, K, O, observables):
-
     # For a harmonic oscillator with spring constant K,
     # x ~ Normal(x_0, sigma^2), where sigma = 1/sqrt(beta K)
 
@@ -670,7 +669,6 @@ print("============================================")
 def generate_fes_data(
     ndim=1, nbinsperdim=15, nsamples=1000, K0=20.0, Ku=100.0, gridscale=0.2, xrange=((-3, 3),)
 ):
-
     x0 = np.zeros([ndim], np.float64)  # center of base potential
     numbrellas = 1
     nperdim = np.zeros([ndim], int)

@@ -57,6 +57,7 @@ ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
 JAX_SOLVER_PROTOCOL = mbar_solvers.JAX_SOLVER_PROTOCOL
 BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
 
+
 # =========================================================================
 # MBAR class definition
 # =========================================================================
@@ -364,7 +365,6 @@ class MBAR:
         protocols = {pnames[0]: solver_protocol, pnames[1]: bootstrap_solver_protocol}
 
         for defl, rob, pname in zip(defaults, robusts, pnames):
-
             prot = protocols[pname]
             if prot is None or prot == "default":
                 prot = defl
@@ -972,7 +972,6 @@ class MBAR:
             A_n[i, :] = A_n[i, :] + (A_min[i] - logfactors[i])
 
         if return_theta:
-
             # Note: these variances will be the same whether or not we
             # subtract a different constant from each A_i
             # for efficency, output theta in block form
@@ -1029,7 +1028,6 @@ class MBAR:
 
     # =========================================================================
     def compute_covariance_of_sums(self, d_ij, K, a):
-
         """
         We wish to calculate the variance of a weighted sum of free energy differences.
         for example ``var(\\sum a_i df_i)``.
@@ -1919,7 +1917,6 @@ class MBAR:
         return -1.0 * logsumexp(self.f_k + u_n[:, np.newaxis] - self.u_kn.T, b=self.N_k, axis=1)
 
     def _initialize_with_bar(self, u_kn, f_k_init=None):
-
         """
 
         Internal method for intializing free energies simulations with BAR.

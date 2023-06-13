@@ -81,7 +81,6 @@ class HarmonicOscillatorsTestCase(object):
         return (self.beta * self.K_k) ** -0.5
 
     def analytical_observable(self, observable="position"):
-
         if observable == "position":
             return self.analytical_means()
         if observable == "potential energy":

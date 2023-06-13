@@ -56,7 +56,6 @@ def test_sample(system_generator):
 
 
 def test_EXP_free_energies(exp_and_test):
-
     """Can exp calculate moderately correct free energy differences?"""
 
     exps, test = exp_and_test["exps"], exp_and_test["test"]

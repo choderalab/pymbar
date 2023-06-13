@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 
 
 def order_replicates(replicates, K):
-
     """
     TODO: Add description for this function and types for parameters
 
@@ -56,7 +55,7 @@ def order_replicates(replicates, K):
     sigma += sigmacorr
 
     yi = []
-    for (replicate_index, replicate) in enumerate(replicates):
+    for replicate_index, replicate in enumerate(replicates):
         yi.append(replicate["error"] / sigma)
     yiarray = np.asarray(yi)
     sortedyi = np.zeros(np.shape(yiarray))
@@ -76,7 +75,6 @@ def order_replicates(replicates, K):
 
 
 def anderson_darling(replicates, K):
-
     """
     TODO: Description here
 
@@ -300,7 +298,7 @@ def generate_confidence_intervals(replicates, K):
         b = 1.0
         # how many dimensions in the data?
 
-        for (replicate_index, replicate) in enumerate(replicates):
+        for replicate_index, replicate in enumerate(replicates):
             # Compute fraction of free energy differences where error <= alpha sigma
             # We only count differences where the analytical difference is larger than a cutoff, so that the results will not be limited by machine precision.
             if dim == 0:

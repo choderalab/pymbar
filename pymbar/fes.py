@@ -229,7 +229,6 @@ class FES:
         n_bootstraps=0,
         seed=-1,
     ):
-
         """
         Given an intialized MBAR object, a set of points,
         the desired energies at that point, and a method, generate
@@ -439,7 +438,6 @@ class FES:
         return result_vals  # should we return results under some other conditions?
 
     def _setup_fes_histogram(self, histogram_parameters):
-
         """
         Does initial processsing of histogram_parameters
 
@@ -476,7 +474,6 @@ class FES:
             self.histogram_datas = None
 
     def _generate_fes_histogram(self, b, x_n, w_nb, log_w_nb):
-
         """
         Parameters
         ----------
@@ -603,7 +600,6 @@ class FES:
             self.histogram_datas.append(histogram_data)
 
     def _setup_fes_kde(self, kde_parameters):
-
         """
         Does initial processsing of kde_parameters
 
@@ -652,7 +648,6 @@ class FES:
         self.kde = kde
 
     def _generate_fes_kde(self, b, x_n, w_n):
-
         """
         Given an fes object with the kde data set up, determine
         the information necessary to define a FES using a kernel density approximation
@@ -704,7 +699,6 @@ class FES:
             self.kdes.append(kde)
 
     def _setup_fes_spline(self, spline_parameters):
-
         """
         Does initial processsing of spline_parameters
 
@@ -813,7 +807,6 @@ class FES:
             self.fes_functions = None
 
     def _get_initial_spline_points(self):
-
         """
         Uses information from spline_parameters to construct initial
         points to create a spline frmo which to start the minimization.
@@ -888,7 +881,6 @@ class FES:
         return xinit, yinit
 
     def _get_initial_spline(self, xinit, yinit):
-
         """
         Uses information from spline_parameters to construct initial
         points to create a spline frmo which to start the minimization.
@@ -977,7 +969,6 @@ class FES:
         return spline_data
 
     def _generate_fes_spline(self, b, x_n, w_n):
-
         """
         Given an fes object with the spline set up, determine
         the information necessary to define a FES.
@@ -1046,7 +1037,6 @@ class FES:
             firsttime = True
 
             while dg > tol:  # until we reach the tolerance.
-
                 f = func(xi, *spline_args)
 
                 # we need some error handling: if we stepped too far, we should go back
@@ -1109,7 +1099,6 @@ class FES:
 
     @staticmethod
     def _calculate_information_criteria(nparameters, minus_log_likelihood, N):
-
         """
         Calculate and store various informaton criterias
 
@@ -1369,7 +1358,6 @@ class FES:
                 raise ParameterError("Specified reference point for FES not given")
 
         if reference_point in ["from-lowest", "from-specified", "all-differences"]:
-
             if reference_point == "from-lowest":
                 # Determine free energy with lowest free energy to serve as reference point
                 j = histogram_data["f"].argmin()
@@ -1597,7 +1585,6 @@ class FES:
             df_i = None
 
         elif uncertainty_method == "bootstrap":
-
             if self.kdes is None:
                 raise ParameterError(
                     f"Cannot calculate bootstrap error of boostrap KDE's not determined"
@@ -1867,7 +1854,6 @@ class FES:
         self.mc_data["g"] = guse  # statistical efficiency used for subsampling
 
     def get_confidence_intervals(self, xplot, plow, phigh, reference="zero"):
-
         """
         Parameters
         ----------
@@ -1937,7 +1923,6 @@ class FES:
         return return_vals
 
     def get_mc_data(self):
-
         """convenience function to retrieve MC data
 
         Parameters
@@ -1964,7 +1949,6 @@ class FES:
             return self.mc_data
 
     def _get_MC_loglikelihood(self, x_n, w_n, spline_weights, spline, xrange):
-
         """
         Parameters
         ----------
@@ -2023,7 +2007,6 @@ class FES:
         return loglikelihood
 
     def _MC_step(self, x_n, w_n, stepsize, xrange, spline_weights, logprior):
-
         """sample over the posterior space of the FES as splined.
 
         Parameters
@@ -2114,7 +2097,6 @@ class FES:
         return results
 
     def _bspline_calculate_f(self, xi, x_n, w_n):
-
         """Calculate the maximum likelihood / KL divergence of the FES represented using B-splines.
 
         Parameters
@@ -2321,7 +2303,6 @@ class FES:
         return g
 
     def _bspline_calculate_h(self, xi, x_n, w_n):
-
         """Calculate the Hessian of the maximum likelihood / KL divergence of the FES represented using B-splines.
 
         Parameters
@@ -2411,7 +2392,6 @@ class FES:
             for i in range(nspline - 1):
                 for j in range(0, i + 1):
                     if np.abs(i - j) <= kdegree:
-
                         # now compute the expectation of each derivative
                         pE = self._integrate(
                             ddexpf,

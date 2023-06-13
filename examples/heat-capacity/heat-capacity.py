@@ -13,6 +13,7 @@ import numpy as np
 import pymbar  # for MBAR analysis
 from pymbar import timeseries  # for timeseries analysis
 
+
 # ===================================================================================================
 # INPUT PARAMETERS
 # ===================================================================================================
@@ -175,7 +176,6 @@ def read_simulation_temps(pathname, num_temps):
 
 
 def print_results(string, E, dE, Cv, dCv, types):
-
     print(string)
     print("Temperature    dA        <E> +/- d<E>  ", end=" ")
     for t in types:
@@ -403,7 +403,6 @@ for n in range(n_boots_work):
 
     # only loop over the points that will be plotted, not the ones that
     for i in range(originalK, K):
-
         # Now, calculae heat capacity by T-differences
         im = i - 1
         ip = i + 1

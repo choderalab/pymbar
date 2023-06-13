@@ -74,7 +74,6 @@ class ExponentialTestCase(object):
         return np.sqrt(self.rates**-2.0)
 
     def analytical_observable(self, observable="position"):
-
         if observable == "position":
             return self.analytical_means()
         if observable == "position^2":

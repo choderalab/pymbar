@@ -75,7 +75,6 @@ def test_statistical_inefficiency_fft(data):
 
 @has_statmodels
 def test_statistical_inefficiency_fft_gaussian():
-
     # Run multiple times to get things with and without negative "spikes" at C(1)
     for i in range(5):
         x = np.random.normal(size=100000)

@@ -181,7 +181,6 @@ def test_sample(system_generator):
     ],
 )
 def test_mbar_free_energies(mbar_and_test, uncertainty_method):
-
     """Can MBAR calculate moderately correct free energy differences?"""
     mbar, test = mbar_and_test["mbar"], mbar_and_test["test"]
 
@@ -216,7 +215,6 @@ def test_mbar_initialization(fixed_harmonic_sample, method):
 
 
 def test_mbar_compute_expectations_position_averages(mbar_and_test):
-
     """Can MBAR calculate E(x_n)??"""
 
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
@@ -231,7 +229,6 @@ def test_mbar_compute_expectations_position_averages(mbar_and_test):
 
 
 def test_mbar_compute_expectations_position_differences(mbar_and_test):
-
     """Can MBAR calculate E(x_n)??"""
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
     results = mbar.compute_expectations(x_n, output="differences")
@@ -244,7 +241,6 @@ def test_mbar_compute_expectations_position_differences(mbar_and_test):
 
 
 def test_mbar_compute_expectations_position2(mbar_and_test):
-
     """Can MBAR calculate E(x_n^2)??"""
 
     mbar, test, x_n = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["x_n"]
@@ -258,7 +254,6 @@ def test_mbar_compute_expectations_position2(mbar_and_test):
 
 
 def test_mbar_compute_expectations_potential(mbar_and_test):
-
     """Can MBAR calculate E(u_kn)??"""
 
     mbar, test, u_kn = mbar_and_test["mbar"], mbar_and_test["test"], mbar_and_test["u_kn"]
@@ -329,7 +324,6 @@ def multiExpectationAssertion(results, test, state=1):
 
 
 def test_mbar_compute_multiple_expectations(mbar_and_test):
-
     """Can MBAR calculate E(u_kn)??"""
 
     mbar, test, x_n, u_kn = (
@@ -347,7 +341,6 @@ def test_mbar_compute_multiple_expectations(mbar_and_test):
 
 
 def test_mbar_compute_multiple_expectations_more_dims(mbar_and_test_kln):
-
     """Can MBAR calculate E(u_kn) with 3 dimensions??"""
 
     mbar, test, x_n, u_kn = (
@@ -367,7 +360,6 @@ def test_mbar_compute_multiple_expectations_more_dims(mbar_and_test_kln):
 
 
 def test_mbar_compute_entropy_and_enthalpy(mbar_and_test, with_uxx=True):
-
     """Can MBAR calculate f_k, <u_k> and s_k ??"""
 
     mbar, test, x_n, u_kn = (
@@ -472,7 +464,6 @@ def test_mbar_compute_overlap_nonanalytical(mbar_and_test):
 
 
 def test_mbar_weights(mbar_and_test):
-
     """testing weights"""
 
     mbar = mbar_and_test["mbar"]
@@ -491,7 +482,6 @@ def test_mbar_weights(mbar_and_test):
     ],
 )
 def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
-
     """testing compute_perturbed_free_energies"""
 
     # only do MBAR with the first and last set
@@ -526,7 +516,6 @@ def test_mbar_computePerturbedFreeEnergeies(system_generator, mode, bad_n):
 
 
 def test_mbar_compute_expectations_inner(mbar_and_test):
-
     """Can MBAR calculate general expectations inner code (note: this just tests completion)"""
 
     mbar, test, x_n, u_kn = (
