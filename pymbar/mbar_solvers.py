@@ -26,7 +26,7 @@ try:
                 "****** PyMBAR will use 64-bit JAX! *******\n"
                 "* JAX is currently set to 32-bit bitsize *\n"
                 "* which is its default.                  *\n"
-                "*                                        *\n"                
+                "*                                        *\n"
                 "* PyMBAR requires 64-bit mode and WILL   *\n"
                 "* enable JAX's 64-bit mode when called.  *\n"
                 "*                                        *\n"
