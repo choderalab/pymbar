@@ -84,6 +84,13 @@ where `results` is a dictionary with keys `mu`, `sigma`, and `Theta`, where `mu[
 
 See the docstring help for these individual methods for more information on exact usage; in Python or IPython, you can view the docstrings with `help()`.
 
+JAX needs 64-bit mode
+---------------------
+PyMBAR needs 64-bit floats to provide reliable answers. JAX by default uses 
+[32-bit (Single) bitsize](https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#double-64bit-precision). 
+PyMBAR will turn on JAX's 64-bit mode, which may cause issues with some separate uses of JAX in the same code as PyMBAR, 
+such as existing Neural Network (NN) Models for machine learning.
+
 Authors
 -------
 * Kyle A. Beauchamp <kyle.beauchamp@choderalab.org>
