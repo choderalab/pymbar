@@ -1,5 +1,6 @@
 import logging
 import warnings
+from functools import wraps
 
 import numpy as np
 
@@ -135,6 +136,9 @@ def jit_or_pass_after_bitsize(jitable_fn):
         A function which can be jit'd
     """
 
+    @wraps(
+        jitable_fn
+    )  # Helper to ensure the decorated function still registers for docs and inspection
     def staggered_jit(*args, **kwargs):
         # This will only trigger if JAX is set
         if use_jit and not config.x64_enabled:
