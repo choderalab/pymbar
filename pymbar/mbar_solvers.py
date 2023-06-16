@@ -23,6 +23,12 @@ accelerator = "numpy"
 # but want to selectively use them
 def init_numpy():
     """Set the imports for the basic numpy methods"""
+    # Disable the pylint problems for this block
+    # pylint: disable=global-variable-not-assigned
+    # pylint: disable=global-statement
+    # pylint: disable=unused-import
+    # pylint: disable=global-variable-undefined
+
     # Fallback/default solver methods
     # NOTE: ALL ACCELERATORS MUST SHADOW THIS NAMESPACE EXACTLY
     global exp, sum, newaxis, diag, dot, s_, npad, lstsq, scipy_optimize, logsumexp
@@ -41,7 +47,7 @@ def init_numpy():
     # Precondition if you need to do something different
     def precondition_jit(fn):
         return jit(fn)
-    
+
     use_jit = False
     accelerator = "numpy"
     logger.info("JAX was either not detected or disabled, using standard NumPy and SciPy")
@@ -49,6 +55,11 @@ def init_numpy():
 
 def init_jax():
     """Set the imports for the JAX accelerated methods"""
+    # Disable the pylint problems for this block
+    # pylint: disable=global-variable-not-assigned
+    # pylint: disable=global-statement
+    # pylint: disable=unused-import
+    # pylint: disable=global-variable-undefined
     # NOTE: ALL ACCELERATORS MUST SHADOW THIS NAMESPACE EXACTLY
     global exp, sum, newaxis, diag, dot, s_, npad, lstsq, scipy_optimize, logsumexp
     global jit, precondition_jit
@@ -64,6 +75,7 @@ def init_jax():
         from jax.scipy.special import logsumexp
 
         from jax import jit
+
         def precondition_jit(jitable_fn):
             """
             Attempt to set JAX precision if present. This does nothing if JAX is not present
@@ -94,7 +106,7 @@ def init_jax():
                 return jited_fn(*args, **kwargs)
 
             return staggered_jit
-        
+
         # Throw warning only if the whole of JAX is found
         if not config.x64_enabled:
             # Warn that we're going to be setting 64 bit jax
@@ -131,12 +143,10 @@ def init_jax():
         # Fall back to NumPy import
         init_numpy()
 
+
 # Accelerator map for the set method below
-ACCELERATOR_MAP = {
-    "numpy": init_numpy,
-    "jax": init_jax
-}
- 
+ACCELERATOR_MAP = {"numpy": init_numpy, "jax": init_jax}
+
 # Try to set the initial/default accelerator
 init_jax()
 
@@ -146,23 +156,27 @@ def set_accelerator(accelerator_name: str):
     """
     Set the accelerator in the namespace for this module
     """
-    global accelerator  # We want to modify the current accelerator
-    # Saving it to new tag does not change since we're saving the immutable string object
+    # Saving accelerator to new tag does not change since we're saving the immutable string object
     accel = accelerator_name.lower()
     if accel not in ACCELERATOR_MAP:
-        raise ValueError(f"No accelerator implementation for {accel}, please use one of the following:\n" +
-                         "".join((f"* {a}\n" for a in ACCELERATOR_MAP.keys())) +
-                         f"(case-insentive)"
-                         )
+        raise ValueError(
+            f"No accelerator implementation for {accel}, please use one of the following:\n"
+            + "".join((f"* {a}\n" for a in ACCELERATOR_MAP.keys()))
+            + f"(case-insentive)"
+        )
     logger.info(f"Attempting to change accelerator to {accel}...")
     old_accelerator = accelerator
-    ACCELERATOR_MAP[accelerator_name.lower()]()
+    # Check the accelerator map, call the accelerator init which will handle the accelerator at the top level
+    ACCELERATOR_MAP[accel]()
     new_accelerator = accelerator
-    if new_accelerator == old_accelerator:
-        logger.warning(f"Attempted to change accelerator from {old_accelerator} to {accel},"
-                       f" but something went wrong. Please check the log outputs above.")
+    if new_accelerator == old_accelerator and accel != old_accelerator:
+        logger.warning(
+            f"Attempted to change accelerator from {old_accelerator} to {accel},"
+            f" but something went wrong. Please check the log outputs above."
+        )
         return
     logger.info(f"Successfully changed to accelerator {accel}!")
+
 
 # Note on "pylint: disable=invalid-unary-operand-type"
 # Known issue with astroid<2.12 and numpy array returns, but 2.12 doesn't fix it due to returns being jax.

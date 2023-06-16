@@ -96,7 +96,7 @@ class MBAR:
         n_bootstraps=0,
         bootstrap_solver_protocol=None,
         rseed=None,
-        accelerator="numpy"
+        accelerator="jax",
     ):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
