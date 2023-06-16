@@ -186,11 +186,11 @@ def bar(
         See code comments below for derivations of the two methods.
     maximum_iterations : int, optional, default=500
         Can be set to limit the maximum number of iterations performed
-    relative_tolerance : float, optional, default=1E-11
-        Can be set to determine the relative tolerance convergence criteria (defailt 1.0e-11)
+    relative_tolerance : float, optional, default=1E-12
+        Can be set to determine the relative tolerance convergence criteria (default 1.0e-12)
     verbose : bool
         Should be set to True if verbse debug output is desired (default False)
-    method: str, optional, defualt='false-position'
+    method: str, optional, default='false-position'
         Choice of method to solve bar nonlinear equations: one of 'bisection', 'self-consistent-iteration' or 'false-position' (default : 'false-position').
     iterated_solution: bool, optional, default=True
         whether to fully solve the optimized bar equation to consistency, or to stop after one step, to be
@@ -579,18 +579,18 @@ def exp(w_F, compute_uncertainty=True, is_timeseries=False):
     compute_uncertainty : bool, optional, default=True
         if False, will disable computation of the statistical uncertainty (default: True)
     is_timeseries : bool, default=False
-        if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
+        if True, correlation in data is corrected for by estimation of statistical inefficiency (default: False)
         Use this option if you are providing correlated timeseries data and have not subsampled the data to produce uncorrelated samples.
 
     Returns
     -------
     dict_vals: dict[float]
         Dictionary with keys `Delta_f` and `dDelta_f` for the free energy difference and its
-        esimated deviation, respectively.
+        estimated deviation, respectively.
 
     Notes
     -----
-    If you are prodividing correlated timeseries data, be sure to set the 'timeseries' flag to True
+    If you are providing correlated timeseries data, be sure to set the 'timeseries' flag to True
 
     Examples
     --------
@@ -657,7 +657,7 @@ def exp_gauss(w_F, compute_uncertainty=True, is_timeseries=False):
     compute_uncertainty : bool, optional, default=True
         if False, will disable computation of the statistical uncertainty (default: True)
     is_timeseries : bool, default=False
-        if True, correlation in data is corrected for by estimation of statisitcal inefficiency (default: False)
+        if True, correlation in data is corrected for by estimation of statistical inefficiency (default: False)
         Use this option if you are providing correlated timeseries data and have not subsampled the data to
         produce uncorrelated samples.
 
