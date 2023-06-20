@@ -155,3 +155,32 @@ class MBARSolverAcceleratorMethods(ABC):
     @abstractmethod
     def _adaptive_core(self, u_kn, N_k, f_k, g, options):
         pass
+
+    # def __hash__(self):
+    #   return hash((self.exp,
+    #                self.sum,
+    #                self.diag,
+    #                self.newaxis,
+    #                self.dot,
+    #                self.s_,
+    #                self.pad,
+    #                self.lstsq,
+    #                self.optimize,
+    #                self.logsumexp,
+    #                self.jit
+    #                ))
+    #
+    # def __eq__(self):
+    #     return hash((self.exp,
+    #                  self.sum,
+    #                  self.diag,
+    #                  self.newaxis,
+    #                  self.dot,
+    #                  self.s_,
+    #                  self.pad,
+    #                  self.lstsq,
+    #                  self.optimize,
+    #                  self.logsumexp,
+    #                  self.jit
+    #                  ))
+

@@ -88,44 +88,41 @@ class MBARSolverJAX(MBARSolver):
     def jit(self):
         return jit
 
+    # def _precondition_jit(self, jitable_fn):
+    #     @wraps(jitable_fn)  # Helper to ensure the decorated function still registers for docs and inspection
+    #     def wrapped_precog_jit(self, *args, **kwargs):
+    #         # Uses "self" here as intercepted first arg for instance of MBARSolver
+    #         jited_fn = self.jit(jitable_fn)
+    #         return jited_fn(*args, **kwargs)
+    #     return wrapped_precog_jit
 
-    class JitDecorators:
-        """
-        Internal helper class to do any preconditioning of JIT operations
-        Uses this buried class to allow a decorator with access to the "self" within its precondition
-        """
-        @classmethod
-        def precondition_jit(cls, jitable_fn):
-            @wraps(
-                jitable_fn
-            )  # Helper to ensure the decorated function still registers for docs and inspection
-            def staggered_jit(self, *args, **kwargs):
-                # This will only trigger if JAX is set
-                if not config.x64_enabled:
-                    # Warn that JAX 64-bit will being turned on
-                    logger.warning(
-                        "\n"
-                        "******* JAX 64-bit mode is now on! *******\n"
-                        "*     JAX is now set to 64-bit mode!     *\n"
-                        "*   This MAY cause problems with other   *\n"
-                        "*      uses of JAX in the same code.     *\n"
-                        "******************************************\n"
-                    )
-                    config.update("jax_enable_x64", True)
+    def _precondition_jit(self, jitable_fn):
+        @wraps(
+            jitable_fn
+        )  # Helper to ensure the decorated function still registers for docs and inspection
+        def staggered_jit(*args, **kwargs):
+            # This will only trigger if JAX is set
+            if not config.x64_enabled:
+                # Warn that JAX 64-bit will being turned on
+                logger.warning(
+                    "\n"
+                    "******* JAX 64-bit mode is now on! *******\n"
+                    "*     JAX is now set to 64-bit mode!     *\n"
+                    "*   This MAY cause problems with other   *\n"
+                    "*      uses of JAX in the same code.     *\n"
+                    "******************************************\n"
+                )
+                config.update("jax_enable_x64", True)
+            jited_fn = self.jit(jitable_fn)
+            return jited_fn(*args, **kwargs)
+        return staggered_jit
 
-                jited_fn = partial(self.jit, static_argnums=(0,))(jitable_fn)
-                return jited_fn(*args, **kwargs)
-            return staggered_jit
-
-    precondition_jit = JitDecorators.precondition_jit
-
-    @precondition_jit
-    def _adaptive_core(self, u_kn, N_k, f_k, gamma):
+    def _adaptive_core(self, u_kn, N_k, f_k, g, options):
         """JAX version of adaptive inner loop.
         N_k must be float (should be cast at a higher level)
 
         """
-
+        gamma = options["gamma"]
         # Perform Newton-Raphson iterations (with sci computed on the way)
         g = self.mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
         H = self.mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
