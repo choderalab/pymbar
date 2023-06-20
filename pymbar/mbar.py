@@ -234,8 +234,7 @@ class MBAR:
         """
 
         # Set the accelerator methods for the solvers
-        mbar_solvers.set_accelerator(accelerator)
-        self.accelerator = mbar_solvers.accelerator
+        self.solver = mbar_solvers.get_accelerator(accelerator)()
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
@@ -419,7 +418,7 @@ class MBAR:
         else:
             np.random.seed(rseed)
 
-        self.f_k = mbar_solvers.solve_mbar_for_all_states(
+        self.f_k = self.solver.solve_mbar_for_all_states(
             self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
         )
 
@@ -443,7 +442,7 @@ class MBAR:
                 # If we initialized with BAR, then BAR, starting from the provided initial_f_k as well.
                 if initialize == "BAR":
                     f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
-                self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
+                self.f_k_boots[b, :] = self.solver.solve_mbar_for_all_states(
                     self.u_kn[:, rints],
                     self.N_k,
                     f_k_init,
@@ -461,7 +460,7 @@ class MBAR:
 
         # bootstrapped weight matrices not generated here, but when expectations are needed
         # otherwise, it's too much memory to keep
-        self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
+        self.Log_W_nk = self.solver.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
         if self.verbose:
@@ -916,7 +915,7 @@ class MBAR:
                 f_k[0:K] = self.f_k_boots[n - 1, :]
                 ri = self.bootstrap_rints[n - 1]
                 u_kn = self.u_kn[:, ri]
-                Log_W_nk[:, 0:K] = mbar_solvers.mbar_log_W_nk(u_kn, self.N_k, f_k[0:K])
+                Log_W_nk[:, 0:K] = self.solver.mbar_log_W_nk(u_kn, self.N_k, f_k[0:K])
             # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
 
             states_with_samples = self.N_k > 0
