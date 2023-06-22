@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from pymbar import MBAR
+from pymbar.mbar_solvers import get_accelerator, default_solver
 from pymbar.utils_for_testing import assert_equal, assert_allclose
 
 # Pylint doesn't like the interplay between pytest and importing fixtures. disabled the one problem.
@@ -72,7 +73,7 @@ def test_mbar_accelerators_are_accurate(only_test_data, accelerator):
     accelerator_name, accelerator_check = accelerator
     test, x_n, u_kn = only_test_data["test"], only_test_data["x_n"], only_test_data["u_kn"]
     x_n, u_kn, N_k_output, s_n = test.sample(N_k, mode="u_kn")
-    mbar = MBAR(u_kn, N_k, verbose=True, n_bootstraps=200, accelerator=accelerator_name)
+    mbar = build_out_an_mbar(u_kn, N_k, accelerator_name, accelerator_check, boostraps=200)
     results = mbar.compute_free_energy_differences()
     fe = results["Delta_f"]
     fe_sigma = results["dDelta_f"]
@@ -80,10 +81,10 @@ def test_mbar_accelerators_are_accurate(only_test_data, accelerator):
     accelerator_check(mbar)
 
 
-def build_out_an_mbar(u_kn, N_k, accelerator_name, accelerator_check):
+def build_out_an_mbar(u_kn, N_k, accelerator_name, accelerator_check, boostraps=0):
     """Helper function to build an MBAR object"""
-    mbar = MBAR(u_kn, N_k, verbose=True, accelerator=accelerator_name)
-    assert mbar.accelerator == accelerator_name
+    mbar = MBAR(u_kn, N_k, verbose=True, accelerator=accelerator_name, n_bootstraps=boostraps)
+    assert mbar.solver == get_accelerator(accelerator_name)
     accelerator_check(mbar)
     return mbar
 
@@ -105,3 +106,13 @@ def test_mbar_accelerators_can_toggle(static_ukn_nk, accelerator, fallback_accel
     # Rebuild the accelerated version again.
     mbar_rebuild = build_out_an_mbar(u_kn, N_k, accelerator_name, accelerator_check)
     assert_allclose(mbar.f_k, mbar_rebuild.f_k)
+
+
+def test_default_acclerator_is_correct(static_ukn_nk):
+    u_kn, N_k_output = static_ukn_nk
+
+    def blank_check(*args):
+        return True
+
+    mbar = build_out_an_mbar(u_kn, N_k, default_solver, blank_check)
+    assert mbar.solver == get_accelerator(default_solver)
