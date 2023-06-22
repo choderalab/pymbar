@@ -17,7 +17,10 @@ from pymbar.mbar_solvers.mbar_solver import MBARSolver
 
 logger = logging.getLogger(__name__)
 
+# hell: https://github.com/google/jax/discussions/16020
 
+
+@jax.tree_util.register_pytree_node_class
 class MBARSolverJAX(MBARSolver):
     """
     Solver methods for MBAR. Implementations use specific libraries/accelerators to solve the code paths.
@@ -43,6 +46,27 @@ class MBARSolverJAX(MBARSolver):
                 "******************************************\n"
             )
         super().__init__()
+
+    def tree_flatten(self):
+        children = ()  # arrays / dynamic values
+        aux_data = {
+            "exp": self.exp,
+            "sum": self.sum,
+            "diag": self.diag,
+            "newaxis": self.newaxis,
+            "dot": self.dot,
+            "s_": self._s,
+            "pad": self.pad,
+            "lstsq": self.lstsq,
+            "optimize": self.optimize,
+            "logsumexp": self.logsumexp
+        }  # static values
+        aux_data = {}
+        return children, aux_data
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+      return cls()
 
     @property
     def exp(self):
@@ -114,6 +138,9 @@ class MBARSolverJAX(MBARSolver):
                 )
                 config.update("jax_enable_x64", True)
             jited_fn = self.jit(jitable_fn)
+            # jited_fn = partial(jit, static_argnums=(0,))(jitable_fn)
+            # breakpoint()
+            # print(jited_fn._cache_size())
             return jited_fn(*args, **kwargs)
         return staggered_jit
 

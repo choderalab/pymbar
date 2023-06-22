@@ -146,7 +146,7 @@ class MBARSolverAcceleratorMethods(ABC):
 
     def _precondition_jit(self, jitable_fn):
         @wraps(jitable_fn)  # Helper to ensure the decorated function still registers for docs and inspection
-        def wrapped_precog_jit(self, *args, **kwargs):
+        def wrapped_precog_jit(*args, **kwargs):
             # Uses "self" here as intercepted first arg for instance of MBARSolver
             jited_fn = self.jit(jitable_fn)
             return jited_fn(*args, **kwargs)
@@ -156,31 +156,19 @@ class MBARSolverAcceleratorMethods(ABC):
     def _adaptive_core(self, u_kn, N_k, f_k, g, options):
         pass
 
-    # def __hash__(self):
-    #   return hash((self.exp,
-    #                self.sum,
-    #                self.diag,
-    #                self.newaxis,
-    #                self.dot,
-    #                self.s_,
-    #                self.pad,
-    #                self.lstsq,
-    #                self.optimize,
-    #                self.logsumexp,
-    #                self.jit
-    #                ))
-    #
-    # def __eq__(self):
-    #     return hash((self.exp,
-    #                  self.sum,
-    #                  self.diag,
-    #                  self.newaxis,
-    #                  self.dot,
-    #                  self.s_,
-    #                  self.pad,
-    #                  self.lstsq,
-    #                  self.optimize,
-    #                  self.logsumexp,
-    #                  self.jit
-    #                  ))
+    def __hash__(self):
+      return hash((self.exp,
+                   self.sum,
+                   self.diag,
+                   self.newaxis,
+                   self.dot,
+                   self.s_,
+                   self.pad,
+                   self.lstsq,
+                   self.optimize,
+                   self.logsumexp,
+                   self.jit
+                   ))
 
+    def __eq__(self, other):
+        return isinstance(other, MBARSolverAcceleratorMethods) and self.__hash__ == other.__hash__

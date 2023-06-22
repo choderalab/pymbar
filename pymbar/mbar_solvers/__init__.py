@@ -54,6 +54,7 @@ ACCELERATOR_MAP = {"numpy": MBARSolverNumpy}
 try:
     from .jax_solver import MBARSolverJAX
     default_solver = MBARSolverJAX
+    # default_solver = MBARSolverNumpy  # Set fallback solver
     ACCELERATOR_MAP["jax"] = MBARSolverJAX
     logger.info("JAX detected. Using JAX acceleration by default.")
 except ImportError:
