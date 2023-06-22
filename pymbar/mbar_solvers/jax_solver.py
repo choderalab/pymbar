@@ -3,14 +3,17 @@
 import logging
 from functools import wraps
 
-from jax.config import config
+try:
+    from jax.config import config
 
-import jax.numpy as jnp
-from jax.numpy.linalg import lstsq
-import jax.scipy.optimize
-from jax.scipy.special import logsumexp
+    import jax.numpy as jnp
+    from jax.numpy.linalg import lstsq
+    import jax.scipy.optimize
+    from jax.scipy.special import logsumexp
 
-from jax import jit
+    from jax import jit
+except ImportError:
+    raise ImportError("JAX not found!")
 
 from pymbar.mbar_solvers.mbar_solver import MBARSolver
 
