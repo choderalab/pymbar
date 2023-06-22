@@ -1,7 +1,5 @@
 import logging
 import warnings
-from functools import wraps
-from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -66,25 +64,58 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
     Default solver is the numpy solution
     """
 
-    JITABLE_IMPLEMENTATION_METHODS = (
-        "_jit_self_consistent_update",
-    )
+    JITABLE_IMPLEMENTATION_METHODS = ("jit_self_consistent_update",)
 
     def __init__(self):
-        """Apply the precondition to each of the JITED_METHODS"""
-        self._construct_static_methods()
-        for method in (
-                self.JITABLE_ACCELERATOR_METHODS +
-                self.JITABLE_API_METHODS +
-                self.JITABLE_IMPLEMENTATION_METHODS
-        ):
-            setattr(self, method, self._precondition_jit(getattr(self, method)))
+        """
+        Generate all the static methods to make JIT compile clean
 
-    def _construct_static_methods(self):
+        All the methods overwritten in this code are cast to static methods because JIT (at least in JAX)
+        suffers a massive performance loss if you try to JIT a bound method of a class (i.e. anything with
+        a reference to 'self'). See: https://github.com/google/jax/discussions/16020#discussioncomment-5915882
+
+        Marking self as static with a partial doesn't work because we're wrapping the function already once, and we
+        still need the functions/properties found in the class to make this an extensible class for other accelerators
+        in the future.
+        See https://jax.readthedocs.io/en/latest/faq.html#strategy-2-marking-self-as-static
+
+        The PyTree approach didn't seem to work due to the same problem as marking self static because it still needs
+        properties so no gains were made. Its possible I (LNN) misinterpreted something here and this can be used to
+        simplify the code in the future to avoid writing all the static-method generators.
+        https://jax.readthedocs.io/en/latest/faq.html#strategy-3-making-customclass-a-pytree
+
+        If the default methods are used (which are written to call the static generator anyway), then the JIT cache
+        will re-compile them every time, which defeats the whole point. The calls are left in to leave a developer
+        breadcrumb as to what is supposed to go there, and to make linter's happy.
         """
-        Hoo boy.
-        This function creates static methods for each of the
-        """
+        # Dont use just _{method} because any result with leading __ mangles name
+        # E.g. __adaptive_core -> _{ClassName}_adaptive_core
+        self._static_mbar_gradient = generate_static_mbar_gradient(self)
+        self._static_mbar_objective = generate_static_mbar_objective(self)
+        self._static_mbar_objective_and_gradient = generate_static_mbar_objective_and_gradient(
+            self
+        )
+        self._static_mbar_hessian = generate_static_mbar_hessian(self)
+        self._static_mbar_log_W_nk = generate_static_mbar_log_W_nk(self)
+        self._static_mbar_W_nk = generate_static_mbar_W_nk(self, self._static_mbar_log_W_nk)
+        self._static_jit_self_consistent_update = generate_jit_self_consistent_update(self)
+        self._static_precondition_u_kn = generate_static_precondition_u_kn(self)
+        # Apply the precondition to each of the JITABLE_METHODS
+        for method in (
+            self.JITABLE_ACCELERATOR_METHODS
+            + self.JITABLE_API_METHODS
+            + self.JITABLE_IMPLEMENTATION_METHODS
+        ):
+            # Attempt to staticfy if method "_{method}" exists
+            if hasattr(self, "_static_" + method):
+                doc = getattr(self, method).__doc__
+                static = getattr(self, "_static_" + method)
+                #  Replace with static name
+                setattr(self, method, static)
+                # Reset docstring
+                getattr(self, method).__doc__ = doc
+            # Jit
+            setattr(self, method, self._precondition_jit(getattr(self, method)))
 
     def self_consistent_update(self, u_kn, N_k, f_k, states_with_samples=None):
         """Return an improved guess for the dimensionless free energies
@@ -112,21 +143,15 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         # Precondition before feeding the op to the JIT'd function
         # In theory, this can be computed with jax.lax.cond, but trying to reuse code for non-jax paths
         states_with_samples = self.s_[:] if states_with_samples is None else states_with_samples
-        return self._jit_self_consistent_update(
+        return self.jit_self_consistent_update(
             u_kn[states_with_samples], N_k[states_with_samples], f_k[states_with_samples]
         )
 
-    def _jit_self_consistent_update(self, u_kn, N_k, f_k):
+    def jit_self_consistent_update(self, u_kn, N_k, f_k):
         """JAX version of self_consistent update.  For parameters, see self_consistent_update.
         N_k must be float (should be cast at a higher level)
 
         """
-        # Asteroid
-        log_denominator_n = self.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-        # All states can contribute to the numerator term. Check transpose
-        return -1.0 * self.logsumexp(
-            -log_denominator_n - u_kn, axis=1
-        )  # pylint: disable=invalid-unary-operand-type
 
     def mbar_gradient(self, u_kn, N_k, f_k):
         """Gradient of MBAR objective function.
@@ -149,6 +174,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         -----
         This is equation C6 in the JCP MBAR paper.
         """
+        return generate_static_mbar_gradient(self)(u_kn, N_k, f_k)
 
     def mbar_objective(self, u_kn, N_k, f_k):
         """Calculates objective function for MBAR.
@@ -178,6 +204,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         More optimal precision, the objective function uses math.fsum for the
         outermost sum and logsumexp for the inner sum.
         """
+        return generate_static_mbar_objective(self)(u_kn, N_k, f_k)
 
     def mbar_objective_and_gradient(self, u_kn, N_k, f_k):
         """Calculates both objective function and gradient for MBAR.
@@ -212,17 +239,10 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         The gradient is equation C6 in the JCP MBAR paper; the objective
         function is its integral.
         """
+        return generate_static_mbar_objective_and_gradient(self)(u_kn, N_k, f_k)
 
-        log_denominator_n = self.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-        log_numerator_k = self.logsumexp(-log_denominator_n - u_kn, axis=1)
-        grad = -1 * N_k * (1.0 - self.exp(f_k + log_numerator_k))
-
-        obj = sum(log_denominator_n) - self.dot(N_k, f_k)
-
-        return obj, grad
-
-    def mbar_hessian(self, u_kn, N_k, f_k):
-        """Hessian of MBAR objective function.
+    def mbar_hessian(self, u_kn, N_k, f_k) -> np.ndarray:
+        """Hessian of Mmbar_hessianBAR objective function.
 
         Parameters
         ----------
@@ -242,16 +262,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         -----
         Equation (C9) in JCP MBAR paper.
         """
-
-        log_denominator_n = self.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-        logW = f_k - u_kn.T - log_denominator_n[:, self.newaxis]
-        W = self.exp(logW)
-
-        H = self.dot(W.T, W)
-        H *= N_k
-        H *= N_k[:, self.newaxis]
-        H -= self.diag(W.sum(0) * N_k)
-        return -1.0 * H
+        return generate_static_mbar_hessian(self)(u_kn, N_k, f_k)
 
     def mbar_log_W_nk(self, u_kn, N_k, f_k):
         """Calculate the log weight matrix.
@@ -274,10 +285,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         -----
         Equation (9) in JCP MBAR paper.
         """
-
-        log_denominator_n = self.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-        logW = f_k - u_kn.T - log_denominator_n[:, self.newaxis]
-        return logW
+        return generate_static_mbar_log_W_nk(self)(u_kn, N_k, f_k)
 
     def mbar_W_nk(self, u_kn, N_k, f_k):
         """Calculate the weight matrix.
@@ -300,8 +308,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         -----
         Equation (9) in JCP MBAR paper.
         """
-
-        return self.exp(self.mbar_log_W_nk(u_kn, N_k, f_k))
+        return generate_static_mbar_W_nk(self, self.mbar_log_W_nk)(u_kn, N_k, f_k)
 
     def precondition_u_kn(self, u_kn, N_k, f_k):
         """Subtract a sample-dependent constant from u_kn to improve precision
@@ -328,9 +335,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         x_n such that the current objective function value is zero, which
         should give maximum precision in the objective function.
         """
-        u_kn = u_kn - u_kn.min(0)
-        u_kn += (self.logsumexp(f_k - u_kn.T, b=N_k, axis=1)) - self.dot(N_k, f_k) / N_k.sum()
-        return u_kn
+        return generate_static_precondition_u_kn(self)(u_kn, N_k, f_k)
 
     def adaptive(self, u_kn, N_k, f_k, tol=1.0e-8, options=None):
         """
@@ -397,7 +402,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         warn = "Did not converge."
         for iteration in range(0, maxiter):
             f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr = self._adaptive_core(
-                u_kn, N_k, f_k, g, options
+                u_kn, N_k, f_k, g, options["gamma"]
             )
             # we could save the gradient, for the next round, but it's not too expensive to
             # compute since we are doing the Hessian anyway.
@@ -446,7 +451,9 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
 
         if doneIterating:
             if options["verbose"]:
-                logger.info(f"Converged to tolerance of {max_delta:e} in {iteration+1:d} iterations.")
+                logger.info(
+                    f"Converged to tolerance of {max_delta:e} in {iteration+1:d} iterations."
+                )
                 logger.info(
                     f"Of {iteration+1:d} iterations, {nr_iter:d} were Newton-Raphson iterations and {sci_iter:d} were self-consistent iterations"
                 )
@@ -524,7 +531,9 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         """
 
         # we only validate at the outside of the call
-        u_kn_nonzero, N_k_nonzeo, f_k_nonzero = validate_inputs(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
+        u_kn_nonzero, N_k_nonzeo, f_k_nonzero = validate_inputs(
+            u_kn_nonzero, N_k_nonzero, f_k_nonzero
+        )
         f_k_nonzero = f_k_nonzero - f_k_nonzero[0]  # Work with reduced dimensions with f_k[0] := 0
         N_k_nonzero = 1.0 * N_k_nonzero  # convert to float for acceleration.
         u_kn_nonzero = self.precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
@@ -554,8 +563,11 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
             :, 1:
         ]  # Hessian of objective function
         with warnings.catch_warnings(record=True) as w:
-            if method == "BFGS":  # Might be a way to fold this in now that accelerators are class-ified
+            if (
+                method == "BFGS"
+            ):  # Might be a way to fold this in now that accelerators are class-ified
                 fpad = lambda x: self.pad(x, (1, 0))
+                # Make sure to use the static method here
                 obj = lambda x: self.mbar_objective(u_kn_nonzero, N_k_nonzero, fpad(x))
                 # objective function to be minimized (for derivative free methods, mostly jit)
                 minimize_results = self.optimize.minimize(
@@ -584,7 +596,9 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
                 )
                 f_k_nonzero = pad(results["x"])
             elif method == "adaptive":
-                results = self.adaptive(u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options)
+                results = self.adaptive(
+                    u_kn_nonzero, N_k_nonzero, f_k_nonzero, tol=tol, options=options
+                )
                 f_k_nonzero = results["x"]
             elif method in scipy_root_options:
                 # find the root in the gradient.
@@ -593,7 +607,9 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
                 )
                 f_k_nonzero = pad(results["x"])
             else:
-                raise ParameterError(f"Method {method} for solution of free energies not recognized")
+                raise ParameterError(
+                    f"Method {method} for solution of free energies not recognized"
+                )
 
         # If there were runtime warnings, show the messages
         if len(w) > 0:
@@ -609,7 +625,9 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
                     warn_msg.file,
                     "",
                 )
-                can_ignore = False  # If any warning is not just unknown options, can not skip check
+                can_ignore = (
+                    False  # If any warning is not just unknown options, can not skip check
+                )
             if not can_ignore:
                 # Ensure MBAR solved correctly
                 w_nk_check = self.mbar_W_nk(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
@@ -784,23 +802,87 @@ def validate_inputs(u_kn, N_k, f_k):
 
     return u_kn, N_k, f_k
 
+
 def generate_static_mbar_gradient(solver: MBARSolver):
     def mbar_gradient(u_kn, N_k, f_k):
         # N_k must be float (should be cast at a higher level)
         log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
         log_numerator_k = solver.logsumexp(-log_denominator_n - u_kn, axis=1)
         return -1 * N_k * (1.0 - solver.exp(f_k + log_numerator_k))
+
     return mbar_gradient
-    
-def generate_static_mbar_objective(solver: MBARSolver)
+
+
+def generate_static_mbar_objective(solver: MBARSolver):
     def mbar_objective(u_kn, N_k, f_k):
         log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
         obj = solver.sum(log_denominator_n) - solver.dot(N_k, f_k)
 
         return obj
-def generate_static_mbar_objective_and_gradient(solver: MBARSolver)
-def generate_static_mbar_hessian(solver: MBARSolver)
-def generate_static_mbar_log_W_nk(solver: MBARSolver)
-def generate_static_mbar_mbar_W_nk(solver: MBARSolver)
-def generate_static_precondition_u_kn(solver: MBARSolver)
 
+    return mbar_objective
+
+
+def generate_static_mbar_objective_and_gradient(solver: MBARSolver):
+    def mbar_objective_and_gradient(u_kn, N_k, f_k):
+        log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+        log_numerator_k = solver.logsumexp(-log_denominator_n - u_kn, axis=1)
+        grad = -1 * N_k * (1.0 - solver.exp(f_k + log_numerator_k))
+
+        obj = solver.sum(log_denominator_n) - solver.dot(N_k, f_k)
+
+        return obj, grad
+
+    return mbar_objective_and_gradient
+
+
+def generate_static_mbar_hessian(solver: MBARSolver):
+    def mbar_hessian(u_kn, N_k, f_k):
+        log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+        logW = f_k - u_kn.T - log_denominator_n[:, solver.newaxis]
+        W = solver.exp(logW)
+
+        H = solver.dot(W.T, W)
+        H *= N_k
+        H *= N_k[:, solver.newaxis]
+        H -= solver.diag(W.sum(0) * N_k)
+        return -1.0 * H
+
+    return mbar_hessian
+
+
+def generate_static_mbar_log_W_nk(solver: MBARSolver):
+    def mbar_log_W_nk(u_kn, N_k, f_k):
+        log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+        logW = f_k - u_kn.T - log_denominator_n[:, solver.newaxis]
+        return logW
+
+    return mbar_log_W_nk
+
+
+def generate_static_mbar_W_nk(solver: MBARSolver, static_mbar_log_W_nk: callable):
+    def mbar_W_nk(u_kn, N_k, f_k):
+        return solver.exp(static_mbar_log_W_nk(u_kn, N_k, f_k))
+
+    return mbar_W_nk
+
+
+def generate_static_precondition_u_kn(solver: MBARSolver):
+    def precondition_u_kn(u_kn, N_k, f_k):
+        u_kn = u_kn - u_kn.min(0)
+        u_kn += (solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)) - solver.dot(N_k, f_k) / N_k.sum()
+        return u_kn
+
+    return precondition_u_kn
+
+
+def generate_jit_self_consistent_update(solver: MBARSolver):
+    def jit_self_consistent_update(u_kn, N_k, f_k):
+        # Asteroid
+        log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+        # All states can contribute to the numerator term. Check transpose
+        return -1.0 * solver.logsumexp(
+            -log_denominator_n - u_kn, axis=1
+        )  # pylint: disable=invalid-unary-operand-type
+
+    return jit_self_consistent_update

@@ -96,7 +96,7 @@ class MBAR:
         n_bootstraps=0,
         bootstrap_solver_protocol=None,
         rseed=None,
-        accelerator="jax",
+        accelerator=None,
     ):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -187,10 +187,10 @@ class MBAR:
             We usually just do steps of adaptive sampling without. "robust" would be the backup.
             Default: dict(method="adaptive", options=dict(min_sc_iter=0)),
 
-        accelerator: str, optional, default="jax"
-            Set the accelerator method to try. Attempts to use the named accelerator for the solvers, and then
+        accelerator: str, optional, default=None
+            Set the accelerator library. Attempts to use the named accelerator for the solvers, and then
             stores the output accelerator after trying to set. Not case-sensitive. "numpy" is no-accelerators,
-            and will work fine.
+            and will work fine. Default accelerator is JAX if nothing specified and JAX installed, else NumPy
             (Valid options: jax, numpy)
 
 
@@ -234,7 +234,7 @@ class MBAR:
         """
 
         # Set the accelerator methods for the solvers
-        self.solver = mbar_solvers.get_accelerator(accelerator)()
+        self.solver = mbar_solvers.get_accelerator(accelerator)
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.

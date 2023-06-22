@@ -72,11 +72,10 @@ class MBARSolverNumpy(MBARSolver):
         """Passthrough JIT"""
         return self._passthrough_jit
 
-    def _adaptive_core(self, u_kn, N_k, f_k, g, options):
+    def _adaptive_core(self, u_kn, N_k, f_k, g, gamma):
         """
         Core function to execute per iteration of a method.
         """
-        gamma = options["gamma"]  # Handle options
         H = self.mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
         Hinvg = np.linalg.lstsq(H, g, rcond=-1)[0]
         Hinvg -= Hinvg[0]

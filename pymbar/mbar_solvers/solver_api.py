@@ -19,7 +19,7 @@ class MBARSolverAPI(ABC):
         "mbar_hessian",
         "mbar_log_W_nk",
         "mbar_W_nk",
-        "precondition_u_kn"
+        "precondition_u_kn",
     )
 
     @abstractmethod
@@ -60,15 +60,15 @@ class MBARSolverAPI(ABC):
 
     @abstractmethod
     def solve_mbar_once(
-            self,
-            u_kn_nonzero,
-            N_k_nonzero,
-            f_k_nonzero,
-            method="adaptive",
-            tol=1e-12,
-            continuation=None,
-            options=None,
-        ):
+        self,
+        u_kn_nonzero,
+        N_k_nonzero,
+        f_k_nonzero,
+        method="adaptive",
+        tol=1e-12,
+        continuation=None,
+        options=None,
+    ):
         pass
 
     @abstractmethod
@@ -85,9 +85,7 @@ class MBARSolverAcceleratorMethods(ABC):
     Methods which have to be implemented by MBAR solver accelerators
     """
 
-    JITABLE_ACCELERATOR_METHODS = (
-        "_adaptive_core",
-    )
+    JITABLE_ACCELERATOR_METHODS = ("_adaptive_core",)
 
     @property
     @abstractmethod
@@ -145,30 +143,16 @@ class MBARSolverAcceleratorMethods(ABC):
         pass
 
     def _precondition_jit(self, jitable_fn):
-        @wraps(jitable_fn)  # Helper to ensure the decorated function still registers for docs and inspection
+        @wraps(
+            jitable_fn
+        )  # Helper to ensure the decorated function still registers for docs and inspection
         def wrapped_precog_jit(*args, **kwargs):
-            # Uses "self" here as intercepted first arg for instance of MBARSolver
+            # Uses "self" here as intercepted first arg for instance of the decorated class
             jited_fn = self.jit(jitable_fn)
             return jited_fn(*args, **kwargs)
+
         return wrapped_precog_jit
 
     @abstractmethod
     def _adaptive_core(self, u_kn, N_k, f_k, g, options):
         pass
-
-    def __hash__(self):
-      return hash((self.exp,
-                   self.sum,
-                   self.diag,
-                   self.newaxis,
-                   self.dot,
-                   self.s_,
-                   self.pad,
-                   self.lstsq,
-                   self.optimize,
-                   self.logsumexp,
-                   self.jit
-                   ))
-
-    def __eq__(self, other):
-        return isinstance(other, MBARSolverAcceleratorMethods) and self.__hash__ == other.__hash__

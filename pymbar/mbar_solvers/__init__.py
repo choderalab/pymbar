@@ -38,24 +38,29 @@ J. Chem. Phys. 129:124105, 2008.  http://dx.doi.org/10.1063/1.2978177
 """
 
 import logging
+from typing import Union
+
 from .mbar_solver import (
     validate_inputs,
     JAX_SOLVER_PROTOCOL,
     DEFAULT_SOLVER_PROTOCOL,
     ROBUST_SOLVER_PROTOCOL,
-    BOOTSTRAP_SOLVER_PROTOCOL
+    BOOTSTRAP_SOLVER_PROTOCOL,
 )
+from .mbar_solver import MBARSolver
 from .numpy_solver import MBARSolverNumpy
 
 logger = logging.getLogger(__name__)
 
-default_solver = MBARSolverNumpy  # Set fallback solver
+INSTANCED_ACCELERATORS = {}  # Cache the accelerators to avoid re-jit on instancing
 ACCELERATOR_MAP = {"numpy": MBARSolverNumpy}
+default_solver = "numpy"  # Set fallback solver
+
 try:
     from .jax_solver import MBARSolverJAX
-    default_solver = MBARSolverJAX
-    # default_solver = MBARSolverNumpy  # Set fallback solver
+
     ACCELERATOR_MAP["jax"] = MBARSolverJAX
+    default_solver = "jax"
     logger.info("JAX detected. Using JAX acceleration by default.")
 except ImportError:
     logger.warning(
@@ -72,12 +77,16 @@ except ImportError:
 
 
 # Helper function for toggling the solver method
-def get_accelerator(accelerator_name: str):
+def get_accelerator(accelerator_name: Union[str, None]) -> MBARSolver:
     """
     get the accelerator in the namespace for this module
     """
+    if accelerator_name is None:
+        accelerator_name = default_solver
     # Saving accelerator to new tag does not change since we're saving the immutable string object
     accel = accelerator_name.lower()
+    if accel in INSTANCED_ACCELERATORS:
+        return INSTANCED_ACCELERATORS[accel]
     if accel not in ACCELERATOR_MAP:
         raise ValueError(
             f"Accelerator {accel} is not implemented or did not load correctly. Please use one of the following:\n"
@@ -85,12 +94,13 @@ def get_accelerator(accelerator_name: str):
             + f"(case-insentive)\n"
             + f"If you expected {accel} to load, please check the logs above for details."
         )
-    logger.info(f"Getting accelerator {accel}...")
-    return ACCELERATOR_MAP[accel]
+    logger.info(f"Instancing accelerator {accel}...")
+    INSTANCED_ACCELERATORS[accel] = ACCELERATOR_MAP[accel]()
+    return INSTANCED_ACCELERATORS[accel]
 
 
 # Imports done, handle initialization
-module_solver = default_solver()
+module_solver = get_accelerator(default_solver)
 
 # Establish API methods for 4.x consistency
 self_consistent_update = module_solver.self_consistent_update
