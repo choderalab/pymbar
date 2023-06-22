@@ -97,6 +97,10 @@ class MBARSolverJAX(MBARSolver):
     def jit(self):
         return jit
 
+    @property
+    def real_jit(self):
+        return True
+
     def _precondition_jit(self, jitable_fn):
         @wraps(
             jitable_fn

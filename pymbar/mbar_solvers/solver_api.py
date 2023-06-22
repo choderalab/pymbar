@@ -142,6 +142,10 @@ class MBARSolverAcceleratorMethods(ABC):
     def jit(self):
         pass
 
+    @property
+    def real_jit(self):
+        return False
+
     def _precondition_jit(self, jitable_fn):
         @wraps(
             jitable_fn

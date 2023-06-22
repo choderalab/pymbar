@@ -564,7 +564,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         ]  # Hessian of objective function
         with warnings.catch_warnings(record=True) as w:
             if (
-                method == "BFGS"
+                self.real_jit and method == "BFGS"
             ):  # Might be a way to fold this in now that accelerators are class-ified
                 fpad = lambda x: self.pad(x, (1, 0))
                 # Make sure to use the static method here
@@ -578,7 +578,7 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
                     options=dict(maxiter=options["maxiter"]),
                 )
                 results = dict()  # there should be a way to copy this.
-                results["x"] = minimize_results[0]
+                results["x"] = minimize_results.x
                 f_k_nonzero = pad(results["x"])
                 results["success"] = minimize_results[1]
             elif method in scipy_minimize_options:
