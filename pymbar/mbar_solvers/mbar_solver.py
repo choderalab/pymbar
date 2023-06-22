@@ -72,12 +72,19 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
 
     def __init__(self):
         """Apply the precondition to each of the JITED_METHODS"""
+        self._construct_static_methods()
         for method in (
                 self.JITABLE_ACCELERATOR_METHODS +
                 self.JITABLE_API_METHODS +
                 self.JITABLE_IMPLEMENTATION_METHODS
         ):
             setattr(self, method, self._precondition_jit(getattr(self, method)))
+
+    def _construct_static_methods(self):
+        """
+        Hoo boy.
+        This function creates static methods for each of the
+        """
 
     def self_consistent_update(self, u_kn, N_k, f_k, states_with_samples=None):
         """Return an improved guess for the dimensionless free energies
@@ -143,11 +150,6 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         This is equation C6 in the JCP MBAR paper.
         """
 
-        # N_k must be float (should be cast at a higher level)
-        log_denominator_n = self.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-        log_numerator_k = self.logsumexp(-log_denominator_n - u_kn, axis=1)
-        return -1 * N_k * (1.0 - self.exp(f_k + log_numerator_k))
-
     def mbar_objective(self, u_kn, N_k, f_k):
         """Calculates objective function for MBAR.
 
@@ -176,11 +178,6 @@ class MBARSolver(MBARSolverAPI, MBARSolverAcceleratorMethods):
         More optimal precision, the objective function uses math.fsum for the
         outermost sum and logsumexp for the inner sum.
         """
-
-        log_denominator_n = self.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
-        obj = sum(log_denominator_n) - self.dot(N_k, f_k)
-
-        return obj
 
     def mbar_objective_and_gradient(self, u_kn, N_k, f_k):
         """Calculates both objective function and gradient for MBAR.
@@ -786,3 +783,24 @@ def validate_inputs(u_kn, N_k, f_k):
     f_k = ensure_type(f_k, "float", 1, "f_k", shape=(n_states,))
 
     return u_kn, N_k, f_k
+
+def generate_static_mbar_gradient(solver: MBARSolver):
+    def mbar_gradient(u_kn, N_k, f_k):
+        # N_k must be float (should be cast at a higher level)
+        log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+        log_numerator_k = solver.logsumexp(-log_denominator_n - u_kn, axis=1)
+        return -1 * N_k * (1.0 - solver.exp(f_k + log_numerator_k))
+    return mbar_gradient
+    
+def generate_static_mbar_objective(solver: MBARSolver)
+    def mbar_objective(u_kn, N_k, f_k):
+        log_denominator_n = solver.logsumexp(f_k - u_kn.T, b=N_k, axis=1)
+        obj = solver.sum(log_denominator_n) - solver.dot(N_k, f_k)
+
+        return obj
+def generate_static_mbar_objective_and_gradient(solver: MBARSolver)
+def generate_static_mbar_hessian(solver: MBARSolver)
+def generate_static_mbar_log_W_nk(solver: MBARSolver)
+def generate_static_mbar_mbar_W_nk(solver: MBARSolver)
+def generate_static_precondition_u_kn(solver: MBARSolver)
+
