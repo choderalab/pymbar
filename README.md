@@ -91,6 +91,13 @@ PyMBAR needs 64-bit floats to provide reliable answers. JAX by default uses
 PyMBAR will turn on JAX's 64-bit mode, which may cause issues with some separate uses of JAX in the same code as PyMBAR, 
 such as existing Neural Network (NN) Models for machine learning.
 
+If you would like JAX in 32-bit mode, and PyMBAR in the same script, instance your MBAR with the `accelerator=numpy` 
+option, e.g.
+```python
+mbar = MBAR(..., accelerator="numpy")
+```
+replacing `...` with your other options.
+
 Authors
 -------
 * Kyle A. Beauchamp <kyle.beauchamp@choderalab.org>

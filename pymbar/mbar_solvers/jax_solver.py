@@ -11,6 +11,8 @@ try:
     import jax.scipy.optimize
     from jax.scipy.special import logsumexp
 
+    from jax.tree_util import register_pytree_node_class
+
     from jax import jit
 except ImportError:
     raise ImportError("JAX not found!")
@@ -20,6 +22,7 @@ from pymbar.mbar_solvers.mbar_solver import MBARSolver
 logger = logging.getLogger(__name__)
 
 
+@register_pytree_node_class
 class MBARSolverJAX(MBARSolver):
     """
     Solver methods for MBAR. Implementations use specific libraries/accelerators to solve the code paths.
@@ -49,8 +52,6 @@ class MBARSolverJAX(MBARSolver):
                 "* when you instance the MBAR object      *\n"
                 "******************************************\n"
             )
-        # Double __ in middle name intentional here
-        self._static__adaptive_core = generate_static_adaptive_core(self)
         super().__init__()
 
     @property
@@ -128,27 +129,32 @@ class MBARSolverJAX(MBARSolver):
         N_k must be float (should be cast at a higher level)
 
         """
-
-
-def generate_static_adaptive_core(solver: MBARSolver):
-    def _adaptive_core(u_kn, N_k, f_k, g, gamma):
         # Perform Newton-Raphson iterations (with sci computed on the way)
-        g = solver.mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
-        H = solver.mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
+        g = self.mbar_gradient(u_kn, N_k, f_k)  # Objective function gradient
+        H = self.mbar_hessian(u_kn, N_k, f_k)  # Objective function hessian
         Hinvg = lstsq(H, g, rcond=-1)[0]
         Hinvg -= Hinvg[0]
         f_nr = f_k - gamma * Hinvg
 
         # self-consistent iteration gradient norm and saved log sums.
-        f_sci = solver.self_consistent_update(u_kn, N_k, f_k)
+        f_sci = self.self_consistent_update(u_kn, N_k, f_k)
         f_sci = f_sci - f_sci[0]  # zero out the minimum
-        g_sci = solver.mbar_gradient(u_kn, N_k, f_sci)
-        gnorm_sci = solver.dot(g_sci, g_sci)
+        g_sci = self.mbar_gradient(u_kn, N_k, f_sci)
+        gnorm_sci = self.dot(g_sci, g_sci)
 
         # newton raphson gradient norm and saved log sums.
-        g_nr = solver.mbar_gradient(u_kn, N_k, f_nr)
-        gnorm_nr = solver.dot(g_nr, g_nr)
+        g_nr = self.mbar_gradient(u_kn, N_k, f_nr)
+        gnorm_nr = self.dot(g_nr, g_nr)
 
         return f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr
 
-    return _adaptive_core
+    def tree_flatten(self):
+        """Required method for PyTree registration with JAX"""
+        children = ()
+        aux_data = {}
+        return children, aux_data
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+        """Required method for PyTree registration with JAX"""
+        return cls()
