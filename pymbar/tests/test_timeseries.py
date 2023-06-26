@@ -130,7 +130,12 @@ def test_compare_detectEquil(show_hist=False):
         bs_de = timeseries.detect_equilibration_binary_search(D_t, bs_nodes=10)
         std_de = timeseries.detect_equilibration(D_t, fast=False, nskip=1)
         t_res.append(bs_de[0] - std_de[0])
-    t_res_mode = float(stats.mode(t_res)[0][0])
+    try:
+        # scipy<1.9
+        t_res_mode = float(stats.mode(t_res)[0][0])
+    except IndexError:
+        # scipy>=1.9
+        t_res_mode = float(stats.mode(t_res, keepdims=True)[0][0])
     assert_almost_equal(t_res_mode, 0.0, decimal=1)
     if show_hist:
         import matplotlib.pyplot as plt
