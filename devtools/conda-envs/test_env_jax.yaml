@@ -22,4 +22,5 @@ dependencies:
   - xlrd
     # Docs
   - numpydoc
+  - sphinx <7
   - sphinxcontrib-bibtex
