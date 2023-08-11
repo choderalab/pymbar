@@ -96,6 +96,7 @@ class MBAR:
         n_bootstraps=0,
         bootstrap_solver_protocol=None,
         rseed=None,
+        accelerator=None,
     ):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -186,6 +187,13 @@ class MBAR:
             We usually just do steps of adaptive sampling without. "robust" would be the backup.
             Default: dict(method="adaptive", options=dict(min_sc_iter=0)),
 
+        accelerator: str, optional, default=None
+            Set the accelerator library. Attempts to use the named accelerator for the solvers, and then
+            stores the output accelerator after trying to set. Not case-sensitive. "numpy" is no-accelerators,
+            and will work fine. Default accelerator is JAX if nothing specified and JAX installed, else NumPy
+            (Valid options: jax, numpy)
+
+
         Notes
         -----
         The reduced potential energy ``u_kn[k,n] = u_k(x_{ln})``, where the reduced potential energy ``u_l(x)`` is
@@ -224,6 +232,9 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
 
         """
+
+        # Set the accelerator methods for the solvers
+        self.solver = mbar_solvers.get_accelerator(accelerator)
 
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
@@ -407,7 +418,7 @@ class MBAR:
         else:
             np.random.seed(rseed)
 
-        self.f_k = mbar_solvers.solve_mbar_for_all_states(
+        self.f_k = self.solver.solve_mbar_for_all_states(
             self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
         )
 
@@ -431,7 +442,7 @@ class MBAR:
                 # If we initialized with BAR, then BAR, starting from the provided initial_f_k as well.
                 if initialize == "BAR":
                     f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
-                self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
+                self.f_k_boots[b, :] = self.solver.solve_mbar_for_all_states(
                     self.u_kn[:, rints],
                     self.N_k,
                     f_k_init,
@@ -449,7 +460,7 @@ class MBAR:
 
         # bootstrapped weight matrices not generated here, but when expectations are needed
         # otherwise, it's too much memory to keep
-        self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
+        self.Log_W_nk = self.solver.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
 
         # Print final dimensionless free energies.
         if self.verbose:
@@ -904,7 +915,7 @@ class MBAR:
                 f_k[0:K] = self.f_k_boots[n - 1, :]
                 ri = self.bootstrap_rints[n - 1]
                 u_kn = self.u_kn[:, ri]
-                Log_W_nk[:, 0:K] = mbar_solvers.mbar_log_W_nk(u_kn, self.N_k, f_k[0:K])
+                Log_W_nk[:, 0:K] = self.solver.mbar_log_W_nk(u_kn, self.N_k, f_k[0:K])
             # Pre-calculate the log denominator: Eqns 13, 14 in MBAR paper
 
             states_with_samples = self.N_k > 0

@@ -62,7 +62,7 @@ jobs:
     - name: Run tests (pytest)
       shell: bash -l {0}
       run: |
-        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/
+        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules --doctest-ignore-import-errors $PACKAGE/
 
     - name: Run examples
       shell: bash -l {0}
