@@ -28,6 +28,7 @@ from pymbar.utils import ParameterError
 
 import logging
 import sys
+
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 # =============================================================================================
