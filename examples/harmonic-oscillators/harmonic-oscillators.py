@@ -26,6 +26,10 @@ import numpy as np
 from pymbar import testsystems, exp, exp_gauss, bar, MBAR, FES
 from pymbar.utils import ParameterError
 
+import logging
+import sys
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 # =============================================================================================
 # HELPER FUNCTIONS
 # =============================================================================================
@@ -219,7 +223,7 @@ print("EXP reverse free energy")
 for k in range(1, K):
     if N_k[k] != 0:
         w_R = u_kln[k, k - 1, 0 : N_k[k]] - u_kln[k, k, 0 : N_k[k]]  # reverse work
-        df_exp, ddf_exp = exp(w_R)
+        results = exp(w_R)
         df_exp = -results["Delta_f"]
         ddf_exp = results["dDelta_f"]
         exp_analytical = f_k_analytical[k] - f_k_analytical[k - 1]
@@ -805,7 +809,7 @@ for i in range(nbins):
 # Compute fre energy profile, first with histograms
 print("Solving for free energies of state to initialize free energy profile...")
 mbar_options = dict()
-mbar_options["verbose"] = True
+mbar_options["verbose"] = False
 fes = FES(u_kn, N_k, mbar_options=mbar_options)
 print("Computing free energy profile ...")
 histogram_parameters = dict()

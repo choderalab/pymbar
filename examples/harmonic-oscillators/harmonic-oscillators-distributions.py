@@ -34,6 +34,10 @@ import numpy
 from pymbar import testsystems, MBAR, confidenceintervals
 from pymbar.utils import ParameterError, DataError
 
+import logging
+import sys
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 # =============================================================================================
 # PARAMETERS
 # =============================================================================================
