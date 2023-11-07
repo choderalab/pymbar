@@ -103,7 +103,7 @@ version = release.split("+")[0]
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'en'
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -262,7 +262,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ("index", "pymbar.tex", "pymbar Documentation", pymbar.__maintainer__, "manual",),
+    (
+        "index",
+        "pymbar.tex",
+        "pymbar Documentation",
+        pymbar.__maintainer__,
+        "manual",
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -285,13 +291,21 @@ latex_documents = [
 # If false, no module index is generated.
 # latex_domain_indices = True
 
-bibtex_bibfiles = ['references.bib']
+bibtex_bibfiles = ["references.bib"]
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "pymbar", "pymbar Documentation", [pymbar.__maintainer__], 1,)]
+man_pages = [
+    (
+        "index",
+        "pymbar",
+        "pymbar Documentation",
+        [pymbar.__maintainer__],
+        1,
+    )
+]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -325,4 +339,3 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
-
