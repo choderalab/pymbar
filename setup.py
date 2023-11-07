@@ -24,13 +24,12 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     python_requires=">=3.6",
-    install_requires=["numpy>=1.12",
-                      "scipy",
-                      "numexpr",
-                      ],
+    install_requires=[
+        "numpy>=1.12",
+        "scipy",
+        "numexpr",
+    ],
     extras_require={
-        "jax": ["jaxlib;platform_system!='Windows'",
-                "jax;platform_system!='Windows'"
-                ],
+        "jax": ["jaxlib;platform_system!='Windows'", "jax;platform_system!='Windows'"],
     },
 )
