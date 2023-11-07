@@ -33,10 +33,6 @@ from .mbar import MBAR
 from .other_estimators import bar, bar_overlap, bar_zero, exp, exp_gauss
 from .fes import FES
 
-from ._version import get_versions
-
-__version__ = get_versions()["version"]
-del get_versions
 
 __all__ = [
     "exp",
@@ -51,3 +47,6 @@ __all__ = [
     "utils",
     "FES",
 ]
+
+from . import _version
+__version__ = _version.get_versions()['version']
