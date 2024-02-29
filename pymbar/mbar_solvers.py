@@ -6,7 +6,8 @@ import numpy as np
 
 # Optimize imported here and below as the jax-optimized one is jax or passthrough, but this is required regardless
 import scipy.optimize
-from pymbar.utils import ensure_type, check_w_normalized, ParameterError
+
+from pymbar.utils import ParameterError, check_w_normalized, ensure_type
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,10 @@ try:
         # Capture user-disabled JAX instead "JAX not found"
         raise ImportError("Jax disabled by force_no_jax in mbar_solvers.py")
     try:
-        from jax.config import config
+        try:
+            from jax.config import config
+        except ImportError:
+            from jax import config
 
         if not config.x64_enabled:
             # Warn that we're going to be setting 64 bit jax
@@ -36,13 +40,13 @@ try:
                 "******************************************\n"
             )
 
-        from jax.numpy import exp, sum, newaxis, diag, dot, s_
-        from jax.numpy import pad as npad
-        from jax.numpy.linalg import lstsq
         import jax.scipy.optimize as optimize_maybe_jax
-        from jax.scipy.special import logsumexp
-
         from jax import jit as jit_or_passthrough
+        from jax.numpy import diag, dot, exp, newaxis
+        from jax.numpy import pad as npad
+        from jax.numpy import s_, sum
+        from jax.numpy.linalg import lstsq
+        from jax.scipy.special import logsumexp
 
         use_jit = True
     except ImportError:
@@ -63,10 +67,11 @@ try:
 except ImportError:
     # No JAX found, overlap imports
     # These imports MUST align exactly
-    from numpy import exp, sum, newaxis, diag, dot, s_
-    from numpy import pad as npad
-    from numpy.linalg import lstsq
     import scipy.optimize as optimize_maybe_jax  # pylint: disable=reimported
+    from numpy import diag, dot, exp, newaxis
+    from numpy import pad as npad
+    from numpy import s_, sum
+    from numpy.linalg import lstsq
     from scipy.special import logsumexp
 
     # No jit, so make a passthrough decorator
