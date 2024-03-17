@@ -399,11 +399,11 @@ class FES:
                         0, N_k[k], size=N_k[k]
                     )
                     index += N_k[k]
-                    # recompute MBAR.
-                    mbar = pymbar.MBAR(
-                        self.u_kn[:, bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k
-                    )
-                    x_nb = x_n[bootstrap_indices]
+                # recompute MBAR, starting from the initial mbar value
+                mbar = pymbar.MBAR(
+                    self.u_kn[:, bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k
+                )
+                x_nb = x_n[bootstrap_indices]
 
             # Compute unnormalized log weights for the given reduced potential
             # u_n, needed for all methods.
@@ -693,7 +693,8 @@ class FES:
             kde.set_params(**params)
         else:
             kde = self.kde
-        kde.fit(x_n, sample_weight=self.w_n)
+            w_n = self.w_n
+        kde.fit(x_n, sample_weight=w_n)
 
         if b > 0:
             self.kdes.append(kde)
@@ -1595,7 +1596,7 @@ class FES:
             fall = np.zeros([len(x), n_bootstraps])
             for b in range(n_bootstraps):
                 fall[:, b] = -self.kdes[b].score_samples(x) - fmin
-            df_i = np.std(fall, axis=1)
+            df_i = np.std(fall, ddof=1, axis=1)
         else:
             raise ParameterError(
                 f"Uncertainty method {uncertainty_method} for kde is not implemented"
