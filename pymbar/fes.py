@@ -1,7 +1,7 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR (FES module)
 #
-# Copyright 2019 University of Colorado Boulder
+# Copyright 2019-2023 University of Colorado Boulder
 #
 # Authors: Michael Shirts
 #
@@ -227,6 +227,7 @@ class FES:
         kde_parameters=None,
         spline_parameters=None,
         n_bootstraps=0,
+        state_biases=None,
         seed=-1,
     ):
         """
@@ -282,6 +283,15 @@ class FES:
         n_bootstraps : int, 0 or > 1, Default: 0
             Number of bootstraps to create an uncertainty estimate. If 0, no bootstrapping is done. Required if
             one uses uncertainty_method = 'bootstrap' in get_fes
+
+        state_biases : "equal", None, or float shape=(K) Default: None
+            What the relative biases of the states are to enforce.  One can have unequal numbers of
+            samples from each state, but that can mean multiple things. It could mean that equal numbers of samples
+            were selected from each state, but they were subsampled at different rates; but it could also mean that
+            the samples were collected with something like expanded ensemble, and the different number of samples
+            represent actually differences that need to be taken into account.  Default does nothing to the weights.
+            "equal" will increase the weights, so that all states receive equal ranking. Only the relative values
+            matter, i.e. an array of [2] and of [1] will give the same results.
 
         seed : int, Default = -1
             Set the randomization seed. Settting should get the
@@ -411,6 +421,37 @@ class FES:
             # calculate a few other things used for multiple methods
             max_log_w_nb = np.max(log_w_nb)  # we need to solve underflow.
             w_nb = np.exp(log_w_nb - max_log_w_nb)
+
+            # correct for state biases from unequal number of samples
+            if state_biases is not None:
+                if isinstance(state_biases, str):
+                    if state_biases == "equal":
+                        bias_weights = N / N_k
+                    else:
+                        raise ParameterError(
+                            "The only allowed string value of 'state_biases' is 'equal'"
+                        )
+                elif isinstance(state_bias, list) or isinstance(state_bias, np.ndarray):
+                    if len(state_biases) == K:
+                        bias_weights = state_biases
+                    else:
+                        raise ParameterError(
+                            "The length of 'state_biases' must be K, the number of states"
+                        )
+                else:
+                    raise ParameterError(
+                        "'state_biases' must be an array of length K, 'equal' or None"
+                    )
+
+                import pdb
+
+                pdb.set_trace()
+                index = 0
+                for k in range(K):
+                    if N_k[k] > 0:
+                        w_nb[index : index + N_k[k]] *= bias_weights[k]
+                    index += N_k[k]
+
             w_nb = w_nb / np.sum(w_nb)  # normalize the weights
             # normalized weights for all states.
             w_knb = np.exp(mbar.Log_W_nk)
@@ -1416,7 +1457,7 @@ class FES:
                 fall = np.zeros([len(histogram_data["f"]), n_bootstraps])
                 for b in range(n_bootstraps):
                     h = histogram_datas[b]  # just to make this shorter
-                    fall[:, b] = h["f"] - h["f"][j] # subtract out the reference bin
+                    fall[:, b] = h["f"] - h["f"][j]  # subtract out the reference bin
                 df_i = np.std(fall, ddof=1, axis=1)
 
         elif reference_point == "from-normalization":
@@ -1565,12 +1606,16 @@ class FES:
 
         if reference_point == "from-lowest":
             fmin = np.min(f_i)
-            f_i = f_i - fmin            
-            wheremin = np.argmin(f_i)  # needed for uncertainties, as we zero by location, not values
+            f_i = f_i - fmin
+            wheremin = np.argmin(
+                f_i
+            )  # needed for uncertainties, as we zero by location, not values
         elif reference_point == "from-specified":
             fmin = -self.kde.score_samples(np.array(fes_reference).reshape(1, -1))
             f_i = f_i - fmin
-            wheremin = p.argmin(f_i) # needed for uncertainties, as we zero by location, not values
+            wheremin = p.argmin(
+                f_i
+            )  # needed for uncertainties, as we zero by location, not values
         elif reference_point == "from-normalization":
             # uncertainites "from normalization" reference is already applied, since
             # the density is normalized.
