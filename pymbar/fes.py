@@ -1416,7 +1416,7 @@ class FES:
                 fall = np.zeros([len(histogram_data["f"]), n_bootstraps])
                 for b in range(n_bootstraps):
                     h = histogram_datas[b]  # just to make this shorter
-                    fall[:, b] = h["f"] - h["f"][j] # subtract out the reference bin
+                    fall[:, b] = h["f"] - h["f"][j]  # subtract out the reference bin
                 df_i = np.std(fall, ddof=1, axis=1)
 
         elif reference_point == "from-normalization":
@@ -1565,12 +1565,16 @@ class FES:
 
         if reference_point == "from-lowest":
             fmin = np.min(f_i)
-            f_i = f_i - fmin            
-            wheremin = np.argmin(f_i)  # needed for uncertainties, as we zero by location, not values
+            f_i = f_i - fmin
+            wheremin = np.argmin(
+                f_i
+            )  # needed for uncertainties, as we zero by location, not values
         elif reference_point == "from-specified":
             fmin = -self.kde.score_samples(np.array(fes_reference).reshape(1, -1))
             f_i = f_i - fmin
-            wheremin = p.argmin(f_i) # needed for uncertainties, as we zero by location, not values
+            wheremin = p.argmin(
+                f_i
+            )  # needed for uncertainties, as we zero by location, not values
         elif reference_point == "from-normalization":
             # uncertainites "from normalization" reference is already applied, since
             # the density is normalized.
