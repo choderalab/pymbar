@@ -45,12 +45,16 @@ jobs:
         ulimit -a
 
     - name: Setup Conda via Mamba
-      uses: mamba-org/provision-with-micromamba@main
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-file: devtools/conda-envs/test_env${{ matrix.jax }}.yaml
         environment-name: test
+        condarc: |
+          channels:
+            - conda-forge
+            - defaults
         channels: conda-forge,defaults
-        extra-specs: |
+        create-args: >-
           python=${{ matrix.python-version }}
 
     - name: Install package
