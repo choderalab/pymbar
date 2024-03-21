@@ -18,7 +18,10 @@ try:
         # Capture user-disabled JAX instead "JAX not found"
         raise ImportError("Jax disabled by force_no_jax in mbar_solvers.py")
     try:
-        from jax.config import config
+        # This works with pre- and post- JAX 0.3.25
+        # If you use try...except around a from jax.config import config then
+        # config gets mangled and the x64_enabled flag doesn't exist.
+        from jax import config
 
         if not config.x64_enabled:
             # Warn that we're going to be setting 64 bit jax
