@@ -399,28 +399,24 @@ def check_w_normalized(W, N_k, tolerance=1.0e-4):
 
 
 class ParameterError(Exception):
-
     """
     An error in the input parameters has been detected.
     """
 
 
 class ConvergenceError(Exception):
-
     """
     Convergence could not be achieved.
     """
 
 
 class BoundsError(Exception):
-
     """
     Could not determine bounds on free energy
     """
 
 
 class DataError(Exception):
-
     """
     Data is inconsistent.
     """
