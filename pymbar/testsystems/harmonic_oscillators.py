@@ -2,7 +2,6 @@ import numpy as np
 
 
 class HarmonicOscillatorsTestCase(object):
-
     """Test cases using harmonic oscillators.
 
     Examples
