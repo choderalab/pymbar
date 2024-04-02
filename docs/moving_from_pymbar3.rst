@@ -131,12 +131,12 @@ Free energy surfaces
 
 Previously, ``pymbar`` had a method ``PMF`` that estimated a free
 energy from a series of umbrella samples using a histogram
-approach. This was sematically problematin in two ways. First, the
+approach. This was semantically problematic in two ways. First, the
 term PMF (potential of mean force) is somewhat of an ambiguous term,
 as the potential of mean force has some dependence on the coordinate
 system in which the mean force is calculated. Since ``pymbar`` does
 not calculate free energies by integration of mean force, this caused
-some comfusion. To be clearer, we now have renamed the class
+some confusion. To be clearer, we now have renamed the class
 ``FES``, for "free energy surface".
 
 The inclusion of a PMF function also created some confusion where some
@@ -158,7 +158,7 @@ with the code, please see: :ref:`fes_with_pymbar`.
 Acceleration
 ------------
 
-Previous version of ``pymbar`` include acceleration using explict C++
+Previous version of ``pymbar`` include acceleration using explicit C++
 inner loops.  The C++ interface has become out of date. ``pymbar``
 optimization routines are now accelerated with ``jax``. This provides
 approximately a 2x speed up when performed on most CPUs, and
