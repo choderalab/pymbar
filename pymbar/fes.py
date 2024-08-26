@@ -1600,8 +1600,6 @@ class FES:
                 n_bootstraps = len(self.kdes)
 
             fall = np.zeros([len(x), n_bootstraps])
-            import pdb
-            pdb.set_trace()
             for b in range(n_bootstraps):
                 fall[:, b] = -self.kdes[b].score_samples(x)
                 fall[:, b] -= fall[wheremin,b]
