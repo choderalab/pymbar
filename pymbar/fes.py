@@ -1359,6 +1359,7 @@ class FES:
                 raise ParameterError("Specified reference point for FES not given")
 
         if reference_point in ["from-lowest", "from-specified", "all-differences"]:
+            j = None # keep lint happy
             if reference_point == "from-lowest":
                 # Determine free energy with lowest free energy to serve as reference point
                 j = histogram_data["f"].argmin()

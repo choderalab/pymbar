@@ -148,7 +148,8 @@ def qq_plot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
     N = len(replicates)
     dim = len(np.shape(replicates[0]["error"]))
     xvals = scipy.stats.norm.ppf((np.arange(0, N) + 0.5) / N)  # inverse pdf
-
+    nplots = None  # keep lint happy when variables are defined in conditionals
+    
     if dim == 0:
         nplots = 1
     elif dim == 1:
