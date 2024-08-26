@@ -399,11 +399,11 @@ class FES:
                         0, N_k[k], size=N_k[k]
                     )
                     index += N_k[k]
-                    # recompute MBAR.
-                    mbar = pymbar.MBAR(
-                        self.u_kn[:, bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k
-                    )
-                    x_nb = x_n[bootstrap_indices]
+                # recompute MBAR.
+                mbar = pymbar.MBAR(
+                    self.u_kn[:, bootstrap_indices], self.N_k, initial_f_k=self.mbar.f_k
+                )
+                x_nb = x_n[bootstrap_indices]
 
             # Compute unnormalized log weights for the given reduced potential
             # u_n, needed for all methods.
