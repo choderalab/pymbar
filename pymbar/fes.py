@@ -693,6 +693,7 @@ class FES:
             kde.set_params(**params)
         else:
             kde = self.kde
+            w_n = self.w_n # use these new weights for the KDE
         kde.fit(x_n, sample_weight=self.w_n)
 
         if b > 0:
@@ -1415,8 +1416,8 @@ class FES:
                 fall = np.zeros([len(histogram_data["f"]), n_bootstraps])
                 for b in range(n_bootstraps):
                     h = histogram_datas[b]  # just to make this shorter
-                    fall[:, b] = h["f"] - h["f"][j]
-                df_i = np.std(fall, axis=1)
+                    fall[:, b] = h["f"] - h["f"][j] # subtract out the reference bin
+                df_i = np.std(fall, ddof=1, axis=1)
 
         elif reference_point == "from-normalization":
             # Determine uncertainties from normalization that \sum_i p_i = 1.
@@ -1510,7 +1511,7 @@ class FES:
                         fall[i, j, b] = (
                             histogram_datas[b]["f"] - histogram_datas[b]["f"].transpose()
                         )
-                dfxij_vals = np.std(fall, axis=2)
+                dfxij_vals = np.std(fall, ddof=1, axis=2)
             if uncertainty_method is not None:
                 # Return dimensionless free energy and uncertainty.
                 result_vals["df_ij"] = dfxij_vals
@@ -1565,9 +1566,11 @@ class FES:
         if reference_point == "from-lowest":
             fmin = np.min(f_i)
             f_i = f_i - fmin
+            wheremin = np.argmin(f_i) # needed or uncertainties, as we zero by location, not values
         elif reference_point == "from-specified":
             fmin = -self.kde.score_samples(np.array(fes_reference).reshape(1, -1))
             f_i = f_i - fmin
+            wheremin = np.argmin(f_i) # needed for uncertainties, as we zero by location, not values
         elif reference_point == "from-normalization":
             # uncertainites "from normalization" reference is already applied, since
             # the density is normalized.
@@ -1594,8 +1597,9 @@ class FES:
 
             fall = np.zeros([len(x), n_bootstraps])
             for b in range(n_bootstraps):
-                fall[:, b] = -self.kdes[b].score_samples(x) - fmin
-            df_i = np.std(fall, axis=1)
+                fall[:, b] = -self.kdes[b].score_samples(x)
+                fall[:, b] = -fall[wheremin,b]
+            df_i = np.std(fall, ddof=1, axis=1)
         else:
             raise ParameterError(
                 f"Uncertainty method {uncertainty_method} for kde is not implemented"
@@ -1681,7 +1685,7 @@ class FES:
             fall = np.zeros(dim_breakdown)
             for b in range(n_bootstraps):
                 fall[:, b] = self.fes_functions[b](x) - fmin
-            df_i = np.std(fall, axis=-1)
+            df_i = np.std(fall, ddof=1, axis=-1)
 
         # uncertainites "from normalization" reference is applied, since
         # the density is normalized.
