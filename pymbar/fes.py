@@ -692,10 +692,10 @@ class FES:
             params = self.kde.get_params()  # pylint: disable=access-member-before-definition
             kde.set_params(**params)
         else:
-            kde = self.kde # use these new weights for the KDE
+            kde = self.kde  # use these new weights for the KDE
             w_n = self.w_n
         kde.fit(x_n, sample_weight=w_n)
-        
+
         if b > 0:
             self.kdes.append(kde)
 
@@ -1416,7 +1416,7 @@ class FES:
                 fall = np.zeros([len(histogram_data["f"]), n_bootstraps])
                 for b in range(n_bootstraps):
                     h = histogram_datas[b]  # just to make this shorter
-                    fall[:, b] = h["f"] - h["f"][j] # subtract out the reference bin
+                    fall[:, b] = h["f"] - h["f"][j]  # subtract out the reference bin
                 df_i = np.std(fall, ddof=1, axis=1)
 
         elif reference_point == "from-normalization":
@@ -1568,13 +1568,13 @@ class FES:
             f_i = f_i - fmin
             wheremin = np.argmin(
                 f_i
-            ) # needed or uncertainties, as we zero by location, not values
+            )  # needed or uncertainties, as we zero by location, not values
         elif reference_point == "from-specified":
             fmin = -self.kde.score_samples(np.array(fes_reference).reshape(1, -1))
             f_i = f_i - fmin
             wheremin = np.argmin(
                 f_i
-            ) # needed for uncertainties, as we zero by location, not values
+            )  # needed for uncertainties, as we zero by location, not values
         elif reference_point == "from-normalization":
             # uncertainites "from normalization" reference is already applied, since
             # the density is normalized.
@@ -1602,7 +1602,7 @@ class FES:
             fall = np.zeros([len(x), n_bootstraps])
             for b in range(n_bootstraps):
                 fall[:, b] = -self.kdes[b].score_samples(x)
-                fall[:, b] -= fall[wheremin,b]
+                fall[:, b] -= fall[wheremin, b]
             df_i = np.std(fall, ddof=1, axis=1)
         else:
             raise ParameterError(
