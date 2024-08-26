@@ -1,7 +1,7 @@
 ##############################################################################
 # pymbar: A Python Library for MBAR (FES module)
 #
-# Copyright 2019 University of Colorado Boulder
+# Copyright 2019-2024 University of Colorado Boulder
 #
 # Authors: Michael Shirts
 #
@@ -692,10 +692,10 @@ class FES:
             params = self.kde.get_params()  # pylint: disable=access-member-before-definition
             kde.set_params(**params)
         else:
-            kde = self.kde
-            w_n = self.w_n # use these new weights for the KDE
-        kde.fit(x_n, sample_weight=self.w_n)
-
+            kde = self.kde # use these new weights for the KDE
+            w_n = self.w_n
+        kde.fit(x_n, sample_weight=w_n)
+        
         if b > 0:
             self.kdes.append(kde)
 
@@ -1566,11 +1566,15 @@ class FES:
         if reference_point == "from-lowest":
             fmin = np.min(f_i)
             f_i = f_i - fmin
-            wheremin = np.argmin(f_i) # needed or uncertainties, as we zero by location, not values
+            wheremin = np.argmin(
+                f_i
+            ) # needed or uncertainties, as we zero by location, not values
         elif reference_point == "from-specified":
             fmin = -self.kde.score_samples(np.array(fes_reference).reshape(1, -1))
             f_i = f_i - fmin
-            wheremin = np.argmin(f_i) # needed for uncertainties, as we zero by location, not values
+            wheremin = np.argmin(
+                f_i
+            ) # needed for uncertainties, as we zero by location, not values
         elif reference_point == "from-normalization":
             # uncertainites "from normalization" reference is already applied, since
             # the density is normalized.
@@ -1596,9 +1600,11 @@ class FES:
                 n_bootstraps = len(self.kdes)
 
             fall = np.zeros([len(x), n_bootstraps])
+            import pdb
+            pdb.set_trace()
             for b in range(n_bootstraps):
                 fall[:, b] = -self.kdes[b].score_samples(x)
-                fall[:, b] = -fall[wheremin,b]
+                fall[:, b] -= fall[wheremin,b]
             df_i = np.std(fall, ddof=1, axis=1)
         else:
             raise ParameterError(
