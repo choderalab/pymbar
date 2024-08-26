@@ -851,8 +851,8 @@ class MBAR:
         K = self.K
         N = self.N  # N is total number of samples
         result_vals = dict()  # dictionary we will store uncertainties in
-        Theta_ij = None # keep lint happy when variables are defined in conditionals.
-        
+        Theta_ij = None  # keep lint happy when variables are defined in conditionals.
+
         # make observables all positive, allowing us to take the logarithm, which is
         # required to prevent overflow in some examples.
         # WARNING: one issue to watch for is if one of the energies is extremely
