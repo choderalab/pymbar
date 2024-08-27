@@ -2,7 +2,6 @@ import numpy as np
 
 
 class ExponentialTestCase(object):
-
     """Test cases using exponential distributions.
 
     Examples

@@ -397,7 +397,7 @@ def test_mbar_compute_entropy_and_enthalpy(mbar_and_test, with_uxx=True):
     [
         (True, True),
         (True, False),
-        (False, False)
+        (False, False),
         # False True handled by main test
     ],
 )

@@ -6,9 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# OS Files
-*.DS_Store
-
 # Distribution / packaging
 .Python
 build/
@@ -153,3 +150,6 @@ docs/examples/generated/
 
 # The examples directory outputs
 examples/*/*.pdf
+
+# OS Files
+.DS_Store
