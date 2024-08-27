@@ -293,7 +293,7 @@ class MBAR:
             for k in range(K):
                 for l in range(k):
                     diffsum = 0
-                    uzero = u_kn[k, indices] - u_kn[l, indices]
+                    uzero = self.u_kn[k, indices] - self.u_kn[l, indices]
                     diffsum += np.dot(uzero, uzero)
                     if diffsum < relative_tolerance:
                         self.samestates.append([k, l])
