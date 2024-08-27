@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# OS Files
+*.DS_Store
+
 # Distribution / packaging
 .Python
 build/
@@ -142,9 +145,11 @@ cython_debug/
 media
 static
 
-
 # The docs build directories
 docs/pymbar-docs
 docs/_build
 tools/hash_dict.pickle
 docs/examples/generated/
+
+# The examples directory outputs
+examples/*/*.pdf
