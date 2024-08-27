@@ -142,11 +142,14 @@ cython_debug/
 media
 static
 
-
 # The docs build directories
 docs/pymbar-docs
 docs/_build
 tools/hash_dict.pickle
 docs/examples/generated/
 
+# The examples directory outputs
+examples/*/*.pdf
+
+# OS Files
 .DS_Store
