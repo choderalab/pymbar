@@ -132,7 +132,7 @@ class HarmonicOscillatorsTestCase(object):
             s_n is the state of origin of x_n
 
         if mode == 'u_kln':
-        
+
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
             1D harmonic oscillator positions
         u_kln : np.ndarray, shape=(n_states, n_states, n_samples), dytpe=float
