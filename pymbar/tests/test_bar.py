@@ -98,6 +98,53 @@ def test_bar_free_energies(bar_and_test):
     assert_almost_equal(dfe_bar, dfe_mbar, decimal=3)
 
 
+@pytest.mark.parametrize("system_generator", system_generators)
+def test_bar_enthalpy_entropy(system_generator):
+    """Test Bar estimate of enthalpy and entropy in harmonic oscillator"""
+
+    name, test = system_generator()
+    
+    Nk = int(1e+5)
+    _, u_kln, _ = test.sample(mode="u_kln", N_k=(Nk, Nk))
+    w_F = u_kln[0, 1] - u_kln[0, 0]
+    w_R = u_kln[1, 0] - u_kln[1, 1]
+    
+    _result = estimators.bar(w_F, w_R)
+    results_bar = estimators.bar_enthalpy_entropy(
+        u_kln[0,0],
+        u_kln[0,1],
+        u_kln[1,1],
+        u_kln[1,0],
+        _result['Delta_f'],
+        dDeltaF=_result['dDelta_f'],
+    )
+    
+    G = test.analytical_free_energies()
+    H = test.analytical_observable(observable="potential energy")
+    S = test.analytical_entropies()
+    results_analytical = {
+        "Delta_f": G[1]-G[0],
+        "Delta_h": H[1]-H[0],
+        "Delta_s": S[1]-S[0],
+    }
+
+    assert_almost_equal(
+        results_bar["Delta_f"], results_analytical["Delta_f"], decimal=2
+    )
+    assert_almost_equal(
+        results_bar["Delta_h"], results_analytical["Delta_h"], decimal=2
+    )
+    assert_almost_equal(
+        results_bar["Delta_s"], results_analytical["Delta_s"], decimal=2
+    )
+    assert_almost_equal(
+        results_bar["dDelta_f"], 0.0, decimal=2
+    )
+    assert_almost_equal(
+        results_bar["dDelta_h"], 0.0, decimal=2
+    )
+
+
 def test_bar_overlap():
     for system_generator in system_generators:
         name, test = system_generator()

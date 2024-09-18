@@ -153,6 +153,148 @@ def bar_zero(w_F, w_R, DeltaF):
     return fzero
 
 
+def bar_enthalpy_entropy(u11, u12, u22, u21, DeltaF, dDeltaF=None):
+    """Compute the enthalpy and entropy components with BAR
+    
+    This function calculates the enthalpy difference between states using a
+    derivation of the entropy from the Bennett Acceptance Ratio (BAR) method
+    at constant temperature.
+
+    from DOI: 10.1021/jp103050u
+    
+        M = log( N_F / N_R )
+
+        g_1(x) = 1 / [1 + exp(M + w_F(x) - Delta F)]
+        g_2(x) = 1 / [1 + exp(-M - w_R(x) + Delta F)]
+        
+        a_F = <g_1 * w_F>_F - <g_1>_F * <w_F>_F + <g_1 * g_2 * (w_R - w_F)>_0 
+        a_R = <g_2 * w_R>_R - <g_2>_R * <w_R>_R - <g_1 * g_2 * (w_R - w_F)>_1
+
+    we want:
+
+        H = (N_F * a_F - N_R * a_R) / (N_F * <g_1 * g_2>_F + N_R * <g_1 * g_2>_R)
+        
+    The entropy is then taken as the difference between the enthalpy and free energy.
+    
+    Note that:
+        w_F = u_kln[0, 1] - u_kln[0, 0]
+        w_R = u_kln[1, 0] - u_kln[1, 1]
+
+    Parameters
+    ----------
+    u11 : np.ndarray
+        Reduced potential energy of state 1 in a configuration 
+        sampled from state 1 in snapshot t.
+        t = 0...(T_1-1)  Length T_1 is deduced from vector.
+    u12 : np.ndarray
+        Reduced potential energy of state 2 in a configuration 
+        sampled from state 1 in snapshot t.
+        t = 0...(T_1-1)  Length must be equal to T_1.
+    u22 : np.ndarray
+        Reduced potential energy of state 2 in a configuration 
+        sampled from state 2 in snapshot t.
+        t = 0...(T_2-1)  Length T_2 is deduced from vector.
+    u21 : np.ndarray
+        Reduced potential energy of state 1 in a configuration 
+        sampled from state 2 in snapshot t.
+        t = 0...(T_2-1)  Length must be equal to T_2.
+    Delta_f : float
+        Free energy difference
+    dDelta_f : float, default=None
+        Estimated standard deviation of free energy difference
+
+    Returns
+    -------
+    dict
+        'Delta_f' : float
+            Free energy difference
+        'dDelta_f' : float
+            Estimated standard error of free energy difference
+        'Delta_h' : float
+            Enthalpy difference
+        'dDelta_h' : float
+            Estimated standard error of enthalpy difference
+        'Delta_s' : float
+            Enthalpy difference
+        'dDelta_s' : float
+            Estimated standard error of enthalpy difference if
+            the standard deviation of the free energy, ``dDelta_f``,
+            is provided.
+
+    Examples
+    --------
+    Compute free energy difference between two specified samples of work values.
+
+    >>> from pymbar import testsystems
+    >>> [u11, u12, u22, u21] = ??? # testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
+    >>> DeltaH = bar_enthalpy(u11, u12, u22, u21, DeltaF)
+
+    """
+
+    np.seterr(over="raise")  # raise exceptions to overflows
+    results = {'Delta_f': DeltaF}
+    if dDeltaF is not None:
+        results["dDelta_f"] = dDeltaF
+    
+    u11, u12 = np.array(u11, np.float64), np.array(u12, np.float64)
+    u22, u21 = np.array(u22, np.float64), np.array(u21, np.float64)
+    DeltaF = float(DeltaF)
+
+    # Recommended stable implementation of bar.
+
+    # Determine number of forward and reverse work values provided.
+    T_1 = float(u11.size)  # number of forward work values
+    T_2 = float(u22.size)  # number of reverse work values
+    if len(u12) != T_1:
+        raise ValueError("The length of u12 must be equal to the length of u11.")
+    if len(u21) != T_2:
+        raise ValueError("The length of u21 must be equal to the length of u22.")
+
+    # Compute log ratio of forward and reverse counts.
+    M = np.log(T_1 / T_2)
+    
+    g_A1 = 1 / (1 + np.exp(u12 - u11 + M - DeltaF))
+    g_A2 = 1 / (1 + np.exp(u22 - u21 + M - DeltaF))
+    g_B1 = 1 / (1 + np.exp(-u12 + u11 - M + DeltaF))
+    g_B2 = 1 / (1 + np.exp(-u22 + u21 - M + DeltaF))
+    
+    a_1 = np.mean(g_A1 * u11) - np.mean(g_A1) * np.mean(u11) + np.mean(g_A1 * g_B1 * (u12 - u11))
+    a_2 = np.mean(g_B2 * u22) - np.mean(g_B2) * np.mean(u22) - np.mean(g_A2 * g_B2 * (u22 - u21))
+
+    tmp1, tmp2 = np.mean(g_A1 * g_B1), np.mean(g_A2 * g_B2)
+    results["Delta_h"] = (T_1 * a_1 - T_2 * a_2) / (T_1 * tmp1 + T_2 * tmp2)
+    
+    # Calculate the uncertainty as standard errors
+    da_1 = np.sqrt(
+        np.std(g_A1 * u11)**2 
+        + np.sqrt((np.std(g_A1) * np.mean(u11))**2 + (np.mean(g_A1) * np.std(u11))**2)
+        + np.std(g_A1 * g_B1 * (u12 - u11))**2
+    ) / np.sqrt(T_1)
+    da_2 = np.sqrt(
+        np.std(g_B2 * u22)**2 
+        + np.sqrt((np.std(g_B2) * np.mean(u22))**2 + (np.mean(g_B2) * np.std(u22))**2) 
+        + np.std(g_A2 * g_B2 * (u22 - u21))**2
+    ) / np.sqrt(T_2)
+    dtmp1, dtmp2 = np.std(g_A1 * g_B1) / np.sqrt(T_1), np.std(g_A2 * g_B2) / np.sqrt(T_2)
+    
+    dHda1 = T_1 / (T_1 * tmp1 + T_2 * tmp2)
+    dHda2 = -T_2 / (T_1 * tmp1 + T_2 * tmp2)
+    dHdtmp1 = T_1 * (T_2 * a_2 - T_1 * a_1) / (T_1 * tmp1 + T_2 * tmp2)**2
+    dHdtmp2 = T_2 * (T_2 * a_2 - T_1 * a_1) / (T_1 * tmp1 + T_2 * tmp2)**2
+    
+    results["dDelta_h"] = np.sqrt(
+        (dHda1 * da_1)**2
+        + (dHda2 * da_2)**2
+        + (dHdtmp1 * dtmp1)**2
+        + (dHdtmp2 * dtmp2)**2
+    )
+
+    results["Delta_s"] = results["Delta_h"] - results["Delta_f"]
+    if 'dDelta_f' in results:
+        results["dDelta_s"] = np.sqrt(results["dDelta_h"]**2 + results["dDelta_f"]**2)
+        
+    return results
+
 def bar(
     w_F,
     w_R,
@@ -189,7 +331,7 @@ def bar(
     relative_tolerance : float, optional, default=1E-12
         Can be set to determine the relative tolerance convergence criteria (default 1.0e-12)
     verbose : bool
-        Should be set to True if verbse debug output is desired (default False)
+        Should be set to True if verbose debug output is desired (default False)
     method: str, optional, default='false-position'
         Choice of method to solve bar nonlinear equations: one of 'bisection', 'self-consistent-iteration' or 'false-position' (default : 'false-position').
     iterated_solution: bool, optional, default=True
@@ -218,7 +360,7 @@ def bar(
     --------
     Compute free energy difference between two specified samples of work values.
 
-    >>> from pymbar import testsystems
+    >>> from pymbar import testsystems, bar
     >>> [w_F, w_R] = testsystems.gaussian_work_example(mu_F=None, DeltaF=1.0, seed=0)
     >>> results = bar(w_F, w_R)
     >>> print('Free energy difference is {:.3f} +- {:.3f} kT'.format(results['Delta_f'], results['dDelta_f']))
