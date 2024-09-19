@@ -242,7 +242,7 @@ def bar(
         DeltaF_initial = DeltaF
 
     if method not in ["self-consistent-iteration", "false-position", "bisection"]:
-        raise ParameterError("method {:d} is not defined for bar".format(method))
+        raise ParameterError("method {} is not defined for bar".format(method))
 
     if uncertainty_method not in ["BAR", "MBAR"]:
         raise ParameterError(
