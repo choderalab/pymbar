@@ -10,7 +10,7 @@ class HarmonicOscillatorsTestCase(object):
     Generate energy samples with default parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase()
-    >>> x_kn, u_kln, N_k, s_n = testcase.sample()
+    >>> x_n, u_kn, N_k, s_n = testcase.sample()
 
     Retrieve analytical properties.
 
@@ -22,12 +22,12 @@ class HarmonicOscillatorsTestCase(object):
 
     Generate energy samples with default parameters in one line.
 
-    >>> x_kn, u_kln, N_k, s_n = HarmonicOscillatorsTestCase().sample()
+    >>> x_n, u_kn, N_k, s_n = HarmonicOscillatorsTestCase().sample()
 
     Generate energy samples with specified parameters.
 
     >>> testcase = HarmonicOscillatorsTestCase(O_k=[0, 1, 2, 3, 4], K_k=[1, 2, 4, 8, 16])
-    >>> x_kn, u_kln, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50])
+    >>> x_n, u_kn, N_k, s_n = testcase.sample(N_k=[10, 20, 30, 40, 50])
 
     Test sampling in different output modes.
 
@@ -131,9 +131,11 @@ class HarmonicOscillatorsTestCase(object):
         s_n : np.ndarray, shape=(n_samples), dtype='int'
             s_n is the state of origin of x_n
 
+        if mode == 'u_kln':
+
         x_kn : np.ndarray, shape=(n_states, n_samples), dtype=float
             1D harmonic oscillator positions
-        u_kln : np.ndarray, shape=(n_states, n_states, n_samples), dytpe=float, only if mode='u_kln'
+        u_kln : np.ndarray, shape=(n_states, n_states, n_samples), dytpe=float
            u_kln[k,l,n] is reduced potential of sample n from state k evaluated at state l.
         N_k : np.ndarray, shape=(n_states), dtype=int32
            N_k[k] is the number of samples generated from state k

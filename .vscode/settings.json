@@ -1,5 +1,0 @@
-{
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.pythonPath": "/home/jaime/.conda/envs/pymbar/bin/python"
-}
