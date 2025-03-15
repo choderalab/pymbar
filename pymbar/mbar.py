@@ -826,7 +826,7 @@ class MBAR:
         # We tried 1 before, but expectations are that any very small number (like
         # fraction folded when it is low) cannot be computed accurately.
         # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
-        # and even occasionally 2*eps, so we choose 4*eps
+        # and even occasionally 2*eps, so we chose 4*eps
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map)  # number of computed expectations we desire
         # need to convert to matrix to be able to pick up D=1
