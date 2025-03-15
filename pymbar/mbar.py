@@ -131,10 +131,10 @@ class MBAR:
             from above, once ``u_kln`` is phased out.
 
         maximum_iterations : int, optional
-            Set to limit the maximum number of iterations performed (default 1000)
+            Set to limit the maximum number of iterations performed (default 10000)
 
         relative_tolerance : float, optional
-            Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+            Set to determine the relative tolerance convergence criteria (default 1.0e-7)
 
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
@@ -180,7 +180,7 @@ class MBAR:
         n_bootstraps: int
             How many bootstrap free energies will be computed? If None, no bootstraps will be computed.
             computing uncertainties with bootstraps is only possible if this is > 0.
-            (default: None)
+            (default: 0)
 
         bootstrap_solver_protocol: list(dict), string or None, optional, default=None
             We usually just do steps of adaptive sampling without. "robust" would be the backup.
@@ -512,7 +512,7 @@ class MBAR:
 
         Parameters
         ----------
-        verbose : print out information about the effective number of samples
+        verbose : print out information about the effective number of samples (default : False)
 
         Notes
         -----
@@ -636,7 +636,7 @@ class MBAR:
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
             than this number (default : 1.0e-10)
-        return_theta : bool, optional
+        return_theta : bool, optional (default : False)
             Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
         Returns
@@ -769,7 +769,7 @@ class MBAR:
             (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        return_theta : bool, optional
+        return_theta : bool, optional (default : False)
             Whether or not to return the theta matrix.  Can be useful for complicated differences of observables.
 
         Returns
@@ -1145,7 +1145,7 @@ class MBAR:
 
         output : string, optional
             'averages' outputs expectations of observables and 'differences' outputs
-            a matrix of differences in the observables.
+            a matrix of differences in the observables. (default : averages)
 
         compute_uncertainty : bool, optional
             If False, the uncertainties will not be computed (default : True)
@@ -1159,7 +1159,10 @@ class MBAR:
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
-        state_dependent : bool, whether the expectations are state-dependent.
+        state_dependent : bool, whether the expectations are state-dependent. (default : False)
+
+        return_theta : bool, optional (default : False)
+            Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
         Returns
         -------
@@ -1343,6 +1346,9 @@ class MBAR:
             with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default : 1.0e-10)
+        return_theta : bool, optional (default : False)
+            Whether or not to return the theta matrix.  Can be useful for complicated differences.
+
 
         Returns
         -------
@@ -1523,13 +1529,15 @@ class MBAR:
 
         Parameters
         ----------
-        u_kn : float, NxK array
-            The energies of the state that are being used.
+        u_kn : float, NxK array, optional (Default : None)
+            The energies of the state that are being used. If value is None use self.u_kn
         uncertainty_method : str , optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
             if method = "bootstrap" then uncertainty over bootstrap samples is used.
             with bootstraps. (default: None)
+         verbose : bool, optional (default : False)
+            If True, will print debug information
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1675,8 +1683,12 @@ class MBAR:
 
     def _ErrorOfDifferences(self, cov, warning_cutoff=1.0e-10):
         """
-        inputs:
-        cov is the covariance matrix of A
+        Parameters
+        ----------
+        cov : np.ndarray
+            The covariance matrix of A
+        warning_cutoff : float, optional
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
         returns the statistical error matrix of A_i - A_j
         """
@@ -1856,13 +1868,15 @@ class MBAR:
 
         Parameters
         ----------
-        verbose : bool, optional=False
+        verbose : bool, optional (default : False)
             If True, will print debug information
-        method : str, optional=zeros
+        method : str, optional (default : zeros)
             Method for initializing guess at free energies.
             * zeros : all free energies are initially set to zero
             * mean-reduced-potential : the mean reduced potential is used
             * 'BAR' : BAR is used to find the free energy difference between consecutive states
+        f_k_init: np.ndarray, optional (default : None)
+            Initial f_k matrix, only used with method=='BAR'
 
         """
 
