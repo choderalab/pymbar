@@ -823,10 +823,10 @@ class MBAR:
 
         logfactor = 4.0 * np.finfo(np.float64).eps
         # make sure all results are larger than this number.
-        # We tried 1 before, but expecations that are all very small (like
+        # We tried 1 before, but expectations are that any very small number (like
         # fraction folded when it is low) cannot be computed accurately.
         # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
-        # and even occasionally 2*eps, so we chooose 4*eps
+        # and even occasionally 2*eps, so we choose 4*eps
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map)  # number of computed expectations we desire
         # need to convert to matrix to be able to pick up D=1
@@ -974,7 +974,7 @@ class MBAR:
         if return_theta:
             # Note: these variances will be the same whether or not we
             # subtract a different constant from each A_i
-            # for efficency, output theta in block form
+            # for efficiency, output theta in block form
             #          K*K   K*S  K*NL
             # Theta =  K*S   S*S  NL*S
             #          K*NL  NL*S NL*NL
@@ -1447,7 +1447,7 @@ class MBAR:
         ----------
         u_ln : np.ndarray, float, shape=(L, Nmax)
             u_ln[l,n] is the reduced potential energy of uncorrelated
-            configuration n evaluated at new state k.  Can be completely indepednent of the original number of states.
+            configuration n evaluated at new state k.  Can be completely independent of the original number of states.
         compute_uncertainty : bool, optional, default=True
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
@@ -1821,7 +1821,7 @@ class MBAR:
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
-            # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            # False Avoids O(N^2) memory allocation by only calculating the active subspace of U.
             U, S, Vt = linalg.svd(W, full_matrices=False)
             Sigma = np.diag(S)
             V = Vt.T
@@ -1899,7 +1899,7 @@ class MBAR:
                 logger.warning(
                     "Warning: All mean reduced potentials are close to zero. "
                     "If you are using energy differences in the u_kln matrix, "
-                    "then the mean reduced potentials will be zero, and this is expected behavoir."
+                    "then the mean reduced potentials will be zero, and this is expected behavior."
                 )
             self.f_k = means
         elif method == "BAR":
@@ -1933,7 +1933,7 @@ class MBAR:
     def _initialize_with_bar(self, u_kn, f_k_init=None):
         """
 
-        Internal method for intializing free energies simulations with BAR.
+        Internal method for initializing free energies simulations with BAR.
         Only useful to do when the states are in order.
 
         """
