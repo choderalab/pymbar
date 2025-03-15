@@ -1530,7 +1530,7 @@ class MBAR:
         Parameters
         ----------
         u_kn : float, NxK array, optional (Default : None)
-            The energies of the state that are being used. If value is None use self.u_kn
+            The energies of the state that are being used. If value is None uses self.u_kn
         uncertainty_method : str , optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
