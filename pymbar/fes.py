@@ -661,7 +661,7 @@ class FES:
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
-        w_n : np.ndarray, float, shape=(sself.N)
+        w_n : np.ndarray, float, shape=(self.N)
             Weights for each sample for the state in which we want the FES (usually, the unbiased state)
 
         Returns
@@ -700,7 +700,7 @@ class FES:
 
     def _setup_fes_spline(self, spline_parameters):
         """
-        Does initial processsing of spline_parameters
+        Does initial processing of spline_parameters
 
         Parameters
         ----------
@@ -1135,7 +1135,7 @@ class FES:
 
     def get_information_criteria(self, type="akaike"):
         """
-        returns the Akaike or Bayesian Informatiton Criteria for the model if it exists.
+        returns the Akaike or Bayesian Information Criteria for the model if it exists.
 
         Parameters
         ----------
@@ -1318,7 +1318,7 @@ class FES:
         # set up structure for return data
         result_vals = {}
 
-        # retrive data for each bootstrap
+        # retrieve data for each bootstrap
         histogram_data = self.histogram_data
         histogram_datas = self.histogram_datas
 
@@ -1956,7 +1956,7 @@ class FES:
         x_n : np.ndarray, float, shape=(N,D)
             x_n[n] is the d-dimensional coordinates of the samples, where D is the reduced dimensional space.
 
-        w_n : np.ndarray, float, shape=(sself.N)
+        w_n : np.ndarray, float, shape=(self.N)
 
             Weights for each sample for the state in which we want the FES (usually, the unbiased state)
 
