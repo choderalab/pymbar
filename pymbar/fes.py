@@ -1372,8 +1372,9 @@ class FES:
                     "FES types (not implemented)"
                 )
             f_i = (
-                histogram_data["f"] - histogram_data["f"][j]
-            )  # pylint: disable=used-before-assignment
+                histogram_data["f"]
+                - histogram_data["f"][j]  # pylint: disable=used-before-assignment
+            )
 
             # now calculate uncertainty for these reference_method approaches.
             df_i = np.zeros(len(histogram_data["f"]), np.float64)
