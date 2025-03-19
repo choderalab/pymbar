@@ -187,8 +187,8 @@ class MBAR:
             Default: dict(method="adaptive", options=dict(min_sc_iter=0)),
 
         rseed: int or None, optional, default=None
-            Seed to use when constructing a new RNGState. If rseed is None, will use the global np.random RNG to generate
-            a seed.
+            Seed to use when constructing a new RNGState. If rseed is None, will use the global
+            np.random RNG to generate a seed.
 
         Notes
         -----
