@@ -178,9 +178,8 @@ class MBAR:
             samples from the 1st state, and so forth.
 
         n_bootstraps: int
-            How many bootstrap free energies will be computed? If None, no bootstraps will be computed.
-            computing uncertainties with bootstraps is only possible if this is > 0.
-            (default: None)
+            The number of bootstrap resamples to compute. If 0, no bootstrapping will be
+            carried out and computing uncertainties with bootstraps will not be possible (default: 0).
 
         bootstrap_solver_protocol: list(dict), string or None, optional, default=None
             We usually just do steps of adaptive sampling without. "robust" would be the backup.
@@ -986,7 +985,7 @@ class MBAR:
                 si = np.zeros(0, dtype=int)
             li = K + state_list
             i = np.concatenate((si, li))
-            Theta = Theta_ij[np.ix_(i, i)]
+            Theta = Theta_ij[np.ix_(i, i)]  # pylint: disable=used-before-assignment
             result_vals["Theta"] = Theta
             if S > 0:
                 # we need to return the minimum A as well

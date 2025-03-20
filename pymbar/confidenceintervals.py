@@ -156,7 +156,7 @@ def qq_plot(replicates, K, title="Generic Q-Q plot", filename="qq.pdf"):
     elif dim == 2:
         nplots = K * K
 
-    yy = np.zeros([N, nplots])
+    yy = np.zeros([N, nplots])  # pylint: disable=used-before-assignment
 
     labelij = dict()
     if dim == 0:
