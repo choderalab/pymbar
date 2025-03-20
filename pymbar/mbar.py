@@ -986,7 +986,7 @@ class MBAR:
                 si = np.zeros(0, dtype=int)
             li = K + state_list
             i = np.concatenate((si, li))
-            Theta = Theta_ij[np.ix_(i, i)]
+            Theta = Theta_ij[np.ix_(i, i)]  # pylint: disable=used-before-assignment
             result_vals["Theta"] = Theta
             if S > 0:
                 # we need to return the minimum A as well
