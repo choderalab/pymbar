@@ -271,7 +271,7 @@ class MBAR:
         self.verbose = verbose
 
         if rseed is None:
-            rseed = np.random.randint(np.iinfo(np.int64).max)
+            rseed = np.random.randint(np.iinfo(np.int32).max)
         self.rng = np.random.default_rng(rseed)
 
         # perform consistency checks on the data.
