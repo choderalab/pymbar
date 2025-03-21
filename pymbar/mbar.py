@@ -410,7 +410,6 @@ class MBAR:
             elif pname == "bootstrap_solver_protocol":
                 bootstrap_solver_protocol = prot
 
-
         self.f_k = mbar_solvers.solve_mbar_for_all_states(
             self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
         )

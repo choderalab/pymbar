@@ -529,6 +529,7 @@ def test_mbar_compute_expectations_inner(mbar_and_test):
     state_map = np.array([[0, 0], [1, 0], [2, 0], [2, 1]], int)
     _ = mbar.compute_expectations_inner(A_in, u_n, state_map)
 
+
 @pytest.mark.parametrize("n_bootstrap", [1, 100])
 def test_mbar_bootstrap_deterministic_given_same_seed(fixed_harmonic_sample, n_bootstrap):
     """Verify that providing a seed to the mbar bootstrap will produce the same values"""
