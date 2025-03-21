@@ -91,7 +91,7 @@ def kn_to_n(kn, N_k=None, cleanup=False):
     u_n : np.ndarray, float, shape=(N)
     """
 
-    # print "warning: KxN arrays deprecated; convering into new preferred N shape"
+    # print "warning: KxN arrays deprecated; converting into new preferred N shape"
     # rewrite into kn shape
 
     # rewrite into kn shape
@@ -152,7 +152,7 @@ def ensure_type(
     warn_on_cast : bool, default=True
         Raise a warning when the dtypes don't match and a cast is done.
     add_newaxis_on_deficient_ndim : bool, default=True
-        Add a new axis to the beginining of the array if the number of
+        Add a new axis to the beginning of the array if the number of
         dimensions is deficient by one compared to your specification. For
         instance, if you're trying to get out an array of ``ndim == 3``,
         but the user provides an array of ``shape == (10, 10)``, a new axis will
@@ -210,16 +210,16 @@ def ensure_type(
         # the shape specified given by the user can look like (None, None 3)
         # which indicates that ANY length is accepted in dimension 0 or
         # dimension 1
-        sentenel = object()
+        sentinel = object()
         error = ValueError(
             (
                 "{} must be shape {}. You supplied  "
                 "{}".format(name, str(shape).replace("None", "Any"), val.shape)
             )
         )
-        for a, b in zip_longest(val.shape, shape, fillvalue=sentenel):
-            if a is sentenel or b is sentenel:
-                # if the sentenel was reached, it means that the ndim didn't
+        for a, b in zip_longest(val.shape, shape, fillvalue=sentinel):
+            if a is sentinel or b is sentinel:
+                # if the sentinel was reached, it means that the ndim didn't
                 # match or something. this really shouldn't happen
                 raise error
             if b is None:

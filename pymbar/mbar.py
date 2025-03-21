@@ -131,10 +131,10 @@ class MBAR:
             from above, once ``u_kln`` is phased out.
 
         maximum_iterations : int, optional
-            Set to limit the maximum number of iterations performed (default 1000)
+            Set to limit the maximum number of iterations performed (default 10000)
 
         relative_tolerance : float, optional
-            Set to determine the relative tolerance convergence criteria (default 1.0e-6)
+            Set to determine the relative tolerance convergence criteria (default 1.0e-7)
 
         verbosity : bool, optional
             Set to True if verbose debug output is desired (default False)
@@ -178,8 +178,9 @@ class MBAR:
             samples from the 1st state, and so forth.
 
         n_bootstraps: int
-            The number of bootstrap resamples to compute. If 0, no bootstrapping will be
-            carried out and computing uncertainties with bootstraps will not be possible (default: 0).
+            How many bootstrap free energies will be computed? If None, no bootstraps will be computed.
+            computing uncertainties with bootstraps is only possible if this is > 0.
+            (default: 0)
 
         bootstrap_solver_protocol: list(dict), string or None, optional, default=None
             We usually just do steps of adaptive sampling without. "robust" would be the backup.
@@ -515,7 +516,7 @@ class MBAR:
 
         Parameters
         ----------
-        verbose : print out information about the effective number of samples
+        verbose : print out information about the effective number of samples (default : False)
 
         Notes
         -----
@@ -639,7 +640,7 @@ class MBAR:
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude
             than this number (default : 1.0e-10)
-        return_theta : bool, optional
+        return_theta : bool, optional (default : False)
             Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
         Returns
@@ -772,7 +773,7 @@ class MBAR:
             (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
-        return_theta : bool, optional
+        return_theta : bool, optional (default : False)
             Whether or not to return the theta matrix.  Can be useful for complicated differences of observables.
 
         Returns
@@ -826,10 +827,10 @@ class MBAR:
 
         logfactor = 4.0 * np.finfo(np.float64).eps
         # make sure all results are larger than this number.
-        # We tried 1 before, but expecations that are all very small (like
+        # We tried 1 before, but expectations are that any very small number (like
         # fraction folded when it is low) cannot be computed accurately.
         # 0 causes warnings in the test with divide by zero, as does 1*eps (though fewer),
-        # and even occasionally 2*eps, so we chooose 4*eps
+        # and even occasionally 2*eps, so we chose 4*eps
         # Retrieve N and K for convenience.
         mapshape = np.shape(state_map)  # number of computed expectations we desire
         # need to convert to matrix to be able to pick up D=1
@@ -977,7 +978,7 @@ class MBAR:
         if return_theta:
             # Note: these variances will be the same whether or not we
             # subtract a different constant from each A_i
-            # for efficency, output theta in block form
+            # for efficiency, output theta in block form
             #          K*K   K*S  K*NL
             # Theta =  K*S   S*S  NL*S
             #          K*NL  NL*S NL*NL
@@ -1148,7 +1149,7 @@ class MBAR:
 
         output : string, optional
             'averages' outputs expectations of observables and 'differences' outputs
-            a matrix of differences in the observables.
+            a matrix of differences in the observables. (default : averages)
 
         compute_uncertainty : bool, optional
             If False, the uncertainties will not be computed (default : True)
@@ -1162,7 +1163,10 @@ class MBAR:
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
-        state_dependent : bool, whether the expectations are state-dependent.
+        state_dependent : bool, whether the expectations are state-dependent. (default : False)
+
+        return_theta : bool, optional (default : False)
+            Whether or not to return the theta matrix.  Can be useful for complicated differences.
 
         Returns
         -------
@@ -1346,6 +1350,9 @@ class MBAR:
             with bootstraps. (default: None)
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default : 1.0e-10)
+        return_theta : bool, optional (default : False)
+            Whether or not to return the theta matrix.  Can be useful for complicated differences.
+
 
         Returns
         -------
@@ -1444,7 +1451,7 @@ class MBAR:
         ----------
         u_ln : np.ndarray, float, shape=(L, Nmax)
             u_ln[l,n] is the reduced potential energy of uncorrelated
-            configuration n evaluated at new state k.  Can be completely indepednent of the original number of states.
+            configuration n evaluated at new state k.  Can be completely independent of the original number of states.
         compute_uncertainty : bool, optional, default=True
             If False, the uncertainties will not be computed (default: True)
         uncertainty_method : string, optional
@@ -1526,13 +1533,15 @@ class MBAR:
 
         Parameters
         ----------
-        u_kn : float, NxK array
-            The energies of the state that are being used.
+        u_kn : float, NxK array, optional (Default : None)
+            The energies of the state that are being used. If value is None uses self.u_kn
         uncertainty_method : str , optional
             Choice of method used to compute asymptotic covariance method, or None to use default
             See help for computeAsymptoticCovarianceMatrix() for more information on various methods.
             if method = "bootstrap" then uncertainty over bootstrap samples is used.
             with bootstraps. (default: None)
+         verbose : bool, optional (default : False)
+            If True, will print debug information
         warning_cutoff : float, optional
             Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
@@ -1678,8 +1687,12 @@ class MBAR:
 
     def _ErrorOfDifferences(self, cov, warning_cutoff=1.0e-10):
         """
-        inputs:
-        cov is the covariance matrix of A
+        Parameters
+        ----------
+        cov : np.ndarray
+            The covariance matrix of A
+        warning_cutoff : float, optional
+            Warn if squared-uncertainty is negative and larger in magnitude than this number (default: 1.0e-10)
 
         returns the statistical error matrix of A_i - A_j
         """
@@ -1812,7 +1825,7 @@ class MBAR:
             I = np.identity(K, dtype=np.float64)
 
             # Compute SVD of W
-            # False Avoids O(N^2) memory allocation by only calculting the active subspace of U.
+            # False Avoids O(N^2) memory allocation by only calculating the active subspace of U.
             U, S, Vt = linalg.svd(W, full_matrices=False)
             Sigma = np.diag(S)
             V = Vt.T
@@ -1859,13 +1872,15 @@ class MBAR:
 
         Parameters
         ----------
-        verbose : bool, optional=False
+        verbose : bool, optional (default : False)
             If True, will print debug information
-        method : str, optional=zeros
+        method : str, optional (default : zeros)
             Method for initializing guess at free energies.
             * zeros : all free energies are initially set to zero
             * mean-reduced-potential : the mean reduced potential is used
             * 'BAR' : BAR is used to find the free energy difference between consecutive states
+        f_k_init: np.ndarray, optional (default : None)
+            Initial f_k matrix, only used with method=='BAR'
 
         """
 
@@ -1888,7 +1903,7 @@ class MBAR:
                 logger.warning(
                     "Warning: All mean reduced potentials are close to zero. "
                     "If you are using energy differences in the u_kln matrix, "
-                    "then the mean reduced potentials will be zero, and this is expected behavoir."
+                    "then the mean reduced potentials will be zero, and this is expected behavior."
                 )
             self.f_k = means
         elif method == "BAR":
@@ -1922,7 +1937,7 @@ class MBAR:
     def _initialize_with_bar(self, u_kn, f_k_init=None):
         """
 
-        Internal method for intializing free energies simulations with BAR.
+        Internal method for initializing free energies simulations with BAR.
         Only useful to do when the states are in order.
 
         """
