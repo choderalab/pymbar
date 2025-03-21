@@ -189,7 +189,7 @@ def bar(
     relative_tolerance : float, optional, default=1E-12
         Can be set to determine the relative tolerance convergence criteria (default 1.0e-12)
     verbose : bool
-        Should be set to True if verbse debug output is desired (default False)
+        Should be set to True if verbose debug output is desired (default False)
     method: str, optional, default='false-position'
         Choice of method to solve bar nonlinear equations: one of 'bisection', 'self-consistent-iteration' or 'false-position' (default : 'false-position').
     iterated_solution: bool, optional, default=True
@@ -264,7 +264,7 @@ def bar(
             # this data set is returning NAN -- will likely not work.  Return 0, print a warning:
             # consider returning more information about failure
             logger.warning(
-                "BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing betweeen states.  For now, guessing that the free energy difference is 0 with no uncertainty."
+                "BAR is likely to be inaccurate because of poor overlap. Improve the sampling, or decrease the spacing between states.  For now, guessing that the free energy difference is 0 with no uncertainty."
             )
             if compute_uncertainty:
                 result_vals["Delta_f"] = 0.0
