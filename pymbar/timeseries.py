@@ -92,9 +92,8 @@ def statistical_inefficiency(A_n, B_n=None, fast=False, mintime=3, fft=False):
         If supplied, the cross-correlation of timeseries A and B will be estimated instead of the
         autocorrelation of timeseries A.
     fast : bool, optional, default=False
-        f True, will use faster (but less accurate) method to estimate correlation
-        time, described in Ref. [1] (default: False).  This is ignored
-        when B_n=None and fft=True.
+        If True, will use faster (but less accurate) method to estimate correlation
+        time, described in Ref. [1].  This is ignored when B_n=None and fft=True.
     mintime : int, optional, default=3
         minimum amount of correlation function to compute (default: 3)
         The algorithm terminates after computing the correlation time out to mintime when the
@@ -374,7 +373,7 @@ def integrated_autocorrelation_time(A_n, B_n=None, fast=False, mintime=3):
 
     See Also
     --------
-    statisticalInefficiency
+    statistical_inefficiency
 
     """
 
@@ -460,7 +459,7 @@ def normalized_fluctuation_correlation_function(A_n, B_n=None, N_max=None, norm=
     # Get the length of the timeseries.
     N = A_n.size
 
-    # Set maximum time to compute correlation functon for.
+    # Set maximum time to compute correlation function for.
     if (not N_max) or (N_max > N - 1):
         N_max = N - 1
 
@@ -669,7 +668,7 @@ def subsample_correlated_data(A_t, g=None, fast=False, conservative=False, verbo
     ----------
     A_t : np.ndarray
         A_t[t] is the t-th value of timeseries A(t).  Length is deduced from vector.
-    g : float, optional
+    g : float, optional, default=None
         if provided, the statistical inefficiency g is used to subsample the timeseries -- otherwise it will be computed (default: None)
     fast : bool, optional, default=False
         fast can be set to True to give a less accurate but very quick estimate (default: False)
@@ -776,6 +775,8 @@ def detect_equilibration(A_t, fast=True, nskip=1):
     ----------
     A_t : np.ndarray
         timeseries
+    fast : bool, optional, default=False
+        fast can be set to True to give a less accurate but very quick estimate (default: False)
     nskip : int, optional, default=1
         number of samples to sparsify data by in order to speed equilibration detection
 
@@ -905,7 +906,7 @@ def detect_equilibration_binary_search(A_t, bs_nodes=10):
     A_t : np.ndarray
         timeseries
 
-    bs_nodes : int > 4
+    bs_nodes : int > 4, optional, default=10
         number of geometrically distributed binary search nodes
 
     Returns
