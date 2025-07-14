@@ -1,12 +1,11 @@
 name: test
 channels:
   - conda-forge
-  - defaults
 dependencies:
     # Base depends
   - python
   - pip
-  - numpy >=1.12
+  - numpy >=1.12,<2.3
   - scipy
   - numexpr
 
