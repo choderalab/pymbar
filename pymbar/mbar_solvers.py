@@ -56,7 +56,7 @@ try:
             " PyMBAR can run faster with JAX  \n"
             " But will work fine without it   \n"
             "Either install with pip or conda:\n"
-            "      pip install pybar[jax]     \n"
+            "      pip install pymbar[jax]     \n"
             "               OR                \n"
             "      conda install pymbar       \n"
             "*********************************"
