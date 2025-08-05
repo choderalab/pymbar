@@ -36,6 +36,9 @@ optional-dependencies.jax = [
 urls.Documentation = "https://pymbar.readthedocs.io/en/master/"
 urls.Repository = "http://github.com/choderalab/pymbar"
 
+[tool.setuptools.packages]
+find = { namespaces = false }
+
 [tool.pytest.ini_options]
 filterwarnings = [
   "ignore::DeprecationWarning:patsy.*",
