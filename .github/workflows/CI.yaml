@@ -93,7 +93,6 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
         flags: unittests
-        yml: ./.codecov.yml
 
   lint-format:
     runs-on: ubuntu-latest
