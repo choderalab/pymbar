@@ -1,5 +1,5 @@
 """
-Example illustrating the application of MBAR to compute a 1D free energy profile 
+Example illustrating the application of MBAR to compute a 1D free energy profile
 from a series of force-clamp single-molecule experiments.
 
 REFERENCE
