@@ -133,4 +133,4 @@ jobs:
       shell: bash -l {0}
       if: always()
       run: |
-        black --check -l 99 $PACKAGE/ examples/ --extend-exclude "$PACKAGE/_version.py"
+        black --check -l 99 $PACKAGE/ examples/
