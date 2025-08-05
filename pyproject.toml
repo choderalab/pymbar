@@ -39,6 +39,9 @@ urls.Repository = "http://github.com/choderalab/pymbar"
 [tool.setuptools.packages]
 find = { namespaces = false }
 
+[tool.setuptools_scm]
+fallback_version = "0.0.0"
+
 [tool.pytest.ini_options]
 filterwarnings = [
   "ignore::DeprecationWarning:patsy.*",
