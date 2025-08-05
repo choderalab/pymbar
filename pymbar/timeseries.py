@@ -748,7 +748,7 @@ def subsample_correlated_data(A_t, g=None, fast=False, conservative=False, verbo
         while int(round(n * g)) < T:
             t = int(round(n * g))
             # ensure we don't sample the same point twice
-            if (n == 0) or (t != indices[n - 1]):
+            if (n == 0) or (t != indices[-1]):
                 indices.append(t)
             n += 1
         if verbose:
