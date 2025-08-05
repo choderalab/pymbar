@@ -6,6 +6,7 @@ requires = [ "setuptools>=80", "setuptools-scm>=8" ]
 name = "pymbar"
 description = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method"
 readme = "README.md"
+keywords = [ "Bayesian parameterization", "forcefield", "molecular mechanics" ]
 license = "MIT"
 authors = [
   { name = "Levi N. Naden", email = "levi.naden@choderalab.org" },
@@ -35,3 +36,16 @@ optional-dependencies.jax = [
 ]
 urls.Documentation = "https://pymbar.readthedocs.io/en/master/"
 urls.Repository = "http://github.com/choderalab/pymbar"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore::DeprecationWarning:patsy.*",
+  "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+# .coveragerc to control coverage.py and pytest-cov
+omit = [
+  # Omit the tests
+  "*/tests/*",
+]
