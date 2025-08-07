@@ -15,8 +15,16 @@ on:
     # Nightly Tests
     - cron: '0 0 * * *'
 
-jobs:
 
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -35,7 +43,7 @@ jobs:
 
     steps:
     - name: Checkout the code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Additional info about the build
       shell: bash
@@ -56,18 +64,15 @@ jobs:
           python=${{ matrix.python-version }}
 
     - name: Install package
-      shell: bash -l {0}
       run: |
         python -m pip install . --no-deps
         micromamba list
 
     - name: Run tests (pytest)
-      shell: bash -l {0}
       run: |
         pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/
 
     - name: Run examples
-      shell: bash -l {0}
       run: |
         ### constant-force-optical-trap
         cd examples/constant-force-optical-trap
@@ -118,19 +123,16 @@ jobs:
         create-args: >-
           python=${{ matrix.python-version }}
     - name: Install linter and formatter
-      shell: bash -l {0}
       run: |
         micromamba install pylint black
 
     - name: Run pylint
-      shell: bash -l {0}
       run: |
         pylint $PACKAGE/
 
     # Black has a default --exclude which reads .gitignore.
     # Black's --exclude and --extend-exclude are single specified RegEx patterns and overwrite if multi-marked.
     - name: Run black check
-      shell: bash -l {0}
       if: always()
       run: |
         black --check -l 99 $PACKAGE/ examples/
