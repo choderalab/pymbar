@@ -422,7 +422,6 @@ class MBAR:
             allN = int(np.sum(N_k))
             self.bootstrap_rints = np.zeros([self.n_bootstraps, allN], int)
             for b in range(self.n_bootstraps):
-                f_k_init = np.array(self.f_k.copy())
                 # picking random samples from the same N_k states.
                 rints = np.zeros(allN, int)
                 for k in range(K):
@@ -434,6 +433,8 @@ class MBAR:
                 # If we initialized with BAR, then BAR, starting from the provided initial_f_k as well.
                 if initialize == "BAR":
                     f_k_init = self._initialize_with_bar(self.u_kn[:, rints], f_k_init=self.f_k)
+                else:
+                    f_k_init = np.array(self.f_k)
                 self.f_k_boots[b, :] = mbar_solvers.solve_mbar_for_all_states(
                     self.u_kn[:, rints],
                     self.N_k,

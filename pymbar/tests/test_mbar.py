@@ -4,10 +4,11 @@ for which the true free energy differences can be computed analytically.
 
 import numpy as np
 import pytest
+from psutil import Process
 from pymbar import MBAR
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
-from pymbar.utils import ParameterError
+from pymbar.utils import ParameterError, kln_to_kn
 
 precision = 8  # the precision for systems that do have analytical results that should be matched.
 # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
@@ -543,3 +544,31 @@ def test_mbar_bootstrap_deterministic_given_same_seed(fixed_harmonic_sample, n_b
     test_fe_diff = mbar_b.compute_free_energy_differences(uncertainty_method="bootstrap")
     np.testing.assert_equal(ref_fe_diff["Delta_f"], test_fe_diff["Delta_f"])
     np.testing.assert_equal(ref_fe_diff["dDelta_f"], test_fe_diff["dDelta_f"])
+
+
+@pytest.mark.parametrize("n_samples", [2000])
+def test_mbar_memory_consumption(fixed_harmonic_sample, n_samples):
+    # Don't use the global N_k, to enable changing the number of samples
+    n_k = [n_samples] * fixed_harmonic_sample.n_states
+    _, u_kln, _ = fixed_harmonic_sample.sample(n_k, mode="u_kln")
+
+    rss_traj = []
+    for i in range(10, n_samples, 10):
+        rss_traj.append(Process().memory_info().rss / (1024 * 1024))
+        truncated_u_kln = u_kln[:, :, :i]
+        K, L, N_max = truncated_u_kln.shape
+        assert K == L
+        u_kn = kln_to_kn(truncated_u_kln)
+        mbar = MBAR(u_kn, [N_max] * K)
+        assert np.isfinite(mbar.compute_free_energy_differences()["Delta_f"][0, -1])
+        # import jax
+        # jax.clear_caches()
+
+    memory_increase = np.max(rss_traj) - np.min(rss_traj)
+    print(f"RSS memory changed by {memory_increase:.2f}MB")
+    # import matplotlib.pyplot as plt
+    # plt.plot(rss_traj)
+    # plt.xlabel("Iteration")
+    # plt.ylabel("RSS (MB)")
+    # plt.title("RSS Pymbar Numpy (MB)")
+    # plt.show()

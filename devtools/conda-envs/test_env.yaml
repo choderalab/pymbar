@@ -12,6 +12,7 @@ dependencies:
     # Testing
   - pytest
   - pytest-cov
+  - psutil
   - flaky
   - codecov
   - statsmodels

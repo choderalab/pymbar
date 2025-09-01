@@ -70,7 +70,7 @@ jobs:
 
     - name: Run tests (pytest)
       run: |
-        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/
+        pytest -v --cov=$PACKAGE --cov-report=xml --color=yes --doctest-modules $PACKAGE/ --durations 0
 
     - name: Run examples
       run: |
