@@ -311,7 +311,10 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
     """
 
     if use_numexpr:
-        warnings.warn("numexpr is not longer used to compute logsumexp, use_numexpr will be removed in a future release", DeprecationWarning)
+        warnings.warn(
+            "numexpr is not longer used to compute logsumexp, use_numexpr will be removed in a future release",
+            DeprecationWarning,
+        )
     return scipy_logsumexp(a, axis=axis, b=b)
 
 
