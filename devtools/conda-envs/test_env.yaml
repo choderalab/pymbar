@@ -5,9 +5,8 @@ dependencies:
     # Base depends
   - python
   - pip
-  - numpy >=1.12,<2.3
+  - numpy >=1.17,<2.3
   - scipy
-  - numexpr
 
     # Testing
   - pytest

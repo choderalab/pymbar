@@ -9,13 +9,12 @@ requirements:
   build:
     - python
     - setuptools
-    - numpy 1.11.*
+    - numpy 1.17.*
     - toolchain
   run:
     - python
-    - numpy >=1.12
+    - numpy >=1.17
     - scipy
-    - numexpr
 
 test:
   requires:
