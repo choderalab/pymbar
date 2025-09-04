@@ -26,7 +26,8 @@
 from itertools import zip_longest
 import warnings
 import numpy as np
-import numexpr
+
+from scipy.special import logsumexp as scipy_logsumexp
 
 
 ##############################################################################
@@ -290,8 +291,7 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
         Scaling factor for exp(`a`) must be of the same shape as `a` or
         broadcastable to `a`.
     use_numexpr : bool, optional, default=True
-        If True, use the numexpr library to speed up the calculation, which
-        can give a 2-4X speedup when working with large arrays.
+        Deprecated. Will always call out to scipy.special.logsumexp.
 
     Returns
     -------
@@ -302,39 +302,17 @@ def logsumexp(a, axis=None, b=None, use_numexpr=True):
 
     See Also
     --------
-    numpy.logaddexp, numpy.logaddexp2, scipy.special.logsumexp
+    scipy.special.logsumexp
 
     Notes
     -----
-    This is based on ``scipy.special.logsumexp`` but with optional numexpr
-    support for improved performance.
+    This calls through to ``scipy.special.logsumexp``, in a future release this will be
+    removed.
     """
 
-    a = np.asarray(a)
-
-    a_max = np.amax(a, axis=axis, keepdims=True)
-
-    if a_max.ndim > 0:
-        a_max[~np.isfinite(a_max)] = 0
-    elif not np.isfinite(a_max):
-        a_max = 0
-
-    if b is not None:
-        b = np.asarray(b)
-        if use_numexpr:
-            out = np.log(numexpr.evaluate("b * exp(a - a_max)").sum(axis))
-        else:
-            out = np.log(np.sum(b * np.exp(a - a_max), axis=axis))
-    else:
-        if use_numexpr:
-            out = np.log(numexpr.evaluate("exp(a - a_max)").sum(axis))
-        else:
-            out = np.log(np.sum(np.exp(a - a_max), axis=axis))
-
-    a_max = np.squeeze(a_max, axis=axis)
-    out += a_max
-
-    return out
+    if use_numexpr:
+        warnings.warn("numexpr is not longer used to compute logsumexp, use_numexpr will be removed in a future release", warnings.DeprecationWarning)
+    return scipy_logsumexp(a, axis=axis, b=b)
 
 
 def check_w_normalized(W, N_k, tolerance=1.0e-4):

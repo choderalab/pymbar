@@ -4,10 +4,7 @@ import pymbar
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 from pymbar.utils import ParameterError, ensure_type, TypeCastPerformanceWarning
 
-try:
-    from scipy.special import logsumexp
-except ImportError:
-    from scipy.misc import logsumexp
+from scipy.special import logsumexp
 
 
 def test_logsumexp():

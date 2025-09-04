@@ -25,7 +25,6 @@ classifiers = [
 
 dynamic = [ "version" ]
 dependencies = [
-  "numexpr",
   "numpy>=1.17",
   "scipy",
 ]
