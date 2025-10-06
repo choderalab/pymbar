@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.11", "3.12", "3.13"]  # Check against oldest and newest versions
+        python-version: ["3.11", "3.12", "3.13", "3.14"]  # Check against oldest and newest versions
         jax: ["", "_jax"]
         exclude:  # Skip win + jax
           - jax: "_jax"
