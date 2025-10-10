@@ -42,7 +42,7 @@ The development version can be installed directly from github via `pip`:
 
 ```bash
 # Get the compressed tarball
-pip install https://github.com/choderalab/pymbar/archive/master.tar.gz
+pip install https://github.com/choderalab/pymbar/archive/main.tar.gz
 # Or obtain a temporary clone of the repo with git
 pip install git+https://github.com/choderalab/pymbar.git
 ```
