@@ -28,6 +28,8 @@ __license__ = "MIT"
 __maintainer__ = "Levi N. Naden, Jaime Rodríguez-Guerra, Michael R. Shirts and John D. Chodera"
 __email__ = "levi.naden@choderalab.org,jaime.rodriguez-guerra@choderalab.org,michael.shirts@colorado.edu,john.chodera@choderalab.org"
 
+from importlib.metadata import version, PackageNotFoundError
+
 from . import timeseries, testsystems, confidenceintervals
 from .mbar import MBAR
 from .other_estimators import bar, bar_overlap, bar_zero, exp, exp_gauss
@@ -48,6 +50,8 @@ __all__ = [
     "FES",
 ]
 
-from . import _version
-
-__version__ = _version.get_versions()["version"]
+try:
+    __version__ = version("pymbar")
+except PackageNotFoundError:
+    # package is not installed
+    pass

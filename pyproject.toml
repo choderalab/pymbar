@@ -1,0 +1,56 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=80", "setuptools-scm>=8" ]
+
+[project]
+name = "pymbar"
+description = "Python implementation of the multistate Bennett acceptance ratio (MBAR) method"
+readme = "README.md"
+keywords = [ "Bayesian parameterization", "forcefield", "molecular mechanics" ]
+license = "MIT"
+authors = [
+  { name = "Levi N. Naden", email = "levi.naden@choderalab.org" },
+  { name = "Jaime Rodriguez-Guerra", email = "jaime.rodriguez-guerra@choderalab.org" },
+  { name = "Michael R. Shirts", email = "michael.shirts@virginia.edu" },
+  { name = "John D. Chodera", email = "john.chodera@choderalab.org" },
+]
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+dynamic = [ "version" ]
+dependencies = [
+  "numexpr",
+  "numpy>=1.17",
+  "scipy",
+]
+optional-dependencies.jax = [
+  "jax; platform_system!='Windows'",
+  "jaxlib; platform_system!='Windows'",
+]
+urls.Documentation = "https://pymbar.readthedocs.io/en/master/"
+urls.Repository = "http://github.com/choderalab/pymbar"
+
+[tool.setuptools.packages]
+find = { namespaces = false }
+
+[tool.setuptools_scm]
+fallback_version = "0.0.0"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore::DeprecationWarning:patsy.*",
+  "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+# .coveragerc to control coverage.py and pytest-cov
+omit = [
+  # Omit the tests
+  "*/tests/*",
+]
