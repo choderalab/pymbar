@@ -528,3 +528,18 @@ def test_mbar_compute_expectations_inner(mbar_and_test):
     u_n = u_kn[:2, :]
     state_map = np.array([[0, 0], [1, 0], [2, 0], [2, 1]], int)
     _ = mbar.compute_expectations_inner(A_in, u_n, state_map)
+
+
+@pytest.mark.parametrize("n_bootstrap", [1, 100])
+def test_mbar_bootstrap_deterministic_given_same_seed(fixed_harmonic_sample, n_bootstrap):
+    """Verify that providing a seed to the mbar bootstrap will produce the same values"""
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode="u_kn")
+
+    mbar_a = MBAR(u_kn, N_k, verbose=True, n_bootstraps=n_bootstrap, rseed=814)
+    ref_fe_diff = mbar_a.compute_free_energy_differences(uncertainty_method="bootstrap")
+
+    # The verbose flag should have no impact on the determinism
+    mbar_b = MBAR(u_kn, N_k, verbose=False, n_bootstraps=n_bootstrap, rseed=814)
+    test_fe_diff = mbar_b.compute_free_energy_differences(uncertainty_method="bootstrap")
+    np.testing.assert_equal(ref_fe_diff["Delta_f"], test_fe_diff["Delta_f"])
+    np.testing.assert_equal(ref_fe_diff["dDelta_f"], test_fe_diff["dDelta_f"])
