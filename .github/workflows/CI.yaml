@@ -3,12 +3,12 @@ name: CI
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
       - 'pymbar4'
       - 'gha'
   pull_request:
     branches:
-      - 'master'
+      - 'main'
       - 'pymbar4'
       - 'gha'
   schedule:
