@@ -15,7 +15,7 @@ use_jit = False
 
 
 # Temporary until we can make a proper setting to enable/disable by choice at runtime
-def _setup_jax_accleration():
+def _setup_jax_acceleration():
     return os.environ.get("PYMBAR_DISABLE_JAX", "").lower() in ("true", "yes", "0")
 
 
