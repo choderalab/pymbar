@@ -7,7 +7,7 @@ from pymbar.utils_for_testing import (
     exponentials,
 )
 from pymbar.tests.test_mbar import z_scale_factor
-from pymbar.mbar_solvers import _setup_jax_accleration
+from pymbar.mbar_solvers import _setup_jax_acceleration
 
 
 @pytest.fixture(scope="module")
@@ -117,9 +117,9 @@ class TestPymbarJaxDisabled:
     def test_env_values(self, monkeypatch, env_value, expected):
         """Test various environment variable values."""
         monkeypatch.setenv("PYMBAR_DISABLE_JAX", env_value)
-        assert _setup_jax_accleration() is expected
+        assert _setup_jax_acceleration() is expected
 
     def test_unset_variable(self, monkeypatch):
         """Test that unset variable returns False."""
         monkeypatch.delenv("PYMBAR_DISABLE_JAX", raising=False)
-        assert _setup_jax_accleration() is False
+        assert _setup_jax_acceleration() is False
