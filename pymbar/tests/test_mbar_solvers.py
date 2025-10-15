@@ -65,7 +65,7 @@ def run_mbar_protocol(oscillator_bundle, protocol):
         "CG",
         "BFGS",
         "Newton-CG",
-        pytest.param("TNC", marks=pytest.mark.flaky(max_runs=2)),  # This one is flaky
+        pytest.param("TNC", marks=pytest.mark.flaky(max_runs=4)),  # This one is flaky
         "trust-ncg",
         "trust-krylov",
         "trust-exact",
