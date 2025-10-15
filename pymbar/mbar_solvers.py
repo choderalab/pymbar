@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 
 use_jit = False
 # Temporary until we can make a proper setting to enable/disable by choice at runtime
-force_no_jax = "PYMBAR_DISABLE_JAX" in os.environ
+def _setup_jax_accleration():
+    return os.environ.get('PYMBAR_DISABLE_JAX', '').lower() in ('true', 'yes', '0')
+# Setup if we should use jax or not
+force_no_jax = _setup_jax_accleration()
+
 try:
     #### JAX related imports
     if force_no_jax:

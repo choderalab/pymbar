@@ -7,6 +7,7 @@ from pymbar.utils_for_testing import (
     exponentials,
 )
 from pymbar.tests.test_mbar import z_scale_factor
+from pymbar.mbar_solvers import _setup_jax_accleration
 
 
 @pytest.fixture(scope="module")
@@ -88,3 +89,34 @@ def test_protocols(base_oscillator, more_oscillators, protocol):
     fe_sigma = results["dDelta_f"][0, 1:]
     z = (fe - fa) / fe_sigma
     assert_array_almost_equal(z / z_scale_factor, np.zeros(len(z)), decimal=0)
+
+
+class TestPymbarJaxDisabled:
+    @pytest.mark.parametrize("env_value,expected", [
+        ('true', True),
+        ('TRUE', True),
+        ('TrUe', True),
+        ('yes', True),
+        ('YES', True),
+        ('YeS', True),
+        ('0', True),
+        ('false', False),
+        ('FALSE', False),
+        ('FaLsE', False),
+        ('no', False),
+        ('NO', False),
+        ('nO', False),
+        ('1', False),
+        ('', False),
+        ('invalid', False),
+        ('random_value', False),
+    ])
+    def test_env_values(self, monkeypatch, env_value, expected):
+        """Test various environment variable values."""
+        monkeypatch.setenv('PYMBAR_DISABLE_JAX', env_value)
+        assert _setup_jax_accleration() is expected
+
+    def test_unset_variable(self, monkeypatch):
+        """Test that unset variable returns False."""
+        monkeypatch.delenv('PYMBAR_DISABLE_JAX', raising=False)
+        assert _setup_jax_accleration() is False
