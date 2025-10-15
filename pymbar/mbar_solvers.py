@@ -20,7 +20,7 @@ def _setup_jax_accleration():
 
 
 # Setup if we should use jax or not
-force_no_jax = _setup_jax_accleration()
+force_no_jax = _setup_jax_acceleration()
 
 try:
     #### JAX related imports
