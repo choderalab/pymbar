@@ -62,6 +62,7 @@ We have the `nsamples` sampled oscillator positions `x_n` (with samples from all
 To analyze this data, we first initialize the `MBAR` object:
 
 ```python
+>>> from pymbar import MBAR
 >>> mbar = MBAR(u_kn, N_k)
 ```
 
