@@ -62,6 +62,7 @@ We have the `nsamples` sampled oscillator positions `x_n` (with samples from all
 To analyze this data, we first initialize the `MBAR` object:
 
 ```python
+>>> from pymbar import MBAR
 >>> mbar = MBAR(u_kn, N_k)
 ```
 
@@ -83,6 +84,27 @@ Expectations and associated uncertainties can easily be estimated for observable
 where `results` is a dictionary with keys `mu`, `sigma`, and `Theta`, where `mu[i]` is the array of the estimate for the average of the observable for in state i, `sigma[i]` is the estimated standard deviation of the `mu` estimates,  and `Theta[i,j]` is the covariance matrix of the log weights.
 
 See the docstring help for these individual methods for more information on exact usage; in Python or IPython, you can view the docstrings with `help()`.
+
+How to disable JAX
+------------------
+
+JAX acceleration is automatic and the existence of the `jax` package in your software environment enables JAX acceleration.
+The easiest way to disable `jax` is to install the version of `pymbar` that doesn't have `jax` as a dependency.
+This can be done via `conda` with:
+
+```bash
+conda install -c conda-forge pymbar-core
+```
+
+Or via `pip` with:
+```bash
+pip install pymbar
+```
+
+However, many packages released on conda-forge specify `pymbar` as a dependency, making it impossible to install the non-jax accelerated of PyMbar.
+In `pymbar >= 4.2.0` JAX acceleration can be controlled with the environmental variable `PYMBAR_DISABLE_JAX`.
+Setting `PYMBAR_DISABLE_JAX` to a truth-y value (`TRUE`, `YES`, `1`) will disable JAX acceleration even if the `jax` package is installed.
+These environment variable checks are case insensitive. 
 
 JAX needs 64-bit mode
 ---------------------
