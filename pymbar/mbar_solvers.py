@@ -1,4 +1,5 @@
 import logging
+import os
 import warnings
 from functools import wraps
 
@@ -11,7 +12,16 @@ from pymbar.utils import ensure_type, check_w_normalized, ParameterError
 logger = logging.getLogger(__name__)
 
 use_jit = False
-force_no_jax = False  # Temporary until we can make a proper setting to enable/disable by choice
+
+
+# Temporary until we can make a proper setting to enable/disable by choice at runtime
+def _setup_jax_acceleration():
+    return os.environ.get("PYMBAR_DISABLE_JAX", "").lower() in ("true", "yes", "1")
+
+
+# Setup if we should use jax or not
+force_no_jax = _setup_jax_acceleration()
+
 try:
     #### JAX related imports
     if force_no_jax:
