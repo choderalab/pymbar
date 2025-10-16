@@ -103,7 +103,7 @@ pip install pymbar
 
 However, many packages released on conda-forge specify `pymbar` as a dependency, making it impossible to install the non-jax accelerated of PyMbar.
 In `pymbar >= 4.2.0` JAX acceleration can be controlled with the environmental variable `PYMBAR_DISABLE_JAX`.
-Setting `PYMBAR_DISABLE_JAX` to a truth-y value (`TRUE`, `YES`, `0`) will disable JAX acceleration even if the `jax` package is installed.
+Setting `PYMBAR_DISABLE_JAX` to a truth-y value (`TRUE`, `YES`, `1`) will disable JAX acceleration even if the `jax` package is installed.
 These environment variable checks are case insensitive. 
 
 JAX needs 64-bit mode
