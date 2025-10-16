@@ -168,7 +168,7 @@ install the appropriate GPU libraries). ``jax`` will be installed when
 or without ``jax`` installed if there are issues with the JAX configuration.
 
 To disable the ``jax`` acceleration, set the environment variable 
-``PYMBAR_DISABLE_JAX`` to ``TRUE``. This will disable ``jax`` acceleration
+``PYMBAR_DISABLE_JAX=TRUE``. This will disable ``jax`` acceleration
 of ``pymbar`` even when the ``jax`` software package is installed.
 
 -------------
