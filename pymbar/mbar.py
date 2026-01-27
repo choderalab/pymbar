@@ -56,6 +56,7 @@ DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
 JAX_SOLVER_PROTOCOL = mbar_solvers.JAX_SOLVER_PROTOCOL
 BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
+NUMBA_SOLVER_PROTOCOL = mbar_solvers.NUMBA_SOLVER_PROTOCOL
 
 
 # =========================================================================
@@ -380,11 +381,13 @@ class MBAR:
                 prot = rob
             elif prot == "jax":
                 prot = JAX_SOLVER_PROTOCOL
+            elif prot == "numba":
+                prot = NUMBA_SOLVER_PROTOCOL
             else:
                 for solver in prot:
                     if not isinstance(solver, dict):
                         logger.warning(
-                            "{pname} is not 'robust','default' or a tuple/list dictionaries, setting to 'default'"
+                            "{pname} is not 'robust','default','jax','numba', or a tuple/list dictionaries, setting to 'default'"
                         )
                         prot = defl
 

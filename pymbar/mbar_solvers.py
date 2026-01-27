@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 use_jit = False
 
-
 # Temporary until we can make a proper setting to enable/disable by choice at runtime
 def _setup_jax_acceleration():
     return os.environ.get("PYMBAR_DISABLE_JAX", "").lower() in ("true", "yes", "1")
@@ -21,6 +20,15 @@ def _setup_jax_acceleration():
 
 # Setup if we should use jax or not
 force_no_jax = _setup_jax_acceleration()
+
+# Try to import numba for numba backend
+try:
+    import numba as nb
+    _numba_available = True
+except ImportError:
+    _numba_available = False
+    nb = None  # type: ignore
+
 
 try:
     #### JAX related imports
@@ -86,15 +94,126 @@ except ImportError:
     def jit_or_passthrough(fn):
         return fn
 
-
 # Note on "pylint: disable=invalid-unary-operand-type"
 # Known issue with astroid<2.12 and numpy array returns, but 2.12 doesn't fix it due to returns being jax.
 # Can be mostly ignored
 
-if use_jit is False:
-    logger.info("JAX was either not detected or disabled, using standard NumPy and SciPy")
-else:
+if use_jit:
     logger.info("JAX detected. Using JAX acceleration.")
+else:
+    logger.info("JAX was either not detected or disabled, using standard NumPy and SciPy")
+
+
+# =============================================================================
+# NUMBA-accelerated MBAR functions
+# =============================================================================
+
+def _mbar_loss_and_grad_numba_python(
+    bias_energy: np.ndarray, energy: np.ndarray, num_conf_ratio: np.ndarray
+) -> tuple[float, np.ndarray]:
+    """Numba-compatible function that calculates the loss function and the gradient of the
+    minimization problem associated with MBAR. Based on the Fast MBAR method:
+    https://doi.org/10.1021/acs.jctc.8b01010.
+
+    Parameters
+    ----------
+    bias_energy : np.ndarray, shape=(K,)
+        An array containing the bias energies (negative of free energies minus log sample ratios).
+    energy : np.ndarray, shape=(K, N)
+        The reduced energy matrix u_kn.
+    num_conf_ratio : np.ndarray, shape=(K,)
+        An array containing the normalized number of samples for each state (N_k / sum(N_k)).
+
+    Returns
+    -------
+    loss : float
+        The loss function value.
+    grad : np.ndarray, shape=(K,)
+        The bias energy gradient associated with the loss function.
+    """
+    grad = np.zeros(energy.shape[0])
+    loss = 0.0
+
+    for j in nb.prange(energy.shape[1]):  # type: ignore
+        exp_biased_energy_j = np.empty(energy.shape[0])
+        exp_biased_energy_j[0] = bias_energy[0] + energy[0][j]
+        min_energy_j = exp_biased_energy_j[0]
+        sum_exp_biased_energy_j = 0.0
+
+        # First loop adds bias and calculates minima
+        for i in range(1, energy.shape[0]):
+            exp_biased_energy_j[i] = bias_energy[i] + energy[i][j]
+            if exp_biased_energy_j[i] < min_energy_j:
+                min_energy_j = exp_biased_energy_j[i]
+
+        # Second loop uses the calculated minima, exponentiates and stores into a sum
+        for i in range(energy.shape[0]):
+            exp_biased_energy_j[i] = np.exp(-exp_biased_energy_j[i] + min_energy_j)
+            sum_exp_biased_energy_j += exp_biased_energy_j[i]
+
+        # Accumulate gradient and loss
+        grad -= exp_biased_energy_j / sum_exp_biased_energy_j
+        loss += np.log(sum_exp_biased_energy_j) - min_energy_j
+
+    # Normalize and add final terms dependent on num_conf_ratio
+    loss /= energy.shape[1]
+    grad = grad / energy.shape[1] + num_conf_ratio
+    for i in nb.prange(energy.shape[0]):  # type: ignore
+        loss += num_conf_ratio[i] * bias_energy[i]
+
+    return loss, grad
+
+
+# JIT compile with numba if available
+if _numba_available:
+    _mbar_loss_and_grad_numba_parallel = nb.njit(fastmath=True, parallel=True)(
+        _mbar_loss_and_grad_numba_python
+    )
+
+
+def _mbar_loss_and_grad_numba_wrapper(
+    f_k: np.ndarray, u_kn: np.ndarray, N_k: np.ndarray
+) -> tuple[float, np.ndarray]:
+    """Wrapper to convert pymbar's f_k, u_kn, N_k format to the numba function format.
+
+    This function converts the free energies to bias energies and calls the numba-optimized
+    loss and gradient function.
+
+    Parameters
+    ----------
+    f_k : np.ndarray, shape=(K,)
+        The reduced free energies of each state (with f_k[0] = 0).
+    u_kn : np.ndarray, shape=(K, N)
+        The reduced potential energies.
+    N_k : np.ndarray, shape=(K,)
+        The number of samples in each state.
+
+    Returns
+    -------
+    loss : float
+        The MBAR objective function value.
+    grad : np.ndarray, shape=(K,)
+        The gradient with respect to f_k.
+    """
+    # Normalize sample counts
+    N_total = np.sum(N_k)
+    num_conf_ratio = N_k / N_total
+
+    # Convert free energies to bias energies: g_k = -f_k - log(N_k / N_total)
+    # Avoid log(0) for states with no samples
+    log_num_conf_ratio = np.zeros_like(num_conf_ratio)
+    nonzero_mask = N_k > 0
+    log_num_conf_ratio[nonzero_mask] = np.log(num_conf_ratio[nonzero_mask])
+    bias_energy = -f_k - log_num_conf_ratio
+
+    # Call the numba-optimized function
+    loss, bias_grad = _mbar_loss_and_grad_numba_parallel(bias_energy, u_kn, num_conf_ratio)
+
+    # Convert bias gradient to free energy gradient: df/df_k = -dL/dg_k
+    f_grad = -bias_grad
+
+    return loss, f_grad
+
 
 # Below are the recommended default protocols (ordered sequence of minimization algorithms / NLE solvers) for solving
 # the MBAR equations.
@@ -115,6 +234,11 @@ ROBUST_SOLVER_PROTOCOL = (
 )
 
 BOOTSTRAP_SOLVER_PROTOCOL = (dict(method="adaptive", options=dict(min_sc_iter=0)),)
+
+# Numba-accelerated solver protocol - uses L-BFGS-B with numba-optimized loss/gradient
+NUMBA_SOLVER_PROTOCOL = (
+    dict(method="L-BFGS-B-numba", continuation=True, options=dict(maxiter=10000)),
+)
 
 # Allows all of the gradient based methods, but not the non-gradient methods ["Nelder-Mead", "Powell", "COBYLA"]",
 scipy_minimize_options = [
@@ -852,6 +976,32 @@ def solve_mbar_once(
             # find the root in the gradient.
             results = scipy.optimize.root(
                 grad, f_k_nonzero[1:], jac=hess, method=method, tol=tol, options=options
+            )
+            f_k_nonzero = pad(results["x"])
+        elif method == "L-BFGS-B-numba":
+            # Use numba-accelerated loss and gradient function with L-BFGS-B
+            if not _numba_available:
+                raise ParameterError(
+                    "Numba is not available. Please install numba to use the 'L-BFGS-B-numba' method."
+                )
+
+            # Convert to numpy arrays for numba compatibility (in case JAX arrays are passed)
+            u_kn_np = np.asarray(u_kn_nonzero)
+            N_k_np = np.asarray(N_k_nonzero)
+
+            # Create numba-optimized objective and gradient function
+            def numba_grad_and_obj(x):
+                f_k_full = np.concatenate([[0.0], x])
+                obj, grad = _mbar_loss_and_grad_numba_wrapper(f_k_full, u_kn_np, N_k_np)
+                return float(obj), np.array(grad[1:])
+
+            results = scipy.optimize.minimize(
+                numba_grad_and_obj,
+                np.asarray(f_k_nonzero[1:]),
+                jac=True,
+                method="L-BFGS-B",
+                tol=tol,
+                options=options,
             )
             f_k_nonzero = pad(results["x"])
         else:
