@@ -131,34 +131,50 @@ def _mbar_loss_and_grad_numba_python(
     grad : np.ndarray, shape=(K,)
         The bias energy gradient associated with the loss function.
     """
-    grad = np.zeros(energy.shape[0])
+    n_states = energy.shape[0]
+    n_samples = energy.shape[1]
+
+    # Pre-allocate storage for gradient contributions from each sample.
+    # This avoids the race condition when multiple threads would otherwise
+    # update the same grad array elements simultaneously.
+    grad_contributions = np.zeros((n_samples, n_states))
     loss = 0.0
 
-    for j in nb.prange(energy.shape[1]):  # type: ignore
-        exp_biased_energy_j = np.empty(energy.shape[0])
+    for j in nb.prange(n_samples):  # type: ignore
+        exp_biased_energy_j = np.empty(n_states)
         exp_biased_energy_j[0] = bias_energy[0] + energy[0][j]
         min_energy_j = exp_biased_energy_j[0]
         sum_exp_biased_energy_j = 0.0
 
         # First loop adds bias and calculates minima
-        for i in range(1, energy.shape[0]):
+        for i in range(1, n_states):
             exp_biased_energy_j[i] = bias_energy[i] + energy[i][j]
             if exp_biased_energy_j[i] < min_energy_j:
                 min_energy_j = exp_biased_energy_j[i]
 
         # Second loop uses the calculated minima, exponentiates and stores into a sum
-        for i in range(energy.shape[0]):
+        for i in range(n_states):
             exp_biased_energy_j[i] = np.exp(-exp_biased_energy_j[i] + min_energy_j)
             sum_exp_biased_energy_j += exp_biased_energy_j[i]
 
-        # Accumulate gradient and loss
-        grad -= exp_biased_energy_j / sum_exp_biased_energy_j
+        # Store gradient contribution for this sample (thread-safe: each j writes to its own row)
+        for i in range(n_states):
+            grad_contributions[j, i] = exp_biased_energy_j[i] / sum_exp_biased_energy_j
+
+        # Accumulate loss (scalar reduction is handled correctly by Numba prange)
         loss += np.log(sum_exp_biased_energy_j) - min_energy_j
 
+    # Sum gradient contributions across all samples.
+    # Each state index is independent, so this can be parallelized safely.
+    grad = np.zeros(n_states)
+    for i in nb.prange(n_states):  # type: ignore
+        for j in range(n_samples):
+            grad[i] -= grad_contributions[j, i]
+
     # Normalize and add final terms dependent on num_conf_ratio
-    loss /= energy.shape[1]
-    grad = grad / energy.shape[1] + num_conf_ratio
-    for i in nb.prange(energy.shape[0]):  # type: ignore
+    loss /= n_samples
+    for i in range(n_states):
+        grad[i] = grad[i] / n_samples + num_conf_ratio[i]
         loss += num_conf_ratio[i] * bias_energy[i]
 
     return loss, grad
