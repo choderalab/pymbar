@@ -2004,7 +2004,7 @@ class FES:
                     loglikelihood += self.N_k[k] * normalize
 
         elif spline_weights == "unbiasedstate":
-            loglikelihood = N * np.dot(w_n, spline(x_n))
+            loglikelihood = N * np.dot(w_n, spline(x_n).ravel())
             # no need to add normalization, should be normalized.
 
         return loglikelihood
@@ -2164,7 +2164,7 @@ class FES:
 
         elif spline_weights == "unbiasedstate":  # just KL divergence of the unbiased potential
             # may need to recast w_n
-            f = N * np.dot(w_n, bloc(x_n))
+            f = N * np.dot(w_n, bloc(x_n).ravel())
 
             def expf(x):
                 return np.exp(-bloc(x))
@@ -2246,7 +2246,7 @@ class FES:
             elif spline_weights == "biasedstates":
                 g[i - 1] = np.sum(db_c[i](x_n))
             elif spline_weights == "unbiasedstate":
-                g[i - 1] = N * np.dot(w_n, db_c[i](x_n))
+                g[i - 1] = N * np.dot(w_n, db_c[i](x_n).ravel())
 
         # now the second part of the gradient.
 
