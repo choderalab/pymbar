@@ -130,15 +130,23 @@ def _mbar_loss_and_grad_numba_python(
         The loss function value.
     grad : np.ndarray, shape=(K,)
         The bias energy gradient associated with the loss function.
+
+    Notes
+    -----
+    This implementation allocates (N, K) and (N,) arrays to store per-sample contributions
+    to avoid race conditions in parallel execution. Memory usage scales with N * (K + 1) * 8 bytes.
     """
     n_states = energy.shape[0]
     n_samples = energy.shape[1]
 
-    # Pre-allocate storage for gradient contributions from each sample.
-    # This avoids the race condition when multiple threads would otherwise
-    # update the same grad array elements simultaneously.
+    # Pre-allocate storage for per-sample contributions.
+    # This avoids race conditions when multiple threads would otherwise
+    # update the same array elements or scalar variables simultaneously.
+    # Numba's parfor analysis can't handle scalar reductions involving variables
+    # that are also conditionally updated (like min_energy_j), so we store
+    # all contributions in arrays and sum afterward.
     grad_contributions = np.zeros((n_samples, n_states))
-    loss = 0.0
+    loss_contributions = np.zeros(n_samples)
 
     for j in nb.prange(n_samples):  # type: ignore
         exp_biased_energy_j = np.empty(n_states)
@@ -161,8 +169,13 @@ def _mbar_loss_and_grad_numba_python(
         for i in range(n_states):
             grad_contributions[j, i] = exp_biased_energy_j[i] / sum_exp_biased_energy_j
 
-        # Accumulate loss (scalar reduction is handled correctly by Numba prange)
-        loss += np.log(sum_exp_biased_energy_j) - min_energy_j
+        # Store loss contribution (thread-safe: each j writes to its own index)
+        loss_contributions[j] = np.log(sum_exp_biased_energy_j) - min_energy_j
+
+    # Sum contributions after the parallel section
+    loss = 0.0
+    for j in range(n_samples):
+        loss += loss_contributions[j]
 
     # Sum gradient contributions across all samples.
     # Each state index is independent, so this can be parallelized safely.
