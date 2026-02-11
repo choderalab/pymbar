@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 use_jit = False
 
+
 # Temporary until we can make a proper setting to enable/disable by choice at runtime
 def _setup_jax_acceleration():
     return os.environ.get("PYMBAR_DISABLE_JAX", "").lower() in ("true", "yes", "1")
@@ -24,6 +25,7 @@ force_no_jax = _setup_jax_acceleration()
 # Try to import numba for numba backend
 try:
     import numba as nb
+
     _numba_available = True
 except ImportError:
     _numba_available = False
@@ -94,6 +96,7 @@ except ImportError:
     def jit_or_passthrough(fn):
         return fn
 
+
 # Note on "pylint: disable=invalid-unary-operand-type"
 # Known issue with astroid<2.12 and numpy array returns, but 2.12 doesn't fix it due to returns being jax.
 # Can be mostly ignored
@@ -107,6 +110,7 @@ else:
 # =============================================================================
 # NUMBA-accelerated MBAR functions
 # =============================================================================
+
 
 def _mbar_loss_and_grad_numba_python(
     bias_energy: np.ndarray, energy: np.ndarray, num_conf_ratio: np.ndarray
