@@ -11,6 +11,7 @@ dependencies:
   - numexpr
   - jaxlib
   - jax
+  - numba
     # Testing
   - pytest
   - pytest-cov

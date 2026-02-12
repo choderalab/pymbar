@@ -56,6 +56,7 @@ DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
 JAX_SOLVER_PROTOCOL = mbar_solvers.JAX_SOLVER_PROTOCOL
 BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
+NUMBA_SOLVER_PROTOCOL = mbar_solvers.NUMBA_SOLVER_PROTOCOL
 
 
 # =========================================================================
@@ -311,9 +312,7 @@ class MBAR:
                         They are therefore likely to to be the same thermodynamic state. This can occasionally cause
                         numerical problems with computing the covariance of their energy difference, which must be
                         identically zero in any case. Consider combining them into a single state.
-                        """.format(
-                            l, k
-                        )
+                        """.format(l, k)
                         logger.warning(dedent(msg[1:]))
 
         # Print number of samples from each state.
@@ -380,11 +379,13 @@ class MBAR:
                 prot = rob
             elif prot == "jax":
                 prot = JAX_SOLVER_PROTOCOL
+            elif prot == "numba":
+                prot = NUMBA_SOLVER_PROTOCOL
             else:
                 for solver in prot:
                     if not isinstance(solver, dict):
                         logger.warning(
-                            "{pname} is not 'robust','default' or a tuple/list dictionaries, setting to 'default'"
+                            "{pname} is not 'robust','default','jax','numba', or a tuple/list dictionaries, setting to 'default'"
                         )
                         prot = defl
 

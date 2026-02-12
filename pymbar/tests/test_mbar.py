@@ -543,3 +543,36 @@ def test_mbar_bootstrap_deterministic_given_same_seed(fixed_harmonic_sample, n_b
     test_fe_diff = mbar_b.compute_free_energy_differences(uncertainty_method="bootstrap")
     np.testing.assert_equal(ref_fe_diff["Delta_f"], test_fe_diff["Delta_f"])
     np.testing.assert_equal(ref_fe_diff["dDelta_f"], test_fe_diff["dDelta_f"])
+
+
+def test_mbar_numba_solver_matches_default(fixed_harmonic_sample):
+    """Verify that the numba solver produces the same results as the default solver."""
+    pytest.importorskip("numba")
+
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode="u_kn")
+
+    # Solve with default solver
+    mbar_default = MBAR(u_kn, N_k, solver_protocol="default")
+    result_default = mbar_default.compute_free_energy_differences()
+
+    # Solve with numba solver
+    mbar_numba = MBAR(u_kn, N_k, solver_protocol="numba")
+    result_numba = mbar_numba.compute_free_energy_differences()
+
+    # Check that free energies match within tolerance
+    np.testing.assert_allclose(
+        mbar_default.f_k,
+        mbar_numba.f_k,
+        rtol=1e-5,
+        atol=1e-7,
+        err_msg="Numba solver f_k does not match default solver",
+    )
+
+    # Check that free energy differences match within tolerance
+    np.testing.assert_allclose(
+        result_default["Delta_f"],
+        result_numba["Delta_f"],
+        rtol=1e-5,
+        atol=1e-7,
+        err_msg="Numba solver Delta_f does not match default solver",
+    )

@@ -35,7 +35,6 @@ from .mbar import MBAR
 from .other_estimators import bar, bar_overlap, bar_zero, exp, exp_gauss
 from .fes import FES
 
-
 __all__ = [
     "exp",
     "exp_gauss",
