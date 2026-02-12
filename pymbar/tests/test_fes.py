@@ -428,7 +428,7 @@ def base_1d_fes_spline(fes_1d, gen_kwargs, reference_point):
         fes_1d["x_n"],
         fes_type="spline",
         spline_parameters=spline_parameters,
-        **gen_kwargs
+        **gen_kwargs,
     )
     # Something wrong with unbiased state?
     results_spline = fes.get_fes(

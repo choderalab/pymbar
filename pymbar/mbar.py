@@ -56,6 +56,7 @@ DEFAULT_SOLVER_PROTOCOL = mbar_solvers.DEFAULT_SOLVER_PROTOCOL
 ROBUST_SOLVER_PROTOCOL = mbar_solvers.ROBUST_SOLVER_PROTOCOL
 JAX_SOLVER_PROTOCOL = mbar_solvers.JAX_SOLVER_PROTOCOL
 BOOTSTRAP_SOLVER_PROTOCOL = mbar_solvers.BOOTSTRAP_SOLVER_PROTOCOL
+NUMBA_SOLVER_PROTOCOL = mbar_solvers.NUMBA_SOLVER_PROTOCOL
 
 
 # =========================================================================
@@ -186,6 +187,10 @@ class MBAR:
             We usually just do steps of adaptive sampling without. "robust" would be the backup.
             Default: dict(method="adaptive", options=dict(min_sc_iter=0)),
 
+        rseed: int or None, optional, default=None
+            Seed to use when constructing a new RNGState. If rseed is None, will use the global
+            np.random RNG to generate a seed.
+
         Notes
         -----
         The reduced potential energy ``u_kn[k,n] = u_k(x_{ln})``, where the reduced potential energy ``u_l(x)`` is
@@ -266,30 +271,34 @@ class MBAR:
         # verbosity level -- if True, will print extra debug information
         self.verbose = verbose
 
+        if rseed is None:
+            rseed = np.random.randint(np.iinfo(np.int32).max)
+        self.rng = np.random.default_rng(rseed)
+
         # perform consistency checks on the data.
 
         self.samestates = []
+        # if, for any set of data, all reduced potential energies are the same,
+        # they are probably the same state.
+        #
+        # This can take quite a while, so we do it on just
+        # the first few data points.
+        #
+        # determine if there are less than 50 points to compare energies.
+        # If so, use that number instead of 50.
+        # (the number 50 is pretty arbitrary)
+
+        maxpoint = 50
+        if self.N < maxpoint:
+            maxpoint = self.N
+        # pick random indices
+        # indices = np.arange(maxpoint) # can uncomment this if need to remove random choices in testing.
+        # Done outside of the verbose if statement to ensure deterministic results of bootstrapping, independent of
+        # the Verbose flag
+        indices = self.rng.choice(np.arange(self.N), maxpoint)
+        # this could possibly be made faster with np.unique(axis=0,return_indices=True)
+        # but not clear if needed.
         if self.verbose:
-            # if, for any set of data, all reduced potential energies are the same,
-            # they are probably the same state.
-            #
-            # This can take quite a while, so we do it on just
-            # the first few data points.
-            #
-            # determine if there are less than 50 points to compare energies.
-            # If so, use that number instead of 50.
-            # (the number 50 is pretty arbitrary)
-
-            maxpoint = 50
-            if self.N < maxpoint:
-                maxpoint = self.N
-
-            # this could possibly be made faster with np.unique(axis=0,return_indices=True)
-            # but not clear if needed.
-
-            # pick random indices
-            # indices = np.arange(maxpoint) # can uncomment this if need to remove random choices in testing.
-            indices = np.random.choice(np.arange(self.N), maxpoint)
             for k in range(K):
                 for l in range(k):
                     diffsum = 0
@@ -303,9 +312,7 @@ class MBAR:
                         They are therefore likely to to be the same thermodynamic state. This can occasionally cause
                         numerical problems with computing the covariance of their energy difference, which must be
                         identically zero in any case. Consider combining them into a single state.
-                        """.format(
-                            l, k
-                        )
+                        """.format(l, k)
                         logger.warning(dedent(msg[1:]))
 
         # Print number of samples from each state.
@@ -372,11 +379,13 @@ class MBAR:
                 prot = rob
             elif prot == "jax":
                 prot = JAX_SOLVER_PROTOCOL
+            elif prot == "numba":
+                prot = NUMBA_SOLVER_PROTOCOL
             else:
                 for solver in prot:
                     if not isinstance(solver, dict):
                         logger.warning(
-                            "{pname} is not 'robust','default' or a tuple/list dictionaries, setting to 'default'"
+                            "{pname} is not 'robust','default','jax','numba', or a tuple/list dictionaries, setting to 'default'"
                         )
                         prot = defl
 
@@ -402,11 +411,6 @@ class MBAR:
             elif pname == "bootstrap_solver_protocol":
                 bootstrap_solver_protocol = prot
 
-        if rseed != None:
-            self.rstate = np.random.get_state()
-        else:
-            np.random.seed(rseed)
-
         self.f_k = mbar_solvers.solve_mbar_for_all_states(
             self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
         )
@@ -426,7 +430,7 @@ class MBAR:
                     # which of the indices are equal to K
                     k_indices = np.where(self.x_kindices == k)[0]
                     # pick new random ones, selected of these K.
-                    new_kindices = k_indices[np.random.randint(int(N_k[k]), size=int(N_k[k]))]
+                    new_kindices = k_indices[self.rng.integers(int(N_k[k]), size=int(N_k[k]))]
                     rints[k_indices] = new_kindices
                 # If we initialized with BAR, then BAR, starting from the provided initial_f_k as well.
                 if initialize == "BAR":
