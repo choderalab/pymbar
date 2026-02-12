@@ -312,9 +312,7 @@ class MBAR:
                         They are therefore likely to to be the same thermodynamic state. This can occasionally cause
                         numerical problems with computing the covariance of their energy difference, which must be
                         identically zero in any case. Consider combining them into a single state.
-                        """.format(
-                            l, k
-                        )
+                        """.format(l, k)
                         logger.warning(dedent(msg[1:]))
 
         # Print number of samples from each state.

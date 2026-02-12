@@ -731,7 +731,7 @@ def adaptive(u_kn, N_k, f_k, tol=1.0e-8, options=None):
     warn = "Did not converge."
     for iteration in range(0, maxiter):
         if use_jit:
-            (f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr) = jax_core_adaptive(
+            f_sci, g_sci, gnorm_sci, f_nr, g_nr, gnorm_nr = jax_core_adaptive(
                 u_kn, N_k, f_k, options["gamma"]
             )
         else:
