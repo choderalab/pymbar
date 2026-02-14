@@ -229,7 +229,6 @@ class MBAR:
         >>> mbar = MBAR(u_kn, N_k)
 
         """
-
         # Store local copies of necessary data.
         # N_k[k] is the number of samples from state k, some of which might be zero.
         self.N_k = np.array(N_k, dtype=np.int64)
@@ -412,7 +411,12 @@ class MBAR:
                 bootstrap_solver_protocol = prot
 
         self.f_k = mbar_solvers.solve_mbar_for_all_states(
-            self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
+            self.u_kn,
+            self.N_k,
+            self.f_k,
+            self.states_with_samples,
+            solver_protocol,
+            tol=relative_tolerance,
         )
 
         if n_bootstraps > 0:
@@ -441,6 +445,7 @@ class MBAR:
                     f_k_init,
                     self.states_with_samples,
                     bootstrap_solver_protocol,
+                    tol=relative_tolerance,
                 )
                 # save the random integers for computing expectations.
                 self.bootstrap_rints[b, :] = rints

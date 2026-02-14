@@ -2,12 +2,15 @@
 for which the true free energy differences can be computed analytically.
 """
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 from pymbar import MBAR
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
 from pymbar.utils import ParameterError
+from pymbar.mbar_solvers import solve_mbar
 
 precision = 8  # the precision for systems that do have analytical results that should be matched.
 # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
@@ -111,6 +114,28 @@ def test_duplicate_state(fixed_harmonic_sample, caplog):
     results = mbar.compute_free_energy_differences()
     fe = results["Delta_f"]
     assert np.allclose(fe[0], fe[-1])
+
+
+def test_tolerance_passed_to_solve_mbar(fixed_harmonic_sample, caplog):
+    """Test that the relative tolerance provided to mbar is passed all the way down"""
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode="u_kn")
+
+    tolerances = []
+
+    def mocked_solve_mbar(*args, **kwargs):
+        tolerances.append(kwargs["tol"])
+        return solve_mbar(*args, **kwargs)
+
+    with patch("pymbar.mbar_solvers.solve_mbar", mocked_solve_mbar):
+        mbar = MBAR(u_kn, N_k, verbose=True)
+        assert len(tolerances) > 0
+        assert all(x == 1e-7 for x in tolerances)
+        tolerances.clear()
+
+        new_tolerance = 1e-12
+        mbar = MBAR(u_kn, N_k, relative_tolerance=new_tolerance, verbose=True)
+        assert len(tolerances) > 0
+        assert all(x == new_tolerance for x in tolerances)
 
 
 def test_x_kindices(fixed_harmonic_sample):

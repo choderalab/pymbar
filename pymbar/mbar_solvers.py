@@ -1066,7 +1066,7 @@ def solve_mbar_once(
     return f_k_nonzero, results
 
 
-def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
+def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None, tol=1e-12):
     """Solve MBAR self-consistent equations using some sequence of equation solvers.
 
     Parameters
@@ -1081,6 +1081,8 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     solver_protocol : tuple(dict()), optional, default=None
         Optional list of dictionaries of steps in solver protocol.
         If None, a default protocol will be used.
+    tol : float
+        relative tolerance for convergence (default 1.0e-12)
 
     Returns
     -------
@@ -1115,7 +1117,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
 
     for solver in solver_protocol:
         f_k_nonzero_result, results = solve_mbar_once(
-            u_kn_nonzero, N_k_nonzero, f_k_nonzero, **solver
+            u_kn_nonzero, N_k_nonzero, f_k_nonzero, **solver, tol=tol
         )
         all_fks.append(f_k_nonzero_result)
         all_gnorms.append(
@@ -1157,7 +1159,7 @@ def solve_mbar(u_kn_nonzero, N_k_nonzero, f_k_nonzero, solver_protocol=None):
     return f_k_nonzero_result, all_results
 
 
-def solve_mbar_for_all_states(u_kn, N_k, f_k, states_with_samples, solver_protocol):
+def solve_mbar_for_all_states(u_kn, N_k, f_k, states_with_samples, solver_protocol, tol=1e-12):
     """Solve for free energies of states with samples, then calculate for
     empty states.
 
@@ -1172,6 +1174,8 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, states_with_samples, solver_protoc
     solver_protocol : tuple(dict()), optional, default=None
         Sequence of dictionaries of steps in solver protocol for final
         stage of refinement.
+    tol : float
+        relative tolerance for convergence (default 1.0e-12)
 
     Returns
     -------
@@ -1187,6 +1191,7 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, states_with_samples, solver_protoc
             N_k[states_with_samples],
             f_k[states_with_samples],
             solver_protocol=solver_protocol,
+            tol=tol,
         )
 
     f_k[states_with_samples] = np.array(f_k_nonzero)
