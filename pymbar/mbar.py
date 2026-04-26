@@ -41,7 +41,7 @@ from textwrap import dedent
 import logging
 import numpy as np
 import numpy.linalg as linalg
-from pymbar import mbar_solvers
+from pymbar import _chunked, mbar_solvers
 from pymbar.utils import (
     kln_to_kn,
     kn_to_n,
@@ -813,6 +813,7 @@ class MBAR:
         uncertainty_method=None,
         warning_cutoff=1.0e-10,
         return_theta=False,
+        chunk_size=None,
     ):
         """
         Compute the expectations of multiple observables of phase space functions in multiple states.
@@ -900,6 +901,21 @@ class MBAR:
 
         """
 
+        if chunk_size is not None:
+            if return_theta:
+                raise ParameterError(
+                    "chunk_size is incompatible with return_theta=True. "
+                    "The chunked batch-evaluation path produces point "
+                    "estimates only; covariance computation requires the "
+                    "full Log_W_nk matrix. Pass return_theta=False (or "
+                    "compute_uncertainty=False from the wrapper).")
+            if uncertainty_method == "bootstrap":
+                raise ParameterError(
+                    "chunk_size is incompatible with uncertainty_method="
+                    "'bootstrap'. The bootstrap loop re-indexes columns of "
+                    "u_kn, which the chunked-eval path does not currently "
+                    "support.")
+
         logfactor = 4.0 * np.finfo(np.float64).eps
         # make sure all results are larger than this number.
         # We tried 1 before, but expectations are that any very small number (like
@@ -959,9 +975,42 @@ class MBAR:
         # log weight matrix
         msize = K + NL + S  # augmented size; all of the states needed to calculate
         # the observables, and the observables themselves.
-        Log_W_nk = np.zeros([N, msize], np.float64)  # log weight matrix
+        Log_W_nk = (None if chunk_size is not None
+                    else np.zeros([N, msize], np.float64))  # log weight matrix
         N_k = np.zeros([msize], np.int64)  # counts
         f_k = np.zeros([msize], np.float64)  # free energies
+
+        if chunk_size is not None:
+            # Chunked branch: point-estimate batch evaluation. Streams over the
+            # sample axis with peak working memory O(max(L, S) * chunk_size)
+            # versus dense O(N * (K + NL + S)). No Theta, no bootstrap (both
+            # rejected up front).
+            N_k[0:K] = self.N_k
+            f_k[0:K] = self.f_k
+            log_denom_n = _chunked.chunked_log_denominator(
+                self.u_kn, self.N_k, self.f_k, chunk_size)
+            log_num_l = _chunked.chunked_log_numerator_l(
+                u_ln, log_denom_n, chunk_size)
+            log_C_a = -log_num_l
+            f_k[K + L_list] = log_C_a[L_list]
+
+            if S > 0:
+                log_A_n = np.log(A_n)  # already shifted positive above
+                log_obs_s = _chunked.chunked_log_observable(
+                    u_ln, log_A_n, state_map, log_denom_n, chunk_size)
+                f_k[K + NL + np.arange(S)] = (
+                    -log_C_a[state_map[0, :]] - log_obs_s)
+                A_i = np.exp(-f_k[K + NL + np.arange(S)])
+                A_i = A_i + (A_min[state_map[1, :]]
+                             - logfactors[state_map[1, :]])
+                result_vals["observables"] = A_i
+
+            # Restore A_n positivity un-shift (mirrors dense post-loop step).
+            for i in A_list:
+                A_n[i, :] = A_n[i, :] + (A_min[i] - logfactors[i])
+
+            result_vals["f"] = f_k[K + state_list]
+            return result_vals
 
         if uncertainty_method == "bootstrap":
             n_total = self.n_bootstraps + 1
@@ -1207,6 +1256,7 @@ class MBAR:
         uncertainty_method=None,
         warning_cutoff=1.0e-10,
         return_theta=False,
+        chunk_size=None,
     ):
         """Compute the expectation of an observable of a phase space function.
 
@@ -1337,6 +1387,7 @@ class MBAR:
             return_theta=compute_uncertainty,
             uncertainty_method=uncertainty_method,
             warning_cutoff=warning_cutoff,
+            chunk_size=chunk_size,
         )
 
         result_vals = dict()
@@ -1397,6 +1448,7 @@ class MBAR:
         uncertainty_method=None,
         warning_cutoff=1.0e-10,
         return_theta=False,
+        chunk_size=None,
     ):
         """Compute the expectations of multiple observables of phase space functions.
 
@@ -1479,6 +1531,7 @@ class MBAR:
             return_theta=(compute_uncertainty or compute_covariance),
             uncertainty_method=uncertainty_method,
             warning_cutoff=warning_cutoff,
+            chunk_size=chunk_size,
         )
         result_vals = dict()
         result_vals["mu"] = inner_results["observables"]
@@ -1516,7 +1569,8 @@ class MBAR:
 
     # =========================================================================
     def compute_perturbed_free_energies(
-        self, u_ln, compute_uncertainty=True, uncertainty_method=None, warning_cutoff=1.0e-10
+        self, u_ln, compute_uncertainty=True, uncertainty_method=None,
+        warning_cutoff=1.0e-10, chunk_size=None,
     ):
         """Compute the free energies for a new set of states.
 
@@ -1576,6 +1630,7 @@ class MBAR:
             return_theta=compute_uncertainty,
             uncertainty_method=uncertainty_method,
             warning_cutoff=warning_cutoff,
+            chunk_size=chunk_size,
         )
 
         Deltaf_ij, dDeltaf_ij = None, None

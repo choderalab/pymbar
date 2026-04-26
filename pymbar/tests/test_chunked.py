@@ -128,3 +128,54 @@ def test_zero_N_k_handled():
     assert_array_almost_equal(
         _chunked.chunked_log_denominator(u_kn, N_k, f_k, chunk_size=100),
         _dense_log_denom(u_kn, N_k, f_k), decimal=12)
+
+
+def _make_eval_problem(K=8, L=5, I=3, N=1500, seed=1):
+    """Synthetic batch-eval problem: K sampled states + L perturbed + I observables."""
+    rng = np.random.default_rng(seed)
+    centers = np.linspace(-2.0, 2.0, K)
+    u_kn = centers[:, None] + rng.standard_normal((K, N)) * 0.5
+    N_k = np.full(K, N // K, dtype=np.float64)
+    f_k = -np.array([np.log(np.mean(np.exp(-u_kn[k]))) for k in range(K)])
+    log_denom = _dense_log_denom(u_kn, N_k, f_k)
+    pert_centers = np.linspace(-2.5, 2.5, L)
+    u_ln = pert_centers[:, None] + rng.standard_normal((L, N)) * 0.5
+    A_n = rng.uniform(0.1, 5.0, size=(I, N))  # already-positive observables
+    return u_ln, np.log(A_n), log_denom
+
+
+def _dense_log_num_l(u_ln, log_denom):
+    return sp_logsumexp(-log_denom - u_ln, axis=1)
+
+
+def _dense_log_observable(u_ln, log_A_n, state_map, log_denom):
+    S = state_map.shape[1]
+    out = np.empty(S)
+    for s in range(S):
+        l, i = state_map[0, s], state_map[1, s]
+        out[s] = sp_logsumexp(log_A_n[i] - u_ln[l] - log_denom)
+    return out
+
+
+@pytest.mark.parametrize("chunk_size", [1, 13, 200, 5000])
+def test_chunked_log_numerator_l(chunk_size):
+    u_ln, _, log_denom = _make_eval_problem(L=5, N=1500)
+    assert_array_almost_equal(
+        _chunked.chunked_log_numerator_l(u_ln, log_denom, chunk_size),
+        _dense_log_num_l(u_ln, log_denom), decimal=12)
+
+
+@pytest.mark.parametrize("chunk_size", [1, 17, 200, 5000])
+def test_chunked_log_observable(chunk_size):
+    u_ln, log_A_n, log_denom = _make_eval_problem(L=4, I=3, N=1500)
+    # state_map: every (l, i) pair, S = L * I
+    L, I = u_ln.shape[0], log_A_n.shape[0]
+    state_map = np.array(
+        [[l for l in range(L) for _ in range(I)],
+         [i for _ in range(L) for i in range(I)]],
+        dtype=np.int64)
+    assert_array_almost_equal(
+        _chunked.chunked_log_observable(
+            u_ln, log_A_n, state_map, log_denom, chunk_size),
+        _dense_log_observable(u_ln, log_A_n, state_map, log_denom),
+        decimal=12)
