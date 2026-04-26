@@ -1,12 +1,14 @@
 import logging
 import os
 import warnings
+from contextlib import contextmanager
 from functools import wraps
 
 import numpy as np
 
 # Optimize imported here and below as the jax-optimized one is jax or passthrough, but this is required regardless
 import scipy.optimize
+from pymbar import _chunked
 from pymbar.utils import ensure_type, check_w_normalized, ParameterError
 
 logger = logging.getLogger(__name__)
@@ -105,6 +107,37 @@ if use_jit:
     logger.info("JAX detected. Using JAX acceleration.")
 else:
     logger.info("JAX was either not detected or disabled, using standard NumPy and SciPy")
+
+
+# Chunked working-array dispatch (issue #574). When _CHUNK_SIZE is set, the
+# public solver functions below route to numpy-only chunked variants in
+# pymbar._chunked, bounding the (N, K) working-array temporaries inside
+# logsumexp(... b=N_k) to (chunk_size, K).
+_CHUNK_SIZE = None
+
+
+def get_chunk_size():
+    """Return the active chunk size, or None for full materialization."""
+    return _CHUNK_SIZE
+
+
+def set_chunk_size(n):
+    """Set the active chunk size. Pass None to disable chunked path."""
+    global _CHUNK_SIZE
+    if n is not None and int(n) < 1:
+        raise ValueError(f"chunk_size must be >= 1, got {n}")
+    _CHUNK_SIZE = None if n is None else int(n)
+
+
+@contextmanager
+def chunk_size_context(n):
+    """Scoped chunk-size override; restores the previous setting on exit."""
+    prev = _CHUNK_SIZE
+    set_chunk_size(n)
+    try:
+        yield
+    finally:
+        set_chunk_size(prev)
 
 
 # =============================================================================
@@ -382,6 +415,10 @@ def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     Equation C3 in MBAR JCP paper.
     """
 
+    if _CHUNK_SIZE is not None:
+        sws = slice(None) if states_with_samples is None else states_with_samples
+        return _chunked.chunked_self_consistent_update(
+            u_kn[sws], N_k[sws], f_k[sws], _CHUNK_SIZE)
     return jax_self_consistent_update(u_kn, N_k, f_k, states_with_samples=states_with_samples)
 
 
@@ -435,6 +472,8 @@ def mbar_gradient(u_kn, N_k, f_k):
     -----
     This is equation C6 in the JCP MBAR paper.
     """
+    if _CHUNK_SIZE is not None:
+        return _chunked.chunked_mbar_gradient(u_kn, N_k, f_k, _CHUNK_SIZE)
     return jax_mbar_gradient(u_kn, N_k, f_k)
 
 
@@ -478,6 +517,8 @@ def mbar_objective(u_kn, N_k, f_k):
     outermost sum and logsumexp for the inner sum.
     """
 
+    if _CHUNK_SIZE is not None:
+        return _chunked.chunked_mbar_objective(u_kn, N_k, f_k, _CHUNK_SIZE)
     return jax_mbar_objective(u_kn, N_k, f_k)
 
 
@@ -546,6 +587,8 @@ def mbar_objective_and_gradient(u_kn, N_k, f_k):
     function is its integral.
     """
 
+    if _CHUNK_SIZE is not None:
+        return _chunked.chunked_mbar_objective_and_gradient(u_kn, N_k, f_k, _CHUNK_SIZE)
     return jax_mbar_objective_and_gradient(u_kn, N_k, f_k)
 
 
@@ -590,6 +633,8 @@ def mbar_hessian(u_kn, N_k, f_k):
     Equation (C9) in JCP MBAR paper.
     """
 
+    if _CHUNK_SIZE is not None:
+        return _chunked.chunked_mbar_hessian(u_kn, N_k, f_k, _CHUNK_SIZE)
     return jax_mbar_hessian(u_kn, N_k, f_k)
 
 
@@ -627,6 +672,8 @@ def mbar_log_W_nk(u_kn, N_k, f_k):
     -----
     Equation (9) in JCP MBAR paper.
     """
+    if _CHUNK_SIZE is not None:
+        return _chunked.chunked_mbar_log_W_nk(u_kn, N_k, f_k, _CHUNK_SIZE)
     return jax_mbar_log_W_nk(u_kn, N_k, f_k)
 
 
@@ -889,6 +936,10 @@ def precondition_u_kn(u_kn, N_k, f_k):
     x_n such that the current objective function value is zero, which
     should give maximum precision in the objective function.
     """
+    if _CHUNK_SIZE is not None:
+        # In-place to avoid the O(N*K) extra allocation; safe because MBAR
+        # is invariant under per-sample shifts of u_kn.
+        return _chunked.chunked_precondition_u_kn(u_kn, N_k, f_k, _CHUNK_SIZE)
     return jax_precondition_u_kn(u_kn, N_k, f_k)
 
 

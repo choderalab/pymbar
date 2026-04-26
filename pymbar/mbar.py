@@ -97,6 +97,8 @@ class MBAR:
         n_bootstraps=0,
         bootstrap_solver_protocol=None,
         rseed=None,
+        chunk_size=None,
+        cache_log_W_nk=True,
     ):
         """Initialize multistate Bennett acceptance ratio (MBAR) on a set of simulation data.
 
@@ -190,6 +192,24 @@ class MBAR:
         rseed: int or None, optional, default=None
             Seed to use when constructing a new RNGState. If rseed is None, will use the global
             np.random RNG to generate a seed.
+
+        chunk_size: int or None, optional, default=None
+            If set, route the inner solve through chunked working-array
+            variants of the logsumexp / Hessian operations. Peak working-array
+            memory drops from ``O(N * K)`` to ``O(chunk_size * K)``, which
+            unblocks large fits where ``u_kn`` itself fits in RAM but the
+            ``(N, K)`` working temporaries do not. The chunked path is
+            numpy-only (JAX is bypassed). When set, ``u_kn`` is preconditioned
+            in-place (sample-wise shift; MBAR is shift-invariant so f_k and
+            Log_W_nk are unaffected). Not compatible with ``n_bootstraps > 0``
+            (raises ``NotImplementedError``). See issue #574.
+
+        cache_log_W_nk: bool, optional, default=True
+            If False, leave ``self.Log_W_nk = None`` (skip the (N, K) cache).
+            Use only when ``compute_overlap``, ``compute_effective_sample_number``,
+            ``weights``, and the uncertainty methods that consume ``Log_W_nk``
+            are not needed -- those will fail without it. ``compute_free_energy_differences``
+            and ``compute_expectations`` for fitted states still work.
 
         Notes
         -----
@@ -411,9 +431,19 @@ class MBAR:
             elif pname == "bootstrap_solver_protocol":
                 bootstrap_solver_protocol = prot
 
-        self.f_k = mbar_solvers.solve_mbar_for_all_states(
-            self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
-        )
+        # Optional chunked working-array path (issue #574). Bound to the
+        # solve + log_W_nk caching scope; restored after.
+        if chunk_size is not None and n_bootstraps > 0:
+            raise NotImplementedError(
+                "chunk_size with n_bootstraps>0 is not yet supported. "
+                "Bootstrap requires u_kn[:, rints] random-sample access "
+                "which the chunked path doesn't provide. PR2 will add this."
+            )
+        _chunk_ctx = mbar_solvers.chunk_size_context(chunk_size)
+        with _chunk_ctx:
+            self.f_k = mbar_solvers.solve_mbar_for_all_states(
+                self.u_kn, self.N_k, self.f_k, self.states_with_samples, solver_protocol
+            )
 
         if n_bootstraps > 0:
             self.n_bootstraps = n_bootstraps
@@ -453,7 +483,11 @@ class MBAR:
 
         # bootstrapped weight matrices not generated here, but when expectations are needed
         # otherwise, it's too much memory to keep
-        self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
+        if cache_log_W_nk:
+            with mbar_solvers.chunk_size_context(chunk_size):
+                self.Log_W_nk = mbar_solvers.mbar_log_W_nk(self.u_kn, self.N_k, self.f_k)
+        else:
+            self.Log_W_nk = None
 
         # Print final dimensionless free energies.
         if self.verbose:
