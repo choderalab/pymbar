@@ -31,33 +31,19 @@ def test_compute_perturbed_free_energies_chunked(small_oscillator, chunk_size):
     assert_array_almost_equal(chunked["Delta_f"], dense["Delta_f"], decimal=10)
 
 
+@pytest.mark.parametrize("state_dependent", [False, True])
 @pytest.mark.parametrize("chunk_size", [50, 137, 5000])
-def test_compute_expectations_chunked_state_independent(small_oscillator,
-                                                         chunk_size):
-    m, u_kn, N_k = small_oscillator
-    # Single observable, evaluated at K different states.
-    rng = np.random.default_rng(1)
-    A_n = rng.uniform(0.5, 2.0, size=u_kn.shape[1])
-    dense = m.compute_expectations(A_n, compute_uncertainty=False)
-    chunked = m.compute_expectations(
-        A_n, compute_uncertainty=False, chunk_size=chunk_size)
-    assert_array_almost_equal(chunked["mu"], dense["mu"], decimal=10)
-
-
-@pytest.mark.parametrize("chunk_size", [50, 137, 5000])
-def test_compute_expectations_chunked_state_dependent(small_oscillator,
-                                                      chunk_size):
-    m, u_kn, N_k = small_oscillator
-    # state_dependent=True puts the diagonal index pattern through the
-    # observable kernel: state_map[0,k] = k, state_map[1,k] = k.
-    K = u_kn.shape[0]
-    rng = np.random.default_rng(3)
-    A_n = rng.uniform(0.5, 2.0, size=(K, u_kn.shape[1]))
-    dense = m.compute_expectations(
-        A_n, state_dependent=True, compute_uncertainty=False)
-    chunked = m.compute_expectations(
-        A_n, state_dependent=True, compute_uncertainty=False,
-        chunk_size=chunk_size)
+def test_compute_expectations_chunked(small_oscillator, chunk_size,
+                                      state_dependent):
+    # state_dependent=True hits the diagonal index pattern (state_map[0,k]=k,
+    # state_map[1,k]=k) in the observable kernel; =False hits state_map[1,k]=0.
+    m, u_kn, _ = small_oscillator
+    rng = np.random.default_rng(1 + state_dependent)
+    shape = (u_kn.shape[0], u_kn.shape[1]) if state_dependent else u_kn.shape[1]
+    A_n = rng.uniform(0.5, 2.0, size=shape)
+    kw = dict(state_dependent=state_dependent, compute_uncertainty=False)
+    dense = m.compute_expectations(A_n, **kw)
+    chunked = m.compute_expectations(A_n, **kw, chunk_size=chunk_size)
     assert_array_almost_equal(chunked["mu"], dense["mu"], decimal=10)
 
 

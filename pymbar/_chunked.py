@@ -97,9 +97,7 @@ def _pad_to(chunk, target_B):
 
 
 def _pad_ld(ld, target_B, dtype):
-    """Pad log_denominator_n slice (B,) to (target_B,) with zeros. Padded
-    entries are arbitrary: the chunk's +inf padding forces z = -ld - chunk
-    to -inf, so exp contribution is 0 regardless of ld value."""
+    """Pad ld (B,) to (target_B,) with zeros (chunk's +inf dominates exp)."""
     B = ld.shape[0]
     if B == target_B:
         return ld
@@ -304,28 +302,19 @@ def chunked_log_numerator_l(u_ln, log_denominator_n, chunk_size):
 
 def chunked_log_observable(u_ln, log_A_n, state_map, log_denominator_n,
                            chunk_size):
-    """Streaming logsumexp(log_A_n[i, n] - u_ln[l, n] - log_denominator_n[n], axis=n)
-    for each (l, i) = (state_map[0, s], state_map[1, s]) over s = 0..S-1.
-
-    log_obs_s[s] = log sum_n exp(log_A_n[state_map[1, s], n]
-                                 - u_ln[state_map[0, s], n]
-                                 - log_denominator_n[n])
-
-    Used by compute_expectations_inner: f_k[K + NL + s] = -log_obs_s[s].
-    Peak working memory O(S * chunk_size); pick chunk_size so this stays
-    below the dense-path footprint S * N.
+    """Streaming per-(state, observable) logsumexp:
+    log_obs_s[s] = log sum_n exp(log_A_n[i_s, n] - u_ln[l_s, n] - log_denom[n])
+    for (l_s, i_s) = state_map[:, s]. Used by compute_expectations_inner.
     """
     S = state_map.shape[1]
     dtype = _dtype_of(u_ln)
-    l_idx = state_map[0, :]
-    i_idx = state_map[1, :]
+    l_idx, i_idx = state_map[0, :], state_map[1, :]
     m_s = np.full(S, -np.inf, dtype=dtype)
     Sum_s = np.zeros(S, dtype=dtype)
     for s, u_chunk in _iter_chunks(u_ln, chunk_size):
         B = u_chunk.shape[1]
-        # _kernel_log_num_update computes z = -log_denom - chunk; we want
-        # z[t, n] = log_A_n[i_t, n] - u_ln[l_t, n] - log_denom[n], so feed
-        # chunk_eff = u_ln[l_t] - log_A_n[i_t].
+        # Feed chunk_eff = u_ln[l] - log_A_n[i] so the kernel's z = -log_denom
+        # - chunk becomes log_A_n[i] - u_ln[l] - log_denom (desired summand).
         chunk_eff = (u_chunk[l_idx] - log_A_n[i_idx, s:s + B]).astype(dtype)
         ld = _pad_ld(log_denominator_n[s:s + B], chunk_size, dtype)
         m_s, Sum_s = _kernel_log_num_update(
