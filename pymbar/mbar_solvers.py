@@ -355,6 +355,14 @@ def jit_or_pass_after_bitsize(jitable_fn):
                 "******************************************\n"
             )
             config.update("jax_enable_x64", True)
+        # The chunked working-array path in _chunked.py runs Python loops over
+        # chunks with mutable numpy output buffers (e.g. `out[s:s+B] = ...`).
+        # That is incompatible with being traced inside an outer jax.jit:
+        # cold cache raises ConcretizationTypeError on shape-dependent ops;
+        # warm cache silently reuses the cached dense jaxpr (since
+        # _CHUNK_SIZE is a Python global the JIT cache can't key on).
+        if _CHUNK_SIZE is not None:
+            return jitable_fn(*args, **kwargs)
         jited_fn = jit_or_passthrough(jitable_fn)
         return jited_fn(*args, **kwargs)
 
