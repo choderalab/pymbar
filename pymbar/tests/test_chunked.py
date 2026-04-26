@@ -45,7 +45,7 @@ def test_chunked_log_numerator_k(chunk_size):
     u_kn, N_k, f_k = _make_problem(K=8, N=1500)
     log_denom = _dense_log_denom(u_kn, N_k, f_k)
     assert_array_almost_equal(
-        _chunked.chunked_log_numerator_k(u_kn, log_denom, chunk_size),
+        _chunked.chunked_log_numerator_k(u_kn, N_k, log_denom, chunk_size),
         _dense_log_num_k(u_kn, log_denom), decimal=12)
 
 

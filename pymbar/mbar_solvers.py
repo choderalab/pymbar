@@ -416,6 +416,9 @@ def self_consistent_update(u_kn, N_k, f_k, states_with_samples=None):
     """
 
     if _CHUNK_SIZE is not None:
+        if callable(u_kn):
+            # Streaming: state-axis slice not supported; caller validates N_k > 0.
+            return _chunked.chunked_self_consistent_update(u_kn, N_k, f_k, _CHUNK_SIZE)
         sws = slice(None) if states_with_samples is None else states_with_samples
         return _chunked.chunked_self_consistent_update(
             u_kn[sws], N_k[sws], f_k[sws], _CHUNK_SIZE)
@@ -994,8 +997,9 @@ def solve_mbar_once(
     multiple times to polish the result.  `solve_mbar()` facilitates this.
     """
 
-    # we only validate at the outside of the call
-    u_kn_nonzero, N_k_nonzeo, f_k_nonzero = validate_inputs(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
+    # validate_inputs assumes a dense ndarray; skip for streaming providers
+    if not callable(u_kn_nonzero):
+        u_kn_nonzero, N_k_nonzeo, f_k_nonzero = validate_inputs(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
     f_k_nonzero = f_k_nonzero - f_k_nonzero[0]  # Work with reduced dimensions with f_k[0] := 0
     N_k_nonzero = 1.0 * N_k_nonzero  # convert to float for acceleration.
     u_kn_nonzero = precondition_u_kn(u_kn_nonzero, N_k_nonzero, f_k_nonzero)
@@ -1233,8 +1237,12 @@ def solve_mbar_for_all_states(u_kn, N_k, f_k, states_with_samples, solver_protoc
     if len(states_with_samples) == 1:
         f_k_nonzero = np.array([0.0])
     else:
+        # Streaming u_kn (callable) doesn't support the [states_with_samples]
+        # state-axis filter; we require N_k > 0 everywhere when streaming so
+        # the slice is a no-op anyway.
+        u_kn_nonzero = u_kn if callable(u_kn) else u_kn[states_with_samples]
         f_k_nonzero, all_results = solve_mbar(
-            u_kn[states_with_samples],
+            u_kn_nonzero,
             N_k[states_with_samples],
             f_k[states_with_samples],
             solver_protocol=solver_protocol,

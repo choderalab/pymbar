@@ -109,9 +109,15 @@ class MBAR:
 
         Parameters
         ----------
-        u_kn : np.ndarray, float, shape=(K, N_max)
+        u_kn : np.ndarray or zero-arg callable, shape=(K, N_max)
             ``u_kn[k,n]`` is the reduced potential energy of uncorrelated
             configuration n evaluated at state ``k``.
+
+            For large-N fits, ``u_kn`` may instead be a zero-arg callable
+            that returns a fresh iterator yielding ``(K, B)`` chunks (last
+            chunk may be smaller). This requires ``chunk_size`` to be set
+            and never materialises the full matrix. See ``chunk_size`` for
+            the three supported modes.
         u_kln : np.ndarray, float, shape (K, L, N_max)
             If the simulation is in form ``u_kln[k,l,n]`` it is converted to ``u_kn`` format
 
@@ -196,13 +202,24 @@ class MBAR:
         chunk_size: int or None, optional, default=None
             If set, route the inner solve through chunked working-array
             variants of the logsumexp / Hessian operations. Peak working-array
-            memory drops from ``O(N * K)`` to ``O(chunk_size * K)``, which
-            unblocks large fits where ``u_kn`` itself fits in RAM but the
-            ``(N, K)`` working temporaries do not. The chunked path is
-            numpy-only (JAX is bypassed). When set, ``u_kn`` is preconditioned
-            in-place (sample-wise shift; MBAR is shift-invariant so f_k and
-            Log_W_nk are unaffected). Not compatible with ``n_bootstraps > 0``
-            (raises ``NotImplementedError``). See issue #574.
+            memory drops from ``O(N * K)`` to ``O(chunk_size * K)``. Three
+            modes are supported via the ``u_kn`` argument:
+
+            - ``u_kn=ndarray, chunk_size=None`` (default): existing dense
+              + JAX path, bit-identical to baseline.
+            - ``u_kn=ndarray, chunk_size=N``: dense u_kn, chunked working
+              temporaries. Common case; works with mmap'd .npy via
+              ``np.load(path, mmap_mode='r')``.
+            - ``u_kn=callable, chunk_size=N`` (required): streaming u_kn,
+              never materialised. The callable must yield deterministic
+              ``(K, B)`` chunks summing to ``sum(N_k)``.
+
+            The chunked path is numpy-only (JAX is bypassed). When ``u_kn``
+            is an ndarray and ``chunk_size`` is set, ``u_kn`` is
+            preconditioned in-place (sample-wise shift; MBAR is shift-
+            invariant so f_k and Log_W_nk are unaffected). Not compatible
+            with ``n_bootstraps > 0`` (raises ``NotImplementedError``).
+            See issue #574.
 
         cache_log_W_nk: bool, optional, default=True
             If False, leave ``self.Log_W_nk = None`` (skip the (N, K) cache).
@@ -255,15 +272,39 @@ class MBAR:
         self.N_k = np.array(N_k, dtype=np.int64)
         self.N = np.sum(self.N_k)
 
-        # Get dimensions of reduced potential energy matrix, and convert to KxN form if needed.
-        if len(np.shape(u_kn)) == 3:
-            self.K = np.shape(u_kn)[1]  # need to set self.K, and it's the second index
-            u_kn = kln_to_kn(u_kn, N_k=self.N_k)
+        # u_kn may be a dense ndarray or a zero-arg callable yielding (K, B)
+        # chunks (issue #574 streaming path). Branch on the type up front;
+        # everything dense-only happens inside the ndarray branch.
+        if callable(u_kn):
+            if chunk_size is None:
+                raise ValueError(
+                    "chunk_size required when u_kn is a streaming provider")
+            if cache_log_W_nk:
+                raise ValueError(
+                    "cache_log_W_nk=True is incompatible with streaming u_kn "
+                    "(the cache itself is shape (N, K) and would defeat the "
+                    "memory savings); pass cache_log_W_nk=False")
+            if n_bootstraps > 0:
+                raise NotImplementedError(
+                    "n_bootstraps>0 with streaming u_kn is not supported "
+                    "(needs random-sample access)")
+            if (np.asarray(self.N_k) <= 0).any():
+                raise NotImplementedError(
+                    "states with N_k=0 not yet supported for streaming u_kn; "
+                    "drop empty states before constructing MBAR")
+            self.u_kn = u_kn  # the callable
+            K = len(self.N_k)
+            N = int(np.sum(self.N_k))
+        else:
+            # Get dimensions of reduced potential energy matrix, and convert to KxN form if needed.
+            if len(np.shape(u_kn)) == 3:
+                self.K = np.shape(u_kn)[1]  # need to set self.K, and it's the second index
+                u_kn = kln_to_kn(u_kn, N_k=self.N_k)
 
-        # u_kn[k,n] is the reduced potential energy of sample n evaluated at state k
-        self.u_kn = np.array(u_kn, dtype=np.float64)
+            # u_kn[k,n] is the reduced potential energy of sample n evaluated at state k
+            self.u_kn = np.array(u_kn, dtype=np.float64)
 
-        K, N = np.shape(u_kn)
+            K, N = np.shape(u_kn)
 
         if verbose:
             logger.info("K (total states) = {:d}, total samples = {:d}".format(K, N))
@@ -318,7 +359,7 @@ class MBAR:
         indices = self.rng.choice(np.arange(self.N), maxpoint)
         # this could possibly be made faster with np.unique(axis=0,return_indices=True)
         # but not clear if needed.
-        if self.verbose:
+        if self.verbose and not callable(self.u_kn):
             for k in range(K):
                 for l in range(k):
                     diffsum = 0
