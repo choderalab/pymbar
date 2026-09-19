@@ -298,15 +298,15 @@ class MBAR:
         indices = self.rng.choice(np.arange(self.N), maxpoint)
         # this could possibly be made faster with np.unique(axis=0,return_indices=True)
         # but not clear if needed.
-        if self.verbose:
-            for k in range(K):
-                for l in range(k):
-                    diffsum = 0
-                    uzero = self.u_kn[k, indices] - self.u_kn[l, indices]
-                    diffsum += np.dot(uzero, uzero)
-                    if diffsum < relative_tolerance:
-                        self.samestates.append([k, l])
-                        self.samestates.append([l, k])
+        for k in range(K):
+            for l in range(k):
+                diffsum = 0
+                uzero = self.u_kn[k, indices] - self.u_kn[l, indices]
+                diffsum += np.dot(uzero, uzero)
+                if diffsum < relative_tolerance:
+                    self.samestates.append([k, l])
+                    self.samestates.append([l, k])
+                    if self.verbose:
                         msg = """
                         States {:d} and {:d} have the same energies on the dataset.
                         They are therefore likely to to be the same thermodynamic state. This can occasionally cause
