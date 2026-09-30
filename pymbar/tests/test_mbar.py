@@ -336,8 +336,24 @@ def test_mbar_compute_multiple_expectations(mbar_and_test):
     A[0, :] = x_n
     A[1, :] = x_n**2
     state = 1
-    results = mbar.compute_multiple_expectations(A, u_kn[state, :])
+    results = mbar.compute_multiple_expectations(A, u_kn[state, :], compute_covariance=True)
     multiExpectationAssertion(results, test, state=state)
+    assert_almost_equal(np.diag(results["covariances"]), results["sigma"] ** 2)
+
+    scale = np.array([10.0, 1.0])
+    scaled = mbar.compute_multiple_expectations(
+        A * scale[:, None], u_kn[state, :], compute_covariance=True
+    )
+    assert_almost_equal(scaled["covariances"], results["covariances"] * np.outer(scale, scale))
+
+    covariance_only = mbar.compute_multiple_expectations(
+        A,
+        u_kn[state, :],
+        compute_uncertainty=False,
+        compute_covariance=True,
+    )
+    assert "sigma" not in covariance_only
+    assert_almost_equal(covariance_only["covariances"], results["covariances"])
 
 
 def test_mbar_compute_multiple_expectations_more_dims(mbar_and_test_kln):
