@@ -1417,18 +1417,20 @@ class MBAR:
             np.fill_diagonal(Adiag, diag)
             Theta = Adiag @ inner_results["Theta"] @ Adiag  # matrix multiplication
 
-            if compute_uncertainty:
+            if compute_uncertainty or compute_covariance:
                 covA_ij = np.array(
                     Theta[0:I, 0:I]
                     + Theta[I : 2 * I, I : 2 * I]
                     - Theta[0:I, I : 2 * I]
                     - Theta[I : 2 * I, 0:I]
                 )
+
+            if compute_uncertainty:
                 result_vals["sigma"] = np.sqrt(covA_ij[0:I, 0:I].diagonal())
 
             if compute_covariance:
                 # compute estimate of statistical covariance of the observables
-                result_vals["covariances"] = inner_results["Theta"][0:I, 0:I]
+                result_vals["covariances"] = covA_ij[0:I, 0:I]
 
             if return_theta:
                 result_vals["Theta"] = Theta
