@@ -604,10 +604,14 @@ class MBAR:
         """
 
         W = self.weights()
-        O = self.N_k * (W.T @ W)
-        eigenvals, eigevec = linalg.eig(O)
-        # sort in descending order
-        eigenvals = np.sort(eigenvals)[::-1]
+        gram = W.T @ W
+        O = self.N_k * gram
+        # GD and sqrt(D) G sqrt(D) share their characteristic polynomial,
+        # including when some states have no samples. Use the symmetric
+        # matrix to obtain a real spectrum without discarding imaginary parts.
+        sqrt_counts = np.sqrt(self.N_k)
+        symmetric_overlap = sqrt_counts[:, None] * gram * sqrt_counts[None, :]
+        eigenvals = linalg.eigvalsh(symmetric_overlap)[::-1]
         overlap_scalar = 1 - eigenvals[1]  # 1 minus the second largest eigenvalue
 
         results_vals = dict()
