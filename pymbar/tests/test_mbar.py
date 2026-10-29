@@ -7,7 +7,7 @@ import pytest
 from pymbar import MBAR
 from pymbar.testsystems import harmonic_oscillators, exponential_distributions
 from pymbar.utils_for_testing import assert_equal, assert_almost_equal
-from pymbar.utils import ParameterError
+from pymbar.utils import ParameterError, ConvergenceError
 
 precision = 8  # the precision for systems that do have analytical results that should be matched.
 # Scales the z_scores so that we can reject things that differ at the ones decimal place.  TEMPORARY HACK
@@ -212,6 +212,41 @@ def test_mbar_initialization(fixed_harmonic_sample, method):
     fe = results["Delta_f"]
     fe_sigma = results["dDelta_f"]
     free_energies_almost_equal(fe, fe_sigma, fixed_harmonic_sample.analytical_free_energies())
+
+
+@pytest.mark.parametrize("noise", [1e-12, 1e-9])
+def test_mbar_bar_initialization_with_nearly_identical_states(noise):
+    """BAR initialization falls back when BAR cannot bound a state pair
+
+    Two sampled states whose reduced potentials differ only by noise give BAR
+    no work spread, and its bisection raises BoundsError.
+    """
+    test = harmonic_oscillators.HarmonicOscillatorsTestCase(
+        O_k=np.array([1.0, 2.0, 2.0]), K_k=np.array([0.5, 1.0, 1.0])
+    )
+    _, u_kn, N_k_sampled, _ = test.sample(np.array([1000, 1000, 1000]), mode="u_kn", seed=0)
+    u_kn[2] = u_kn[1] + np.random.default_rng(1).normal(scale=noise, size=u_kn.shape[1])
+    mbar = MBAR(u_kn, N_k_sampled, initialize="BAR")
+    fe = mbar.compute_free_energy_differences()["Delta_f"]
+    assert np.isclose(fe[1, 2], 0.0, atol=1e-6)
+    reference = MBAR(u_kn, N_k_sampled, initialize="zeros")
+    assert np.allclose(fe, reference.compute_free_energy_differences()["Delta_f"], atol=1e-6)
+
+
+def test_mbar_bar_initialization_without_bar_convergence(fixed_harmonic_sample, monkeypatch):
+    """BAR initialization falls back when BAR does not converge"""
+    import pymbar.other_estimators
+
+    def no_convergence(*args, **kwargs):
+        raise ConvergenceError("BAR did not converge")
+
+    monkeypatch.setattr(pymbar.other_estimators, "bar", no_convergence)
+    _, u_kn, _, _ = fixed_harmonic_sample.sample(N_k, mode="u_kn")
+    mbar = MBAR(u_kn, N_k, initialize="BAR")
+    results = mbar.compute_free_energy_differences()
+    free_energies_almost_equal(
+        results["Delta_f"], results["dDelta_f"], fixed_harmonic_sample.analytical_free_energies()
+    )
 
 
 def test_mbar_compute_expectations_position_averages(mbar_and_test):

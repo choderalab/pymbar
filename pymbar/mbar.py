@@ -47,6 +47,8 @@ from pymbar.utils import (
     kn_to_n,
     ParameterError,
     DataError,
+    BoundsError,
+    ConvergenceError,
     logsumexp,
     check_w_normalized,
 )
@@ -1978,7 +1980,7 @@ class MBAR:
                             compute_uncertainty=False,
                         )["Delta_f"]
                     )
-                except ConvergenceError:
+                except (BoundsError, ConvergenceError):
                     logger.warn("WARNING: BAR did not converge to within tolerance")
                     f_k_init[l] = f_k_init[k]  # just assume zero if didn't converge.
             else:
